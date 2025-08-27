@@ -1,0 +1,86 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar Sesión"
+  },
+  "sidebar": {
+    "overview": "Resumen",
+    "listings": "Mis Anuncios",
+    "profile": "Perfil",
+    "settings": "Configuración"
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar Sesión",
+      "subtitle": "Accede a tu cuenta",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión",
+      "noAccount": "¿No tienes cuenta?",
+      "createAccount": "Crear una cuenta",
+      "demo": "Demo: usar cualquier email/password"
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "subtitle": "Únete a Sayulita Travel",
+      "name": "Nombre completo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Crear cuenta",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "signIn": "Iniciar sesión"
+    }
+  },
+  "home": {
+    "title": "Descubre Sayulita",
+    "subtitle": "Los mejores alojamientos y experiencias en el paraíso mexicano",
+    "searchPlaceholder": "Buscar alojamientos...",
+    "featured": "Destacados",
+    "noListings": "No hay anuncios disponibles",
+    "loading": "Cargando anuncios..."
+  },
+  "dashboard": {
+    "title": "Panel de Control",
+    "subtitle": "Administra tus anuncios y reservas",
+    "stats": {
+      "totalListings": "Total de Anuncios",
+      "activeListings": "Anuncios Activos",
+      "totalViews": "Visualizaciones",
+      "totalBookings": "Reservas"
+    },
+    "recentActivity": "Actividad Reciente",
+    "quickActions": "Acciones Rápidas",
+    "createListing": "Crear Anuncio",
+    "viewListings": "Ver Mis Anuncios"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "view": "Ver",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "close": "Cerrar"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "language": {
+    "spanish": "Español",
+    "english": "English"
+  }
+}

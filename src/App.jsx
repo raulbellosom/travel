@@ -1,11 +1,6 @@
-function App() {
-  return (
-    <>
-      <di>
-        <p>hello world</p>
-      </di>
-    </>
-  );
-}
+// src/App.jsx
+import AppRoutes from "./routes/AppRoutes.jsx";
 
-export default App;
+export default function App() {
+  return <AppRoutes />;
+}

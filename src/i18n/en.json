@@ -1,0 +1,86 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "sidebar": {
+    "overview": "Overview",
+    "listings": "My Listings",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Access your account",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create an account",
+      "demo": "Demo: use any email/password"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Join Sayulita Travel",
+      "name": "Full name",
+      "email": "Email address",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in"
+    }
+  },
+  "home": {
+    "title": "Discover Sayulita",
+    "subtitle": "The best accommodations and experiences in Mexican paradise",
+    "searchPlaceholder": "Search accommodations...",
+    "featured": "Featured",
+    "noListings": "No listings available",
+    "loading": "Loading listings..."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Manage your listings and bookings",
+    "stats": {
+      "totalListings": "Total Listings",
+      "activeListings": "Active Listings",
+      "totalViews": "Total Views",
+      "totalBookings": "Total Bookings"
+    },
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions",
+    "createListing": "Create Listing",
+    "viewListings": "View My Listings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "close": "Close"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "spanish": "Español",
+    "english": "English"
+  }
+}
