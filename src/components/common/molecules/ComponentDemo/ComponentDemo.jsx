@@ -15,12 +15,14 @@ const ComponentDemo = ({
   children,
   code,
   className = "",
+  id,
 }) => {
   const [showCode, setShowCode] = useState(false);
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 ${className}`}
+      id={id}
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 scroll-mt-20 ${className}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">

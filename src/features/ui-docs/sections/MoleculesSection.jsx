@@ -1,91 +1,122 @@
-import React, { useState } from "react";
-import { Button, Card, Modal } from "../../../components/common";
-import ComponentDemo from "../../../components/common/molecules/ComponentDemo/ComponentDemo";
-import { Mail } from "lucide-react";
+import { useState } from "react";
+import {
+  DateRangePicker,
+  Carousel,
+  ComponentDemo,
+} from "../../../components/common";
+import { ComponentSection } from "../components";
+import { useUIDocsTranslation } from "../../../hooks/useUIDocsTranslation";
 
-/**
- * Molecules section - Combination of atoms
- */
-const MoleculesSection = () => {
-  const [showModal, setShowModal] = useState(false);
+export default function MoleculesSection({ selectedSize, id = "molecules" }) {
+  const { t } = useUIDocsTranslation();
+  const [dateRange, setDateRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  const handleDateChange = ({ startDate, endDate }) =>
+    setDateRange({ startDate, endDate });
+
+  const carouselImages = [
+    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1502775789162-9f8e7bb65ab2?w=800&h=600&fit=crop",
+  ];
 
   return (
-    <>
-      {/* Cards */}
+    <ComponentSection
+      id={id}
+      title={t("sections.molecules.title")}
+      description={t("sections.molecules.description")}
+      className="scroll-mt-8"
+    >
       <ComponentDemo
-        title="Cards"
-        code={`// Card Examples
-<Card className="p-6">
-  <h3 className="text-lg font-semibold mb-2">Basic Card</h3>
-  <p className="text-gray-600">This is a basic card component.</p>
-</Card>
-<Card className="p-6" hover>
-  <h3 className="text-lg font-semibold mb-2">Interactive Card</h3>
-  <p className="text-gray-600">This card has hover effects.</p>
-</Card>`}
+        id="molecules-dateRangePicker"
+        title={t("sections.molecules.components.dateRangePicker.title")}
+        description="Rango de fechas con feedback"
+        code={`<DateRangePicker size="${selectedSize}" variant="outlined" />`}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
-              Basic Card
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              This is a basic card component.
-            </p>
-          </Card>
-          <Card className="p-6" hover>
-            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
-              Interactive Card
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              This card has hover effects.
-            </p>
-          </Card>
-        </div>
-      </ComponentDemo>
-
-      {/* Modals */}
-      <ComponentDemo
-        title="Modals"
-        code={`// Modal Examples
-<Button onClick={() => setShowModal(true)}>
-  Open Modal
-</Button>
-<Modal
-  isOpen={showModal}
-  onClose={() => setShowModal(false)}
-  title="Example Modal"
-  size="md"
->
-  <p>This is the modal content.</p>
-</Modal>`}
-      >
-        <div>
-          <Button onClick={() => setShowModal(true)}>Open Modal</Button>
-          <Modal
-            isOpen={showModal}
-            onClose={() => setShowModal(false)}
-            title="Example Modal"
-            size="md"
-          >
-            <div className="p-4">
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                This is the modal content. You can put any content here.
-              </p>
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setShowModal(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" onClick={() => setShowModal(false)}>
-                  Confirm
-                </Button>
-              </div>
+        <div className="w-full max-w-md space-y-4">
+          <DateRangePicker
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+            onDateChange={handleDateChange}
+            size={selectedSize}
+            variant="outlined"
+            placeholder="Seleccionar fechas"
+          />
+          {dateRange.startDate && dateRange.endDate ? (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 text-sm">
+              <b>Fechas seleccionadas:</b>
+              <br />
+              Desde: {dateRange.startDate?.toLocaleDateString("es-ES")}
+              <br />
+              Hasta: {dateRange.endDate?.toLocaleDateString("es-ES")}
+              <br />
+              <b>
+                Total:{" "}
+                {Math.ceil(
+                  (dateRange.endDate - dateRange.startDate) /
+                    (1000 * 60 * 60 * 24)
+                )}{" "}
+                días
+              </b>
             </div>
-          </Modal>
+          ) : (
+            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
+              Selecciona un rango de fechas para ver los detalles
+            </div>
+          )}
         </div>
       </ComponentDemo>
-    </>
-  );
-};
 
-export default MoleculesSection;
+      <ComponentDemo
+        id="molecules-carousel"
+        title={t("sections.molecules.components.carousel.title")}
+        description="Con y sin controles, y autoplay"
+        code={`<Carousel images={carouselImages} aspectRatio="16/9" showDots />`}
+      >
+        <div className="space-y-6">
+          <div className="w-full max-w-lg">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Con controles y puntos
+            </h4>
+            <Carousel
+              images={carouselImages}
+              aspectRatio="16/9"
+              showDots
+              showArrows
+              autoPlay={false}
+            />
+          </div>
+          <div className="w-full max-w-lg">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Autoplay (sin controles)
+            </h4>
+            <Carousel
+              images={carouselImages}
+              aspectRatio="4/3"
+              showDots={false}
+              showArrows={false}
+              autoPlay
+              autoPlayInterval={2000}
+            />
+          </div>
+          <div className="w-full max-w-sm">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Cuadrado con puntos
+            </h4>
+            <Carousel
+              images={carouselImages}
+              aspectRatio="1/1"
+              showDots
+              showArrows
+              autoPlay={false}
+            />
+          </div>
+        </div>
+      </ComponentDemo>
+    </ComponentSection>
+  );
+}

@@ -1,0 +1,180 @@
+{
+  "header": {
+    "title": "UI Components",
+    "subtitle": "Librería de componentes React con Tailwind CSS",
+    "description": "Sistema completo de componentes con <span class=\"text-blue-600 dark:text-blue-400 font-semibold\">{{variants}}</span>, <span class=\"text-purple-600 dark:text-purple-400 font-semibold\">{{sizes}}</span> y <span class=\"text-indigo-600 dark:text-indigo-400 font-semibold\">{{themes}}</span>",
+    "components": "componentes integrales",
+    "variants": "múltiples variantes",
+    "sizes": "tamaños dinámicos",
+    "themes": "temas adaptativos",
+    "technologies": {
+      "react": "React 19",
+      "tailwind": "Tailwind CSS v4",
+      "motion": "Framer Motion",
+      "icons": "Lucide React",
+      "framerMotion": "Framer Motion",
+      "lucideIcons": "Lucide React",
+      "i18nReady": "i18n Ready"
+    },
+    "globalControls": {
+      "title": "Controles Globales",
+      "sizeLabel": "Tamaño",
+      "variantLabel": "Variante",
+      "themeLabel": "Tema",
+      "sizes": {
+        "xs": "Extra Pequeño",
+        "sm": "Pequeño",
+        "md": "Mediano",
+        "lg": "Grande",
+        "xl": "Extra Grande"
+      },
+      "variants": {
+        "default": "Por Defecto",
+        "primary": "Primario",
+        "secondary": "Secundario",
+        "ghost": "Fantasma",
+        "outline": "Contorno",
+        "destructive": "Destructivo"
+      },
+      "themes": {
+        "light": "Claro",
+        "dark": "Oscuro",
+        "system": "Sistema"
+      }
+    }
+  },
+  "navigation": {
+    "title": "Componentes",
+    "atoms": "Átomos",
+    "molecules": "Moléculas",
+    "organisms": "Organismos",
+    "overview": "Resumen",
+    "toggleSidebar": "Alternar navegación lateral",
+    "toggleMobileMenu": "Alternar menú móvil",
+    "components": {
+      "button": "Botón",
+      "button-icons": "Botón con Iconos",
+      "icon-button": "Botón Solo Icono",
+      "iconbutton": "IconButton",
+      "textinput": "Campo de Texto",
+      "select": "Selector",
+      "toggle": "Interruptor",
+      "checkbox": "Casilla",
+      "radio": "Radio",
+      "badge": "Etiqueta",
+      "avatar": "Avatar",
+      "ratingStars": "Calificaciones",
+      "spinner": "Cargador",
+      "priceBadge": "Etiqueta Precio",
+      "dateRangePicker": "Selector Fechas",
+      "carousel": "Carrusel",
+      "listingCard": "Tarjeta Propiedad",
+      "modal": "Modal"
+    }
+  },
+  "sections": {
+    "atoms": {
+      "title": "Atoms - Elementos Básicos",
+      "description": "Componentes fundamentales del sistema de diseño",
+      "components": {
+        "button": {
+          "title": "Botones",
+          "description": "Componentes de botón con diferentes variantes, tamaños y estados"
+        },
+        "buttonIcons": {
+          "title": "Botones con Iconos y Texto",
+          "description": "Botones que combinan iconos con texto para mejorar la experiencia"
+        },
+        "iconButton": {
+          "title": "Botones Solo Icono (Button)",
+          "description": "Variante del componente Button cuando solo se muestra un icono"
+        },
+        "iconButtonComponent": {
+          "title": "Botones de Icono",
+          "description": "Componente IconButton específico para botones solo icono"
+        },
+        "textInput": {
+          "title": "Campos de Texto",
+          "description": "Campos de entrada de texto con diferentes estados y variantes"
+        },
+        "select": {
+          "title": "Selectores",
+          "description": "Componentes de selección desplegable con múltiples opciones"
+        },
+        "toggle": {
+          "title": "Interruptores",
+          "description": "Componentes de interruptor/toggle para opciones binarias"
+        },
+        "checkbox": {
+          "title": "Casillas",
+          "description": "Casillas para selecciones múltiples y confirmaciones"
+        },
+        "radio": {
+          "title": "Botones Radio",
+          "description": "Selección única entre múltiples opciones"
+        },
+        "badge": {
+          "title": "Etiquetas",
+          "description": "Etiquetas para mostrar estados, categorías o información destacada"
+        },
+        "avatar": {
+          "title": "Avatares",
+          "description": "Componentes de avatar con diferentes tamaños y estados"
+        },
+        "ratingStars": {
+          "title": "Calificaciones",
+          "description": "Sistema de estrellas para mostrar y capturar calificaciones"
+        },
+        "spinner": {
+          "title": "Indicadores de Carga",
+          "description": "Spinners y cargadores para estados de carga"
+        },
+        "priceBadge": {
+          "title": "Etiquetas de Precio",
+          "description": "Etiquetas especializadas para mostrar precios y monedas"
+        }
+      }
+    },
+    "molecules": {
+      "title": "Molecules - Componentes Compuestos",
+      "description": "Combinaciones de átomos que forman unidades funcionales",
+      "components": {
+        "dateRangePicker": {
+          "title": "Selector de Fechas",
+          "description": "Selector de rango de fechas con calendario interactivo"
+        },
+        "carousel": {
+          "title": "Carrusel de Imágenes",
+          "description": "Carrusel responsivo para mostrar múltiples imágenes"
+        }
+      }
+    },
+    "organisms": {
+      "title": "Organisms - Componentes Complejos",
+      "description": "Estructuras complejas formadas por moléculas y átomos",
+      "components": {
+        "listingCard": {
+          "title": "Tarjetas de Propiedad",
+          "description": "Tarjetas completas para mostrar información de propiedades"
+        },
+        "modal": {
+          "title": "Modales",
+          "description": "Componentes modales con diferentes tamaños y propósitos"
+        }
+      }
+    }
+  },
+  "controls": {
+    "theme": "Tema",
+    "language": "Idioma",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "features": {
+    "responsive": "Diseño Responsive",
+    "accessible": "Accesibilidad Completa",
+    "customizable": "Altamente Personalizable",
+    "performant": "Optimizado para Rendimiento"
+  }
+}

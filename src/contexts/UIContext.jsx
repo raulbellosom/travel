@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const UIContext = createContext(null);
@@ -6,109 +6,71 @@ const UIContext = createContext(null);
 export function UIProvider({ children }) {
   const { i18n } = useTranslation();
 
-  // Theme management con soporte para 'system'
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem("theme");
-    return saved || "system";
-  });
+  // 'light' | 'dark' | 'system'
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "system"
+  );
 
-  // Función para obtener el tema efectivo
-  const getEffectiveTheme = (currentTheme) => {
-    if (currentTheme === "system") {
+  // Tema efectivo (considera el sistema si eligió 'system')
+  const getEffectiveTheme = (t) => {
+    if (t === "system") {
       return window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
     }
-    return currentTheme;
+    return t;
   };
 
-  // Aplicar tema al DOM
-  useEffect(() => {
-    const effectiveTheme = getEffectiveTheme(theme);
+  // Aplicar clase `.dark` en <html> y (opcional) data-theme
+  const applyTheme = (t) => {
+    const effective = getEffectiveTheme(t);
     const root = document.documentElement;
+    root.classList.toggle("dark", effective === "dark");
+    // Si quieres exponer un atributo para tus propios estilos (no para Tailwind):
+    // root.setAttribute("data-theme", effective);
+    // color-scheme ayuda con selects/scrollbars nativos:
+    root.style.colorScheme = effective;
+  };
 
-    root.classList.remove("light", "dark");
-    root.classList.add(effectiveTheme);
-
-    // Para mejor SEO y accesibilidad
-    root.setAttribute("data-theme", effectiveTheme);
-
-    // Guardar en localStorage
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  // Escuchar cambios en preferencias del sistema
+  // Aplica al montar y cuando cambie 'theme'
   useEffect(() => {
+    localStorage.setItem("theme", theme);
+    applyTheme(theme);
+
+    // Si es 'system', escucha cambios del SO
     if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-      const handleChange = () => {
-        const effectiveTheme = getEffectiveTheme("system");
-        const root = document.documentElement;
-
-        root.classList.remove("light", "dark");
-        root.classList.add(effectiveTheme);
-        root.setAttribute("data-theme", effectiveTheme);
-      };
-
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      const onChange = () => applyTheme("system");
+      mq.addEventListener?.("change", onChange);
+      return () => mq.removeEventListener?.("change", onChange);
     }
   }, [theme]);
 
   // Language management
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
-
-    // Para SEO: actualizar lang attribute
     document.documentElement.lang = lng;
-
-    // Opcional: actualizar meta tags para SEO
-    const existingMeta = document.querySelector('meta[name="language"]');
-    if (existingMeta) {
-      existingMeta.setAttribute("content", lng);
-    } else {
-      const meta = document.createElement("meta");
-      meta.name = "language";
-      meta.content = lng;
-      document.head.appendChild(meta);
-    }
   };
 
-  // Theme management functions
-  const changeTheme = (newTheme) => {
-    setTheme(newTheme);
-  };
-
-  const toggleTheme = () => {
-    const effectiveTheme = getEffectiveTheme(theme);
-    setTheme(effectiveTheme === "dark" ? "light" : "dark");
-  };
-
-  const value = {
-    // Theme
-    theme,
-    effectiveTheme: getEffectiveTheme(theme),
-    changeTheme,
-    toggleTheme,
-
-    // Language
-    language: i18n.language,
-    changeLanguage,
-
-    // Utility
-    isSystemTheme: theme === "system",
-  };
+  // API pública
+  const value = useMemo(
+    () => ({
+      theme,
+      effectiveTheme: getEffectiveTheme(theme),
+      changeTheme: (next) => setTheme(next), // 'light' | 'dark' | 'system'
+      toggleTheme: () =>
+        setTheme((t) => (getEffectiveTheme(t) === "dark" ? "light" : "dark")),
+      language: i18n.language,
+      changeLanguage,
+    }),
+    [theme, i18n.language]
+  );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }
 
 export const useUI = () => {
-  const context = useContext(UIContext);
-
-  if (!context) {
-    throw new Error("useUI must be used within a UIProvider");
-  }
-
-  return context;
+  const ctx = useContext(UIContext);
+  if (!ctx) throw new Error("useUI must be used within a UIProvider");
+  return ctx;
 };
