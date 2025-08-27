@@ -1,4 +1,20 @@
 {
+  "home": {
+    "hero": {
+      "title": "Discover Sayulita Travel",
+      "subtitle": "Find the perfect place for your vacation",
+      "cta": "Explore Properties"
+    },
+    "listings": {
+      "title": "Featured Properties"
+    },
+    "title": "Discover Sayulita",
+    "subtitle": "The best accommodations and experiences in Mexican paradise",
+    "searchPlaceholder": "Search accommodations...",
+    "featured": "Featured",
+    "noListings": "No listings available",
+    "loading": "Loading listings..."
+  },
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -35,14 +51,6 @@
       "signIn": "Sign in"
     }
   },
-  "home": {
-    "title": "Discover Sayulita",
-    "subtitle": "The best accommodations and experiences in Mexican paradise",
-    "searchPlaceholder": "Search accommodations...",
-    "featured": "Featured",
-    "noListings": "No listings available",
-    "loading": "Loading listings..."
-  },
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "Manage your listings and bookings",
@@ -73,6 +81,43 @@
     "filter": "Filter",
     "sort": "Sort",
     "close": "Close"
+  },
+  "rating": {
+    "reviews": "reviews",
+    "basedOnReviews": "Based on {{count}} reviews",
+    "displayLabel": "Rating: {{rating}} out of {{max}} stars",
+    "interactiveLabel": "Rate: {{rating}} out of {{max}} stars"
+  },
+  "pricing": {
+    "perNight": "per night",
+    "perDay": "per day",
+    "perWeek": "per week",
+    "perMonth": "per month",
+    "perPerson": "per person",
+    "perHour": "per hour",
+    "basePrice": "Base price",
+    "serviceFees": "Service fees",
+    "taxes": "Taxes",
+    "total": "Total"
+  },
+  "property": {
+    "guests": "guests",
+    "bedrooms": "bedrooms",
+    "bathrooms": "bathrooms",
+    "beds": "beds"
+  },
+  "badges": {
+    "premium": "Premium",
+    "featured": "Featured",
+    "verified": "Verified",
+    "superhost": "Superhost"
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
+    "book": "Book",
+    "contact": "Contact"
   },
   "theme": {
     "light": "Light",

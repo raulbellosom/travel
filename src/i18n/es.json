@@ -1,4 +1,20 @@
 {
+  "home": {
+    "hero": {
+      "title": "Descubre Sayulita Travel",
+      "subtitle": "Encuentra el lugar perfecto para tus vacaciones",
+      "cta": "Explorar Propiedades"
+    },
+    "listings": {
+      "title": "Propiedades Destacadas"
+    },
+    "title": "Descubre Sayulita",
+    "subtitle": "Los mejores alojamientos y experiencias en el paraíso mexicano",
+    "searchPlaceholder": "Buscar alojamientos...",
+    "featured": "Destacados",
+    "noListings": "No hay anuncios disponibles",
+    "loading": "Cargando anuncios..."
+  },
   "nav": {
     "home": "Inicio",
     "dashboard": "Panel",
@@ -35,14 +51,6 @@
       "signIn": "Iniciar sesión"
     }
   },
-  "home": {
-    "title": "Descubre Sayulita",
-    "subtitle": "Los mejores alojamientos y experiencias en el paraíso mexicano",
-    "searchPlaceholder": "Buscar alojamientos...",
-    "featured": "Destacados",
-    "noListings": "No hay anuncios disponibles",
-    "loading": "Cargando anuncios..."
-  },
   "dashboard": {
     "title": "Panel de Control",
     "subtitle": "Administra tus anuncios y reservas",
@@ -73,6 +81,43 @@
     "filter": "Filtrar",
     "sort": "Ordenar",
     "close": "Cerrar"
+  },
+  "rating": {
+    "reviews": "reseñas",
+    "basedOnReviews": "Basado en {{count}} reseñas",
+    "displayLabel": "Calificación: {{rating}} de {{max}} estrellas",
+    "interactiveLabel": "Calificar: {{rating}} de {{max}} estrellas"
+  },
+  "pricing": {
+    "perNight": "por noche",
+    "perDay": "por día",
+    "perWeek": "por semana",
+    "perMonth": "por mes",
+    "perPerson": "por persona",
+    "perHour": "por hora",
+    "basePrice": "Precio base",
+    "serviceFees": "Tarifas de servicio",
+    "taxes": "Impuestos",
+    "total": "Total"
+  },
+  "property": {
+    "guests": "huéspedes",
+    "bedrooms": "habitaciones",
+    "bathrooms": "baños",
+    "beds": "camas"
+  },
+  "badges": {
+    "premium": "Premium",
+    "featured": "Destacado",
+    "verified": "Verificado",
+    "superhost": "Superhost"
+  },
+  "actions": {
+    "viewDetails": "Ver detalles",
+    "addFavorite": "Agregar a favoritos",
+    "removeFavorite": "Quitar de favoritos",
+    "book": "Reservar",
+    "contact": "Contactar"
   },
   "theme": {
     "light": "Claro",

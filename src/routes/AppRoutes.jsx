@@ -12,6 +12,7 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
+import UIDocsPage from "../pages/UIDocsPage";
 import NotFound from "../pages/NotFound";
 
 const AppRoutes = () => {
@@ -23,6 +24,7 @@ const AppRoutes = () => {
             {/* Rutas públicas con MainLayout */}
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Home />} />
+              <Route path="ui-docs" element={<UIDocsPage />} />
             </Route>
 
             {/* Rutas de autenticación con AuthLayout */}
