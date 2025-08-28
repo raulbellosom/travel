@@ -82,58 +82,251 @@ export default function OrganismsSection({
       <ComponentDemo
         id="organisms-listingCard"
         title={t("sections.organisms.components.listingCard.title")}
-        description="Tarjetas completas"
-        code="<ListingCard .../>"
+        description={t("sections.organisms.components.listingCard.description")}
+        code={`// Tarjeta básica de propiedad
+<ListingCard
+  listing={{
+    id: "listing-1",
+    title: "Beautiful Beach House",
+    location: "Sayulita, Nayarit",
+    price: 120,
+    currency: "USD",
+    rating: 4.8,
+    reviewCount: 156,
+    images: [imageUrl],
+    host: {
+      name: "María García",
+      avatar: avatarUrl,
+      verified: true,
+    },
+    capacity: { guests: 6, bedrooms: 3, bathrooms: 2 },
+    badges: ["premium"],
+    area: 120,
+  }}
+  onCardClick={(listing) => console.log("Card clicked:", listing)}
+  onFavoriteClick={(id, isFav) => console.log("Favorite:", id, isFav)}
+/>
+
+// Tarjeta premium con carrusel
+<ListingCard
+  listing={{
+    ...listing,
+    title: "Villa de Lujo con Vista al Océano",
+    images: [img1, img2, img3], // Múltiples imágenes
+    badges: ["premium", "featured"],
+    price: 350,
+    area: 200,
+  }}
+  onCardClick={handleCardClick}
+  onFavoriteClick={handleFavoriteClick}
+/>`}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-          <ListingCard
-            listing={sampleListing}
-            onCardClick={(l) => console.log("Card clicked:", l)}
-            onFavoriteClick={(id, isFav) => console.log("Favorite:", id, isFav)}
-          />
-          <ListingCard
-            listing={sampleListingWithCarousel}
-            onCardClick={(l) => console.log("Card clicked:", l)}
-            onFavoriteClick={(id, isFav) => console.log("Favorite:", id, isFav)}
-          />
+        <div className="space-y-8">
+          {/* Grid de tarjetas de propiedades */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Tarjeta básica con imagen única
+              </h4>
+              <ListingCard
+                listing={sampleListing}
+                onCardClick={(l) => console.log("Card clicked:", l)}
+                onFavoriteClick={(id, isFav) =>
+                  console.log("Favorite:", id, isFav)
+                }
+              />
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Tarjeta premium con carrusel
+              </h4>
+              <ListingCard
+                listing={sampleListingWithCarousel}
+                onCardClick={(l) => console.log("Card clicked:", l)}
+                onFavoriteClick={(id, isFav) =>
+                  console.log("Favorite:", id, isFav)
+                }
+              />
+            </div>
+          </div>
+
+          {/* Información de características */}
+          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              🏠 Características de ListingCard:
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <ul className="space-y-2">
+                <li>• ❤️ Botón de favoritos interactivo</li>
+                <li>• 🖼️ Soporte para carrusel de imágenes</li>
+                <li>• ⭐ Rating con estrellas y reseñas</li>
+                <li>• 💰 Precio con moneda configurable</li>
+                <li>• 📍 Ubicación con geolocalización</li>
+                <li>• 👤 Información del host verificado</li>
+              </ul>
+              <ul className="space-y-2">
+                <li>• 🏷️ Badges premium y destacado</li>
+                <li>• 👥 Capacidad (huéspedes, habitaciones)</li>
+                <li>• 📐 Área en metros cuadrados</li>
+                <li>• 📱 Diseño completamente responsivo</li>
+                <li>• ♿ Accesible con ARIA labels</li>
+                <li>• 🎯 Callbacks personalizables</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </ComponentDemo>
 
       <ComponentDemo
         id="organisms-modal"
         title={t("sections.organisms.components.modal.title")}
-        description="Tamaños y variantes"
-        code="<Modal .../>"
+        description={t("sections.organisms.components.modal.description")}
+        code={`// Modal básico
+<Modal
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Modal Básico"
+  size="md"
+>
+  <p>Contenido del modal...</p>
+</Modal>
+
+// Modal de confirmación
+<Modal
+  isOpen={confirmationOpen}
+  onClose={() => setConfirmationOpen(false)}
+  title="Confirmar Acción"
+  size="sm"
+  variant="danger"
+>
+  <div className="space-y-4">
+    <p>¿Seguro? Esta acción no se puede deshacer.</p>
+    <div className="flex justify-end gap-3">
+      <Button variant="secondary" onClick={handleCancel}>
+        Cancelar
+      </Button>
+      <Button variant="destructive" onClick={handleConfirm}>
+        Confirmar
+      </Button>
+    </div>
+  </div>
+</Modal>
+
+// Modal de éxito
+<Modal
+  isOpen={successOpen}
+  onClose={() => setSuccessOpen(false)}
+  title="¡Operación Exitosa!"
+  size="md"
+  variant="success"
+>
+  <div className="text-center space-y-4">
+    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+      <span className="text-green-600 text-2xl">✓</span>
+    </div>
+    <p>Tu operación se completó exitosamente.</p>
+    <Button variant="success" onClick={handleSuccess}>
+      Entendido
+    </Button>
+  </div>
+</Modal>
+
+// Modal de formulario
+<Modal
+  isOpen={formOpen}
+  onClose={() => setFormOpen(false)}
+  title="Formulario de Contacto"
+  size="lg"
+>
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <TextInput label="Nombre" placeholder="Tu nombre completo" />
+      <TextInput label="Email" placeholder="tu@email.com" />
+    </div>
+    <TextInput label="Asunto" placeholder="¿En qué podemos ayudarte?" />
+    <textarea
+      className="w-full p-3 border rounded-md"
+      rows="4"
+      placeholder="Escribe tu mensaje..."
+    />
+    <div className="flex justify-end gap-3">
+      <Button variant="secondary" onClick={handleCancel}>
+        Cancelar
+      </Button>
+      <Button variant="primary" onClick={handleSubmit}>
+        Enviar Mensaje
+      </Button>
+    </div>
+  </div>
+</Modal>`}
       >
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-4">
-            <Button variant="primary" onClick={() => toggleModal("small")}>
-              Modal Pequeño
-            </Button>
-            <Button variant="secondary" onClick={() => toggleModal("medium")}>
-              Modal Mediano
-            </Button>
-            <Button variant="success" onClick={() => toggleModal("large")}>
-              Modal Grande
-            </Button>
-            <Button variant="warning" onClick={() => toggleModal("xl")}>
-              Modal Extra Grande
-            </Button>
+        <div className="space-y-8">
+          {/* Botones para abrir modales por tamaño */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Modales por Tamaño
+            </h4>
+            <div className="flex flex-wrap gap-4">
+              <Button variant="primary" onClick={() => toggleModal("small")}>
+                Modal Pequeño
+              </Button>
+              <Button variant="secondary" onClick={() => toggleModal("medium")}>
+                Modal Mediano
+              </Button>
+              <Button variant="success" onClick={() => toggleModal("large")}>
+                Modal Grande
+              </Button>
+              <Button variant="warning" onClick={() => toggleModal("xl")}>
+                Modal Extra Grande
+              </Button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <Button
-              variant="danger"
-              onClick={() => toggleModal("confirmation")}
-            >
-              Confirmación
-            </Button>
-            <Button variant="info" onClick={() => toggleModal("success")}>
-              Éxito
-            </Button>
-            <Button variant="tertiary" onClick={() => toggleModal("contact")}>
-              Formulario de Contacto
-            </Button>
+          {/* Botones para modales especializados */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Modales Especializados
+            </h4>
+            <div className="flex flex-wrap gap-4">
+              <Button
+                variant="danger"
+                onClick={() => toggleModal("confirmation")}
+              >
+                Confirmación
+              </Button>
+              <Button variant="info" onClick={() => toggleModal("success")}>
+                Éxito
+              </Button>
+              <Button variant="tertiary" onClick={() => toggleModal("contact")}>
+                Formulario de Contacto
+              </Button>
+            </div>
+          </div>
+
+          {/* Información de características */}
+          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              📱 Características de Modal:
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <ul className="space-y-2">
+                <li>• 🎯 Tamaños: sm, md, lg, xl</li>
+                <li>• 🎨 Variantes: default, danger, success</li>
+                <li>• ⌨️ Navegación con teclado (ESC, Tab)</li>
+                <li>• 🔒 Focus trap automático</li>
+                <li>• 📱 Completamente responsivo</li>
+                <li>• 🌗 Soporte para modo oscuro</li>
+              </ul>
+              <ul className="space-y-2">
+                <li>• ♿ Accesible con ARIA</li>
+                <li>• 🎭 Animaciones con Framer Motion</li>
+                <li>• 📦 Overlay con blur backdrop</li>
+                <li>• ❌ Cierre con click fuera</li>
+                <li>• 🔄 Estados de carga</li>
+                <li>• 📋 Formularios integrados</li>
+              </ul>
+            </div>
           </div>
 
           {/* Small */}
