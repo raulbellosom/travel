@@ -5,6 +5,28 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Travel</title>
+    <script>
+      // Evitar FOUC y respetar preferencia guardada antes de que cargue la app
+      (function () {
+        try {
+          const stored = localStorage.getItem("theme"); // 'light' | 'dark' | 'system' | null
+          const prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
+
+          // Si no hay preferencia, respeta el sistema
+          const isDark =
+            stored === "dark" ||
+            ((!stored || stored === "system") && prefersDark);
+
+          document.documentElement.classList.toggle("dark", isDark);
+
+          // Si SOLO usas clase .dark, no seteamos data-theme para evitar conflictos.
+          // Si deseas usar data-theme para tus propios tokens, puedes reflejarlo:
+          // document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

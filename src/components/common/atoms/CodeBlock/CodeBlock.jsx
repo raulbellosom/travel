@@ -1,3 +1,4 @@
+//file: src/commponents/common/atoms/CodeBlock/Codeblock.jsx
 import React, { useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -15,6 +16,7 @@ const CodeBlock = ({
   language = "jsx",
   showLineNumbers = true,
   className = "",
+  maxHeight, // extract maxHeight so it doesn't go into ...props
   ...props
 }) => {
   const { theme } = useUI();
@@ -37,7 +39,9 @@ const CodeBlock = ({
       {/* Copy Button */}
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 
+                   opacity-100 md:opacity-0 md:group-hover:opacity-100 
+                   transition-opacity duration-200 hover:bg-gray-200 dark:hover:bg-gray-600"
         aria-label="Copy code"
       >
         {copied ? (
@@ -52,7 +56,6 @@ const CodeBlock = ({
         {language.toUpperCase()}
       </div>
 
-      {/* Code Block */}
       <SyntaxHighlighter
         language={language}
         style={codeStyle}
@@ -64,6 +67,7 @@ const CodeBlock = ({
           lineHeight: "1.5",
           padding: "1rem",
           paddingTop: "3rem", // Space for language label and copy button
+          ...(maxHeight ? { maxHeight } : {}),
         }}
         codeTagProps={{
           style: {

@@ -1,233 +1,323 @@
-import React, { useState, useRef, useEffect } from "react";
+// src/components/DatePicker.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { IconButton, Button } from "../../atoms";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
 
 /**
- * Enhanced DateRangePicker component with Airbnb-like behavior.
- * Features:
- * - Date range selection with improved UX
- * - Doesn't close on selection
- * - Clear button and day counter
- * - Third click resets selection
- * - Better spacing and layout
+ * DatePicker – Unificado (range | single)
+ *
+ * Props principales:
+ * - mode: 'range' | 'single' (default 'range')
+ * - value: { startDate:Date|null, endDate:Date|null } | Date|null
+ * - onChange: (next) => void
+ * - inline: boolean (si true, no se muestra trigger; el calendario queda embebido)
+ * - renderTrigger: ({open,toggle,formatted}) => ReactNode (para personalizar el "handler")
+ * - numberOfMonths: 1 | 2 (auto por ancho si no se pasa)
+ * - pricing: { 'YYYY-MM-DD': number } (opcional)
+ * - disabledDates: Date[]
+ * - availableDates: Date[] (si no está vacío, sólo se permiten esas fechas)
+ * - minDate: Date
+ * - maxDate: Date
+ * - showPrices: boolean
+ * - closeOnSelect: boolean (single=true por defecto; range=false por defecto)
+ * - className: string
+ *
+ * Accesibilidad:
+ * - botón de limpiar
+ * - navegación de mes
  */
-const DateRangePicker = ({
-  startDate = null,
-  endDate = null,
-  onDateChange,
-  availableDates = [],
+
+export default function DatePicker({
+  mode = "range",
+  value = mode === "range" ? { startDate: null, endDate: null } : null,
+  onChange,
+  inline = false,
+  renderTrigger,
+  numberOfMonths: propNumberOfMonths,
   pricing = {},
   disabledDates = [],
+  availableDates = [],
   minDate = new Date(),
   maxDate = null,
-  numberOfMonths = 2,
   showPrices = true,
+  closeOnSelect: propCloseOnSelect,
+  placeholder,
   className = "",
-  placeholder = "Select dates",
-  ...props
-}) => {
-  const { t } = useTranslation();
+}) {
+  const { i18n } = useTranslation();
+  const locale = i18n.language === "es" ? "es-ES" : "en-US";
+
+  // --- control interno vs controlado
+  const isRange = mode === "range";
+  const [internalRange, setInternalRange] = useState(
+    isRange ? value : { startDate: value, endDate: null }
+  );
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [hoverDate, setHoverDate] = useState(null);
-  const containerRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  const range = isRange ? value : { startDate: value, endDate: null };
+  const current = isControlled(value) ? range : internalRange;
+
+  function isControlled(v) {
+    // si el padre pasa value !== undefined
+    return typeof v !== "undefined";
+  }
+
+  const setRange = (r) => {
+    if (isControlled(value)) onChange?.(isRange ? r : r.startDate);
+    else setInternalRange(r);
+  };
+
+  // cierre automático por modo
+  const closeOnSelect =
+    typeof propCloseOnSelect === "boolean" ? propCloseOnSelect : !isRange; // single:true, range:false
+
+  // --- meses visibles
+  const initialMonth = useMemo(() => {
+    const d = current.startDate || new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  }, []); // eslint-disable-line
+
+  const [month, setMonth] = useState(initialMonth);
+
+  const numMonths =
+    typeof propNumberOfMonths === "number"
+      ? propNumberOfMonths
+      : typeof window !== "undefined" && window.innerWidth < 768
+      ? 1
+      : 2;
+
+  // --- click afuera cierra
+  const popRef = useRef(null);
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target)
-      ) {
+    if (inline) return;
+    const onDoc = (e) => {
+      if (popRef.current && !popRef.current.contains(e.target))
         setIsOpen(false);
-      }
     };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [inline]);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // --- utils fechas
+  const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
+  const keyOf = (d) =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const sameDay = (a, b) =>
+    a &&
+    b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
 
-  // Helper functions
-  const formatDate = (date) => {
-    if (!date) return "";
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-    }).format(date);
+  const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+  const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, 1);
+
+  const dayNameHeaders =
+    i18n.language === "es"
+      ? ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"]
+      : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  const monthTitle = (d) =>
+    d.toLocaleDateString(locale, { month: "long", year: "numeric" });
+
+  const isDisabled = (d) => {
+    if (minDate && d < stripTime(minDate)) return true;
+    if (maxDate && d > stripTime(maxDate)) return true;
+    if (disabledDates.some((x) => sameDay(x, d))) return true;
+    if (availableDates.length && !availableDates.some((x) => sameDay(x, d)))
+      return true;
+    return false;
   };
 
-  const isSameDay = (date1, date2) => {
-    if (!date1 || !date2) return false;
-    return date1.toDateString() === date2.toDateString();
+  const stripTime = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const daysInGrid = (d) => {
+    const start = startOfMonth(d);
+    const end = endOfMonth(d);
+    const gridStart = new Date(start);
+    gridStart.setDate(start.getDate() - start.getDay()); // empieza domingo
+    const arr = [];
+    const cur = new Date(gridStart);
+    // 6 semanas visibles típicamente
+    while (cur <= end || cur.getDay() !== 0) {
+      arr.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return arr;
   };
 
-  const isDateInRange = (date) => {
+  // --- selección (single o range)
+  const [hoverDate, setHoverDate] = useState(null);
+
+  const inHoverRange = (d) => {
+    if (!isRange) return false;
+    const { startDate, endDate } = current;
+    if (startDate && !endDate && hoverDate) {
+      const a = startDate < hoverDate ? startDate : hoverDate;
+      const b = startDate < hoverDate ? hoverDate : startDate;
+      return d >= a && d <= b;
+    }
+    return false;
+  };
+
+  const inRange = (d) => {
+    const { startDate, endDate } = current;
     if (!startDate || !endDate) return false;
-    return date >= startDate && date <= endDate;
+    return d >= startDate && d <= endDate;
   };
 
-  const isDateDisabled = (date) => {
-    if (date < minDate) return true;
-    if (maxDate && date > maxDate) return true;
-    return disabledDates.some((disabled) => isSameDay(date, disabled));
-  };
-
-  const isDateAvailable = (date) => {
-    if (availableDates.length === 0) return true;
-    return availableDates.some((available) => isSameDay(date, available));
-  };
-
-  const getDatePrice = (date) => {
-    const dateKey = date.toISOString().split("T")[0];
-    return pricing[dateKey];
-  };
-
-  // Enhanced date selection logic (Airbnb-like)
-  const handleDateClick = (date) => {
-    if (isDateDisabled(date) || !isDateAvailable(date)) return;
-
+  const pick = (d) => {
+    if (isDisabled(d)) return;
+    if (!isRange) {
+      setRange({ startDate: d, endDate: null });
+      if (closeOnSelect && !inline) setIsOpen(false);
+      return;
+    }
+    const { startDate, endDate } = current;
     if (!startDate) {
-      // First selection
-      onDateChange?.({ startDate: date, endDate: null });
+      setRange({ startDate: d, endDate: null });
     } else if (!endDate) {
-      if (isSameDay(date, startDate)) {
-        // Clicking same start date - reset
-        onDateChange?.({ startDate: null, endDate: null });
-      } else if (date < startDate) {
-        // New start date
-        onDateChange?.({ startDate: date, endDate: null });
+      if (sameDay(d, startDate)) {
+        // reinicia si se vuelve a clickear el mismo
+        setRange({ startDate: null, endDate: null });
+      } else if (d < startDate) {
+        setRange({ startDate: d, endDate: null });
       } else {
-        // Complete range
-        onDateChange?.({ startDate, endDate: date });
+        setRange({ startDate, endDate: d });
       }
     } else {
-      // Both dates selected - third click resets and starts new selection
-      onDateChange?.({ startDate: date, endDate: null });
+      // tercer click: reinicia y arranca nuevo rango
+      setRange({ startDate: d, endDate: null });
     }
   };
 
-  // Calculate days between dates
-  const getDaysBetween = () => {
+  const nights = useMemo(() => {
+    const { startDate, endDate } = current;
     if (!startDate || !endDate) return 0;
-    const timeDiff = Math.abs(endDate.getTime() - startDate.getTime());
-    return Math.ceil(timeDiff / (1000 * 3600 * 24));
-  };
+    return Math.ceil((stripTime(endDate) - stripTime(startDate)) / 86400000);
+  }, [current]);
 
-  // Clear all dates
-  const clearDates = () => {
-    onDateChange?.({ startDate: null, endDate: null });
-  };
-
-  // Handle month navigation
-  const navigateMonth = (direction) => {
-    const newMonth = new Date(currentMonth);
-    newMonth.setMonth(currentMonth.getMonth() + direction);
-    setCurrentMonth(newMonth);
-  };
-
-  // Generate calendar days
-  const generateCalendarDays = (month) => {
-    if (!month || typeof month.getFullYear !== "function") {
-      return [];
+  // --- formateo de la etiqueta (trigger)
+  const fmtDay = (d) =>
+    d.toLocaleDateString(locale, { month: "short", day: "numeric" });
+  const formatted = useMemo(() => {
+    if (!isRange) {
+      return current.startDate
+        ? fmtDay(current.startDate)
+        : placeholder ||
+            (i18n.language === "es" ? "Selecciona fecha" : "Select date");
     }
-
-    const start = new Date(month.getFullYear(), month.getMonth(), 1);
-    const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-    const startOfWeek = new Date(start);
-    startOfWeek.setDate(start.getDate() - start.getDay());
-
-    const days = [];
-    const current = new Date(startOfWeek);
-
-    while (current <= end || current.getDay() !== 0) {
-      days.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-
-    return days;
-  };
-
-  // Calendar component
-  const Calendar = ({ month }) => {
-    if (!month || typeof month.getFullYear !== "function") {
+    const { startDate, endDate } = current;
+    if (!startDate)
       return (
-        <div className="p-4 w-80">
-          <div className="text-center text-gray-500">Loading calendar...</div>
-        </div>
+        placeholder ||
+        (i18n.language === "es" ? "Selecciona fechas" : "Select dates")
       );
-    }
+    if (!endDate) return fmtDay(startDate);
+    return `${fmtDay(startDate)} – ${fmtDay(endDate)}${
+      nights
+        ? `  ·  ${nights} ${
+            i18n.language === "es"
+              ? nights === 1
+                ? "noche"
+                : "noches"
+              : nights === 1
+              ? "night"
+              : "nights"
+          }`
+        : ""
+    }`;
+  }, [current, nights, placeholder, i18n.language]);
 
-    const days = generateCalendarDays(month);
-    const monthName = month.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
+  // --- precio
+  const priceOf = (d) => pricing[keyOf(d)];
+
+  // --- Trigger por defecto
+  const DefaultTrigger = ({ open, toggle }) => (
+    <button
+      type="button"
+      onClick={toggle}
+      className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center justify-between"
+      aria-expanded={open}
+    >
+      <span
+        className={`text-sm ${
+          current.startDate
+            ? "text-gray-900 dark:text-gray-100"
+            : "text-gray-500 dark:text-gray-400"
+        } whitespace-nowrap truncate`}
+      >
+        {formatted}
+      </span>
+      <CalendarIcon className="w-5 h-5 text-gray-400" />
+    </button>
+  );
+
+  // --- Mes (sólo grid; el título está en el header global para evitar duplicación)
+  const MonthGrid = ({ base }) => {
+    const days = daysInGrid(base);
+    const inThisMonth = (d) => d.getMonth() === base.getMonth();
 
     return (
-      <div className="p-6 w-80">
-        {/* Month title */}
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 text-center">
-            {monthName}
-          </h3>
-        </div>
-
-        {/* Day headers */}
+      <div
+        className={`flex-shrink-0 ${
+          numMonths === 1 ? "p-4 w-full" : "p-6 w-80"
+        }`}
+      >
+        {/* Encabezados de días */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-            <div key={day} className="h-8 flex items-center justify-center">
+          {dayNameHeaders.map((d) => (
+            <div key={d} className="h-8 flex items-center justify-center">
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {day}
+                {d}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Calendar grid */}
+        {/* Días */}
         <div className="grid grid-cols-7 gap-1">
-          {days.map((day, index) => {
-            const isCurrentMonth = day.getMonth() === month.getMonth();
-            const isSelected =
-              isSameDay(day, startDate) || isSameDay(day, endDate);
-            const isInRange = isDateInRange(day);
-            const isDisabled = isDateDisabled(day);
-            const isAvailable = isDateAvailable(day);
-            const price = getDatePrice(day);
+          {days.map((d, idx) => {
+            const disabled = isDisabled(d);
+            const selected =
+              sameDay(d, current.startDate) ||
+              (isRange && sameDay(d, current.endDate));
+            const inSelRange = inRange(d) || inHoverRange(d);
+            const price = priceOf(d);
 
             return (
               <button
-                key={index}
-                onClick={() => handleDateClick(day)}
-                onMouseEnter={() => setHoverDate(day)}
+                key={idx}
+                type="button"
+                onClick={() => pick(d)}
+                onMouseEnter={() => setHoverDate(d)}
                 onMouseLeave={() => setHoverDate(null)}
-                disabled={isDisabled || !isAvailable}
-                className={`
-                  relative h-12 w-full flex flex-col items-center justify-center
-                  text-sm transition-all duration-200 rounded-lg
-                  ${
-                    !isCurrentMonth
-                      ? "text-gray-300 dark:text-gray-600"
-                      : "text-gray-900 dark:text-gray-100"
-                  }
-                  ${
-                    isSelected
-                      ? "bg-blue-500 text-white shadow-md"
-                      : isInRange
-                      ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                  }
-                  ${
-                    isDisabled || !isAvailable
-                      ? "opacity-25 cursor-not-allowed line-through"
-                      : "cursor-pointer"
-                  }
-                `}
+                disabled={disabled}
+                className={[
+                  "relative h-12 w-full flex flex-col items-center justify-center rounded-lg text-sm transition-colors",
+                  inThisMonth(d)
+                    ? "text-gray-900 dark:text-gray-100"
+                    : "text-gray-300 dark:text-gray-600",
+                  disabled
+                    ? "opacity-30 cursor-not-allowed line-through"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer",
+                  selected
+                    ? "bg-blue-600 text-white shadow"
+                    : inSelRange
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100"
+                    : "",
+                ].join(" ")}
               >
-                <span className="font-medium">{day.getDate()}</span>
-                {showPrices && price && isCurrentMonth && !isDisabled && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="font-medium">{d.getDate()}</span>
+                {showPrices && price && inThisMonth(d) && !disabled && (
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400">
                     ${price}
                   </span>
                 )}
@@ -239,134 +329,122 @@ const DateRangePicker = ({
     );
   };
 
-  // Display selected dates
-  const getDisplayText = () => {
-    if (!startDate) return placeholder;
-    if (!endDate) return formatDate(startDate);
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-  };
+  // --- Contenido del popover (o inline)
+  const CalendarPanel = (
+    <div
+      ref={popRef}
+      className={[
+        "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl",
+        inline ? "w-full" : numMonths === 1 ? "w-96" : "w-[760px]",
+        className,
+      ].join(" ")}
+    >
+      {/* Header único (sin duplicar títulos en cada grid) */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <button
+            type="button"
+            onClick={() => setMonth(addMonths(month, -1))}
+            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <span className="min-w-[200px] text-center">
+            {monthTitle(month)}
+            {numMonths === 2 && (
+              <>
+                <span className="mx-2">–</span>
+                {monthTitle(addMonths(month, 1))}
+              </>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setMonth(addMonths(month, +1))}
+            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Next month"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {isRange && current.startDate && current.endDate && (
+            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+              {nights}{" "}
+              {i18n.language === "es"
+                ? nights === 1
+                  ? "noche"
+                  : "noches"
+                : nights === 1
+                ? "night"
+                : "nights"}
+            </span>
+          )}
+          {(current.startDate || current.endDate) && (
+            <button
+              type="button"
+              onClick={() => setRange({ startDate: null, endDate: null })}
+              className="text-sm px-3 py-1 rounded-md border border-transparent hover:border-gray-200 dark:hover:border-gray-700 text-gray-600 dark:text-gray-300"
+            >
+              {i18n.language === "es" ? "Limpiar" : "Clear"}
+            </button>
+          )}
+          {!inline && (
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Grids */}
+      <div className={numMonths === 1 ? "p-2" : "flex justify-center"}>
+        <MonthGrid base={month} />
+        {numMonths === 2 && <MonthGrid base={addMonths(month, 1)} />}
+      </div>
+    </div>
+  );
+
+  // --- Render
+  if (inline) {
+    return CalendarPanel; // calendario embebido (sin trigger)
+  }
 
   return (
-    <div ref={containerRef} className={`relative ${className}`} {...props}>
-      {/* Input trigger */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-      >
-        <div className="flex items-center justify-between">
-          <span
-            className={
-              startDate
-                ? "text-gray-900 dark:text-gray-100"
-                : "text-gray-500 dark:text-gray-400"
-            }
-          >
-            {getDisplayText()}
-          </span>
-          <Calendar className="w-5 h-5 text-gray-400" />
-        </div>
-      </button>
+    <div className="relative">
+      {renderTrigger ? (
+        renderTrigger({
+          open: isOpen,
+          toggle: () => setIsOpen((v) => !v),
+          formatted,
+          value: isRange ? current : current.startDate,
+        })
+      ) : (
+        <DefaultTrigger open={isOpen} toggle={() => setIsOpen((v) => !v)} />
+      )}
 
-      {/* Dropdown calendar */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className={`
-              absolute top-full mt-2 z-50 left-0
-              bg-white dark:bg-gray-800 
-              border border-gray-200 dark:border-gray-700
-              rounded-xl shadow-xl
-              ${numberOfMonths === 1 ? "w-80" : "w-[680px]"}
-            `}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            className={`absolute z-50 mt-2 ${
+              numMonths === 1 ? "left-0 w-96" : "left-0 w-[760px]"
+            } max-w-[calc(100vw-2rem)]`}
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18 }}
           >
-            {/* Header with navigation and controls */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-4">
-                <IconButton
-                  icon={ChevronLeft}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigateMonth(-1)}
-                />
-                <div className="text-lg font-semibold text-gray-900 dark:text-gray-100 min-w-[200px] text-center">
-                  {currentMonth.toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  {numberOfMonths === 2 && (
-                    <>
-                      <span className="mx-2">-</span>
-                      <span>
-                        {new Date(
-                          currentMonth.getFullYear(),
-                          currentMonth.getMonth() + 1
-                        ).toLocaleDateString("en-US", {
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <IconButton
-                  icon={ChevronRight}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigateMonth(1)}
-                />
-              </div>
-
-              {/* Clear button and day counter */}
-              <div className="flex items-center gap-4">
-                {startDate && endDate && (
-                  <span className="text-sm text-gray-600 dark:text-gray-400 font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-                    {getDaysBetween()}{" "}
-                    {getDaysBetween() === 1 ? "night" : "nights"}
-                  </span>
-                )}
-                {(startDate || endDate) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearDates}
-                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  >
-                    Clear dates
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Calendars */}
-            <div className="flex">
-              <Calendar month={currentMonth} />
-              {numberOfMonths === 2 && (
-                <Calendar
-                  month={
-                    new Date(
-                      currentMonth.getFullYear(),
-                      currentMonth.getMonth() + 1
-                    )
-                  }
-                />
-              )}
-            </div>
+            {CalendarPanel}
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
-};
-
-export default DateRangePicker;
+}

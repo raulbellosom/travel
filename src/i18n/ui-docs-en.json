@@ -1,0 +1,180 @@
+{
+  "header": {
+    "title": "UI Components",
+    "subtitle": "React Component Library with Tailwind CSS",
+    "description": "Complete component system with <span class=\"text-blue-600 dark:text-blue-400 font-semibold\">{{variants}}</span>, <span class=\"text-purple-600 dark:text-purple-400 font-semibold\">{{sizes}}</span> and <span class=\"text-indigo-600 dark:text-indigo-400 font-semibold\">{{themes}}</span>",
+    "components": "comprehensive components",
+    "variants": "multiple variants",
+    "sizes": "dynamic sizes",
+    "themes": "adaptive themes",
+    "technologies": {
+      "react": "React 19",
+      "tailwind": "Tailwind CSS v4",
+      "motion": "Framer Motion",
+      "icons": "Lucide React",
+      "framerMotion": "Framer Motion",
+      "lucideIcons": "Lucide React",
+      "i18nReady": "i18n Ready"
+    },
+    "globalControls": {
+      "title": "Global Controls",
+      "sizeLabel": "Size",
+      "variantLabel": "Variant",
+      "themeLabel": "Theme",
+      "sizes": {
+        "xs": "Extra Small",
+        "sm": "Small",
+        "md": "Medium",
+        "lg": "Large",
+        "xl": "Extra Large"
+      },
+      "variants": {
+        "default": "Default",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "ghost": "Ghost",
+        "outline": "Outline",
+        "destructive": "Destructive"
+      },
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      }
+    }
+  },
+  "navigation": {
+    "title": "Components",
+    "atoms": "Atoms",
+    "molecules": "Molecules",
+    "organisms": "Organisms",
+    "overview": "Overview",
+    "toggleSidebar": "Toggle sidebar navigation",
+    "toggleMobileMenu": "Toggle mobile menu",
+    "components": {
+      "button": "Button",
+      "button-icons": "Button with Icons",
+      "icon-button": "Icon Only Button",
+      "iconbutton": "IconButton",
+      "textinput": "Text Input",
+      "select": "Select",
+      "toggle": "Toggle",
+      "checkbox": "Checkbox",
+      "radio": "Radio",
+      "badge": "Badge",
+      "avatar": "Avatar",
+      "ratingStars": "Rating Stars",
+      "spinner": "Spinner",
+      "priceBadge": "Price Badge",
+      "dateRangePicker": "Date Range Picker",
+      "carousel": "Carousel",
+      "listingCard": "Listing Card",
+      "modal": "Modal"
+    }
+  },
+  "sections": {
+    "atoms": {
+      "title": "Atoms - Basic Elements",
+      "description": "Fundamental components of the design system",
+      "components": {
+        "button": {
+          "title": "Buttons",
+          "description": "Button components with different variants, sizes, and states"
+        },
+        "buttonIcons": {
+          "title": "Buttons with Icons and Text",
+          "description": "Buttons that combine icons with text to enhance user experience"
+        },
+        "iconButton": {
+          "title": "Icon-Only Buttons (Button)",
+          "description": "Button component variant when only an icon is displayed"
+        },
+        "iconButtonComponent": {
+          "title": "Icon Buttons",
+          "description": "IconButton component specific for icon-only buttons"
+        },
+        "textInput": {
+          "title": "Text Fields",
+          "description": "Text input fields with different states and variants"
+        },
+        "select": {
+          "title": "Selectors",
+          "description": "Dropdown selection components with multiple options"
+        },
+        "toggle": {
+          "title": "Switches",
+          "description": "Switch/toggle components for binary options"
+        },
+        "checkbox": {
+          "title": "Checkboxes",
+          "description": "Checkboxes for multiple selections and confirmations"
+        },
+        "radio": {
+          "title": "Radio Buttons",
+          "description": "Single selection among multiple options"
+        },
+        "badge": {
+          "title": "Badges",
+          "description": "Badges to display states, categories, or highlighted information"
+        },
+        "avatar": {
+          "title": "Avatars",
+          "description": "Avatar components with different sizes and states"
+        },
+        "ratingStars": {
+          "title": "Ratings",
+          "description": "Star system to display and capture ratings"
+        },
+        "spinner": {
+          "title": "Loading Indicators",
+          "description": "Spinners and loaders for loading states"
+        },
+        "priceBadge": {
+          "title": "Price Badges",
+          "description": "Specialized badges to display prices and currencies"
+        }
+      }
+    },
+    "molecules": {
+      "title": "Molecules - Compound Components",
+      "description": "Combinations of atoms that form functional units",
+      "components": {
+        "dateRangePicker": {
+          "title": "Date Picker",
+          "description": "Date range selector with interactive calendar"
+        },
+        "carousel": {
+          "title": "Image Carousel",
+          "description": "Responsive carousel to display multiple images"
+        }
+      }
+    },
+    "organisms": {
+      "title": "Organisms - Complex Components",
+      "description": "Complex structures formed by molecules and atoms",
+      "components": {
+        "listingCard": {
+          "title": "Property Cards",
+          "description": "Complete cards to display property information"
+        },
+        "modal": {
+          "title": "Modals",
+          "description": "Modal components with different sizes and purposes"
+        }
+      }
+    }
+  },
+  "controls": {
+    "theme": "Theme",
+    "language": "Language",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "features": {
+    "responsive": "Responsive Design",
+    "accessible": "Full Accessibility",
+    "customizable": "Highly Customizable",
+    "performant": "Performance Optimized"
+  }
+}
