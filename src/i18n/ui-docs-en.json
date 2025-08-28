@@ -34,7 +34,11 @@
         "secondary": "Secondary",
         "ghost": "Ghost",
         "outline": "Outline",
-        "destructive": "Destructive"
+        "destructive": "Destructive",
+        "success": "Success",
+        "info": "Info",
+        "warning": "Warning",
+        "danger": "Danger"
       },
       "themes": {
         "light": "Light",
@@ -94,16 +98,16 @@
           "description": "IconButton component specific for icon-only buttons"
         },
         "textInput": {
-          "title": "Text Fields",
-          "description": "Text input fields with different states and variants"
+          "title": "Input Fields",
+          "description": "Input fields with different states and variants"
         },
         "select": {
           "title": "Selectors",
           "description": "Dropdown selection components with multiple options"
         },
         "toggle": {
-          "title": "Switches",
-          "description": "Switch/toggle components for binary options"
+          "title": "Toggle",
+          "description": "Toggle components for binary options"
         },
         "checkbox": {
           "title": "Checkboxes",

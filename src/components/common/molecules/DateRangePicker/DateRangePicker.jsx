@@ -56,11 +56,15 @@ export default function DatePicker({
   // --- control interno vs controlado
   const isRange = mode === "range";
   const [internalRange, setInternalRange] = useState(
-    isRange ? value : { startDate: value, endDate: null }
+    isRange
+      ? value || { startDate: null, endDate: null }
+      : { startDate: value || null, endDate: null }
   );
   const [isOpen, setIsOpen] = useState(false);
 
-  const range = isRange ? value : { startDate: value, endDate: null };
+  const range = isRange
+    ? value || { startDate: null, endDate: null }
+    : { startDate: value || null, endDate: null };
   const current = isControlled(value) ? range : internalRange;
 
   function isControlled(v) {
@@ -79,9 +83,9 @@ export default function DatePicker({
 
   // --- meses visibles
   const initialMonth = useMemo(() => {
-    const d = current.startDate || new Date();
+    const d = current?.startDate || new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
-  }, []); // eslint-disable-line
+  }, [current?.startDate]); // eslint-disable-line
 
   const [month, setMonth] = useState(initialMonth);
 
@@ -209,12 +213,12 @@ export default function DatePicker({
     d.toLocaleDateString(locale, { month: "short", day: "numeric" });
   const formatted = useMemo(() => {
     if (!isRange) {
-      return current.startDate
+      return current?.startDate
         ? fmtDay(current.startDate)
         : placeholder ||
             (i18n.language === "es" ? "Selecciona fecha" : "Select date");
     }
-    const { startDate, endDate } = current;
+    const { startDate, endDate } = current || {};
     if (!startDate)
       return (
         placeholder ||
@@ -249,7 +253,7 @@ export default function DatePicker({
     >
       <span
         className={`text-sm ${
-          current.startDate
+          current?.startDate
             ? "text-gray-900 dark:text-gray-100"
             : "text-gray-500 dark:text-gray-400"
         } whitespace-nowrap truncate`}
@@ -287,8 +291,8 @@ export default function DatePicker({
           {days.map((d, idx) => {
             const disabled = isDisabled(d);
             const selected =
-              sameDay(d, current.startDate) ||
-              (isRange && sameDay(d, current.endDate));
+              sameDay(d, current?.startDate) ||
+              (isRange && sameDay(d, current?.endDate));
             const inSelRange = inRange(d) || inHoverRange(d);
             const price = priceOf(d);
 
@@ -370,7 +374,7 @@ export default function DatePicker({
         </div>
 
         <div className="flex items-center gap-3">
-          {isRange && current.startDate && current.endDate && (
+          {isRange && current?.startDate && current?.endDate && (
             <span className="text-sm text-gray-600 dark:text-gray-400 font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
               {nights}{" "}
               {i18n.language === "es"
@@ -382,7 +386,7 @@ export default function DatePicker({
                 : "nights"}
             </span>
           )}
-          {(current.startDate || current.endDate) && (
+          {(current?.startDate || current?.endDate) && (
             <button
               type="button"
               onClick={() => setRange({ startDate: null, endDate: null })}
@@ -424,7 +428,7 @@ export default function DatePicker({
           open: isOpen,
           toggle: () => setIsOpen((v) => !v),
           formatted,
-          value: isRange ? current : current.startDate,
+          value: isRange ? current : current?.startDate,
         })
       ) : (
         <DefaultTrigger open={isOpen} toggle={() => setIsOpen((v) => !v)} />

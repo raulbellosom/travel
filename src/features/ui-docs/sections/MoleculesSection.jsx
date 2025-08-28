@@ -3,6 +3,8 @@ import {
   DateRangePicker,
   Carousel,
   ComponentDemo,
+  FormField,
+  SearchBar,
 } from "../../../components/common";
 import { ComponentSection } from "../components";
 import { useUIDocsTranslation } from "../../../hooks/useUIDocsTranslation";
@@ -45,6 +47,38 @@ export default function MoleculesSection({ selectedSize, id = "molecules" }) {
     "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop",
   ];
+
+  // Estados para FormField
+  const [formFieldValue, setFormFieldValue] = useState("");
+  const [formFieldError, setFormFieldError] = useState("");
+  const [numberValue, setNumberValue] = useState(1);
+  const [currencyValue, setCurrencyValue] = useState("");
+
+  // Estados para SearchBar
+  const [searchData, setSearchData] = useState(null);
+  const [searchBarCollapsed, setSearchBarCollapsed] = useState(false);
+
+  // Handlers para FormField
+  const handleFormFieldChange = (value) => {
+    setFormFieldValue(value);
+    if (formFieldError) setFormFieldError("");
+  };
+
+  const handleFormFieldBlur = () => {
+    if (!formFieldValue.trim()) {
+      setFormFieldError("Este campo es obligatorio");
+    }
+  };
+
+  // Handlers para SearchBar
+  const handleSearch = (data) => {
+    setSearchData(data);
+    console.log("Search data:", data);
+  };
+
+  const handleTabChange = (tabId) => {
+    console.log("Tab changed to:", tabId);
+  };
 
   return (
     <ComponentSection
@@ -614,6 +648,151 @@ const availableDates = [
               </div>
             </div>
           </div>
+        </div>
+      </ComponentDemo>
+
+      {/* FormField */}
+      <ComponentDemo
+        id="molecules-formField-basic"
+        title="FormField - Campo de Formulario Completo"
+        description="Wrapper completo para campos de formulario con label, helper text, errores y estados de validación"
+        code={`import { FormField, TextInput, NumberInput, CurrencyInput } from "../../../components/common";
+
+// Uso básico con TextInput
+<FormField
+  label="Nombre completo"
+  helperText="Ingresa tu nombre completo"
+  error={error}
+  required
+>
+  <TextInput
+    value={value}
+    onChange={setValue}
+    placeholder="Juan Pérez"
+  />
+</FormField>
+
+// Con NumberInput
+<FormField
+  label="Número de huéspedes"
+  helperText="Máximo 10 personas"
+>
+  <NumberInput
+    value={guests}
+    onChange={setGuests}
+    min={1}
+    max={10}
+  />
+</FormField>
+
+// Con CurrencyInput
+<FormField
+  label="Precio por noche"
+  helperText="Monto en USD"
+>
+  <CurrencyInput
+    value={price}
+    onChange={setPrice}
+    currency="USD"
+    locale="en-US"
+  />
+</FormField>`}
+        size={selectedSize}
+      >
+        <div className="space-y-6">
+          {/* TextInput con FormField */}
+          <FormField
+            label="Nombre completo"
+            helperText="Ingresa tu nombre completo"
+            error={formFieldError}
+            required
+          >
+            <input
+              type="text"
+              value={formFieldValue}
+              onChange={(e) => handleFormFieldChange(e.target.value)}
+              onBlur={handleFormFieldBlur}
+              placeholder="Juan Pérez"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            />
+          </FormField>
+
+          {/* NumberInput con FormField */}
+          <FormField
+            label="Número de huéspedes"
+            helperText="Máximo 10 personas"
+          >
+            <input
+              type="number"
+              value={numberValue}
+              onChange={(e) => setNumberValue(Number(e.target.value))}
+              min={1}
+              max={10}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            />
+          </FormField>
+
+          {/* CurrencyInput con FormField */}
+          <FormField label="Precio por noche" helperText="Monto en USD">
+            <input
+              type="text"
+              value={currencyValue}
+              onChange={(e) => setCurrencyValue(e.target.value)}
+              placeholder="$0.00"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            />
+          </FormField>
+        </div>
+      </ComponentDemo>
+
+      {/* SearchBar */}
+      <ComponentDemo
+        id="molecules-searchBar-basic"
+        title="SearchBar - Barra de Búsqueda con Pestañas"
+        description="Componente de búsqueda avanzado con pestañas, selector de fechas y configuración de huéspedes"
+        code={`import { SearchBar } from "../../../components/common";
+
+const [searchData, setSearchData] = useState(null);
+const [collapsed, setCollapsed] = useState(false);
+
+<SearchBar
+  onSearch={(data) => {
+    console.log("Search:", data);
+    setSearchData(data);
+  }}
+  onTabChange={(tabId) => console.log("Tab:", tabId)}
+  collapsed={collapsed}
+  onToggleCollapse={setCollapsed}
+  defaultTab="rentals"
+/>
+
+// Los datos incluyen:
+// - tab: "rentals" | "real-estate" | "services"
+// - query: string de búsqueda
+// - guests: número de huéspedes
+// - dateRange: { startDate, endDate }`}
+        size={selectedSize}
+      >
+        <div className="space-y-4">
+          <SearchBar
+            onSearch={handleSearch}
+            onTabChange={handleTabChange}
+            collapsed={searchBarCollapsed}
+            onToggleCollapse={setSearchBarCollapsed}
+            defaultTab="rentals"
+          />
+
+          {/* Resultados de búsqueda */}
+          {searchData && (
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Última búsqueda:
+              </h4>
+              <pre className="text-sm text-gray-600 dark:text-gray-400">
+                {JSON.stringify(searchData, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
       </ComponentDemo>
     </ComponentSection>

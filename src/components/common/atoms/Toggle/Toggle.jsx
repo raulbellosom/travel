@@ -15,26 +15,17 @@ const Toggle = ({
   description,
   error,
   className = "",
-  onChange,
+  onChange, // (nextChecked:boolean, event?:ChangeEvent) => void
   ...props
 }) => {
+  const autoId = React.useId();
+  const inputId = id ?? autoId;
+
   // Size styles
   const sizeStyles = {
-    sm: {
-      track: "w-8 h-4",
-      thumb: "w-3 h-3",
-      translate: "translate-x-4",
-    },
-    md: {
-      track: "w-10 h-5",
-      thumb: "w-4 h-4",
-      translate: "translate-x-5",
-    },
-    lg: {
-      track: "w-12 h-6",
-      thumb: "w-5 h-5",
-      translate: "translate-x-6",
-    },
+    sm: { track: "w-8 h-4", thumb: "w-3 h-3", translate: "translate-x-4" },
+    md: { track: "w-10 h-5", thumb: "w-4 h-4", translate: "translate-x-5" },
+    lg: { track: "w-12 h-6", thumb: "w-5 h-5", translate: "translate-x-6" },
   };
 
   // Variant styles
@@ -61,10 +52,8 @@ const Toggle = ({
     },
   };
 
-  const safeSize = sizeStyles[size] ? size : "md";
-  const safeVariant = variantStyles[variant] ? variant : "primary";
-  const currentSize = sizeStyles[safeSize];
-  const currentVariant = variantStyles[safeVariant];
+  const currentSize = sizeStyles[size] ?? sizeStyles.md;
+  const currentVariant = variantStyles[variant] ?? variantStyles.primary;
 
   // Track styles
   const trackStyles = [
@@ -77,15 +66,18 @@ const Toggle = ({
     `focus:${currentVariant.focus}`,
     error && "ring-2 ring-red-500/20 dark:ring-red-400/20",
     className,
-  ].join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   // Thumb styles
   const thumbStyles = [
     "inline-block rounded-full bg-white shadow-md transition-transform duration-200",
-    "transform",
     currentSize.thumb,
-    checked ? currentSize.translate : "translate-x-0.5",
-  ].join(" ");
+    checked ? currentSize.translate : "translate-x-[2px]",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   // Label styles
   const labelStyles = [
@@ -94,7 +86,15 @@ const Toggle = ({
     error
       ? "text-red-600 dark:text-red-400"
       : "text-gray-700 dark:text-gray-300",
-  ].join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const handleChange = (e) => {
+    if (disabled) return;
+    const next = e.target.checked;
+    onChange?.(next, e);
+  };
 
   return (
     <div className="flex flex-col gap-1">
@@ -102,24 +102,28 @@ const Toggle = ({
         <div className="relative">
           <input
             type="checkbox"
-            id={id}
-            name={name}
+            id={inputId}
+            name={name ?? inputId}
             checked={checked}
             disabled={disabled}
-            onChange={onChange}
+            onChange={handleChange}
             className="sr-only"
+            role="switch"
+            aria-checked={checked}
             {...props}
           />
-          <label htmlFor={id} className={trackStyles}>
+          <label htmlFor={inputId} className={trackStyles} aria-hidden>
             <span className={thumbStyles} />
           </label>
         </div>
 
-        {label && (
+        {(label || description) && (
           <div className="flex-1">
-            <label htmlFor={id} className={labelStyles}>
-              {label}
-            </label>
+            {label && (
+              <label htmlFor={inputId} className={labelStyles}>
+                {label}
+              </label>
+            )}
             {description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 {description}

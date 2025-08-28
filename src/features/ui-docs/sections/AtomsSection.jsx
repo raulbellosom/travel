@@ -10,6 +10,8 @@ import {
   Checkbox,
   Radio,
   TextInput,
+  NumberInput,
+  CurrencyInput,
   Select,
   IconButton,
   ComponentDemo,
@@ -45,6 +47,10 @@ export default function AtomsSection({
   const [searchText, setSearchText] = useState("");
   const [filterText, setFilterText] = useState("");
   const [selectValue, setSelectValue] = useState("");
+
+  // Estados para nuevos componentes
+  const [numberValue, setNumberValue] = useState(2);
+  const [currencyValue, setCurrencyValue] = useState("");
 
   const handleButtonClick = (e) => {
     e.preventDefault();
@@ -308,42 +314,189 @@ export default function AtomsSection({
         id="atoms-textinput"
         title={t("sections.atoms.components.textInput.title")}
         description={t("sections.atoms.components.textInput.description")}
-        code={`<TextInput label="Email" placeholder="tu@email.com" size="${selectedSize}" variant="outlined" leftIcon={Search}/>`}
+        code={`<TextInput label="Email" placeholder="tu@email.com" size="${selectedSize}" variant="outlined" leftIcon={Search}/>
+<TextInput label="Teléfono" type="tel" placeholder="+52 55 1234 5678" size="${selectedSize}" variant="outlined" />
+<TextInput label="URL" type="url" placeholder="https://ejemplo.com" size="${selectedSize}" variant="filled" />
+<TextInput label="Número" type="number" placeholder="123" size="${selectedSize}" variant="outlined" />
+<TextInput label="Fecha" type="date" size="${selectedSize}" variant="outlined" />
+<TextInput label="Contraseña" type="password" placeholder="••••••••" size="${selectedSize}" variant="outlined" helperText="Mínimo 8 caracteres" />
+<TextInput label="Con Error" placeholder="Campo requerido" size="${selectedSize}" error="Este campo es obligatorio" />
+<TextInput label="Deshabilitado" placeholder="Campo bloqueado" size="${selectedSize}" disabled />
+<TextInput label="Solo lectura" placeholder="Campo de solo lectura" size="${selectedSize}" readOnly />
+<TextInput label="Búsqueda" placeholder="Buscar propiedades..." size="${selectedSize}" variant="outlined" leftIcon={Search} rightIcon={Filter} />
+<NumberInput label="Número de huéspedes" value={numberValue} onChange={setNumberValue} min={1} max={10} size="${selectedSize}" />
+<NumberInput label="Cantidad decimal" value={3.5} min={0} max={10} step={0.1} precision={1} size="${selectedSize}" />
+<NumberInput label="Stepper oculto" value={numberValue} showStepper={false} size="${selectedSize}" />
+<NumberInput label="Deshabilitado" value={5} disabled size="${selectedSize}" />
+<CurrencyInput label="Precio máximo" value={currencyValue} onChange={setCurrencyValue} currency="USD" locale="en-US" size="${selectedSize}" />
+<CurrencyInput label="Precio en MXN" value={currencyValue} onChange={setCurrencyValue} currency="MXN" locale="es-MX" size="${selectedSize}" />
+<CurrencyInput label="Precio en EUR" value={currencyValue} onChange={setCurrencyValue} currency="EUR" locale="de-DE" size="${selectedSize}" />
+<CurrencyInput label="Deshabilitado" value={150} currency="USD" disabled size="${selectedSize}" />`}
       >
-        <div className="w-full max-w-md space-y-4">
-          <TextInput
-            label="Email"
-            placeholder="tu@email.com"
-            size={selectedSize}
-            variant="outlined"
-            leftIcon={Search}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <TextInput
-            label="Contraseña"
-            type="password"
-            placeholder="••••••••"
-            size={selectedSize}
-            variant="outlined"
-            helperText="Mínimo 8 caracteres"
-          />
-          <TextInput
-            label="Con Error"
-            placeholder="Campo requerido"
-            size={selectedSize}
-            error="Este campo es obligatorio"
-          />
-          <TextInput
-            label="Búsqueda"
-            placeholder="Buscar propiedades..."
-            size={selectedSize}
-            variant="outlined"
-            leftIcon={Search}
-            rightIcon={Filter}
-            value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
-          />
+        <div className="w-full space-y-6">
+          {/* TextInput Examples */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Text Input Variants
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput
+                label="Email"
+                placeholder="tu@email.com"
+                size={selectedSize}
+                variant="outlined"
+                leftIcon={Search}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+              <TextInput
+                label="Teléfono"
+                type="tel"
+                placeholder="+52 55 1234 5678"
+                size={selectedSize}
+                variant="outlined"
+              />
+              <TextInput
+                label="URL"
+                type="url"
+                placeholder="https://ejemplo.com"
+                size={selectedSize}
+                variant="filled"
+              />
+              <TextInput
+                label="Número"
+                type="number"
+                placeholder="123"
+                size={selectedSize}
+                variant="outlined"
+              />
+              <TextInput
+                label="Fecha"
+                type="date"
+                size={selectedSize}
+                variant="outlined"
+              />
+              <TextInput
+                label="Contraseña"
+                type="password"
+                placeholder="••••••••"
+                size={selectedSize}
+                variant="outlined"
+                helperText="Mínimo 8 caracteres"
+              />
+              <TextInput
+                label="Con Error"
+                placeholder="Campo requerido"
+                size={selectedSize}
+                error="Este campo es obligatorio"
+              />
+              <TextInput
+                label="Deshabilitado"
+                placeholder="Campo bloqueado"
+                size={selectedSize}
+                disabled
+              />
+              <TextInput
+                label="Solo lectura"
+                placeholder="Campo de solo lectura"
+                size={selectedSize}
+                readOnly
+              />
+              <TextInput
+                label="Búsqueda"
+                placeholder="Buscar propiedades..."
+                size={selectedSize}
+                variant="outlined"
+                leftIcon={Search}
+                rightIcon={Filter}
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* NumberInput Examples */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Number Input Variants
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <NumberInput
+                label="Número de huéspedes"
+                value={numberValue}
+                onChange={setNumberValue}
+                min={1}
+                max={10}
+                size={selectedSize}
+                helperText="Máximo 10 personas"
+              />
+              <NumberInput
+                label="Cantidad decimal"
+                value={3.5}
+                min={0}
+                max={10}
+                step={0.1}
+                precision={1}
+                size={selectedSize}
+                helperText="Con decimales"
+              />
+              <NumberInput
+                label="Stepper oculto"
+                value={numberValue}
+                showStepper={false}
+                size={selectedSize}
+              />
+              <NumberInput
+                label="Deshabilitado"
+                value={5}
+                disabled
+                size={selectedSize}
+              />
+            </div>
+          </div>
+
+          {/* CurrencyInput Examples */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Currency Input Variants
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CurrencyInput
+                label="Precio máximo"
+                value={currencyValue}
+                onChange={setCurrencyValue}
+                currency="USD"
+                locale="en-US"
+                size={selectedSize}
+                helperText="Monto en USD"
+              />
+              <CurrencyInput
+                label="Precio en MXN"
+                value={currencyValue}
+                onChange={setCurrencyValue}
+                currency="MXN"
+                locale="es-MX"
+                size={selectedSize}
+                helperText="Monto en MXN"
+              />
+              <CurrencyInput
+                label="Precio en EUR"
+                value={currencyValue}
+                onChange={setCurrencyValue}
+                currency="EUR"
+                locale="de-DE"
+                size={selectedSize}
+                helperText="Monto en EUR"
+              />
+              <CurrencyInput
+                label="Deshabilitado"
+                value={150}
+                currency="USD"
+                disabled
+                size={selectedSize}
+              />
+            </div>
+          </div>
         </div>
       </ComponentDemo>
 
@@ -398,13 +551,16 @@ export default function AtomsSection({
       >
         <div className="space-y-4">
           <Toggle
+            id="notify-toggle"
             checked={toggleChecked}
-            onChange={setToggleChecked}
+            onChange={setToggleChecked} // te pasa true/false
             size={selectedSize}
             variant={selectedVariant}
             label="Activar notificaciones"
           />
+
           <Toggle
+            id="auto-dark-toggle"
             checked={toggleChecked2}
             onChange={setToggleChecked2}
             size={selectedSize}
@@ -412,7 +568,9 @@ export default function AtomsSection({
             label="Modo oscuro automático"
             description="Se activará según tus preferencias del sistema"
           />
+
           <Toggle
+            id="cloud-save-toggle"
             checked={cloudSaveToggle}
             onChange={setCloudSaveToggle}
             size={selectedSize}

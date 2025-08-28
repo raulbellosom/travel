@@ -4,10 +4,10 @@ export { default as DateRangePicker } from "./DateRangePicker";
 export { default as Carousel } from "./Carousel";
 export { default as ComponentDemo } from "./ComponentDemo";
 export { default as Card } from "./Card";
+export { default as FormField } from "./FormField";
+export { default as SearchBar } from "./SearchBar";
 
 // TODO: Export remaining molecules
-// export { default as SearchBar } from './SearchBar';
-// export { default as FormField } from './FormField';
 // export { default as FilterGroup } from './FilterGroup';
 // export { default as FilterGroup } from './FilterGroup';
 // export { default as Pagination } from './Pagination';

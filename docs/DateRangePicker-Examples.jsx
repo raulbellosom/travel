@@ -1,7 +1,7 @@
 // DateRangePicker - Ejemplos de Código Listos para Usar
 
 import { useState } from "react";
-import { DateRangePicker } from "./components/common";
+import DateRangePicker from "../src/components/common/molecules/DateRangePicker";
 
 // ============================================================================
 // 1. EJEMPLO BÁSICO - RANGO DE FECHAS

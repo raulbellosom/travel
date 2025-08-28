@@ -34,7 +34,11 @@
         "secondary": "Secundario",
         "ghost": "Fantasma",
         "outline": "Contorno",
-        "destructive": "Destructivo"
+        "destructive": "Destructivo",
+        "success": "Exitoso",
+        "info": "Informativo",
+        "warning": "Advertencia",
+        "danger": "Peligro"
       },
       "themes": {
         "light": "Claro",
@@ -56,7 +60,7 @@
       "button-icons": "Botón con Iconos",
       "icon-button": "Botón Solo Icono",
       "iconbutton": "IconButton",
-      "textinput": "Campo de Texto",
+      "textinput": "Campo de Entrada",
       "select": "Selector",
       "toggle": "Interruptor",
       "checkbox": "Casilla",
@@ -103,7 +107,7 @@
         },
         "toggle": {
           "title": "Interruptores",
-          "description": "Componentes de interruptor/toggle para opciones binarias"
+          "description": "Componentes de interruptor para opciones binarias"
         },
         "checkbox": {
           "title": "Casillas",

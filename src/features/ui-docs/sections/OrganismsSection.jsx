@@ -8,6 +8,7 @@ import {
   Checkbox,
   Carousel,
   ComponentDemo,
+  Navbar,
 } from "../../../components/common";
 import { ComponentSection } from "../components";
 import { useUIDocsTranslation } from "../../../hooks/useUIDocsTranslation";
@@ -499,6 +500,115 @@ export default function OrganismsSection({
               </div>
             </div>
           </Modal>
+        </div>
+      </ComponentDemo>
+
+      {/* Navbar */}
+      <ComponentDemo
+        id="organisms-navbar-basic"
+        title="Navbar - Navegación Principal"
+        description="Barra de navegación completa con menú móvil, selector de idioma, modo oscuro y autenticación"
+        code={`import { Navbar } from "../../../components/common";
+
+// El Navbar se integra automáticamente con:
+// - React Router para navegación
+// - Context de autenticación (useAuth)
+// - Context de UI para idioma y tema (useUI)
+// - Sistema de menú móvil responsive
+
+// Uso básico (se integra en el layout)
+<Navbar />
+
+// Características principales:
+// ✅ Navegación responsive con menú hamburguesa
+// ✅ Selector de idioma integrado
+// ✅ Toggle de tema oscuro/claro
+// ✅ Estados de autenticación (login/logout)
+// ✅ Avatar de usuario con menú desplegable
+// ✅ Efectos de scroll (transparencia/cambio de color)`}
+        size={selectedSize}
+      >
+        <div className="space-y-4">
+          {/* Simulación del Navbar en un contenedor */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 p-4">
+              <div className="flex items-center justify-between">
+                {/* Logo */}
+                <div className="flex items-center space-x-4">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    Sayulita Travel
+                  </div>
+                </div>
+
+                {/* Desktop Navigation */}
+                <div className="hidden md:flex items-center space-x-6">
+                  <a
+                    href="/"
+                    className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    Inicio
+                  </a>
+                  <a
+                    href="/ui-docs"
+                    className="text-blue-600 dark:text-blue-400 font-medium"
+                  >
+                    UI Docs
+                  </a>
+                </div>
+
+                {/* Right side */}
+                <div className="flex items-center space-x-4">
+                  {/* Language Switcher */}
+                  <select className="text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1">
+                    <option>ES</option>
+                    <option>EN</option>
+                  </select>
+
+                  {/* Theme Toggle */}
+                  <button className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* User Menu */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">U</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+            <p>
+              <strong>Nota:</strong> El Navbar real se muestra en la parte
+              superior de esta página.
+            </p>
+            <p>
+              <strong>Características:</strong>
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li>Completamente responsive con menú móvil</li>
+              <li>Integración con React Router</li>
+              <li>Sistema de autenticación integrado</li>
+              <li>Selector de idioma y tema</li>
+              <li>Efectos visuales de scroll</li>
+              <li>Accesibilidad completa (WCAG AA)</li>
+            </ul>
+          </div>
         </div>
       </ComponentDemo>
     </ComponentSection>

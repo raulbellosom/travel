@@ -1,7 +1,10 @@
 // === ATOMS ===
 export { default as Button } from "./atoms/Button";
 export { default as TextInput } from "./atoms/TextInput";
+export { default as NumberInput } from "./atoms/NumberInput";
+export { default as CurrencyInput } from "./atoms/CurrencyInput";
 export { default as Select } from "./atoms/Select";
+export { default as Chip } from "./atoms/Chip";
 export { default as Badge } from "./atoms/Badge";
 export { default as Avatar } from "./atoms/Avatar";
 export { default as IconButton } from "./atoms/IconButton";
@@ -18,15 +21,16 @@ export { default as DateRangePicker } from "./molecules/DateRangePicker";
 export { default as Card } from "./molecules/Card";
 export { default as Carousel } from "./molecules/Carousel";
 export { default as ComponentDemo } from "./molecules/ComponentDemo";
+export { default as FormField } from "./molecules/FormField";
+export { default as SearchBar } from "./molecules/SearchBar";
 
 // === ORGANISMS ===
 export { default as ListingCard } from "./organisms/ListingCard";
 export { default as Modal } from "./organisms/Modal";
+export { default as Navbar } from "./organisms/Navbar";
+export { default as Footer } from "./organisms/Footer";
 
 // TODO: Export remaining components as they are implemented
 // export { default as SearchBar } from './molecules/SearchBar';
-// export { default as FormField } from './molecules/FormField';
-// export { default as Navbar } from './organisms/Navbar';
-// export { default as Footer } from './organisms/Footer';
 // export { default as HeroCarousel } from './organisms/HeroCarousel';
 // export { default as ListingGrid } from './organisms/ListingGrid';

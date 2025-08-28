@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../../../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { Menu, X, User, LogOut, Settings } from "lucide-react";
-import { Button, IconButton, Avatar, Badge } from "../common/atoms";
+import { Button, IconButton, Avatar, Badge } from "../../atoms";
 import LanguageSwitcher from "./LanguageSwitcher";
 import ThemeToggle from "./ThemeToggle";
 

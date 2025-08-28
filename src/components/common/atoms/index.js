@@ -1,6 +1,9 @@
 export { default as Button } from "./Button";
 export { default as TextInput } from "./TextInput";
+export { default as NumberInput } from "./NumberInput";
+export { default as CurrencyInput } from "./CurrencyInput";
 export { default as Select } from "./Select";
+export { default as Chip } from "./Chip";
 export { default as Badge } from "./Badge";
 export { default as Avatar } from "./Avatar";
 export { default as IconButton } from "./IconButton";
