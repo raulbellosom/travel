@@ -358,17 +358,24 @@ export default function OrganismsSection({
           <Modal
             isOpen={modalStates.large}
             onClose={() => toggleModal("large")}
-            title="Modal Grande"
+            title="Modal Grande con Carousel"
             size="lg"
           >
             <div className="space-y-6">
               <div className="aspect-video">
                 <Carousel
                   images={carouselImages}
-                  aspectRatio="16:9"
-                  showThumbnails
+                  variant="default"
+                  aspectRatio="16/9"
+                  showArrows
+                  showDots
+                  showCounter
+                  autoPlay={false}
                 />
               </div>
+              <p className="text-gray-600 dark:text-gray-400 text-center">
+                Modal grande con carousel de imágenes de alta calidad
+              </p>
             </div>
           </Modal>
 

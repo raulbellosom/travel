@@ -43,7 +43,7 @@ export default function MoleculesSection({ selectedSize, id = "molecules" }) {
     "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop",
     "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1502775789162-9f8e7bb65ab2?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop",
   ];
 
   return (
@@ -388,126 +388,231 @@ const availableDates = [
         id="molecules-carousel"
         title={t("sections.molecules.components.carousel.title")}
         description={t("sections.molecules.components.carousel.description")}
-        code={`// Carrusel básico con controles
+        code={`// Carrusel completo con todos los controles
 <Carousel
   images={carouselImages}
   aspectRatio="16/9"
+  variant="default"
   showDots
   showArrows
+  showCounter
+  showPlayPause
   autoPlay={false}
-  loop
 />
 
-// Carrusel automático con control de velocidad
+// Carrusel compacto para listings
 <Carousel
   images={carouselImages}
   aspectRatio="4/3"
-  showDots={true}
-  showArrows={true}
-  autoPlay={true}
-  autoPlayInterval={5000}
-  loop
-/>
-
-// Carrusel con miniaturas
-<Carousel
-  images={carouselImages}
-  aspectRatio="16/9"
-  showThumbnails
-  showDots={false}
+  variant="listing"
   showArrows
+  showCounter
+  autoPlay={false}
 />
 
-// Carrusel responsivo
+// Carrusel mínimo sin controles
 <Carousel
   images={carouselImages}
   aspectRatio="1/1"
+  variant="minimal"
+/>
+
+// Carrusel con autoplay pausable
+<Carousel
+  images={carouselImages}
+  aspectRatio="16/9"
   showDots
   showArrows
-  autoPlay={false}
-  className="md:aspect-video"
-  loop
+  showPlayPause
+  autoPlay={true}
+  autoPlayInterval={4000}
 />`}
         size={selectedSize}
       >
         <div className="space-y-8">
-          {/* Carrusel con controles completos */}
+          {/* Carrusel Completo */}
           <div className="w-full max-w-2xl">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Carrusel completo con controles y puntos
+              Carrusel Completo - Todos los Controles
             </h4>
             <Carousel
               images={carouselImages}
               aspectRatio="16/9"
+              variant="default"
               showDots
               showArrows
+              showCounter
+              showPlayPause
               autoPlay={false}
-              loop={false}
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              ✨ Incluye flechas, puntos, contador y botón play/pause
+            </p>
           </div>
 
-          {/* Carrusel automático con control de velocidad */}
+          {/* Carrusel para Listings */}
           <div className="w-full max-w-lg">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Autoplay con controles de velocidad
+              Carrusel para Listings - Optimizado
             </h4>
             <Carousel
               images={carouselImages}
               aspectRatio="4/3"
-              showDots={true}
-              showArrows={true}
-              autoPlay={true}
-              autoPlayInterval={5000}
-              loop
+              variant="listing"
+              showArrows
+              showCounter
+              autoPlay={false}
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              🏠 Perfecto para propiedades y productos
+            </p>
           </div>
 
-          {/* Carrusel con miniaturas */}
-          <div className="w-full max-w-2xl">
+          {/* Carrusel Compacto */}
+          <div className="w-full max-w-md">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Con miniaturas navegables
+              Carrusel Compacto - Solo Esencial
             </h4>
             <Carousel
               images={carouselImages}
-              aspectRatio="16/9"
-              showThumbnails
-              showDots={false}
+              aspectRatio="3/2"
+              variant="compact"
               showArrows
+              showCounter
+              autoPlay={false}
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              📱 Ideal para espacios reducidos
+            </p>
           </div>
 
-          {/* Carrusel cuadrado para móviles */}
-          <div className="w-full max-w-md">
+          {/* Carrusel Mínimo */}
+          <div className="w-full max-w-sm">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Formato cuadrado (ideal móviles)
+              Carrusel Mínimo - Sin Controles
             </h4>
             <Carousel
               images={carouselImages}
               aspectRatio="1/1"
-              showDots
-              showArrows
-              autoPlay={false}
-              loop
+              variant="minimal"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              🎯 Solo navegación táctil/swipe
+            </p>
           </div>
 
-          {/* Información adicional */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              📝 Características del Carousel:
+          {/* Carrusel con AutoPlay */}
+          <div className="w-full max-w-xl">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Carrusel con AutoPlay Pausable
+            </h4>
+            <Carousel
+              images={carouselImages}
+              aspectRatio="16/9"
+              variant="default"
+              showDots
+              showArrows
+              showCounter
+              showPlayPause
+              autoPlay={true}
+              autoPlayInterval={4000}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              ⏯️ AutoPlay con control manual de pausa/reproducción
+            </p>
+          </div>
+
+          {/* Información de Características */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl border border-blue-200 dark:border-blue-800">
+            <h5 className="font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2">
+              <span className="text-xl">🎠</span>
+              Características del Nuevo Carousel
             </h5>
-            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <li>• ✨ Soporte para touch/swipe en móviles</li>
-              <li>• 🎯 Navegación con teclado (arrows, tab)</li>
-              <li>• 📱 Completamente responsivo</li>
-              <li>• ⚡ Lazy loading de imágenes</li>
-              <li>• 🔄 Autoplay configurable con velocidad</li>
-              <li>• ⏸️ Botón play/pause en autoplay</li>
-              <li>• 🖼️ Miniaturas opcionales</li>
-              <li>• ♾️ Loop infinito</li>
-              <li>• 🎨 Múltiples aspectos de ratio</li>
-              <li>• 🖱️ Pause automático al hover</li>
-            </ul>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <h6 className="font-medium text-blue-800 dark:text-blue-200">
+                  🎯 Transiciones Mejoradas
+                </h6>
+                <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
+                  <li>• ✨ Efecto de deslizamiento suave (sin fade)</li>
+                  <li>• 🔄 Transiciones direccionales inteligentes</li>
+                  <li>• 📱 Optimizado para touch/swipe</li>
+                  <li>• ⚡ Animaciones fluidas con Framer Motion</li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h6 className="font-medium text-blue-800 dark:text-blue-200">
+                  🎨 Controles Rediseñados
+                </h6>
+                <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
+                  <li>• 🎯 Flechas con diseño glassmorphism</li>
+                  <li>• 📊 Contador estilizado y moderno</li>
+                  <li>• 🔘 Puntos indicadores mejorados</li>
+                  <li>• ⏯️ Botón play/pause integrado</li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h6 className="font-medium text-blue-800 dark:text-blue-200">
+                  🔧 Variantes Flexibles
+                </h6>
+                <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
+                  <li>
+                    • 🏠 <code>listing</code>: Para propiedades
+                  </li>
+                  <li>
+                    • 📱 <code>compact</code>: Para espacios pequeños
+                  </li>
+                  <li>
+                    • 🎯 <code>minimal</code>: Solo swipe
+                  </li>
+                  <li>
+                    • 🎨 <code>default</code>: Funcionalidad completa
+                  </li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h6 className="font-medium text-blue-800 dark:text-blue-200">
+                  ♿ Accesibilidad
+                </h6>
+                <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
+                  <li>• ⌨️ Navegación completa por teclado</li>
+                  <li>• 🔊 Labels ARIA apropiados</li>
+                  <li>• 🎯 Focus management optimizado</li>
+                  <li>• 📱 Soporte completo para screen readers</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Ejemplo de Uso en Listing */}
+          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+            <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              💡 Ejemplo: Uso en Listing de Propiedades
+            </h5>
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="w-full max-w-xs mx-auto">
+                <Carousel
+                  images={carouselImages}
+                  aspectRatio="4/3"
+                  variant="listing"
+                  showArrows
+                  showCounter
+                  autoPlay={false}
+                  className="mb-3"
+                />
+                <div className="space-y-2">
+                  <h6 className="font-semibold text-gray-900 dark:text-gray-100">
+                    Casa Moderna en el Centro
+                  </h6>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    3 hab • 2 baños • 120m²
+                  </p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    $450,000
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </ComponentDemo>
