@@ -17,7 +17,7 @@ import NotFound from "../pages/NotFound";
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/travel">
       <AuthProvider>
         <UIProvider>
           <Routes>
