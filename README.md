@@ -9,7 +9,7 @@ La plataforma permite explorar anuncios, crear listados, gestionar reservas y ma
 
 - **React + Vite (JavaScript)** — SPA rápida y modular.
 - **TailwindCSS** — Estilos utilitarios y tema personalizable.
-- **Framer Motion** — Animaciones fluidas.
+- **Motion** — Animaciones fluidas.
 - **Lucide Icons** — Íconos consistentes.
 - **Appwrite** — Autenticación, base de datos, storage y funciones.
 
