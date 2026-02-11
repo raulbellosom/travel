@@ -9,25 +9,27 @@ HTTP function that creates a payment session/preference for a reservation.
 
 ## Type
 
-- HTTP endpoint (POST)
+- HTTP endpoint (POST, authenticated user required)
 
 ## Payload
 
 ```json
 {
   "reservationId": "RESERVATION_ID",
-  "guestEmail": "guest@example.com",
   "provider": "stripe"
 }
 ```
 
+`guestEmail` is optional and, if provided, must match the authenticated account email.
+
 ## Behavior
 
-- Validates reservation and guest identity
-- Creates or updates `reservation_payments` with `status=pending`
-- Syncs reservation `paymentStatus=pending`
-- Uses Stripe/Mercado Pago credentials when available
-- Returns `mock` checkout URL when provider credentials are not configured
+- Validates authenticated and email-verified user.
+- Validates reservation ownership for that guest (`guestUserId` or legacy email fallback).
+- Creates or updates `reservation_payments` with `status=pending`.
+- Syncs reservation `paymentStatus=pending`.
+- Uses Stripe/Mercado Pago credentials when available.
+- Returns `mock` checkout URL when provider credentials are not configured.
 
 ## Environment
 

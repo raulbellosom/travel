@@ -1,4 +1,4 @@
-﻿import { Client, Databases, ID, Permission, Query, Role } from "node-appwrite";
+﻿import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SUPPORTED_CURRENCIES = ["MXN", "USD", "EUR"];
@@ -46,8 +46,6 @@ const toOptionalText = (value, maxLength = 0) => {
   return normalized ? normalized : undefined;
 };
 
-const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
-
 const parseDate = (value) => {
   const parsed = new Date(value);
   const time = parsed.getTime();
@@ -66,6 +64,15 @@ const toMoney = (value) => {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric < 0) return null;
   return Math.round(numeric * 100) / 100;
+};
+
+const getAuthenticatedUserId = (req) => {
+  const headers = req.headers || {};
+  return (
+    headers["x-appwrite-user-id"] ||
+    headers["x-appwrite-userid"] ||
+    ""
+  );
 };
 
 const getRequestId = (req) => {
@@ -92,9 +99,19 @@ const safeActivityLog = async ({ db, config, data, logger }) => {
   }
 };
 
+const buildReservationPermissions = (ownerUserId, guestUserId) =>
+  [...new Set([
+    Permission.read(Role.user(ownerUserId)),
+    Permission.update(Role.user(ownerUserId)),
+    Permission.delete(Role.user(ownerUserId)),
+    Permission.read(Role.user(guestUserId)),
+  ])];
+
 const buildReservationData = ({
   property,
   payload,
+  guestUserId,
+  authUser,
   guestCount,
   checkInIso,
   checkOutIso,
@@ -108,8 +125,12 @@ const buildReservationData = ({
   const data = {
     propertyId: property.$id,
     propertyOwnerId: property.ownerUserId,
-    guestName: normalizeText(payload.guestName, 120),
-    guestEmail: normalizeText(payload.guestEmail, 254).toLowerCase(),
+    guestUserId,
+    guestName:
+      normalizeText(payload.guestName, 120) ||
+      normalizeText(authUser.name, 120) ||
+      "Guest",
+    guestEmail: normalizeText(authUser.email, 254).toLowerCase(),
     checkInDate: checkInIso,
     checkOutDate: checkOutIso,
     guestCount,
@@ -124,7 +145,7 @@ const buildReservationData = ({
     enabled: true,
   };
 
-  const guestPhone = toOptionalText(payload.guestPhone, 20);
+  const guestPhone = toOptionalText(payload.guestPhone || authUser.phone, 20);
   if (guestPhone) data.guestPhone = guestPhone;
 
   const specialRequests = toOptionalText(payload.specialRequests, 2000);
@@ -153,30 +174,29 @@ export default async ({ req, res, log, error }) => {
     });
   }
 
+  const authenticatedUserId = normalizeText(getAuthenticatedUserId(req), 64);
+  if (!authenticatedUserId) {
+    return json(res, 401, {
+      ok: false,
+      success: false,
+      code: "AUTH_REQUIRED",
+      message: "You must be authenticated to create a reservation",
+    });
+  }
+
   const payload = parseBody(req);
   const propertyId = normalizeText(payload.propertyId, 64);
-  const guestName = normalizeText(payload.guestName, 120);
-  const guestEmail = normalizeText(payload.guestEmail, 254).toLowerCase();
   const checkIn = parseDate(payload.checkInDate);
   const checkOut = parseDate(payload.checkOutDate);
   const guestCount = toPositiveInt(payload.guestCount);
 
-  if (!propertyId || !guestName || !guestEmail || !checkIn || !checkOut || guestCount === null) {
+  if (!propertyId || !checkIn || !checkOut || guestCount === null) {
     return json(res, 400, {
       ok: false,
       success: false,
       code: "VALIDATION_ERROR",
       message:
-        "propertyId, guestName, guestEmail, checkInDate, checkOutDate and guestCount are required",
-    });
-  }
-
-  if (!isValidEmail(guestEmail)) {
-    return json(res, 400, {
-      ok: false,
-      success: false,
-      code: "VALIDATION_ERROR",
-      message: "Invalid guestEmail format",
+        "propertyId, checkInDate, checkOutDate and guestCount are required",
     });
   }
 
@@ -217,8 +237,39 @@ export default async ({ req, res, log, error }) => {
     .setProject(config.projectId)
     .setKey(config.apiKey);
   const db = new Databases(client);
+  const users = new Users(client);
 
   try {
+    const authUser = await users.get(authenticatedUserId);
+    const normalizedAuthEmail = normalizeText(authUser.email, 254).toLowerCase();
+    if (!normalizedAuthEmail) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "AUTH_EMAIL_MISSING",
+        message: "Authenticated account has no email configured",
+      });
+    }
+
+    if (!authUser.emailVerification) {
+      return json(res, 403, {
+        ok: false,
+        success: false,
+        code: "EMAIL_NOT_VERIFIED",
+        message: "Verify your email before creating a reservation",
+      });
+    }
+
+    const payloadGuestEmail = normalizeText(payload.guestEmail, 254).toLowerCase();
+    if (payloadGuestEmail && payloadGuestEmail !== normalizedAuthEmail) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "GUEST_EMAIL_MISMATCH",
+        message: "guestEmail must match the authenticated account email",
+      });
+    }
+
     const property = await db.getDocument(
       config.databaseId,
       config.propertiesCollectionId,
@@ -324,6 +375,8 @@ export default async ({ req, res, log, error }) => {
     const reservationData = buildReservationData({
       property,
       payload,
+      guestUserId: authenticatedUserId,
+      authUser,
       guestCount,
       checkInIso,
       checkOutIso,
@@ -340,11 +393,7 @@ export default async ({ req, res, log, error }) => {
       config.reservationsCollectionId,
       ID.unique(),
       reservationData,
-      [
-        Permission.read(Role.user(property.ownerUserId)),
-        Permission.update(Role.user(property.ownerUserId)),
-        Permission.delete(Role.user(property.ownerUserId)),
-      ],
+      buildReservationPermissions(property.ownerUserId, authenticatedUserId),
     );
 
     await db.updateDocument(
@@ -361,14 +410,15 @@ export default async ({ req, res, log, error }) => {
       config,
       logger: log,
       data: {
-        actorUserId: property.ownerUserId,
-        actorRole: "owner",
-        action: "reservation.create_public",
+        actorUserId: authenticatedUserId,
+        actorRole: "client",
+        action: "reservation.create_authenticated",
         entityType: "reservations",
         entityId: reservation.$id,
         afterData: JSON.stringify({
           propertyId,
-          guestEmail,
+          guestUserId: authenticatedUserId,
+          guestEmail: reservationData.guestEmail,
           checkInDate: checkInIso,
           checkOutDate: checkOutIso,
           totalAmount,
@@ -388,6 +438,7 @@ export default async ({ req, res, log, error }) => {
       data: {
         reservationId: reservation.$id,
         propertyId,
+        guestUserId: authenticatedUserId,
         nights,
         totalAmount,
         currency,

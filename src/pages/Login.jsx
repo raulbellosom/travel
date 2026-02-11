@@ -31,7 +31,7 @@ const Login = () => {
 
     try {
       await login(email, password);
-      const target = location.state?.from?.pathname || "/dashboard";
+      const target = location.state?.from?.pathname || "/";
       navigate(target, { replace: true });
     } catch (err) {
       const message = getErrorMessage(err, t("loginPage.errors.login"));

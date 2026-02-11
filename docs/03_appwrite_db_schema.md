@@ -83,7 +83,7 @@ Regla:
 
 | Collection ID          | Purpose                                 | Phase |
 | ---------------------- | --------------------------------------- | ----- |
-| `users`                | Perfiles y roles internos               | 0     |
+| `users`                | Perfiles y roles internos + clientes    | 0     |
 | `user_preferences`     | Preferencias de UI y branding base      | 0     |
 | `properties`           | Catalogo de propiedades                 | 0     |
 | `property_images`      | Galeria por propiedad                   | 0     |
@@ -102,22 +102,22 @@ Regla:
 
 ## Collection: users
 
-Purpose: perfiles de usuarios internos de la instancia.
+Purpose: perfiles de usuarios de la instancia (internos + clientes finales).
 
 ### Attributes
 
-| Attribute    | Type    | Size | Required | Default | Constraint                                                    |
-| ------------ | ------- | ---- | -------- | ------- | ------------------------------------------------------------- |
-| `authId`     | string  | 64   | yes      | -       | regex `^[A-Za-z0-9._-]{1,64}$`                                |
-| `email`      | email   | 254  | yes      | -       | email valido                                                  |
-| `firstName`  | string  | 80   | yes      | -       | min 1                                                         |
-| `lastName`   | string  | 80   | yes      | -       | min 1                                                         |
-| `phone`      | string  | 20   | no       | -       | regex telefono internacional                                  |
-| `birthDate`  | string  | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                |
-| `role`       | enum    | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support` |
-| `scopesJson` | string  | 4000 | no       | -       | JSON array serializado                                        |
-| `isHidden`   | boolean | -    | no       | false   | -                                                             |
-| `enabled`    | boolean | -    | no       | true    | -                                                             |
+| Attribute    | Type    | Size | Required | Default | Constraint                                                             |
+| ------------ | ------- | ---- | -------- | ------- | ---------------------------------------------------------------------- |
+| `authId`     | string  | 64   | yes      | -       | regex `^[A-Za-z0-9._-]{1,64}$`                                         |
+| `email`      | email   | 254  | yes      | -       | email valido                                                           |
+| `firstName`  | string  | 80   | yes      | -       | min 1                                                                  |
+| `lastName`   | string  | 80   | yes      | -       | min 1                                                                  |
+| `phone`      | string  | 20   | no       | -       | regex telefono internacional                                           |
+| `birthDate`  | string  | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                         |
+| `role`       | enum    | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
+| `scopesJson` | string  | 4000 | no       | -       | JSON array serializado                                                 |
+| `isHidden`   | boolean | -    | no       | false   | -                                                                      |
+| `enabled`    | boolean | -    | no       | true    | -                                                                      |
 
 Notas:
 
@@ -127,6 +127,7 @@ Notas:
 - `role`: Rol de aplicacion
 - `scopesJson`: Permisos finos
 - `isHidden`: `true` para root
+- `client`: rol por defecto para registros web publicos
 - `enabled`: Soft delete
 
 ### Indexes
@@ -144,6 +145,7 @@ Notas:
 
 - Lectura/actualizacion directa: `Role.user(authId)`.
 - Gestion de staff/roles: solo via Functions (owner/root).
+- Listado de clientes por owner: solo via Function y sin mutaciones directas.
 
 ---
 
@@ -403,6 +405,7 @@ Purpose: reservaciones por propiedad.
 | ----------------- | -------- | ---- | -------- | --------- | ------------------------------------------------------- |
 | `propertyId`      | string   | 64   | yes      | -         | FK logical a `properties.$id`                           |
 | `propertyOwnerId` | string   | 64   | yes      | -         | FK logical a `users.$id`                                |
+| `guestUserId`     | string   | 64   | yes      | -         | FK logical a Auth/App `users.$id` del cliente           |
 | `guestName`       | string   | 120  | yes      | -         | min 2                                                   |
 | `guestEmail`      | email    | 254  | yes      | -         | email valido                                            |
 | `guestPhone`      | string   | 20   | no       | -         | regex telefono internacional                            |
@@ -427,6 +430,7 @@ Notas:
 - `nights`: Calculado
 - `status`: Estado reserva
 - `paymentStatus`: Estado pago
+- `guestUserId`: Usuario autenticado que crea la reserva
 - `enabled`: Soft delete
 
 ### Indexes
@@ -435,6 +439,7 @@ Notas:
 | -------------------------------- | ---- | --------------------------------- | ---------------------- |
 | `idx_reservations_propertyid`    | idx  | `propertyId ↑`                    | Reservas por propiedad |
 | `idx_reservations_ownerid`       | idx  | `propertyOwnerId ↑`               | Reservas por owner     |
+| `idx_reservations_guestuserid`   | idx  | `guestUserId ↑`                   | Reservas por cliente   |
 | `idx_reservations_checkin`       | idx  | `checkInDate ↑`                   | Agenda                 |
 | `idx_reservations_status`        | idx  | `status ↑`                        | Filtro de estado       |
 | `idx_reservations_paymentstatus` | idx  | `paymentStatus ↑`                 | Filtro de pago         |
@@ -443,8 +448,9 @@ Notas:
 
 ### Permissions
 
-- Creacion publica via Function.
+- Creacion autenticada via Function (cliente registrado + email verificado).
 - Lectura/escritura para owner/staff con scope de reservas.
+- Lectura de propia reserva para `Role.user(guestUserId)`.
 
 ---
 
@@ -531,22 +537,24 @@ Purpose: resenas asociadas a reservas completadas.
 
 ### Attributes
 
-| Attribute         | Type     | Size | Required | Default   | Constraint                       |
-| ----------------- | -------- | ---- | -------- | --------- | -------------------------------- |
-| `propertyId`      | string   | 64   | yes      | -         | FK logical a `properties.$id`    |
-| `reservationId`   | string   | 64   | yes      | -         | FK logical a `reservations.$id`  |
-| `authorName`      | string   | 120  | yes      | -         | min 2                            |
-| `authorEmailHash` | string   | 128  | no       | -         | hash sha256/base64               |
-| `rating`          | integer  | -    | yes      | -         | min `1`, max `5`                 |
-| `title`           | string   | 160  | no       | -         | min 3                            |
-| `comment`         | string   | 3000 | yes      | -         | min 10                           |
-| `status`          | enum     | -    | no       | `pending` | `pending`,`published`,`rejected` |
-| `publishedAt`     | datetime | -    | no       | -         | ISO 8601 UTC                     |
-| `enabled`         | boolean  | -    | no       | true      | -                                |
+| Attribute         | Type     | Size | Required | Default   | Constraint                        |
+| ----------------- | -------- | ---- | -------- | --------- | --------------------------------- |
+| `propertyId`      | string   | 64   | yes      | -         | FK logical a `properties.$id`     |
+| `reservationId`   | string   | 64   | yes      | -         | FK logical a `reservations.$id`   |
+| `authorUserId`    | string   | 64   | yes      | -         | FK logical a Auth/App `users.$id` |
+| `authorName`      | string   | 120  | yes      | -         | min 2                             |
+| `authorEmailHash` | string   | 128  | no       | -         | hash sha256/base64                |
+| `rating`          | integer  | -    | yes      | -         | min `1`, max `5`                  |
+| `title`           | string   | 160  | no       | -         | min 3                             |
+| `comment`         | string   | 3000 | yes      | -         | min 10                            |
+| `status`          | enum     | -    | no       | `pending` | `pending`,`published`,`rejected`  |
+| `publishedAt`     | datetime | -    | no       | -         | ISO 8601 UTC                      |
+| `enabled`         | boolean  | -    | no       | true      | -                                 |
 
 Notas:
 
 - `reservationId`: Elegibilidad
+- `authorUserId`: Usuario autenticado que envia la resena
 - `authorName`: Publico
 - `authorEmailHash`: Anti abuso
 - `status`: Moderacion
@@ -554,16 +562,17 @@ Notas:
 
 ### Indexes
 
-| Index Name               | Type | Attributes     | Notes                 |
-| ------------------------ | ---- | -------------- | --------------------- |
-| `idx_reviews_propertyid` | idx  | `propertyId ↑` | Resenas por propiedad |
-| `idx_reviews_status`     | idx  | `status ↑`     | Cola de moderacion    |
-| `idx_reviews_rating`     | idx  | `rating ↓`     | Top rating            |
-| `idx_reviews_createdat`  | idx  | `$createdAt ↓` | Recientes             |
+| Index Name                 | Type | Attributes       | Notes                 |
+| -------------------------- | ---- | ---------------- | --------------------- |
+| `idx_reviews_propertyid`   | idx  | `propertyId ↑`   | Resenas por propiedad |
+| `idx_reviews_authoruserid` | idx  | `authorUserId ↑` | Resenas por cliente   |
+| `idx_reviews_status`       | idx  | `status ↑`       | Cola de moderacion    |
+| `idx_reviews_rating`       | idx  | `rating ↓`       | Top rating            |
+| `idx_reviews_createdat`    | idx  | `$createdAt ↓`   | Recientes             |
 
 ### Permissions
 
-- Creacion publica via Function con validacion de reserva.
+- Creacion autenticada via Function con validacion de reserva y usuario.
 - Moderacion por owner/staff con scope.
 
 ---
@@ -615,21 +624,21 @@ Purpose: auditoria forense para panel root.
 
 ### Attributes
 
-| Attribute       | Type     | Size  | Required | Default | Constraint                                                    |
-| --------------- | -------- | ----- | -------- | ------- | ------------------------------------------------------------- |
-| `actorUserId`   | string   | 64    | yes      | -       | FK logical a `users.$id`                                      |
-| `actorRole`     | string   | 40    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support` |
-| `action`        | string   | 80    | yes      | -       | verbo de accion                                               |
-| `entityType`    | string   | 80    | yes      | -       | nombre coleccion o dominio                                    |
-| `entityId`      | string   | 64    | no       | -       | ID de entidad                                                 |
-| `beforeData`    | string   | 20000 | no       | -       | JSON serializado antes del cambio                             |
-| `afterData`     | string   | 20000 | no       | -       | JSON serializado despues del cambio                           |
-| `changedFields` | string[] | 120   | no       | -       | max 100 elementos                                             |
-| `changeSummary` | string   | 500   | no       | -       | resumen corto                                                 |
-| `requestId`     | string   | 100   | no       | -       | correlacion                                                   |
-| `ipHash`        | string   | 128   | no       | -       | hash no reversible                                            |
-| `userAgent`     | string   | 500   | no       | -       | -                                                             |
-| `severity`      | enum     | -     | no       | `info`  | `info`,`warning`,`critical`                                   |
+| Attribute       | Type     | Size  | Required | Default | Constraint                                                             |
+| --------------- | -------- | ----- | -------- | ------- | ---------------------------------------------------------------------- |
+| `actorUserId`   | string   | 64    | yes      | -       | FK logical a `users.$id`                                               |
+| `actorRole`     | string   | 40    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
+| `action`        | string   | 80    | yes      | -       | verbo de accion                                                        |
+| `entityType`    | string   | 80    | yes      | -       | nombre coleccion o dominio                                             |
+| `entityId`      | string   | 64    | no       | -       | ID de entidad                                                          |
+| `beforeData`    | string   | 20000 | no       | -       | JSON serializado antes del cambio                                      |
+| `afterData`     | string   | 20000 | no       | -       | JSON serializado despues del cambio                                    |
+| `changedFields` | string[] | 120   | no       | -       | max 100 elementos                                                      |
+| `changeSummary` | string   | 500   | no       | -       | resumen corto                                                          |
+| `requestId`     | string   | 100   | no       | -       | correlacion                                                            |
+| `ipHash`        | string   | 128   | no       | -       | hash no reversible                                                     |
+| `userAgent`     | string   | 500   | no       | -       | -                                                                      |
+| `severity`      | enum     | -     | no       | `info`  | `info`,`warning`,`critical`                                            |
 
 Notas:
 
@@ -700,6 +709,8 @@ Notas:
 
 - `users (1) -> (N) properties`
 - `users (1) -> (1) user_preferences`
+- `users (1) -> (N) reservations` (como `guestUserId`)
+- `users (1) -> (N) reviews` (como `authorUserId`)
 - `properties (1) -> (N) property_images`
 - `properties (1) -> (N) property_amenities`
 - `amenities (1) -> (N) property_amenities`
@@ -739,16 +750,30 @@ Formato obligatorio:
 
 - Colecciones `organizations` y `organization_members`.
 
+## Migration: 2026-02-11-client-auth-booking-review
+
+### Added
+
+- Rol `client` en `users.role`.
+- Campo `reservations.guestUserId`.
+- Campo `reviews.authorUserId`.
+- Indexes `idx_reservations_guestuserid` y `idx_reviews_authoruserid`.
+
+### Modified
+
+- `create-reservation-public`, `create-payment-session` y `create-review-public` pasan a flujo autenticado para clientes registrados.
+- `activity_logs.actorRole` agrega `client`.
+
 ---
 
 ## Estado del Documento
 
 - Definitivo para el schema Appwrite de cada instancia cliente.
-- Alineado con reservas, pagos, vouchers, staff y auditoria root.
+- Alineado con reservas, pagos, vouchers, staff, clientes autenticados y auditoria root.
 - Debe mantenerse sincronizado con Appwrite en cada cambio.
 
 ---
 
-Ultima actualizacion: 2026-02-10
-Version: 2.1.0
-Schema Version: 2.1
+Ultima actualizacion: 2026-02-11
+Version: 2.2.0
+Schema Version: 2.2

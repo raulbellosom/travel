@@ -1,6 +1,6 @@
 ﻿# create-review-public
 
-HTTP function that receives a public review for an eligible reservation.
+HTTP function that receives a review for an eligible reservation.
 
 ## Runtime
 
@@ -9,7 +9,7 @@ HTTP function that receives a public review for an eligible reservation.
 
 ## Type
 
-- HTTP endpoint (POST)
+- HTTP endpoint (POST, authenticated user required)
 
 ## Payload
 
@@ -17,8 +17,6 @@ HTTP function that receives a public review for an eligible reservation.
 {
   "propertyId": "PROPERTY_ID",
   "reservationId": "RESERVATION_ID",
-  "authorName": "Jane Doe",
-  "authorEmail": "jane@example.com",
   "rating": 5,
   "title": "Great stay",
   "comment": "Very clean and comfortable"
@@ -27,10 +25,12 @@ HTTP function that receives a public review for an eligible reservation.
 
 ## Validation
 
-- Reservation must belong to `propertyId`
-- Reservation must be completed/confirmed and paid
-- Author email must match reservation guest email
-- One review per reservation
+- User must be authenticated and email-verified.
+- Reservation must belong to `propertyId`.
+- Reservation must be completed/confirmed and paid.
+- Authenticated user must match reservation guest (`guestUserId` or legacy email fallback).
+- One review per reservation.
+- Review stores `authorUserId` from auth context.
 
 ## Environment
 

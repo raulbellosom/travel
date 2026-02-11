@@ -94,6 +94,7 @@ Roles de negocio (campo `users.role`):
 - `staff_manager`
 - `staff_editor`
 - `staff_support`
+- `client` (usuario final registrado)
 
 Reglas:
 
@@ -154,7 +155,7 @@ para lectura/escritura directa y se exponen por Functions controladas.
 
 ### 7.1 Flujo base
 
-1. Visitante crea reservacion (`pending`).
+1. Cliente autenticado y verificado crea reservacion (`pending`).
 2. Se genera intento de pago.
 3. Pasarela confirma via webhook.
 4. Sistema actualiza pago y reservacion (`confirmed`).
@@ -253,7 +254,7 @@ Checklist:
 
 - API keys por funcion con scope minimo.
 - Rotacion de secrets cada 6 meses.
-- Rate limiting en endpoints publicos (leads/reservas/reviews).
+- Rate limiting en endpoints publicos (`leads`) y autenticados (`reservas/reviews/pagos`).
 - Sanitizacion de payloads y validacion estricta.
 
 ---
@@ -277,5 +278,5 @@ Este documento habilita:
 
 ---
 
-Ultima actualizacion: 2026-02-10
-Version: 2.0.0
+Ultima actualizacion: 2026-02-11
+Version: 2.1.0

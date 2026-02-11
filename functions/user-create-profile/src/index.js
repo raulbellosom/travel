@@ -10,6 +10,9 @@ const cfg = () => ({
   preferencesCollectionId:
     process.env.APPWRITE_COLLECTION_USER_PREFERENCES_ID || "user_preferences",
   emailVerificationFunctionId: process.env.APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID || "",
+  defaultUserRole: process.env.APPWRITE_DEFAULT_AUTH_ROLE || "client",
+  ownerBootstrapUserIds: process.env.APPWRITE_OWNER_AUTH_IDS || "",
+  ownerBootstrapEmails: process.env.APPWRITE_OWNER_EMAILS || "",
 });
 
 const parsePayload = (req) => {
@@ -31,11 +34,58 @@ const splitName = (name) => {
   };
 };
 
+const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
+
+const parseCsv = (value) =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const ALLOWED_DEFAULT_ROLES = new Set(["client", "owner"]);
+
+const resolveInitialRole = ({ userId, email, config }) => {
+  const normalizedEmail = normalizeEmail(email);
+  const ownerUserIds = new Set(parseCsv(config.ownerBootstrapUserIds));
+  const ownerEmails = new Set(parseCsv(config.ownerBootstrapEmails).map(normalizeEmail));
+
+  if (ownerUserIds.has(String(userId || ""))) {
+    return "owner";
+  }
+
+  if (normalizedEmail && ownerEmails.has(normalizedEmail)) {
+    return "owner";
+  }
+
+  const defaultRole = String(config.defaultUserRole || "client").trim().toLowerCase();
+  return ALLOWED_DEFAULT_ROLES.has(defaultRole) ? defaultRole : "client";
+};
+
+const buildProfilePermissions = ({ userId, config }) => {
+  const permissions = [
+    Permission.read(Role.user(userId)),
+    Permission.update(Role.user(userId)),
+    Permission.delete(Role.user(userId)),
+  ];
+
+  const ownerReaderIds = parseCsv(config.ownerBootstrapUserIds);
+  for (const ownerId of ownerReaderIds) {
+    if (ownerId && ownerId !== userId) {
+      permissions.push(Permission.read(Role.user(ownerId)));
+    }
+  }
+
+  return permissions;
+};
+
 const safeCreateUsersProfile = async (db, config, payload, log) => {
   const userId = payload.$id || payload.userId || payload.id;
-  const email = payload.email || "";
+  const email = normalizeEmail(payload.email || "");
   const phone = payload.phone || "";
   const { firstName, lastName } = splitName(payload.name || payload.fullName || "");
+  const role = resolveInitialRole({ userId, email, config });
+
+  const permissions = buildProfilePermissions({ userId, config });
 
   const profileData = {
     authId: userId,
@@ -43,7 +93,7 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
     firstName,
     lastName,
     phone,
-    role: "owner",
+    role,
     scopesJson: "[]",
     isHidden: false,
     enabled: true,
@@ -55,13 +105,9 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
       config.usersCollectionId,
       userId,
       profileData,
-      [
-        Permission.read(Role.user(userId)),
-        Permission.update(Role.user(userId)),
-        Permission.delete(Role.user(userId)),
-      ]
+      permissions
     );
-    return "created";
+    return role === "owner" ? "created_owner" : "created_client";
   } catch (error) {
     const alreadyExists =
       Number(error?.code) === 409 ||
@@ -69,12 +115,18 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
     if (!alreadyExists) throw error;
 
     log(`users/${userId} ya existe, se actualiza estado basico.`);
-    await db.updateDocument(config.databaseId, config.usersCollectionId, userId, {
-      email,
-      firstName,
-      lastName,
-      phone,
-    });
+    await db.updateDocument(
+      config.databaseId,
+      config.usersCollectionId,
+      userId,
+      {
+        email,
+        firstName,
+        lastName,
+        phone,
+      },
+      permissions
+    );
     return "updated";
   }
 };

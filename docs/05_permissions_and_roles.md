@@ -13,8 +13,9 @@ Definir control de acceso completo para una instancia dedicada por cliente,
 incluyendo:
 
 1. Roles operativos (`owner`, `staff_*`).
-2. Usuario `root` interno y oculto.
-3. Reglas de auditoria obligatoria.
+2. Rol `client` para usuario final registrado.
+3. Usuario `root` interno y oculto.
+4. Reglas de auditoria obligatoria.
 
 ---
 
@@ -58,10 +59,17 @@ incluyendo:
 - Respuesta de mensajes.
 - Sin acceso a configuracion de contenido avanzado.
 
-### 3.6 Visitor
+### 3.6 Client
+
+- Usuario final registrado desde la web.
+- Puede reservar, pagar y dejar reseña sobre su propia reservacion.
+- No accede al dashboard operativo interno.
+
+### 3.7 Visitor
 
 - Acceso publico a catalogo.
-- Puede enviar lead, reservar y dejar reseña (si cumple reglas).
+- Puede enviar lead sin cuenta.
+- Para reservar/pagar/reseñar debe registrarse y verificar email.
 
 ---
 
@@ -93,6 +101,7 @@ Regla:
 - Update propio: `Role.user(self)`.
 - Operaciones de staff management: solo via Function (`owner` o `root`).
 - Filtrado obligatorio para ocultar `isHidden=true` en vistas no root.
+- Owner puede listar `client` en modo solo lectura via Function dedicada.
 
 ## 5.2 properties / property_images / property_amenities
 
@@ -108,8 +117,10 @@ Regla:
 
 ## 5.4 reservations
 
-- Creacion publica via Function (`create-reservation-public`).
+- Creacion autenticada via Function (`create-reservation-public`).
+- Requiere `client` con email verificado.
 - Lectura/gestion: owner + staff autorizado.
+- Cliente solo puede consultar su propia reserva.
 - Cambios de estado se registran en `activity_logs`.
 
 ## 5.5 reservation_payments
@@ -126,7 +137,8 @@ Regla:
 
 ## 5.7 reviews
 
-- Creacion publica controlada (post-reserva).
+- Creacion autenticada controlada (post-reserva).
+- Requiere `client` con email verificado y reservacion propia elegible.
 - Moderacion por owner/staff con scope `reviews.moderate`.
 - Publicacion/rechazo auditado.
 
@@ -140,18 +152,18 @@ Regla:
 
 ## 6. Matriz de Permisos (Resumen)
 
-| Modulo                 | Root | Owner | Staff Manager | Staff Editor | Staff Support | Visitor |
-| ---------------------- | ---- | ----- | ------------- | ------------ | ------------- | ------- |
-| Dashboard general      | Yes  | Yes   | Yes           | Yes          | Yes           | No      |
-| Propiedades CRUD       | Yes  | Yes   | Yes           | Yes          | No            | No      |
-| Leads gestion          | Yes  | Yes   | Yes           | No           | Yes           | No      |
-| Reservas gestion       | Yes  | Yes   | Yes           | No           | Yes           | No      |
-| Pagos vista            | Yes  | Yes   | Optional      | No           | No            | No      |
-| Staff management       | Yes  | Yes   | No            | No           | No            | No      |
-| ActivityLog oculto     | Yes  | No    | No            | No           | No            | No      |
-| Formulario contacto    | No   | No    | No            | No           | No            | Yes     |
-| Crear reservacion web  | No   | No    | No            | No           | No            | Yes     |
-| Crear reseña publica   | No   | No    | No            | No            | No            | Yes*    |
+| Modulo                 | Root | Owner | Staff Manager | Staff Editor | Staff Support | Client | Visitor |
+| ---------------------- | ---- | ----- | ------------- | ------------ | ------------- | ------ | ------- |
+| Dashboard general      | Yes  | Yes   | Yes           | Yes          | Yes           | No     | No      |
+| Propiedades CRUD       | Yes  | Yes   | Yes           | Yes          | No            | No     | No      |
+| Leads gestion          | Yes  | Yes   | Yes           | No           | Yes           | No     | No      |
+| Reservas gestion       | Yes  | Yes   | Yes           | No           | Yes           | No     | No      |
+| Pagos vista            | Yes  | Yes   | Optional      | No           | No            | No     | No      |
+| Staff management       | Yes  | Yes   | No            | No           | No            | No     | No      |
+| ActivityLog oculto     | Yes  | No    | No            | No           | No            | No     | No      |
+| Formulario contacto    | No   | No    | No            | No           | No            | Optional | Yes   |
+| Crear reservacion web  | No   | No    | No            | No           | No            | Yes    | No      |
+| Crear reseña publica   | No   | No    | No            | No            | No            | Yes*   | No      |
 
 `Yes*`: solo si existe reservacion elegible y reglas anti-abuso.
 
@@ -222,9 +234,9 @@ Campos minimos de log:
 ## 11. Estado del Documento
 
 - Definitivo para roles/permisos del modelo por instancia dedicada.
-- Listo para operacion con staff restringido y root oculto.
+- Listo para operacion con staff restringido, clientes registrados y root oculto.
 
 ---
 
-Ultima actualizacion: 2026-02-10
-Version: 2.0.0
+Ultima actualizacion: 2026-02-11
+Version: 2.1.0

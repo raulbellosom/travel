@@ -85,12 +85,14 @@ Modelo operativo:
 2. **Staff (operadores internos)**
    - Atienden mensajes, actualizan contenido, gestionan leads.
    - Acceso restringido por modulos.
-3. **Visitante publico**
-   - Navega propiedades, contacta, reserva y deja reseña.
+3. **Client (usuario final registrado)**
+   - Navega propiedades, reserva, paga y deja reseña.
+4. **Visitante publico**
+   - Navega propiedades y envia leads sin cuenta.
 
 ### 4.2 En la operacion del proveedor
 
-4. **Root interno (RacoonDevs)**
+5. **Root interno (RacoonDevs)**
    - Soporte, auditoria y recuperacion de incidentes.
    - Acceso a panel oculto ActivityLog.
 
@@ -229,7 +231,7 @@ Modelo operativo:
 
 1. Se puede crear una nueva instancia de cliente aislada sin tocar datos de otras.
 2. Owner puede crear usuarios staff y limitar accesos por modulo.
-3. Visitante puede reservar desde pagina publica.
+3. Usuario `client` autenticado y verificado puede reservar desde la pagina.
 4. Pago exitoso confirma reservacion y genera voucher.
 5. Root puede auditar cambios con detalle before/after.
 

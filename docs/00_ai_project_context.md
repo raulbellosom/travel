@@ -107,7 +107,8 @@ Roles de negocio:
 - `staff_manager`
 - `staff_editor`
 - `staff_support`
-- `visitor`
+- `client` (usuario final registrado)
+- `visitor` (solo publico, sin cuenta)
 
 Regla especial:
 

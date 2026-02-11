@@ -1,4 +1,4 @@
-﻿import { Client, Databases, ID, Query } from "node-appwrite";
+﻿import { Client, Databases, ID, Query, Users } from "node-appwrite";
 
 const SUPPORTED_PROVIDERS = ["stripe", "mercadopago"];
 const SUPPORTED_CURRENCIES = ["MXN", "USD", "EUR"];
@@ -46,6 +46,15 @@ const normalizeText = (value, maxLength = 0) => {
   const normalized = String(value ?? "").trim().replace(/\s+/g, " ");
   if (!maxLength) return normalized;
   return normalized.slice(0, maxLength);
+};
+
+const getAuthenticatedUserId = (req) => {
+  const headers = req.headers || {};
+  return (
+    headers["x-appwrite-user-id"] ||
+    headers["x-appwrite-userid"] ||
+    ""
+  );
 };
 
 const toMoney = (value) => {
@@ -297,18 +306,28 @@ export default async ({ req, res, log, error }) => {
 
   const payload = parseBody(req);
   const reservationId = normalizeText(payload.reservationId, 64);
+  const authenticatedUserId = normalizeText(getAuthenticatedUserId(req), 64);
   const guestEmail = normalizeText(payload.guestEmail, 254).toLowerCase();
   const providerRaw = normalizeText(
     payload.provider || config.paymentDefaultProvider,
     20,
   ).toLowerCase();
 
-  if (!reservationId || !guestEmail) {
+  if (!authenticatedUserId) {
+    return json(res, 401, {
+      ok: false,
+      success: false,
+      code: "AUTH_REQUIRED",
+      message: "You must be authenticated to create a payment session",
+    });
+  }
+
+  if (!reservationId) {
     return json(res, 400, {
       ok: false,
       success: false,
       code: "VALIDATION_ERROR",
-      message: "reservationId and guestEmail are required",
+      message: "reservationId is required",
     });
   }
 
@@ -326,8 +345,38 @@ export default async ({ req, res, log, error }) => {
     .setProject(config.projectId)
     .setKey(config.apiKey);
   const db = new Databases(client);
+  const users = new Users(client);
 
   try {
+    const authUser = await users.get(authenticatedUserId);
+    const authEmail = normalizeText(authUser.email, 254).toLowerCase();
+    if (!authEmail) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "AUTH_EMAIL_MISSING",
+        message: "Authenticated account has no email configured",
+      });
+    }
+
+    if (!authUser.emailVerification) {
+      return json(res, 403, {
+        ok: false,
+        success: false,
+        code: "EMAIL_NOT_VERIFIED",
+        message: "Verify your email before creating a payment session",
+      });
+    }
+
+    if (guestEmail && guestEmail !== authEmail) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "GUEST_EMAIL_MISMATCH",
+        message: "guestEmail must match the authenticated account email",
+      });
+    }
+
     const reservation = await db.getDocument(
       config.databaseId,
       config.reservationsCollectionId,
@@ -343,12 +392,34 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (String(reservation.guestEmail || "").toLowerCase() !== guestEmail) {
+    const reservationGuestUserId = normalizeText(reservation.guestUserId, 64);
+    const reservationGuestEmail = normalizeText(reservation.guestEmail, 254).toLowerCase();
+    const hasLegacyGuest = !reservationGuestUserId && reservationGuestEmail;
+
+    if (!reservationGuestUserId && !reservationGuestEmail) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "RESERVATION_GUEST_MISSING",
+        message: "Reservation guest identity is not configured",
+      });
+    }
+
+    if (reservationGuestUserId && reservationGuestUserId !== authenticatedUserId) {
       return json(res, 403, {
         ok: false,
         success: false,
         code: "PAYMENT_UNAUTHORIZED",
-        message: "Guest identity mismatch",
+        message: "Authenticated user does not match reservation guest",
+      });
+    }
+
+    if (hasLegacyGuest && reservationGuestEmail !== authEmail) {
+      return json(res, 403, {
+        ok: false,
+        success: false,
+        code: "PAYMENT_UNAUTHORIZED",
+        message: "Authenticated email does not match reservation guest email",
       });
     }
 
@@ -489,8 +560,8 @@ export default async ({ req, res, log, error }) => {
       config,
       logger: log,
       data: {
-        actorUserId: reservation.propertyOwnerId,
-        actorRole: "owner",
+        actorUserId: authenticatedUserId,
+        actorRole: "client",
         action: "payment.session_created",
         entityType: "reservation_payments",
         entityId: paymentDocument.$id,

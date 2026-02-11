@@ -24,19 +24,29 @@
 - Requiere sesion activa.
 - Si no hay sesion -> `/login`.
 
-## 2.2 `RoleRoute`
+## 2.2 `InternalRoute`
+
+- Requiere sesion activa + rol interno (`root`,`owner`,`staff_*`).
+- Si el usuario es `client` -> `/error/403`.
+
+## 2.3 `RoleRoute`
 
 - Valida rol minimo (`owner`, `staff_*`, `root`).
 - Si no cumple -> `/forbidden`.
 
-## 2.3 `ScopeRoute`
+## 2.4 `ScopeRoute`
 
 - Valida scope de modulo (`reservations.read`, `staff.manage`, etc.).
 
-## 2.4 `RootRoute`
+## 2.5 `RootRoute`
 
 - Solo para usuario `root`.
 - Bloquea acceso al panel oculto de auditoria.
+
+## 2.6 `OwnerRoute`
+
+- Requiere `user.role === owner`.
+- Uso recomendado para modulos de negocio sensibles como listados de clientes.
 
 ---
 
@@ -46,7 +56,7 @@
 | ---- | ----------- |
 | `/` | Home/catalogo publico |
 | `/propiedades/:slug` | Detalle de propiedad |
-| `/reservar/:slug` | Flujo de reserva publica |
+| `/reservar/:slug` | Flujo de reserva (requiere login para confirmar) |
 | `/voucher/:code` | Consulta publica opcional de voucher |
 | `/login` | Inicio de sesion |
 | `/register` | Registro |
@@ -56,11 +66,13 @@
 ### 3.1 Flujo `/reservar/:slug`
 
 1. Usuario elige fechas y huespedes.
-2. Frontend llama `create-reservation-public`.
-3. Frontend llama `create-payment-session`.
-4. Usuario paga en Stripe/Mercado Pago.
-5. Webhook confirma pago.
-6. Usuario recibe mensaje de confirmacion + voucher.
+2. Si no tiene sesion, frontend redirige a `/login`.
+3. Si no tiene email verificado, frontend bloquea y solicita verificar.
+4. Frontend llama `create-reservation-public`.
+5. Frontend llama `create-payment-session`.
+6. Usuario paga en Stripe/Mercado Pago.
+7. Webhook confirma pago.
+8. Usuario recibe mensaje de confirmacion + voucher.
 
 ---
 
@@ -68,11 +80,12 @@
 
 | Ruta | Guard | Rol/Scope |
 | ---- | ----- | --------- |
-| `/dashboard` | ProtectedRoute | cualquier usuario interno |
+| `/dashboard` | InternalRoute | cualquier usuario interno |
 | `/mis-propiedades` | ScopeRoute | `properties.read` |
 | `/crear-propiedad` | ScopeRoute | `properties.write` |
 | `/editar-propiedad/:id` | ScopeRoute | `properties.write` |
 | `/leads` | ScopeRoute | `leads.read` |
+| `/clientes` | OwnerRoute | `owner` |
 | `/reservas` | ScopeRoute | `reservations.read` |
 | `/pagos` | ScopeRoute | `payments.read` |
 | `/resenas` | ScopeRoute | `reviews.moderate` |
@@ -142,7 +155,7 @@ Regla:
 
 ## 7.3 Reserva + pago + voucher
 
-1. Visitante crea reserva.
+1. Cliente autenticado crea reserva.
 2. Paga en pasarela.
 3. Webhook confirma pago.
 4. Sistema confirma reserva.
@@ -193,5 +206,5 @@ Rutas privadas y root no indexables.
 
 ---
 
-Ultima actualizacion: 2026-02-10
-Version: 2.0.0
+Ultima actualizacion: 2026-02-11
+Version: 2.1.0

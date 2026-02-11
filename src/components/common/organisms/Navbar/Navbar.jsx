@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import ThemeToggle from "./ThemeToggle";
 import LanguageSwitcher from "./LanguageSwitcher";
 import BrandLogo from "../../BrandLogo";
+import { canPublishProperty } from "../../../../utils/roles";
 
 const navItemClass =
   "inline-flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-medium transition";
@@ -16,6 +17,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const allowPublishProperty = canPublishProperty(user?.role);
 
   const isActive = (path) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -73,12 +75,14 @@ const Navbar = () => {
 
           {user ? (
             <>
-              <Link
-                to="/crear-propiedad"
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
-              >
-                <PlusCircle size={16} /> {t("navbar.publish")}
-              </Link>
+              {allowPublishProperty ? (
+                <Link
+                  to="/crear-propiedad"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
+                >
+                  <PlusCircle size={16} /> {t("navbar.publish")}
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={onLogout}
@@ -138,13 +142,15 @@ const Navbar = () => {
 
             {user ? (
               <>
-                <Link
-                  to="/crear-propiedad"
-                  onClick={() => setMobileOpen(false)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white"
-                >
-                  {t("navbar.publish")}
-                </Link>
+                {allowPublishProperty ? (
+                  <Link
+                    to="/crear-propiedad"
+                    onClick={() => setMobileOpen(false)}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    {t("navbar.publish")}
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   onClick={onLogout}

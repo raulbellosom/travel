@@ -51,7 +51,9 @@ functions/
 
 - Tipo: Event Trigger (`users.*.create`).
 - Crea `users` y `user_preferences`.
-- Default role: `owner` solo para bootstrap inicial; staff via invitacion.
+- Default role: `client`.
+- Bootstrap de `owner` via allowlist (`APPWRITE_OWNER_AUTH_IDS` / `APPWRITE_OWNER_EMAILS`).
+- Staff via invitacion.
 
 ## 4.2 `create-lead-public`
 
@@ -74,8 +76,9 @@ functions/
 
 ## 4.4 `create-reservation-public`
 
-- Tipo: HTTP POST.
+- Tipo: HTTP POST autenticado.
 - Crea reservacion `pending`.
+- Requiere usuario `client` con email verificado.
 - Valida disponibilidad minima (fechas, cupo, reglas basicas).
 - Devuelve identificador de reserva y siguiente paso de pago.
 
@@ -87,7 +90,8 @@ functions/
 
 ## 4.5 `create-payment-session`
 
-- Tipo: HTTP POST autenticado/publico controlado.
+- Tipo: HTTP POST autenticado.
+- Requiere usuario `client` con email verificado.
 - Genera sesion de pago con Stripe o preferencia con Mercado Pago.
 - Crea/actualiza registro `reservation_payments` en `pending`.
 
@@ -115,7 +119,8 @@ functions/
 
 ## 4.9 `create-review-public`
 
-- Tipo: HTTP POST.
+- Tipo: HTTP POST autenticado.
+- Requiere usuario `client` con email verificado.
 - Permite reseña solo para reservaciones elegibles.
 - Crea reseña en `pending`.
 
@@ -256,4 +261,4 @@ Errores:
 ---
 
 Ultima actualizacion: 2026-02-11
-Version: 2.1.0
+Version: 2.2.0

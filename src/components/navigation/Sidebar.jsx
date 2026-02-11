@@ -1,6 +1,6 @@
 ﻿import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Home, List, User, Settings, Inbox, X } from "lucide-react";
+import { Home, List, User, Settings, Inbox, Users, X } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import BrandLogo from "../common/BrandLogo";
 
@@ -13,6 +13,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: t("sidebar.overview"), href: "/dashboard", icon: Home },
     { name: t("sidebar.listings"), href: "/mis-propiedades", icon: List },
     { name: t("sidebar.leads"), href: "/leads", icon: Inbox },
+    ...(user?.role === "owner"
+      ? [{ name: t("sidebar.clients", { defaultValue: "Clientes" }), href: "/clientes", icon: Users }]
+      : []),
     { name: t("sidebar.profile"), href: "/perfil", icon: User },
     {
       name: t("sidebar.settings"),
@@ -116,4 +119,3 @@ const Sidebar = ({ isOpen, onClose }) => {
 };
 
 export default Sidebar;
-

@@ -38,7 +38,7 @@ Reglas bloqueantes:
 
 Enums canonicos:
 
-- `users.role`: `root`, `owner`, `staff_manager`, `staff_editor`, `staff_support`.
+- `users.role`: `root`, `owner`, `staff_manager`, `staff_editor`, `staff_support`, `client`.
 - `user_preferences.theme`: `light`, `dark`, `system`.
 - `user_preferences.locale`: `es`, `en`.
 - `properties.propertyType`: `house`, `apartment`, `land`, `commercial`, `office`, `warehouse`.

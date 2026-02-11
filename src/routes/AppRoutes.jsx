@@ -1,7 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "../contexts/AuthContext";
 import { UIProvider } from "../contexts/UIContext";
-import ProtectedRoute from "./ProtectedRoute";
+import InternalRoute from "./InternalRoute";
+import OwnerRoute from "./OwnerRoute";
 import RootRoute from "./RootRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
 import MainLayout from "../layouts/MainLayout";
@@ -19,6 +20,7 @@ import MyProperties from "../pages/MyProperties";
 import CreateProperty from "../pages/CreateProperty";
 import EditProperty from "../pages/EditProperty";
 import Leads from "../pages/Leads";
+import Clients from "../pages/Clients";
 import Profile from "../pages/Profile";
 import Settings from "../pages/Settings";
 import UIDocsPage from "../pages/UIDocsPage";
@@ -76,9 +78,9 @@ const AppRoutes = () => {
             <Route
               path="/"
               element={
-                <ProtectedRoute>
+                <InternalRoute>
                   <DashboardLayout />
-                </ProtectedRoute>
+                </InternalRoute>
               }
             >
               <Route path="dashboard" element={<Dashboard />} />
@@ -86,6 +88,14 @@ const AppRoutes = () => {
               <Route path="crear-propiedad" element={<CreateProperty />} />
               <Route path="editar-propiedad/:id" element={<EditProperty />} />
               <Route path="leads" element={<Leads />} />
+              <Route
+                path="clientes"
+                element={
+                  <OwnerRoute>
+                    <Clients />
+                  </OwnerRoute>
+                }
+              />
               <Route path="perfil" element={<Profile />} />
               <Route path="configuracion" element={<Settings />} />
             </Route>

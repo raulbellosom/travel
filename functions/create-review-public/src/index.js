@@ -1,5 +1,5 @@
 ﻿import { createHash } from "node:crypto";
-import { Client, Databases, ID, Permission, Query, Role } from "node-appwrite";
+import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
 
 const hasValue = (value) =>
   value !== undefined && value !== null && String(value).trim() !== "";
@@ -40,8 +40,6 @@ const normalizeText = (value, maxLength = 0) => {
   return normalized.slice(0, maxLength);
 };
 
-const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
-
 const safeJsonString = (value, maxLength = 20000) => {
   try {
     return JSON.stringify(value).slice(0, maxLength);
@@ -52,6 +50,25 @@ const safeJsonString = (value, maxLength = 20000) => {
 
 const hashEmail = (email) =>
   createHash("sha256").update(String(email || "").toLowerCase()).digest("hex");
+
+const getAuthenticatedUserId = (req) => {
+  const headers = req.headers || {};
+  return (
+    headers["x-appwrite-user-id"] ||
+    headers["x-appwrite-userid"] ||
+    ""
+  );
+};
+
+const buildReviewPermissions = (propertyOwnerId, authorUserId) => {
+  const permissions = [Permission.read(Role.user(authorUserId))];
+  if (propertyOwnerId) {
+    permissions.push(Permission.read(Role.user(propertyOwnerId)));
+    permissions.push(Permission.update(Role.user(propertyOwnerId)));
+    permissions.push(Permission.delete(Role.user(propertyOwnerId)));
+  }
+  return [...new Set(permissions)];
+};
 
 const safeActivityLog = async ({ db, config, data, logger }) => {
   if (!config.activityLogsCollectionId) return;
@@ -87,31 +104,29 @@ export default async ({ req, res, log, error }) => {
     });
   }
 
+  const authenticatedUserId = normalizeText(getAuthenticatedUserId(req), 64);
+  if (!authenticatedUserId) {
+    return json(res, 401, {
+      ok: false,
+      success: false,
+      code: "AUTH_REQUIRED",
+      message: "You must be authenticated to create a review",
+    });
+  }
+
   const payload = parseBody(req);
   const propertyId = normalizeText(payload.propertyId, 64);
   const reservationId = normalizeText(payload.reservationId, 64);
-  const authorName = normalizeText(payload.authorName, 120);
-  const authorEmail = normalizeText(payload.authorEmail, 254).toLowerCase();
   const comment = normalizeText(payload.comment, 3000);
   const title = normalizeText(payload.title, 160);
   const rating = Number(payload.rating);
 
-  if (!propertyId || !reservationId || !authorName || !authorEmail || !comment) {
+  if (!propertyId || !reservationId || !comment) {
     return json(res, 400, {
       ok: false,
       success: false,
       code: "VALIDATION_ERROR",
-      message:
-        "propertyId, reservationId, authorName, authorEmail and comment are required",
-    });
-  }
-
-  if (!isValidEmail(authorEmail)) {
-    return json(res, 400, {
-      ok: false,
-      success: false,
-      code: "VALIDATION_ERROR",
-      message: "Invalid authorEmail format",
+      message: "propertyId, reservationId and comment are required",
     });
   }
 
@@ -138,8 +153,29 @@ export default async ({ req, res, log, error }) => {
     .setProject(config.projectId)
     .setKey(config.apiKey);
   const db = new Databases(client);
+  const users = new Users(client);
 
   try {
+    const authUser = await users.get(authenticatedUserId);
+    const authEmail = normalizeText(authUser.email, 254).toLowerCase();
+    if (!authEmail) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "AUTH_EMAIL_MISSING",
+        message: "Authenticated account has no email configured",
+      });
+    }
+
+    if (!authUser.emailVerification) {
+      return json(res, 403, {
+        ok: false,
+        success: false,
+        code: "EMAIL_NOT_VERIFIED",
+        message: "Verify your email before creating a review",
+      });
+    }
+
     const [property, reservation] = await Promise.all([
       db.getDocument(config.databaseId, config.propertiesCollectionId, propertyId),
       db.getDocument(config.databaseId, config.reservationsCollectionId, reservationId),
@@ -185,12 +221,21 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (String(reservation.guestEmail || "").toLowerCase() !== authorEmail) {
+    const reservationGuestUserId = normalizeText(reservation.guestUserId, 64);
+    const reservationGuestEmail = normalizeText(reservation.guestEmail, 254).toLowerCase();
+    const isGuestByUserId =
+      reservationGuestUserId && reservationGuestUserId === authenticatedUserId;
+    const isGuestByEmail =
+      !reservationGuestUserId &&
+      reservationGuestEmail &&
+      reservationGuestEmail === authEmail;
+
+    if (!isGuestByUserId && !isGuestByEmail) {
       return json(res, 403, {
         ok: false,
         success: false,
         code: "REVIEW_UNAUTHORIZED",
-        message: "Guest email does not match reservation",
+        message: "Authenticated user does not match reservation guest",
       });
     }
 
@@ -213,11 +258,18 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
+    const propertyOwnerId =
+      String(reservation.propertyOwnerId || "") || String(property.ownerUserId || "");
+
     const reviewData = {
       propertyId,
       reservationId,
-      authorName,
-      authorEmailHash: hashEmail(authorEmail),
+      authorUserId: authenticatedUserId,
+      authorName:
+        normalizeText(authUser.name, 120) ||
+        normalizeText(reservation.guestName, 120) ||
+        "Guest",
+      authorEmailHash: hashEmail(authEmail),
       rating,
       comment,
       status: "pending",
@@ -228,21 +280,12 @@ export default async ({ req, res, log, error }) => {
       reviewData.title = title;
     }
 
-    const propertyOwnerId =
-      String(reservation.propertyOwnerId || "") || String(property.ownerUserId || "");
-
     const review = await db.createDocument(
       config.databaseId,
       config.reviewsCollectionId,
       ID.unique(),
       reviewData,
-      propertyOwnerId
-        ? [
-            Permission.read(Role.user(propertyOwnerId)),
-            Permission.update(Role.user(propertyOwnerId)),
-            Permission.delete(Role.user(propertyOwnerId)),
-          ]
-        : undefined,
+      buildReviewPermissions(propertyOwnerId, authenticatedUserId),
     );
 
     if (propertyOwnerId) {
@@ -251,14 +294,15 @@ export default async ({ req, res, log, error }) => {
         config,
         logger: log,
         data: {
-          actorUserId: propertyOwnerId,
-          actorRole: "owner",
-          action: "review.create_public",
+          actorUserId: authenticatedUserId,
+          actorRole: "client",
+          action: "review.create_authenticated",
           entityType: "reviews",
           entityId: review.$id,
           afterData: safeJsonString({
             reservationId,
             propertyId,
+            authorUserId: authenticatedUserId,
             rating,
             status: "pending",
           }),
@@ -276,6 +320,7 @@ export default async ({ req, res, log, error }) => {
         reviewId: review.$id,
         reservationId,
         propertyId,
+        authorUserId: authenticatedUserId,
         status: "pending",
       },
     });
