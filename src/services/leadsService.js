@@ -35,7 +35,7 @@ export const leadsService = {
     const functionId = env.appwrite.functions.createLead;
     if (!functionId) {
       throw new Error(
-        "No está configurada VITE_APPWRITE_FUNCTION_CREATE_LEAD_ID para crear leads públicos."
+        "No esta configurada APPWRITE_FUNCTION_CREATE_LEAD_ID para crear leads publicos."
       );
     }
 

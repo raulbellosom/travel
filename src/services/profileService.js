@@ -65,7 +65,7 @@ export const profileService = {
     const functionId = env.appwrite.functions.syncUserProfile;
     if (!functionId) {
       throw new Error(
-        "No está configurada VITE_APPWRITE_FUNCTION_SYNC_USER_PROFILE_ID."
+        "No esta configurada APPWRITE_FUNCTION_SYNC_USER_PROFILE_ID."
       );
     }
     return executeJsonFunction(functionId, patch);

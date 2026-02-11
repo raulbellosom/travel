@@ -73,7 +73,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
     const documents = await listAllDocuments({
@@ -88,7 +88,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
     return listAllDocuments({
@@ -101,7 +101,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
     const data = normalizeAmenityInput(input, { includeEnabled: true });
@@ -122,7 +122,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
     const shouldIncludeEnabled = Object.prototype.hasOwnProperty.call(
@@ -149,7 +149,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
     return databases.updateDocument({
@@ -164,7 +164,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
     const existing = await this.listAll();
@@ -205,7 +205,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       PROPERTY_AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID"
+      "APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID"
     );
 
     const links = await listAllDocuments({
@@ -220,7 +220,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
     const amenityIds = await this.listPropertyAmenityIds(propertyId);
@@ -243,7 +243,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       PROPERTY_AMENITIES_COLLECTION_ID,
-      "VITE_APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID"
+      "APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID"
     );
 
     const nextIds = Array.from(

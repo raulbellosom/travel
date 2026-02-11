@@ -8,6 +8,7 @@ import {
 import { authService } from "../services/authService";
 import { profileService } from "../services/profileService";
 import { isUnauthorizedError } from "../utils/errors";
+import env from "../env";
 
 const AuthContext = createContext(null);
 
@@ -113,9 +114,7 @@ export function AuthProvider({ children }) {
   const updateProfile = useCallback(async (patch) => {
     if (!authUser?.$id) throw new Error("No hay sesión activa.");
 
-    const hasSyncFunction = Boolean(
-      import.meta.env.VITE_APPWRITE_FUNCTION_SYNC_USER_PROFILE_ID
-    );
+    const hasSyncFunction = Boolean(env.appwrite.functions.syncUserProfile);
 
     if (hasSyncFunction) {
       await profileService.syncUserProfile(patch);

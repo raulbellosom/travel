@@ -15,7 +15,7 @@ const callEmailVerificationFunction = async (payload) => {
   const functionId = env.appwrite.functions.emailVerification;
   if (!functionId) {
     throw new Error(
-      "No está configurada VITE_APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID."
+      "No esta configurada APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID."
     );
   }
 
@@ -51,7 +51,7 @@ export const authService = {
         sessionId: "current",
       });
       const error = new Error(
-        "Tu correo no está verificado. Revisa tu email antes de iniciar sesión."
+        "Tu correo no esta verificado. Revisa tu email antes de iniciar sesion."
       );
       error.code = "EMAIL_NOT_VERIFIED";
       throw error;
@@ -110,7 +110,7 @@ export const authService = {
     }
 
     if (!userId || !secret) {
-      throw new Error("Faltan parámetros de verificación.");
+      throw new Error("Faltan parametros de verificacion.");
     }
 
     return account.updateVerification({
