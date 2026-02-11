@@ -1,8 +1,10 @@
-﻿import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, ShieldCheck, Globe2 } from "lucide-react";
 import { Footer } from "../components/common/organisms";
 import BrandLogo from "../components/common/BrandLogo";
+import LoadingScreen from "../components/loaders/LoadingScreen";
+import { useAuth } from "../hooks/useAuth";
 
 const pathKeyMap = {
   "/login": "login",
@@ -14,8 +16,18 @@ const pathKeyMap = {
 
 const AuthLayout = () => {
   const { t } = useTranslation();
+  const { loading } = useAuth();
   const location = useLocation();
   const pageKey = pathKeyMap[location.pathname] || "login";
+
+  if (loading) {
+    return (
+      <LoadingScreen
+        transparent={false}
+        title={t("routeGuards.validatingSession")}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-slate-100 dark:bg-slate-950">

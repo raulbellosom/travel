@@ -497,6 +497,8 @@
     },
     "actions": {
       "saving": "Saving...",
+      "editProfile": "Edit profile",
+      "cancelEdit": "Cancel",
       "saveProfile": "Save profile",
       "savePreferences": "Save preferences",
       "uploadAvatar": "Upload photo",
@@ -521,6 +523,9 @@
       "defaultName": "User",
       "location": "Puerto Vallarta, Jalisco",
       "profileProgress": "Profile completion"
+    },
+    "view": {
+      "empty": "No data"
     },
     "sidebar": {
       "title": "Settings",

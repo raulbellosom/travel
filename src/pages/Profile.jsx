@@ -6,6 +6,7 @@ import {
   KeyRound,
   Mail,
   MapPin,
+  PencilLine,
   ShieldCheck,
   SlidersHorizontal,
   Trash2,
@@ -24,6 +25,19 @@ const PROFILE_FIELDS = [
   "instagramUrl",
 ];
 
+const PROFILE_EDIT_KEYS = [
+  ...PROFILE_FIELDS,
+  "bio",
+];
+
+const PREFERENCE_KEYS = [
+  "theme",
+  "locale",
+  "currency",
+  "measurementSystem",
+  "notificationsEmail",
+];
+
 const PROFILE_NAV_KEYS = [
   "personalInfo",
   "address",
@@ -36,6 +50,53 @@ const PROFILE_NAV_KEYS = [
 const MAX_AVATAR_SIZE_MB = 5;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
 
+const splitFullName = (value) => {
+  const normalized = String(value || "").trim().replace(/\s+/g, " ");
+  if (!normalized) return { firstName: "", lastName: "" };
+  const [firstName, ...rest] = normalized.split(" ");
+  return {
+    firstName,
+    lastName: rest.join(" "),
+  };
+};
+
+const buildProfileFormFromSources = ({ profile, user }) => {
+  const parsedName = splitFullName(user?.name);
+
+  return {
+    firstName: profile?.firstName || parsedName.firstName || "",
+    lastName: profile?.lastName || parsedName.lastName || "",
+    phone: profile?.phone || user?.phone || "",
+    whatsappNumber: profile?.whatsappNumber || "",
+    companyName: profile?.companyName || "",
+    bio: profile?.bio || "",
+    websiteUrl: profile?.websiteUrl || "",
+    facebookUrl: profile?.facebookUrl || "",
+    instagramUrl: profile?.instagramUrl || "",
+  };
+};
+
+const buildPreferencesForm = (preferences) => ({
+  theme: preferences?.theme || "system",
+  locale: preferences?.locale || "es",
+  currency: preferences?.currency || "MXN",
+  measurementSystem: preferences?.measurementSystem || "metric",
+  notificationsEmail: preferences?.notificationsEmail ?? true,
+});
+
+const hasChanged = (current, initial, keys) => {
+  return keys.some((key) => {
+    const currentValue = current?.[key];
+    const initialValue = initial?.[key];
+
+    if (typeof currentValue === "boolean" || typeof initialValue === "boolean") {
+      return Boolean(currentValue) !== Boolean(initialValue);
+    }
+
+    return String(currentValue ?? "").trim() !== String(initialValue ?? "").trim();
+  });
+};
+
 const Profile = () => {
   const { t } = useTranslation();
   const {
@@ -47,24 +108,18 @@ const Profile = () => {
     updateAvatar,
     removeAvatar,
   } = useAuth();
-  const [profileForm, setProfileForm] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    whatsappNumber: "",
-    companyName: "",
-    bio: "",
-    websiteUrl: "",
-    facebookUrl: "",
-    instagramUrl: "",
-  });
-  const [preferencesForm, setPreferencesForm] = useState({
-    theme: "system",
-    locale: "es",
-    currency: "MXN",
-    measurementSystem: "metric",
-    notificationsEmail: true,
-  });
+
+  const [profileForm, setProfileForm] = useState(() =>
+    buildProfileFormFromSources({ profile: null, user: null })
+  );
+  const [initialProfileForm, setInitialProfileForm] = useState(() =>
+    buildProfileFormFromSources({ profile: null, user: null })
+  );
+
+  const [preferencesForm, setPreferencesForm] = useState(() => buildPreferencesForm(null));
+  const [initialPreferencesForm, setInitialPreferencesForm] = useState(() => buildPreferencesForm(null));
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -73,26 +128,21 @@ const Profile = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setProfileForm({
-      firstName: profile?.firstName || "",
-      lastName: profile?.lastName || "",
-      phone: profile?.phone || "",
-      whatsappNumber: profile?.whatsappNumber || "",
-      companyName: profile?.companyName || "",
-      bio: profile?.bio || "",
-      websiteUrl: profile?.websiteUrl || "",
-      facebookUrl: profile?.facebookUrl || "",
-      instagramUrl: profile?.instagramUrl || "",
+    const nextProfileForm = buildProfileFormFromSources({
+      profile,
+      user: {
+        name: user?.name || "",
+        phone: user?.phone || "",
+      },
     });
+    const nextPreferencesForm = buildPreferencesForm(preferences);
 
-    setPreferencesForm({
-      theme: preferences?.theme || "system",
-      locale: preferences?.locale || "es",
-      currency: preferences?.currency || "MXN",
-      measurementSystem: preferences?.measurementSystem || "metric",
-      notificationsEmail: preferences?.notificationsEmail ?? true,
-    });
-  }, [preferences, profile]);
+    setProfileForm(nextProfileForm);
+    setInitialProfileForm(nextProfileForm);
+    setPreferencesForm(nextPreferencesForm);
+    setInitialPreferencesForm(nextPreferencesForm);
+    setIsEditingProfile(false);
+  }, [preferences, profile, user?.name, user?.phone]);
 
   const fullName = useMemo(() => {
     const value = `${profileForm.firstName} ${profileForm.lastName}`.trim();
@@ -122,13 +172,43 @@ const Profile = () => {
     return Math.round((filled / values.length) * 100);
   }, [profileForm]);
 
+  const hasProfileChanges = useMemo(
+    () => hasChanged(profileForm, initialProfileForm, PROFILE_EDIT_KEYS),
+    [profileForm, initialProfileForm]
+  );
+
+  const hasPreferencesChanges = useMemo(
+    () => hasChanged(preferencesForm, initialPreferencesForm, PREFERENCE_KEYS),
+    [preferencesForm, initialPreferencesForm]
+  );
+
+  const profileItems = useMemo(
+    () => [
+      { key: "firstName", value: profileForm.firstName },
+      { key: "lastName", value: profileForm.lastName },
+      { key: "phone", value: profileForm.phone },
+      { key: "whatsappNumber", value: profileForm.whatsappNumber },
+      { key: "companyName", value: profileForm.companyName },
+      { key: "websiteUrl", value: profileForm.websiteUrl },
+      { key: "facebookUrl", value: profileForm.facebookUrl },
+      { key: "instagramUrl", value: profileForm.instagramUrl },
+      { key: "bio", value: profileForm.bio },
+    ],
+    [profileForm]
+  );
+
   const onSaveProfile = async (event) => {
     event.preventDefault();
+    if (!hasProfileChanges) return;
+
     setSavingProfile(true);
     setError("");
     setMessage("");
+
     try {
       await updateProfile(profileForm);
+      setInitialProfileForm(profileForm);
+      setIsEditingProfile(false);
       setMessage(t("profilePage.messages.profileSaved"));
     } catch (err) {
       setError(getErrorMessage(err, t("profilePage.errors.profile")));
@@ -137,13 +217,23 @@ const Profile = () => {
     }
   };
 
+  const onCancelProfileEdit = () => {
+    setProfileForm(initialProfileForm);
+    setIsEditingProfile(false);
+    setError("");
+  };
+
   const onSavePreferences = async (event) => {
     event.preventDefault();
+    if (!hasPreferencesChanges) return;
+
     setSavingPreferences(true);
     setError("");
     setMessage("");
+
     try {
       await updatePreferences(preferencesForm);
+      setInitialPreferencesForm(preferencesForm);
       setMessage(t("profilePage.messages.preferencesSaved"));
     } catch (err) {
       setError(getErrorMessage(err, t("profilePage.errors.preferences")));
@@ -328,42 +418,92 @@ const Profile = () => {
             onSubmit={onSaveProfile}
             className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
           >
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 md:col-span-2">
-              {t("profilePage.sections.personal")}
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-3 md:col-span-2">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {t("profilePage.sections.personal")}
+              </h2>
 
-            {PROFILE_FIELDS.map((key) => (
-              <label key={key} className="grid gap-1 text-sm">
-                <span>{t(`profilePage.fields.${key}`)}</span>
-                <input
-                  value={profileForm[key]}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({ ...prev, [key]: event.target.value }))
-                  }
-                  className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
-                />
-              </label>
-            ))}
+              {!isEditingProfile ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingProfile(true);
+                    setError("");
+                    setMessage("");
+                  }}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <PencilLine size={14} />
+                  {t("profilePage.actions.editProfile")}
+                </button>
+              ) : null}
+            </div>
 
-            <label className="grid gap-1 text-sm md:col-span-2">
-              <span>{t("profilePage.fields.bio")}</span>
-              <textarea
-                rows={4}
-                value={profileForm.bio}
-                onChange={(event) =>
-                  setProfileForm((prev) => ({ ...prev, bio: event.target.value }))
-                }
-                className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
-              />
-            </label>
+            {!isEditingProfile ? (
+              <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+                {profileItems.map((item) => (
+                  <article
+                    key={item.key}
+                    className={`rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50 ${
+                      item.key === "bio" ? "md:col-span-2" : ""
+                    }`}
+                  >
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                      {t(`profilePage.fields.${item.key}`)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-900 dark:text-slate-100">
+                      {String(item.value || "").trim() || t("profilePage.view.empty")}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <>
+                {PROFILE_FIELDS.map((key) => (
+                  <label key={key} className="grid gap-1 text-sm">
+                    <span>{t(`profilePage.fields.${key}`)}</span>
+                    <input
+                      value={profileForm[key]}
+                      onChange={(event) =>
+                        setProfileForm((prev) => ({ ...prev, [key]: event.target.value }))
+                      }
+                      className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+                    />
+                  </label>
+                ))}
 
-            <button
-              type="submit"
-              disabled={savingProfile}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {savingProfile ? t("profilePage.actions.saving") : t("profilePage.actions.saveProfile")}
-            </button>
+                <label className="grid gap-1 text-sm md:col-span-2">
+                  <span>{t("profilePage.fields.bio")}</span>
+                  <textarea
+                    rows={4}
+                    value={profileForm.bio}
+                    onChange={(event) =>
+                      setProfileForm((prev) => ({ ...prev, bio: event.target.value }))
+                    }
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+                  />
+                </label>
+
+                <div className="flex flex-wrap items-center gap-3 md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={onCancelProfileEdit}
+                    disabled={savingProfile}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    {t("profilePage.actions.cancelEdit")}
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={!hasProfileChanges || savingProfile}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {savingProfile ? t("profilePage.actions.saving") : t("profilePage.actions.saveProfile")}
+                  </button>
+                </div>
+              </>
+            )}
           </form>
 
           <form
@@ -451,7 +591,7 @@ const Profile = () => {
 
             <button
               type="submit"
-              disabled={savingPreferences}
+              disabled={!hasPreferencesChanges || savingPreferences}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {savingPreferences ? t("profilePage.actions.saving") : t("profilePage.actions.savePreferences")}
