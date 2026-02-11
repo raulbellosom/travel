@@ -8,6 +8,11 @@ import {
 import { authService } from "../services/authService";
 import { profileService } from "../services/profileService";
 import { isUnauthorizedError } from "../utils/errors";
+import {
+  isValidPhoneCombination,
+  normalizePhoneDialCode,
+  sanitizePhoneLocalNumber,
+} from "../utils/phone";
 import env from "../env";
 
 const AuthContext = createContext(null);
@@ -82,8 +87,25 @@ export function AuthProvider({ children }) {
     [loadProfileData]
   );
 
-  const register = useCallback(async ({ firstName, lastName, email, password }) => {
+  const register = useCallback(async ({
+    firstName,
+    lastName,
+    email,
+    password,
+    phone,
+    phoneCountryCode,
+  }) => {
     const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+    const normalizedPhone = sanitizePhoneLocalNumber(phone);
+    const normalizedPhoneCountryCode = normalizePhoneDialCode(phoneCountryCode);
+    const hasValidPhone =
+      normalizedPhone &&
+      normalizedPhoneCountryCode &&
+      isValidPhoneCombination({
+        dialCode: normalizedPhoneCountryCode,
+        localNumber: normalizedPhone,
+      });
+
     const nextUser = await authService.register({
       firstName,
       lastName,
@@ -91,7 +113,43 @@ export function AuthProvider({ children }) {
       email,
       password,
     });
+
+    let setupSessionCreated = false;
     try {
+      await authService.createSetupSession(email, password);
+      setupSessionCreated = true;
+    } catch {
+      setupSessionCreated = false;
+    }
+
+    try {
+      if (setupSessionCreated) {
+        const registrationPatch = {
+          firstName,
+          lastName,
+        };
+
+        if (hasValidPhone) {
+          registrationPatch.phoneCountryCode = normalizedPhoneCountryCode;
+          registrationPatch.phone = normalizedPhone;
+        }
+
+        if (env.appwrite.functions.syncUserProfile) {
+          await profileService.syncUserProfile(registrationPatch).catch(() => {});
+        } else {
+          try {
+            await profileService.updateProfile(nextUser.$id, registrationPatch);
+          } catch {
+            const fallbackPatch = { ...registrationPatch };
+            delete fallbackPatch.phoneCountryCode;
+            if (hasValidPhone) {
+              fallbackPatch.phone = `${normalizedPhoneCountryCode}${normalizedPhone}`;
+            }
+            await profileService.updateProfile(nextUser.$id, fallbackPatch).catch(() => {});
+          }
+        }
+      }
+
       await authService.sendVerificationEmail({
         userId: nextUser.$id,
         email: nextUser.email,
@@ -102,7 +160,12 @@ export function AuthProvider({ children }) {
       if (code !== 409 && code !== 429) {
         throw error;
       }
+    } finally {
+      if (setupSessionCreated) {
+        await authService.logout().catch(() => {});
+      }
     }
+
     return nextUser;
   }, []);
 
@@ -182,7 +245,13 @@ export function AuthProvider({ children }) {
       if (!authUser?.$id) throw new Error("No hay sesion activa.");
 
       const hasSyncFunction = Boolean(env.appwrite.functions.syncUserProfile);
-      const syncAllowedFields = new Set(["firstName", "lastName", "email", "phone"]);
+      const syncAllowedFields = new Set([
+        "firstName",
+        "lastName",
+        "email",
+        "phone",
+        "phoneCountryCode",
+      ]);
       const syncPatch = {};
       const profilePatch = {};
 

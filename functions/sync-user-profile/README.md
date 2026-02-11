@@ -4,6 +4,7 @@ Sincroniza cambios de perfil entre:
 
 - `users` collection (database)
 - usuario de Appwrite Auth
+- campos sincronizados: `firstName`, `lastName`, `email`, `phone`, `phoneCountryCode`
 
 ## Runtime
 

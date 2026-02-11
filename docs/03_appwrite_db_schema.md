@@ -1,4 +1,4 @@
-﻿# 03_APPWRITE_DB_SCHEMA.md - REAL ESTATE SAAS PLATFORM
+# 03_APPWRITE_DB_SCHEMA.md - INMOBO PLATFORM
 
 ## Referencia
 
@@ -106,23 +106,27 @@ Purpose: perfiles de usuarios de la instancia (internos + clientes finales).
 
 ### Attributes
 
-| Attribute    | Type    | Size | Required | Default | Constraint                                                             |
-| ------------ | ------- | ---- | -------- | ------- | ---------------------------------------------------------------------- |
-| `authId`     | string  | 64   | yes      | -       | regex `^[A-Za-z0-9._-]{1,64}$`                                         |
-| `email`      | email   | 254  | yes      | -       | email valido                                                           |
-| `firstName`  | string  | 80   | yes      | -       | min 1                                                                  |
-| `lastName`   | string  | 80   | yes      | -       | min 1                                                                  |
-| `phone`      | string  | 20   | no       | -       | regex telefono internacional                                           |
-| `birthDate`  | string  | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                         |
-| `role`       | enum    | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
-| `scopesJson` | string  | 4000 | no       | -       | JSON array serializado                                                 |
-| `isHidden`   | boolean | -    | no       | false   | -                                                                      |
-| `enabled`    | boolean | -    | no       | true    | -                                                                      |
+| Attribute             | Type    | Size | Required | Default | Constraint                                                             |
+| --------------------- | ------- | ---- | -------- | ------- | ---------------------------------------------------------------------- |
+| `email`               | email   | 254  | yes      | -       | email valido                                                           |
+| `firstName`           | string  | 80   | yes      | -       | min 1                                                                  |
+| `lastName`            | string  | 80   | yes      | -       | min 1                                                                  |
+| `phoneCountryCode`    | string  | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
+| `phone`               | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                        |
+| `whatsappCountryCode` | string  | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
+| `whatsappNumber`      | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                        |
+| `birthDate`           | string  | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                         |
+| `role`                | enum    | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
+| `scopesJson`          | string  | 4000 | no       | -       | JSON array serializado                                                 |
+| `isHidden`            | boolean | -    | no       | false   | -                                                                      |
+| `enabled`             | boolean | -    | no       | true    | -                                                                      |
 
 Notas:
 
-- `authId`: Debe coincidir con Auth user id
+- `$id`: Debe ser igual al Auth user id
 - `email`: Unico
+- `phoneCountryCode` + `phone`: Telefono principal separado en lada y numero local
+- `whatsappCountryCode` + `whatsappNumber`: WhatsApp separado en lada y numero local
 - `birthDate`: Fecha de nacimiento en formato `YYYY-MM-DD`
 - `role`: Rol de aplicacion
 - `scopesJson`: Permisos finos
@@ -134,7 +138,6 @@ Notas:
 
 | Index Name            | Type | Attributes     | Notes                    |
 | --------------------- | ---- | -------------- | ------------------------ |
-| `uq_users_authid`     | uq   | `authId ↑`     | Unico por Auth ID        |
 | `uq_users_email`      | uq   | `email ↑`      | Unico por email          |
 | `idx_users_role`      | idx  | `role ↑`       | Filtro por rol           |
 | `idx_users_hidden`    | idx  | `isHidden ↑`   | Excluir root en listados |
@@ -143,7 +146,7 @@ Notas:
 
 ### Permissions
 
-- Lectura/actualizacion directa: `Role.user(authId)`.
+- Lectura/actualizacion directa: `Role.user($id)`.
 - Gestion de staff/roles: solo via Functions (owner/root).
 - Listado de clientes por owner: solo via Function y sin mutaciones directas.
 
@@ -777,3 +780,4 @@ Formato obligatorio:
 Ultima actualizacion: 2026-02-11
 Version: 2.2.0
 Schema Version: 2.2
+

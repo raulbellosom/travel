@@ -35,6 +35,16 @@ const splitName = (name) => {
 };
 
 const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
+const normalizePhoneLocal = (value) =>
+  String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 15);
+const normalizeDialCode = (value) => {
+  const digits = String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 4);
+  return digits ? `+${digits}` : "";
+};
 
 const parseCsv = (value) =>
   String(value || "")
@@ -49,6 +59,53 @@ const getErrorText = (error) => String(error?.message || "").toLowerCase();
 const isAuthIdRequiredError = (error) => {
   const message = getErrorText(error);
   return message.includes("authid") && (message.includes("required") || message.includes("missing"));
+};
+
+const isUnknownAttributeError = (error, fieldName) => {
+  const message = getErrorText(error);
+  const field = String(fieldName || "").toLowerCase();
+  return message.includes(field) && message.includes("attribute");
+};
+
+const DIAL_CODE_REGEX = /^\+[1-9][0-9]{0,3}$/;
+const PHONE_LOCAL_REGEX = /^[0-9]{6,15}$/;
+
+const isValidDialCode = (value) => DIAL_CODE_REGEX.test(String(value || ""));
+const isValidPhoneLocal = (value) => PHONE_LOCAL_REGEX.test(String(value || ""));
+
+const splitE164Phone = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return { phone: "", phoneCountryCode: "" };
+
+  for (let length = 4; length >= 1; length -= 1) {
+    const dial = `+${digits.slice(0, length)}`;
+    const local = digits.slice(length);
+    if (isValidDialCode(dial) && isValidPhoneLocal(local)) {
+      return {
+        phone: local,
+        phoneCountryCode: dial,
+      };
+    }
+  }
+
+  return { phone: "", phoneCountryCode: "" };
+};
+
+const resolvePhoneFields = (payload) => {
+  const rawPhone = String(payload.phone || "").trim();
+  if (rawPhone.startsWith("+")) {
+    const parsed = splitE164Phone(rawPhone);
+    if (parsed.phone) return parsed;
+  }
+
+  const phone = normalizePhoneLocal(payload.phone);
+  const phoneCountryCode = normalizeDialCode(payload.phoneCountryCode);
+  if (!phone) return { phone: "", phoneCountryCode: "" };
+
+  return {
+    phone,
+    phoneCountryCode: isValidDialCode(phoneCountryCode) ? phoneCountryCode : "",
+  };
 };
 
 const resolveInitialRole = ({ userId, email, config }) => {
@@ -95,14 +152,31 @@ const createUsersProfileCompat = async ({ db, config, userId, profileData, permi
       permissions
     );
   } catch (error) {
-    if (!isAuthIdRequiredError(error)) throw error;
+    let nextProfileData = { ...profileData };
+    if (isUnknownAttributeError(error, "phoneCountryCode")) {
+      delete nextProfileData.phoneCountryCode;
+    }
+
+    if (!isAuthIdRequiredError(error)) {
+      if (!isUnknownAttributeError(error, "phoneCountryCode")) {
+        throw error;
+      }
+
+      return db.createDocument(
+        config.databaseId,
+        config.usersCollectionId,
+        userId,
+        nextProfileData,
+        permissions
+      );
+    }
 
     return db.createDocument(
       config.databaseId,
       config.usersCollectionId,
       userId,
       {
-        ...profileData,
+        ...nextProfileData,
         authId: userId,
       },
       permissions
@@ -120,14 +194,31 @@ const updateUsersProfileCompat = async ({ db, config, userId, patch, permissions
       permissions
     );
   } catch (error) {
-    if (!isAuthIdRequiredError(error)) throw error;
+    let nextPatch = { ...patch };
+    if (isUnknownAttributeError(error, "phoneCountryCode")) {
+      delete nextPatch.phoneCountryCode;
+    }
+
+    if (!isAuthIdRequiredError(error)) {
+      if (!isUnknownAttributeError(error, "phoneCountryCode")) {
+        throw error;
+      }
+
+      return db.updateDocument(
+        config.databaseId,
+        config.usersCollectionId,
+        userId,
+        nextPatch,
+        permissions
+      );
+    }
 
     return db.updateDocument(
       config.databaseId,
       config.usersCollectionId,
       userId,
       {
-        ...patch,
+        ...nextPatch,
         authId: userId,
       },
       permissions
@@ -138,7 +229,7 @@ const updateUsersProfileCompat = async ({ db, config, userId, patch, permissions
 const safeCreateUsersProfile = async (db, config, payload, log) => {
   const userId = payload.$id || payload.userId || payload.id;
   const email = normalizeEmail(payload.email || "");
-  const phone = payload.phone || "";
+  const { phone, phoneCountryCode } = resolvePhoneFields(payload);
   const { firstName, lastName } = splitName(payload.name || payload.fullName || "");
   const role = resolveInitialRole({ userId, email, config });
 
@@ -149,6 +240,7 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
     firstName,
     lastName,
     phone,
+    phoneCountryCode,
     role,
     scopesJson: "[]",
     isHidden: false,
@@ -180,6 +272,7 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
         firstName,
         lastName,
         phone,
+        phoneCountryCode,
       },
       permissions,
     });

@@ -24,15 +24,47 @@ const normalize = (value, max = 0) => {
   return max > 0 ? str.slice(0, max) : str;
 };
 
+const normalizeDigits = (value, max = 0) => {
+  const str = String(value ?? "").replace(/\D/g, "");
+  return max > 0 ? str.slice(0, max) : str;
+};
+
+const normalizeDialCode = (value) => {
+  const digits = normalizeDigits(value, 4);
+  return digits ? `+${digits}` : "";
+};
+
 const hasValue = (value) =>
   value !== undefined && value !== null && String(value).trim() !== "";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^\+?[0-9()\-\s]{7,20}$/;
-const ALLOWED_FIELDS = new Set(["firstName", "lastName", "email", "phone"]);
+const PHONE_LOCAL_REGEX = /^[0-9]{6,15}$/;
+const DIAL_CODE_REGEX = /^\+[1-9][0-9]{0,3}$/;
+const E164_REGEX = /^\+[1-9][0-9]{6,14}$/;
+const ALLOWED_FIELDS = new Set([
+  "firstName",
+  "lastName",
+  "email",
+  "phone",
+  "phoneCountryCode",
+]);
 
 const isValidEmail = (value) => EMAIL_REGEX.test(String(value || ""));
-const isValidPhone = (value) => PHONE_REGEX.test(String(value || ""));
+const isValidPhoneLocal = (value) => PHONE_LOCAL_REGEX.test(String(value || ""));
+const isValidDialCode = (value) => DIAL_CODE_REGEX.test(String(value || ""));
+
+const buildE164Phone = ({ dialCode, localNumber }) => {
+  if (!hasValue(localNumber)) return "";
+  if (!isValidDialCode(dialCode) || !isValidPhoneLocal(localNumber)) return "";
+  const value = `${dialCode}${localNumber}`;
+  return E164_REGEX.test(value) ? value : "";
+};
+
+const isUnknownAttributeError = (err, fieldName) => {
+  const message = String(err?.message || "").toLowerCase();
+  const target = String(fieldName || "").toLowerCase();
+  return message.includes(target) && message.includes("attribute");
+};
 
 const fullName = (firstName, lastName) =>
   `${String(firstName || "").trim()} ${String(lastName || "").trim()}`.trim();
@@ -110,7 +142,10 @@ export default async ({ req, res, log, error }) => {
       body.email ?? authUser.email,
       254,
     ).toLowerCase();
-    const nextPhone = normalize(body.phone ?? currentProfile.phone, 20);
+    const nextPhone = normalizeDigits(body.phone ?? currentProfile.phone, 15);
+    const nextPhoneCountryCode = normalizeDialCode(
+      body.phoneCountryCode ?? currentProfile.phoneCountryCode,
+    );
 
     if (!nextFirstName || !nextLastName) {
       return json(res, 422, {
@@ -130,7 +165,39 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (hasValue(nextPhone) && !isValidPhone(nextPhone)) {
+    if (hasValue(nextPhone) && !isValidPhoneLocal(nextPhone)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "Invalid phone format",
+      });
+    }
+
+    if (hasValue(nextPhone) && !hasValue(nextPhoneCountryCode)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "phoneCountryCode is required when phone is present",
+      });
+    }
+
+    if (hasValue(nextPhoneCountryCode) && !isValidDialCode(nextPhoneCountryCode)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "Invalid phoneCountryCode format",
+      });
+    }
+
+    const nextPhoneE164 = buildE164Phone({
+      dialCode: nextPhoneCountryCode,
+      localNumber: nextPhone,
+    });
+
+    if (hasValue(nextPhone) && !nextPhoneE164) {
       return json(res, 422, {
         ok: false,
         success: false,
@@ -143,6 +210,7 @@ export default async ({ req, res, log, error }) => {
       firstName: nextFirstName,
       lastName: nextLastName,
       phone: nextPhone,
+      phoneCountryCode: hasValue(nextPhone) ? nextPhoneCountryCode : "",
     };
 
     const emailChanged =
@@ -151,12 +219,27 @@ export default async ({ req, res, log, error }) => {
       patch.email = nextEmail;
     }
 
-    await db.updateDocument(
-      config.databaseId,
-      config.usersCollectionId,
-      userId,
-      patch,
-    );
+    try {
+      await db.updateDocument(
+        config.databaseId,
+        config.usersCollectionId,
+        userId,
+        patch,
+      );
+    } catch (dbErr) {
+      if (!isUnknownAttributeError(dbErr, "phoneCountryCode")) {
+        throw dbErr;
+      }
+
+      const fallbackPatch = { ...patch };
+      delete fallbackPatch.phoneCountryCode;
+      await db.updateDocument(
+        config.databaseId,
+        config.usersCollectionId,
+        userId,
+        fallbackPatch,
+      );
+    }
 
     const authUpdates = [];
     const nextName = fullName(nextFirstName, nextLastName);
@@ -171,8 +254,8 @@ export default async ({ req, res, log, error }) => {
       authUpdates.push("email");
     }
 
-    if (hasValue(nextPhone) && nextPhone !== authUser.phone) {
-      await users.updatePhone(userId, nextPhone);
+    if (hasValue(nextPhoneE164) && nextPhoneE164 !== authUser.phone) {
+      await users.updatePhone(userId, nextPhoneE164);
       authUpdates.push("phone");
     }
 

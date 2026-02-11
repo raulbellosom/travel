@@ -279,9 +279,16 @@
       "lastName": "Apellidos",
       "email": "Correo electronico",
       "phoneOptional": "Telefono (opcional)",
+      "phoneCountryCode": "Lada",
+      "phoneNumberOptional": "Numero de telefono (opcional)",
       "password": "Contrasena",
       "confirmPassword": "Confirmar contrasena",
       "terms": "Acepto terminos y condiciones."
+    },
+    "placeholders": {
+      "phoneCountryCode": "Selecciona lada",
+      "noCountryCodeResults": "Sin resultados",
+      "phoneNumber": "Solo numeros"
     },
     "actions": {
       "submit": "Crear cuenta",
@@ -299,7 +306,8 @@
       "termsRequired": "Debes aceptar terminos y condiciones.",
       "create": "No pudimos crear tu cuenta.",
       "invalidEmail": "Ingresa un correo electronico valido.",
-      "passwordWeak": "La contrasena no cumple el nivel minimo de seguridad."
+      "passwordWeak": "La contrasena no cumple el nivel minimo de seguridad.",
+      "invalidPhone": "Ingresa un telefono valido con lada y numero."
     }
   },
   "forgotPasswordPage": {
@@ -520,7 +528,15 @@
       "preferences": "No se pudieron guardar las preferencias.",
       "avatarUpload": "No se pudo subir la imagen de perfil.",
       "avatarRemove": "No se pudo eliminar la imagen de perfil.",
-      "avatarSize": "La imagen supera el maximo de {{max}} MB."
+      "avatarSize": "La imagen supera el maximo de {{max}} MB.",
+      "invalidPhone": "Ingresa un telefono valido.",
+      "invalidWhatsapp": "Ingresa un numero de WhatsApp valido."
+    },
+    "placeholders": {
+      "phoneCountryCode": "Selecciona lada",
+      "noCountryCodeResults": "Sin resultados",
+      "phoneNumber": "Solo numeros",
+      "whatsappNumber": "Solo numeros"
     },
     "summary": {
       "defaultName": "Usuario",

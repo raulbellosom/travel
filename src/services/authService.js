@@ -64,6 +64,14 @@ export const authService = {
     return user;
   },
 
+  async createSetupSession(email, password) {
+    ensureAppwriteConfigured();
+    return account.createEmailPasswordSession({
+      email: String(email || "").trim().toLowerCase(),
+      password,
+    });
+  },
+
   async logout() {
     ensureAppwriteConfigured();
     return account.deleteSession({

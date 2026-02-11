@@ -279,9 +279,16 @@
       "lastName": "Last name",
       "email": "Email",
       "phoneOptional": "Phone (optional)",
+      "phoneCountryCode": "Country code",
+      "phoneNumberOptional": "Phone number (optional)",
       "password": "Password",
       "confirmPassword": "Confirm password",
       "terms": "I accept terms and conditions."
+    },
+    "placeholders": {
+      "phoneCountryCode": "Select country code",
+      "noCountryCodeResults": "No results",
+      "phoneNumber": "Digits only"
     },
     "actions": {
       "submit": "Create account",
@@ -299,7 +306,8 @@
       "termsRequired": "You must accept terms and conditions.",
       "create": "We could not create your account.",
       "invalidEmail": "Enter a valid email address.",
-      "passwordWeak": "The password does not meet the minimum security level."
+      "passwordWeak": "The password does not meet the minimum security level.",
+      "invalidPhone": "Enter a valid phone with country code and number."
     }
   },
   "forgotPasswordPage": {
@@ -520,7 +528,15 @@
       "preferences": "Could not save preferences.",
       "avatarUpload": "Could not upload profile image.",
       "avatarRemove": "Could not remove profile image.",
-      "avatarSize": "Image exceeds the {{max}} MB limit."
+      "avatarSize": "Image exceeds the {{max}} MB limit.",
+      "invalidPhone": "Enter a valid phone number.",
+      "invalidWhatsapp": "Enter a valid WhatsApp number."
+    },
+    "placeholders": {
+      "phoneCountryCode": "Select country code",
+      "noCountryCodeResults": "No results",
+      "phoneNumber": "Digits only",
+      "whatsappNumber": "Digits only"
     },
     "summary": {
       "defaultName": "User",

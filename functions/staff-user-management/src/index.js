@@ -253,28 +253,50 @@ const createStaff = async ({
       const notFound = Number(profileWaitError?.code) === 404;
       if (!notFound) throw profileWaitError;
 
-      await db.createDocument(
-        config.databaseId,
-        config.usersCollectionId,
-        createdUserId,
-        {
-          authId: createdUserId,
-          email,
-          firstName: firstName || "Staff",
-          lastName: lastName || "",
-          phone: "",
-          role,
-          scopesJson,
-          isHidden: false,
-          enabled: true,
-        },
-        [
-          Permission.read(Role.user(createdUserId)),
-          Permission.update(Role.user(createdUserId)),
-          Permission.delete(Role.user(createdUserId)),
-          Permission.read(Role.user(actorUserId)),
-        ],
-      );
+      const baseProfileData = {
+        email,
+        firstName: firstName || "Staff",
+        lastName: lastName || "",
+        phone: "",
+        role,
+        scopesJson,
+        isHidden: false,
+        enabled: true,
+      };
+
+      const profilePermissions = [
+        Permission.read(Role.user(createdUserId)),
+        Permission.update(Role.user(createdUserId)),
+        Permission.delete(Role.user(createdUserId)),
+        Permission.read(Role.user(actorUserId)),
+      ];
+
+      try {
+        await db.createDocument(
+          config.databaseId,
+          config.usersCollectionId,
+          createdUserId,
+          baseProfileData,
+          profilePermissions,
+        );
+      } catch (createProfileErr) {
+        const authRequired = String(createProfileErr?.message || "")
+          .toLowerCase()
+          .includes("authid");
+        if (!authRequired) throw createProfileErr;
+
+        await db.createDocument(
+          config.databaseId,
+          config.usersCollectionId,
+          createdUserId,
+          {
+            ...baseProfileData,
+            authId: createdUserId,
+          },
+          profilePermissions,
+        );
+      }
+
       profileTouched = true;
     }
 

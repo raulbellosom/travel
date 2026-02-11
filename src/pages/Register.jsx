@@ -12,18 +12,27 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
+import Combobox from "../components/common/molecules/Combobox/Combobox";
 import {
   getPasswordChecks,
   getPasswordStrengthScore,
   isStrongPassword,
   isValidEmail,
 } from "../utils/validation";
+import {
+  getCountryDialCodeOptions,
+  isValidPhoneCombination,
+  isValidPhoneDialCode,
+  isValidPhoneLocalNumber,
+  normalizePhoneDialCode,
+  sanitizePhoneLocalNumber,
+} from "../utils/phone";
 
 const inputClass =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800";
 
 const Register = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -31,6 +40,7 @@ const Register = () => {
     firstName: "",
     lastName: "",
     email: "",
+    phoneCountryCode: "+52",
     phone: "",
     password: "",
     confirmPassword: "",
@@ -48,6 +58,10 @@ const Register = () => {
   const passwordScore = useMemo(
     () => getPasswordStrengthScore(form.password),
     [form.password]
+  );
+  const countryDialCodeOptions = useMemo(
+    () => getCountryDialCodeOptions(i18n.language),
+    [i18n.language]
   );
 
   const onChange = (field, value) => {
@@ -88,12 +102,38 @@ const Register = () => {
       return;
     }
 
+    const normalizedPhone = sanitizePhoneLocalNumber(form.phone);
+    const normalizedPhoneDialCode = normalizePhoneDialCode(form.phoneCountryCode);
+    if (normalizedPhone) {
+      if (!isValidPhoneLocalNumber(normalizedPhone)) {
+        setError(t("registerPage.errors.invalidPhone"));
+        return;
+      }
+
+      if (!isValidPhoneDialCode(normalizedPhoneDialCode)) {
+        setError(t("registerPage.errors.invalidPhone"));
+        return;
+      }
+
+      if (
+        !isValidPhoneCombination({
+          dialCode: normalizedPhoneDialCode,
+          localNumber: normalizedPhone,
+        })
+      ) {
+        setError(t("registerPage.errors.invalidPhone"));
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       await register({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email,
+        phoneCountryCode: normalizedPhone ? normalizedPhoneDialCode : "",
+        phone: normalizedPhone,
         password: form.password,
       });
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`, {
@@ -156,16 +196,36 @@ const Register = () => {
           />
         </label>
 
-        <label className="grid gap-1 text-sm">
+        <div className="grid gap-2 text-sm">
           <span className="inline-flex items-center gap-2"><Phone size={14} /> {t("registerPage.fields.phoneOptional")}</span>
-          <input
-            type="tel"
-            autoComplete="tel"
-            value={form.phone}
-            onChange={(event) => onChange("phone", event.target.value)}
-            className={inputClass}
-          />
-        </label>
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
+            <label className="grid gap-1 text-sm">
+              <span>{t("registerPage.fields.phoneCountryCode")}</span>
+              <Combobox
+                options={countryDialCodeOptions}
+                value={form.phoneCountryCode}
+                onChange={(value) => onChange("phoneCountryCode", value || "")}
+                placeholder={t("registerPage.placeholders.phoneCountryCode")}
+                noResultsText={t("registerPage.placeholders.noCountryCodeResults")}
+                inputClassName={inputClass}
+              />
+            </label>
+            <label className="grid gap-1 text-sm">
+              <span>{t("registerPage.fields.phoneNumberOptional")}</span>
+              <input
+                type="tel"
+                autoComplete="tel-national"
+                inputMode="numeric"
+                value={form.phone}
+                onChange={(event) =>
+                  onChange("phone", sanitizePhoneLocalNumber(event.target.value))
+                }
+                className={inputClass}
+                placeholder={t("registerPage.placeholders.phoneNumber")}
+              />
+            </label>
+          </div>
+        </div>
 
         <label className="grid gap-1 text-sm">
           <span className="inline-flex items-center gap-2"><Lock size={14} /> {t("registerPage.fields.password")}</span>
