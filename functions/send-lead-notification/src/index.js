@@ -21,7 +21,7 @@ const cfg = () => ({
   propertiesCollectionId:
     getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
   usersCollectionId: getEnv("APPWRITE_COLLECTION_USERS_ID") || "users",
-  appUrl: getEnv("APP_BASE_URL", "APP_URL", "VITE_APP_URL") || "http://localhost:5173",
+  appUrl: getEnv("APP_BASE_URL") || "http://localhost:5173",
 });
 
 const parseBody = (req) => {
@@ -34,11 +34,11 @@ const parseBody = (req) => {
 };
 
 const getTransporter = () => {
-  const host = getEnv("EMAIL_SMTP_HOST", "SMTP_HOST");
-  const portRaw = getEnv("EMAIL_SMTP_PORT", "SMTP_PORT");
+  const host = getEnv("EMAIL_SMTP_HOST");
+  const portRaw = getEnv("EMAIL_SMTP_PORT");
   const secureRaw = getEnv("EMAIL_SMTP_SECURE");
-  const user = getEnv("EMAIL_SMTP_USER", "SMTP_USER");
-  const pass = getEnv("EMAIL_SMTP_PASS", "SMTP_PASSWORD");
+  const user = getEnv("EMAIL_SMTP_USER");
+  const pass = getEnv("EMAIL_SMTP_PASS");
 
   if (!host || !user || !pass) {
     throw new Error(
@@ -92,9 +92,8 @@ export default async ({ req, res, log, error }) => {
       return res.json({ ok: false, error: "Owner email not found" }, 404);
     }
 
-    const fromName =
-      getEnv("EMAIL_FROM_NAME", "SMTP_FROM_NAME") || "Real Estate SaaS";
-    const fromAddress = getEnv("EMAIL_FROM_ADDRESS", "SMTP_FROM_EMAIL");
+    const fromName = getEnv("EMAIL_FROM_NAME") || "Real Estate SaaS";
+    const fromAddress = getEnv("EMAIL_FROM_ADDRESS");
 
     if (!fromAddress) {
       return res.json(

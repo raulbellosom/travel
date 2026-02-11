@@ -1,6 +1,6 @@
 # Atomic Design Components
 
-Esta carpeta contiene los componentes base del sistema de diseño de Sayulita Travel, organizados siguiendo la metodología Atomic Design.
+Esta carpeta contiene los componentes base del sistema de diseño de Inmobo, organizados siguiendo la metodología Atomic Design.
 
 ## Estructura
 

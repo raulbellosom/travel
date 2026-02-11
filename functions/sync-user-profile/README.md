@@ -16,8 +16,10 @@ Sincroniza cambios de perfil entre:
 
 ## Seguridad
 
-- Usa `APPWRITE_FUNCTION_USER_ID` como fuente de verdad.
-- Solo permite actualizar el perfil del usuario autenticado.
+- Solo actualiza el perfil del usuario autenticado.
+- No acepta `userId` desde body.
+- Usa identidad confiable del runtime/header de Appwrite.
+- Valida metodo/identidad/payload con util local `src/_request.js` (aislado por function).
 
 ## Variables de entorno
 

@@ -1,0 +1,291 @@
+﻿import { createHash } from "node:crypto";
+import { Client, Databases, ID, Permission, Query, Role } from "node-appwrite";
+
+const hasValue = (value) =>
+  value !== undefined && value !== null && String(value).trim() !== "";
+
+const getEnv = (...keys) => {
+  for (const key of keys) {
+    if (hasValue(process.env[key])) return process.env[key];
+  }
+  return "";
+};
+
+const cfg = () => ({
+  endpoint: getEnv("APPWRITE_FUNCTION_ENDPOINT", "APPWRITE_ENDPOINT"),
+  projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
+  apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
+  databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
+  propertiesCollectionId: getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+  reservationsCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
+  reviewsCollectionId: getEnv("APPWRITE_COLLECTION_REVIEWS_ID") || "reviews",
+  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+});
+
+const parseBody = (req) => {
+  try {
+    const raw = req.body ?? req.payload ?? "{}";
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {
+    return {};
+  }
+};
+
+const json = (res, status, body) => res.json(body, status);
+
+const normalizeText = (value, maxLength = 0) => {
+  const normalized = String(value ?? "").trim().replace(/\s+/g, " ");
+  if (!maxLength) return normalized;
+  return normalized.slice(0, maxLength);
+};
+
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
+
+const safeJsonString = (value, maxLength = 20000) => {
+  try {
+    return JSON.stringify(value).slice(0, maxLength);
+  } catch {
+    return "{}";
+  }
+};
+
+const hashEmail = (email) =>
+  createHash("sha256").update(String(email || "").toLowerCase()).digest("hex");
+
+const safeActivityLog = async ({ db, config, data, logger }) => {
+  if (!config.activityLogsCollectionId) return;
+  try {
+    await db.createDocument(
+      config.databaseId,
+      config.activityLogsCollectionId,
+      ID.unique(),
+      data,
+    );
+  } catch (err) {
+    logger(`activity_logs write skipped: ${err.message}`);
+  }
+};
+
+export default async ({ req, res, log, error }) => {
+  if (req.method && req.method.toUpperCase() !== "POST") {
+    return json(res, 405, {
+      ok: false,
+      success: false,
+      code: "METHOD_NOT_ALLOWED",
+      message: "Use POST",
+    });
+  }
+
+  const config = cfg();
+  if (!config.endpoint || !config.projectId || !config.apiKey) {
+    return json(res, 500, {
+      ok: false,
+      success: false,
+      code: "ENV_MISSING",
+      message: "Missing Appwrite credentials",
+    });
+  }
+
+  const payload = parseBody(req);
+  const propertyId = normalizeText(payload.propertyId, 64);
+  const reservationId = normalizeText(payload.reservationId, 64);
+  const authorName = normalizeText(payload.authorName, 120);
+  const authorEmail = normalizeText(payload.authorEmail, 254).toLowerCase();
+  const comment = normalizeText(payload.comment, 3000);
+  const title = normalizeText(payload.title, 160);
+  const rating = Number(payload.rating);
+
+  if (!propertyId || !reservationId || !authorName || !authorEmail || !comment) {
+    return json(res, 400, {
+      ok: false,
+      success: false,
+      code: "VALIDATION_ERROR",
+      message:
+        "propertyId, reservationId, authorName, authorEmail and comment are required",
+    });
+  }
+
+  if (!isValidEmail(authorEmail)) {
+    return json(res, 400, {
+      ok: false,
+      success: false,
+      code: "VALIDATION_ERROR",
+      message: "Invalid authorEmail format",
+    });
+  }
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return json(res, 422, {
+      ok: false,
+      success: false,
+      code: "VALIDATION_ERROR",
+      message: "rating must be an integer between 1 and 5",
+    });
+  }
+
+  if (comment.length < 10) {
+    return json(res, 422, {
+      ok: false,
+      success: false,
+      code: "VALIDATION_ERROR",
+      message: "comment must contain at least 10 characters",
+    });
+  }
+
+  const client = new Client()
+    .setEndpoint(config.endpoint)
+    .setProject(config.projectId)
+    .setKey(config.apiKey);
+  const db = new Databases(client);
+
+  try {
+    const [property, reservation] = await Promise.all([
+      db.getDocument(config.databaseId, config.propertiesCollectionId, propertyId),
+      db.getDocument(config.databaseId, config.reservationsCollectionId, reservationId),
+    ]);
+
+    if (property.enabled !== true) {
+      return json(res, 404, {
+        ok: false,
+        success: false,
+        code: "PROPERTY_NOT_AVAILABLE",
+        message: "Property not available",
+      });
+    }
+
+    if (reservation.enabled !== true) {
+      return json(res, 404, {
+        ok: false,
+        success: false,
+        code: "RESERVATION_NOT_AVAILABLE",
+        message: "Reservation not available",
+      });
+    }
+
+    if (reservation.propertyId !== propertyId) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "REVIEW_NOT_ELIGIBLE",
+        message: "Reservation does not belong to property",
+      });
+    }
+
+    const reservationStatus = String(reservation.status || "");
+    const paymentStatus = String(reservation.paymentStatus || "");
+    const isEligibleStatus = reservationStatus === "completed" || reservationStatus === "confirmed";
+
+    if (!isEligibleStatus || paymentStatus !== "paid") {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "REVIEW_NOT_ELIGIBLE",
+        message: "Reservation is not eligible for review",
+      });
+    }
+
+    if (String(reservation.guestEmail || "").toLowerCase() !== authorEmail) {
+      return json(res, 403, {
+        ok: false,
+        success: false,
+        code: "REVIEW_UNAUTHORIZED",
+        message: "Guest email does not match reservation",
+      });
+    }
+
+    const duplicates = await db.listDocuments(
+      config.databaseId,
+      config.reviewsCollectionId,
+      [
+        Query.equal("reservationId", reservationId),
+        Query.equal("enabled", true),
+        Query.limit(1),
+      ],
+    );
+
+    if (duplicates.total > 0) {
+      return json(res, 409, {
+        ok: false,
+        success: false,
+        code: "REVIEW_ALREADY_EXISTS",
+        message: "A review already exists for this reservation",
+      });
+    }
+
+    const reviewData = {
+      propertyId,
+      reservationId,
+      authorName,
+      authorEmailHash: hashEmail(authorEmail),
+      rating,
+      comment,
+      status: "pending",
+      enabled: true,
+    };
+
+    if (title) {
+      reviewData.title = title;
+    }
+
+    const propertyOwnerId =
+      String(reservation.propertyOwnerId || "") || String(property.ownerUserId || "");
+
+    const review = await db.createDocument(
+      config.databaseId,
+      config.reviewsCollectionId,
+      ID.unique(),
+      reviewData,
+      propertyOwnerId
+        ? [
+            Permission.read(Role.user(propertyOwnerId)),
+            Permission.update(Role.user(propertyOwnerId)),
+            Permission.delete(Role.user(propertyOwnerId)),
+          ]
+        : undefined,
+    );
+
+    if (propertyOwnerId) {
+      await safeActivityLog({
+        db,
+        config,
+        logger: log,
+        data: {
+          actorUserId: propertyOwnerId,
+          actorRole: "owner",
+          action: "review.create_public",
+          entityType: "reviews",
+          entityId: review.$id,
+          afterData: safeJsonString({
+            reservationId,
+            propertyId,
+            rating,
+            status: "pending",
+          }),
+          severity: "info",
+        },
+      });
+    }
+
+    return json(res, 201, {
+      ok: true,
+      success: true,
+      code: "REVIEW_CREATED",
+      message: "Review created in pending state",
+      data: {
+        reviewId: review.$id,
+        reservationId,
+        propertyId,
+        status: "pending",
+      },
+    });
+  } catch (err) {
+    error(`create-review-public failed: ${err.message}`);
+    return json(res, 500, {
+      ok: false,
+      success: false,
+      code: "INTERNAL_ERROR",
+      message: err.message,
+    });
+  }
+};

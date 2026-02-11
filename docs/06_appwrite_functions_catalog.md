@@ -65,6 +65,13 @@ functions/
 - Tipo: Event Trigger (`leads.create`).
 - Envia email al owner/staff responsable.
 
+## 4.3.1 `property-view-counter`
+
+- Tipo: HTTP POST.
+- Recibe `propertyId`.
+- Incrementa `properties.views` para propiedad publica.
+- Uso recomendado: llamada no bloqueante desde detalle publico.
+
 ## 4.4 `create-reservation-public`
 
 - Tipo: HTTP POST.
@@ -248,5 +255,5 @@ Errores:
 
 ---
 
-Ultima actualizacion: 2026-02-10
-Version: 2.0.0
+Ultima actualizacion: 2026-02-11
+Version: 2.1.0

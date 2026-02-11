@@ -1,0 +1,116 @@
+﻿import { Client, Databases } from "node-appwrite";
+
+const hasValue = (value) =>
+  value !== undefined && value !== null && String(value).trim() !== "";
+
+const getEnv = (...keys) => {
+  for (const key of keys) {
+    if (hasValue(process.env[key])) return process.env[key];
+  }
+  return "";
+};
+
+const cfg = () => ({
+  endpoint: getEnv("APPWRITE_FUNCTION_ENDPOINT", "APPWRITE_ENDPOINT"),
+  projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
+  apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
+  databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
+  propertiesCollectionId: getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+});
+
+const parseBody = (req) => {
+  try {
+    const raw = req.body ?? req.payload ?? "{}";
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {
+    return {};
+  }
+};
+
+const json = (res, status, body) => res.json(body, status);
+
+const asObjectOrEmpty = (value) => (value && typeof value === "object" ? value : {});
+
+export default async ({ req, res, error }) => {
+  if (req.method && req.method.toUpperCase() !== "POST") {
+    return json(res, 405, {
+      ok: false,
+      success: false,
+      code: "METHOD_NOT_ALLOWED",
+      message: "Use POST",
+    });
+  }
+
+  const config = cfg();
+  if (!config.endpoint || !config.projectId || !config.apiKey) {
+    return json(res, 500, {
+      ok: false,
+      success: false,
+      code: "ENV_MISSING",
+      message: "Missing Appwrite credentials",
+    });
+  }
+
+  const body = asObjectOrEmpty(parseBody(req));
+  const propertyId = String(body.propertyId || "").trim();
+  if (!propertyId) {
+    return json(res, 400, {
+      ok: false,
+      success: false,
+      code: "VALIDATION_ERROR",
+      message: "propertyId is required",
+    });
+  }
+
+  const client = new Client()
+    .setEndpoint(config.endpoint)
+    .setProject(config.projectId)
+    .setKey(config.apiKey);
+  const db = new Databases(client);
+
+  try {
+    const property = await db.getDocument(
+      config.databaseId,
+      config.propertiesCollectionId,
+      propertyId,
+    );
+
+    if (property.enabled !== true || property.status !== "published") {
+      return json(res, 404, {
+        ok: false,
+        success: false,
+        code: "PROPERTY_NOT_AVAILABLE",
+        message: "Property not available",
+      });
+    }
+
+    const currentViews = Number(property.views || 0);
+    const nextViews = Number.isFinite(currentViews) && currentViews >= 0 ? currentViews + 1 : 1;
+
+    await db.updateDocument(
+      config.databaseId,
+      config.propertiesCollectionId,
+      propertyId,
+      { views: nextViews },
+    );
+
+    return json(res, 200, {
+      ok: true,
+      success: true,
+      code: "PROPERTY_VIEW_COUNTED",
+      message: "Property view incremented",
+      data: {
+        propertyId,
+        views: nextViews,
+      },
+    });
+  } catch (err) {
+    error(`property-view-counter failed: ${err.message}`);
+    return json(res, 500, {
+      ok: false,
+      success: false,
+      code: "INTERNAL_ERROR",
+      message: err.message,
+    });
+  }
+};

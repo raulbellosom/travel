@@ -1,14 +1,14 @@
 {
   "home": {
     "hero": {
-      "title": "Descubre Sayulita Travel",
+      "title": "Descubre Inmobo",
       "subtitle": "Encuentra el lugar perfecto para tus vacaciones",
       "cta": "Explorar Propiedades"
     },
     "listings": {
       "title": "Propiedades Destacadas"
     },
-    "title": "Descubre Sayulita",
+    "title": "Descubre Inmobo",
     "subtitle": "Los mejores alojamientos y experiencias en el paraíso mexicano",
     "searchPlaceholder": "Buscar alojamientos...",
     "featured": "Destacados",
@@ -50,7 +50,7 @@
     },
     "register": {
       "title": "Crear Cuenta",
-      "subtitle": "Únete a Sayulita Travel",
+      "subtitle": "Únete a Inmobo",
       "name": "Nombre completo",
       "email": "Correo electrónico",
       "password": "Contraseña",
@@ -855,15 +855,7 @@
     "close": "Cerrar modal"
   },
   "dateRangePicker": {
-    "dayHeaders": [
-      "Do",
-      "Lu",
-      "Ma",
-      "Mi",
-      "Ju",
-      "Vi",
-      "Sa"
-    ],
+    "dayHeaders": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
     "placeholders": {
       "single": "Selecciona fecha",
       "range": "Selecciona fechas"

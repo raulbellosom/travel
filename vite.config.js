@@ -38,6 +38,8 @@ const PUBLIC_ENV_KEYS = [
   "APPWRITE_FUNCTION_CREATE_LEAD_ID",
   "APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID",
   "APPWRITE_FUNCTION_SYNC_USER_PROFILE_ID",
+  "APPWRITE_FUNCTION_USER_CREATE_PROFILE_ID",
+  "APPWRITE_FUNCTION_SEND_LEAD_NOTIFICATION_ID",
   "APPWRITE_FUNCTION_PROPERTY_VIEW_COUNTER_ID",
   "APPWRITE_FUNCTION_CREATE_RESERVATION_ID",
   "APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID",
@@ -72,7 +74,7 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 export default defineConfig(({ mode }) => {
   const rawEnv = loadEnv(mode, rootDir, "");
   const publicEnv = Object.fromEntries(
-    PUBLIC_ENV_KEYS.map((key) => [key, getPublicEnvValue(rawEnv, key)])
+    PUBLIC_ENV_KEYS.map((key) => [key, getPublicEnvValue(rawEnv, key)]),
   );
 
   return {
@@ -90,8 +92,8 @@ export default defineConfig(({ mode }) => {
           "web/icon-512-maskable.png",
         ],
         manifest: {
-          name: "Travel - Plataforma Inmobiliaria",
-          short_name: "Travel",
+          name: "Inmobo - Plataforma Inmobiliaria",
+          short_name: "Inmobo",
           description:
             "Plataforma integral para compra, venta y renta de inmuebles. Encuentra tu hogar ideal o publica tus propiedades de manera facil y segura.",
           theme_color: "#3B82F6",
