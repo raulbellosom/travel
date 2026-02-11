@@ -82,8 +82,15 @@ export function AuthProvider({ children }) {
     [loadProfileData]
   );
 
-  const register = useCallback(async ({ fullName, email, password }) => {
-    const nextUser = await authService.register({ fullName, email, password });
+  const register = useCallback(async ({ firstName, lastName, email, password }) => {
+    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+    const nextUser = await authService.register({
+      firstName,
+      lastName,
+      fullName,
+      email,
+      password,
+    });
     try {
       await authService.sendVerificationEmail({
         userId: nextUser.$id,

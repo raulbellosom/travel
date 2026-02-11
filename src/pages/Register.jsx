@@ -28,7 +28,8 @@ const Register = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     password: "",
@@ -57,6 +58,16 @@ const Register = () => {
     event.preventDefault();
     setError("");
 
+    if (!String(form.firstName || "").trim()) {
+      setError(t("registerPage.errors.firstNameRequired"));
+      return;
+    }
+
+    if (!String(form.lastName || "").trim()) {
+      setError(t("registerPage.errors.lastNameRequired"));
+      return;
+    }
+
     if (!isValidEmail(form.email)) {
       setError(t("registerPage.errors.invalidEmail"));
       return;
@@ -80,7 +91,8 @@ const Register = () => {
     setLoading(true);
     try {
       await register({
-        fullName: form.fullName,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
         email: form.email,
         password: form.password,
       });
@@ -106,17 +118,31 @@ const Register = () => {
       </header>
 
       <form className="space-y-4" onSubmit={onSubmit}>
-        <label className="grid gap-1 text-sm">
-          <span className="inline-flex items-center gap-2"><UserRound size={14} /> {t("registerPage.fields.fullName")}</span>
-          <input
-            required
-            minLength={3}
-            value={form.fullName}
-            autoComplete="name"
-            onChange={(event) => onChange("fullName", event.target.value)}
-            className={inputClass}
-          />
-        </label>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-1 text-sm">
+            <span className="inline-flex items-center gap-2"><UserRound size={14} /> {t("registerPage.fields.firstName")}</span>
+            <input
+              required
+              minLength={2}
+              value={form.firstName}
+              autoComplete="given-name"
+              onChange={(event) => onChange("firstName", event.target.value)}
+              className={inputClass}
+            />
+          </label>
+
+          <label className="grid gap-1 text-sm">
+            <span className="inline-flex items-center gap-2"><UserRound size={14} /> {t("registerPage.fields.lastName")}</span>
+            <input
+              required
+              minLength={2}
+              value={form.lastName}
+              autoComplete="family-name"
+              onChange={(event) => onChange("lastName", event.target.value)}
+              className={inputClass}
+            />
+          </label>
+        </div>
 
         <label className="grid gap-1 text-sm">
           <span className="inline-flex items-center gap-2"><Mail size={14} /> {t("registerPage.fields.email")}</span>

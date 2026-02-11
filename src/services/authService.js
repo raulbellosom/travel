@@ -28,11 +28,15 @@ export const authService = {
     return account.get();
   },
 
-  async register({ fullName, email, password }) {
+  async register({ firstName, lastName, fullName, email, password }) {
     ensureAppwriteConfigured();
+    const resolvedName =
+      String(fullName || "").trim() ||
+      [firstName, lastName].filter(Boolean).join(" ").trim();
+
     return account.create({
       userId: ID.unique(),
-      name: fullName?.trim(),
+      name: resolvedName,
       email: email?.trim().toLowerCase(),
       password,
     });

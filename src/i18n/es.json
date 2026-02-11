@@ -275,7 +275,8 @@
     "title": "Crear cuenta",
     "subtitle": "Registrate para publicar propiedades y administrar tus contactos.",
     "fields": {
-      "fullName": "Nombre completo",
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
       "email": "Correo electronico",
       "phoneOptional": "Telefono (opcional)",
       "password": "Contrasena",
@@ -291,6 +292,8 @@
       "login": "Iniciar sesion"
     },
     "errors": {
+      "firstNameRequired": "Ingresa tu nombre.",
+      "lastNameRequired": "Ingresa tus apellidos.",
       "passwordMismatch": "Las contrasenas no coinciden.",
       "passwordLength": "La contrasena debe tener al menos 8 caracteres.",
       "termsRequired": "Debes aceptar terminos y condiciones.",

@@ -31,8 +31,8 @@ const AuthLayout = () => {
 
   return (
     <div className="flex min-h-dvh flex-col bg-slate-100 dark:bg-slate-950">
-      <header className="border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
+        <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3">
             <BrandLogo size="md" mode="adaptive" alt={t("footer.brand")} className="rounded-xl shadow-md" />
             <div>

@@ -275,7 +275,8 @@
     "title": "Create account",
     "subtitle": "Sign up to publish properties and manage your contacts.",
     "fields": {
-      "fullName": "Full name",
+      "firstName": "First name",
+      "lastName": "Last name",
       "email": "Email",
       "phoneOptional": "Phone (optional)",
       "password": "Password",
@@ -291,6 +292,8 @@
       "login": "Sign in"
     },
     "errors": {
+      "firstNameRequired": "Enter your first name.",
+      "lastNameRequired": "Enter your last name.",
       "passwordMismatch": "Passwords do not match.",
       "passwordLength": "Password must be at least 8 characters.",
       "termsRequired": "You must accept terms and conditions.",
