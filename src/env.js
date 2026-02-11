@@ -71,7 +71,7 @@ const env = {
     },
   },
   app: {
-    name: get("APP_NAME", "Real Estate SaaS"),
+    name: get("APP_NAME", "Inmobo"),
     env: get("APP_ENV", "development"),
     url: get("APP_BASE_URL", "http://localhost:5173"),
     version: get("APP_VERSION", "1.0.0"),

@@ -22,10 +22,12 @@ Enviar / reenviar:
 ```json
 {
   "action": "send",
-  "userAuthId": "USER_ID",
+  "userId": "USER_ID",
   "email": "agent@example.com"
 }
 ```
+
+Tambien acepta `userAuthId` por compatibilidad.
 
 Verificar token:
 

@@ -25,7 +25,7 @@ export async function sendEmail(to, subject, html) {
   const secure = String(process.env.EMAIL_SMTP_SECURE || "false") === "true";
   const user = mustEnv("EMAIL_SMTP_USER");
   const pass = mustEnv("EMAIL_SMTP_PASS");
-  const fromName = process.env.EMAIL_FROM_NAME || "Real Estate SaaS";
+  const fromName = process.env.EMAIL_FROM_NAME || "Inmobo";
   const fromAddress = mustEnv("EMAIL_FROM_ADDRESS");
 
   const transporter = nodemailer.createTransport({
@@ -53,7 +53,7 @@ export function buildEmailHtml(token, appBaseUrl) {
       <table role="presentation" style="width:100%;max-width:620px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;">
         <tr>
           <td style="padding:24px;background:#0369a1;color:#f8fafc;">
-            <h1 style="margin:0;font-size:22px;">Real Estate SaaS</h1>
+            <h1 style="margin:0;font-size:22px;">Inmobo</h1>
             <p style="margin:8px 0 0 0;color:#e2e8f0;">Verificación de correo</p>
           </td>
         </tr>

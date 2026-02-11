@@ -71,6 +71,7 @@ const invalidateTokens = async (db, cfg, userAuthId) => {
 };
 
 const resolveAuthUser = async (users, body) => {
+  if (body.userId) return users.get(body.userId);
   if (body.userAuthId) return users.get(body.userAuthId);
   if (!body.email) return null;
   const result = await users.list([Query.equal("email", body.email), Query.limit(1)]);

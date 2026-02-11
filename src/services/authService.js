@@ -67,13 +67,13 @@ export const authService = {
     });
   },
 
-  async sendVerificationEmail({ userAuthId, email }) {
+  async sendVerificationEmail({ userId, email }) {
     ensureAppwriteConfigured();
 
     if (env.appwrite.functions.emailVerification) {
       return callEmailVerificationFunction({
         action: "send",
-        userAuthId,
+        userId,
         email,
       });
     }
@@ -83,13 +83,13 @@ export const authService = {
     });
   },
 
-  async resendVerificationEmail({ userAuthId, email }) {
+  async resendVerificationEmail({ userId, email }) {
     ensureAppwriteConfigured();
 
     if (env.appwrite.functions.emailVerification) {
       return callEmailVerificationFunction({
         action: "resend",
-        userAuthId,
+        userId,
         email,
       });
     }

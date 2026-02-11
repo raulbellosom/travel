@@ -84,17 +84,25 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async ({ fullName, email, password }) => {
     const nextUser = await authService.register({ fullName, email, password });
-    await authService.sendVerificationEmail({
-      userAuthId: nextUser.$id,
-      email: nextUser.email,
-    });
+    try {
+      await authService.sendVerificationEmail({
+        userId: nextUser.$id,
+        email: nextUser.email,
+      });
+    } catch (error) {
+      const code = Number(error?.code);
+      // Evita romper el registro si el backend ya envio el correo por trigger.
+      if (code !== 409 && code !== 429) {
+        throw error;
+      }
+    }
     return nextUser;
   }, []);
 
   const resendVerification = useCallback(
     async ({ email }) => {
       return authService.resendVerificationEmail({
-        userAuthId: authUser?.$id,
+        userId: authUser?.$id,
         email: email || authUser?.email,
       });
     },

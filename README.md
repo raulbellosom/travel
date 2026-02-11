@@ -1,6 +1,6 @@
-# Real Estate SaaS Frontend
+# Inmobo Frontend
 
-Frontend base para una plataforma inmobiliaria SaaS en modelo single-tenant por
+Frontend base para la aplicacion Inmobo en modelo single-tenant por
 instancia:
 
 - Este repo funciona como demo/plantilla base.

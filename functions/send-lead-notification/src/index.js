@@ -92,7 +92,7 @@ export default async ({ req, res, log, error }) => {
       return res.json({ ok: false, error: "Owner email not found" }, 404);
     }
 
-    const fromName = getEnv("EMAIL_FROM_NAME") || "Real Estate SaaS";
+    const fromName = getEnv("EMAIL_FROM_NAME") || "Inmobo";
     const fromAddress = getEnv("EMAIL_FROM_ADDRESS");
 
     if (!fromAddress) {

@@ -1,4 +1,5 @@
-﻿import { useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
+import BrandLogo from "../common/BrandLogo";
 
 const dots = [0, 1, 2];
 
@@ -53,9 +54,9 @@ const LoadingScreen = ({
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="rounded-full bg-sky-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-sky-200">
-              {t("loadingScreen.badge")}
-            </span>
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-white/90 shadow-lg ring-1 ring-white/30">
+              <BrandLogo size="sm" mode="color" alt={t("loadingScreen.badge")} />
+            </div>
           </div>
         </div>
 
@@ -77,4 +78,3 @@ const LoadingScreen = ({
 };
 
 export default LoadingScreen;
-

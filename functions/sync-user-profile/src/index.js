@@ -182,7 +182,7 @@ export default async ({ req, res, log, error }) => {
           config.emailVerificationFunctionId,
           JSON.stringify({
             action: "send",
-            userAuthId: userId,
+            userId,
             email: nextEmail,
           }),
           true,

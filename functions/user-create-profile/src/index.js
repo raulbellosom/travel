@@ -44,6 +44,13 @@ const parseCsv = (value) =>
 
 const ALLOWED_DEFAULT_ROLES = new Set(["client", "owner"]);
 
+const getErrorText = (error) => String(error?.message || "").toLowerCase();
+
+const isAuthIdRequiredError = (error) => {
+  const message = getErrorText(error);
+  return message.includes("authid") && (message.includes("required") || message.includes("missing"));
+};
+
 const resolveInitialRole = ({ userId, email, config }) => {
   const normalizedEmail = normalizeEmail(email);
   const ownerUserIds = new Set(parseCsv(config.ownerBootstrapUserIds));
@@ -78,6 +85,56 @@ const buildProfilePermissions = ({ userId, config }) => {
   return permissions;
 };
 
+const createUsersProfileCompat = async ({ db, config, userId, profileData, permissions }) => {
+  try {
+    return await db.createDocument(
+      config.databaseId,
+      config.usersCollectionId,
+      userId,
+      profileData,
+      permissions
+    );
+  } catch (error) {
+    if (!isAuthIdRequiredError(error)) throw error;
+
+    return db.createDocument(
+      config.databaseId,
+      config.usersCollectionId,
+      userId,
+      {
+        ...profileData,
+        authId: userId,
+      },
+      permissions
+    );
+  }
+};
+
+const updateUsersProfileCompat = async ({ db, config, userId, patch, permissions }) => {
+  try {
+    return await db.updateDocument(
+      config.databaseId,
+      config.usersCollectionId,
+      userId,
+      patch,
+      permissions
+    );
+  } catch (error) {
+    if (!isAuthIdRequiredError(error)) throw error;
+
+    return db.updateDocument(
+      config.databaseId,
+      config.usersCollectionId,
+      userId,
+      {
+        ...patch,
+        authId: userId,
+      },
+      permissions
+    );
+  }
+};
+
 const safeCreateUsersProfile = async (db, config, payload, log) => {
   const userId = payload.$id || payload.userId || payload.id;
   const email = normalizeEmail(payload.email || "");
@@ -88,7 +145,6 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
   const permissions = buildProfilePermissions({ userId, config });
 
   const profileData = {
-    authId: userId,
     email,
     firstName,
     lastName,
@@ -100,13 +156,13 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
   };
 
   try {
-    await db.createDocument(
-      config.databaseId,
-      config.usersCollectionId,
+    await createUsersProfileCompat({
+      db,
+      config,
       userId,
       profileData,
-      permissions
-    );
+      permissions,
+    });
     return role === "owner" ? "created_owner" : "created_client";
   } catch (error) {
     const alreadyExists =
@@ -115,18 +171,18 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
     if (!alreadyExists) throw error;
 
     log(`users/${userId} ya existe, se actualiza estado basico.`);
-    await db.updateDocument(
-      config.databaseId,
-      config.usersCollectionId,
+    await updateUsersProfileCompat({
+      db,
+      config,
       userId,
-      {
+      patch: {
         email,
         firstName,
         lastName,
         phone,
       },
-      permissions
-    );
+      permissions,
+    });
     return "updated";
   }
 };
@@ -164,7 +220,7 @@ const triggerEmailVerification = async (fn, functionId, userId, email, log, erro
   try {
     await fn.createExecution(functionId, JSON.stringify({
       action: "send",
-      userAuthId: userId,
+      userId,
       email,
     }), true);
   } catch (err) {

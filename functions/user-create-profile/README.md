@@ -22,7 +22,7 @@ cuando se registra un usuario en Appwrite Auth.
 ## Roles de alta
 
 - Rol por defecto: `client`.
-- Bootstrap owner: si `authId` o email coincide con listas de bootstrap, el rol inicial sera `owner`.
+- Bootstrap owner: si `userId` de Auth o email coincide con listas de bootstrap, el rol inicial sera `owner`.
 
 Variables:
 

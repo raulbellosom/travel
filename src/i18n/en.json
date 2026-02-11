@@ -213,7 +213,7 @@
     "validatingSession": "Validating session"
   },
   "navbar": {
-    "brand": "Real Estate SaaS",
+    "brand": "Inmobo",
     "toggleMenu": "Open menu",
     "tagline": "Properties and experiences",
     "searchPlaceholder": "Search properties...",
@@ -237,7 +237,7 @@
   "loadingScreen": {
     "title": "Validating session",
     "message": "Please wait while we load your information.",
-    "badge": "SaaS"
+    "badge": "Inmobo"
   },
   "listingCard": {
     "noImage": "No image",
@@ -1005,7 +1005,7 @@
     }
   },
   "footer": {
-    "brand": "Real Estate SaaS",
+    "brand": "Inmobo",
     "tagline": "Real estate marketplace",
     "description": "Find properties to live, invest, or vacation with a modern and secure experience.",
     "sections": {
@@ -1021,7 +1021,7 @@
     },
     "contact": {
       "city": "Puerto Vallarta, Jalisco",
-      "email": "hello@realestate-saas.com",
+      "email": "hello@inmobo.com",
       "phone": "+52 322 123 4567"
     },
     "newsletter": {
@@ -1029,7 +1029,7 @@
       "placeholder": "Your email address",
       "action": "Subscribe"
     },
-    "copyright": "? {{year}} Real Estate SaaS. All rights reserved."
+    "copyright": "? {{year}} Inmobo. All rights reserved."
   },
   "authLayout": {
     "platform": "Real estate platform",
