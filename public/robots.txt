@@ -1,0 +1,44 @@
+# Robots.txt - Travel Real Estate Platform
+# Permite el rastreo completo para motores de búsqueda
+
+# Permitir todos los bots
+User-agent: *
+Allow: /
+
+# Páginas específicas con alta prioridad para SEO
+Allow: /properties
+Allow: /search
+Allow: /buy
+Allow: /rent
+Allow: /sell
+
+# Bloquear áreas administrativas privadas
+Disallow: /admin/
+Disallow: /dashboard/settings
+Disallow: /api/
+
+# Bloquear archivos y carpetas del sistema
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /src/
+Disallow: /node_modules/
+
+# Evitar duplicados de parámetros de búsqueda
+Disallow: /*?*utm_
+Disallow: /*?*ref=
+Disallow: /*?*session=
+
+# Tiempos de rastreo (crawl-delay)
+# Googlebot no requiere delay
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 1
+
+# Referencia al sitemap
+Sitemap: https://www.travel.com/sitemap.xml
+Sitemap: https://www.travel.com/sitemap-properties.xml
+
+# Información de contacto
+# Contact: webmaster@travel.com

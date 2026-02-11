@@ -1,88 +1,144 @@
-import { useAuth } from "../hooks/useAuth";
+﻿import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useLocation, Link } from "react-router-dom";
-import { useState } from "react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { getErrorMessage } from "../utils/errors";
 
-export default function Login() {
-  const { login } = useAuth();
+const inputClass =
+  "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800";
+
+const Login = () => {
   const { t } = useTranslation();
-  const nav = useNavigate();
-  const { state } = useLocation();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const { login, resendVerification } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    await login(form.email, form.password);
-    nav(state?.from?.pathname || "/dashboard", { replace: true });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    setInfo("");
+    setEmailNotVerified(false);
+
+    try {
+      await login(email, password);
+      const target = location.state?.from?.pathname || "/dashboard";
+      navigate(target, { replace: true });
+    } catch (err) {
+      const message = getErrorMessage(err, t("loginPage.errors.login"));
+      setError(message);
+      setEmailNotVerified(err?.code === "EMAIL_NOT_VERIFIED");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onResendVerification = async () => {
+    setResending(true);
+    setError("");
+    setInfo("");
+    try {
+      await resendVerification({ email });
+      setInfo(t("loginPage.messages.resendSuccess"));
+    } catch (err) {
+      setError(getErrorMessage(err, t("loginPage.errors.resend")));
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t("auth.login.title")}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          {t("auth.login.subtitle")}
-        </p>
-      </div>
+    <div className="space-y-6">
+      <header className="space-y-1">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          {t("loginPage.title")}
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-300">{t("loginPage.subtitle")}</p>
+      </header>
 
       <form className="space-y-4" onSubmit={onSubmit}>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {t("auth.login.email")}
-          </label>
+        <label className="grid gap-1 text-sm">
+          <span className="inline-flex items-center gap-2"><Mail size={14} /> {t("loginPage.fields.email")}</span>
           <input
+            required
             type="email"
-            required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder={t("auth.login.email")}
-            value={form.email}
-            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className={inputClass}
           />
-        </div>
+        </label>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {t("auth.login.password")}
-          </label>
+        <label className="grid gap-1 text-sm">
+          <span className="inline-flex items-center gap-2"><Lock size={14} /> {t("loginPage.fields.password")}</span>
           <input
-            type="password"
             required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder={t("auth.login.password")}
-            value={form.password}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, password: e.target.value }))
-            }
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className={inputClass}
           />
-        </div>
+        </label>
+
+        {error ? (
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+            {error}
+          </p>
+        ) : null}
+
+        {info ? (
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
+            {info}
+          </p>
+        ) : null}
 
         <button
           type="submit"
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+          disabled={submitting}
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {t("auth.login.submit")}
+          {submitting ? t("loginPage.actions.validating") : t("loginPage.actions.submit")}
+          <ArrowRight size={14} />
         </button>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {t("auth.login.demo")}
-          </p>
-        </div>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {t("auth.login.noAccount")}{" "}
-            <Link
-              to="/auth/register"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-            >
-              {t("auth.login.createAccount")}
-            </Link>
-          </p>
-        </div>
       </form>
+
+      <div className="space-y-2 text-sm">
+        {emailNotVerified ? (
+          <button
+            type="button"
+            disabled={resending}
+            onClick={onResendVerification}
+            className="font-medium text-cyan-700 hover:underline disabled:opacity-70 dark:text-cyan-400"
+          >
+            {resending
+              ? t("loginPage.actions.resending")
+              : t("loginPage.actions.resendVerification")}
+          </button>
+        ) : null}
+        <p>
+          <Link to="/recuperar-password" className="text-cyan-700 hover:underline dark:text-cyan-400">
+            {t("loginPage.links.forgotPassword")}
+          </Link>
+        </p>
+        <p className="text-slate-600 dark:text-slate-300">
+          {t("loginPage.links.noAccount")} {" "}
+          <Link to="/register" className="font-medium text-cyan-700 hover:underline dark:text-cyan-400">
+            {t("loginPage.links.createAccount")}
+          </Link>
+        </p>
+      </div>
     </div>
   );
-}
+};
+
+export default Login;

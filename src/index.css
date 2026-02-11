@@ -8,18 +8,30 @@ html {
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  transition: background-color 200ms ease-in-out, color 200ms ease-in-out;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  transition:
+    background-color 200ms ease-in-out,
+    color 200ms ease-in-out;
 }
 
-/* Focus styles for accessibility */
+/* Remove default outline on click/tap */
 *:focus {
+  outline: none;
+}
+
+/* Show outline only when navigating with keyboard (accessibility) */
+*:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
-/* Hide focus on mouse users */
-.js-focus-visible *:focus:not(.focus-visible) {
+/* Ensure buttons and links don't show outline on click */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
   outline: none;
 }
 
@@ -64,5 +76,327 @@ body {
   20% {
     transform: scaleY(1);
     opacity: 1;
+  }
+}
+
+/* Error Page Animations */
+@keyframes bounce-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes glitch {
+  0%,
+  100% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+.animate-ping-slow {
+  animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+.animate-glitch {
+  animation: glitch 0.3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+/* Immersive Error Page Visuals */
+@keyframes orb-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(22px, -18px, 0) scale(1.06);
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes spin-very-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes shake-soft {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  60% {
+    transform: translateX(-1px);
+  }
+  80% {
+    transform: translateX(1px);
+  }
+}
+
+@keyframes glitch-soft {
+  0%,
+  100% {
+    transform: translate(0);
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-1px, 1px);
+    opacity: 0.9;
+  }
+  40% {
+    transform: translate(1px, -1px);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-1px, 0);
+    opacity: 0.92;
+  }
+  80% {
+    transform: translate(1px, 1px);
+    opacity: 1;
+  }
+}
+
+.error-page-grid {
+  background-image:
+    linear-gradient(to right, rgb(148 163 184 / 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(148 163 184 / 0.15) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at 50% 45%, black 50%, transparent 100%);
+}
+
+.error-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(58px);
+  animation: orb-float 16s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.error-orb-a {
+  top: -110px;
+  left: -120px;
+  width: 360px;
+  height: 360px;
+}
+
+.error-orb-b {
+  right: -100px;
+  bottom: -120px;
+  width: 340px;
+  height: 340px;
+  animation-duration: 20s;
+  animation-direction: reverse;
+}
+
+.error-card-enter {
+  animation: card-in 680ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.error-code-glow {
+  text-shadow: 0 6px 30px rgb(14 165 233 / 0.24);
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2.8s ease-in-out infinite;
+}
+
+.animate-spin-very-slow {
+  animation: spin-very-slow 15s linear infinite;
+}
+
+.animate-float-y {
+  animation: float-y 3.2s ease-in-out infinite;
+}
+
+.animate-shake-soft {
+  animation: shake-soft 2.5s ease-in-out infinite;
+}
+
+.animate-glitch-soft {
+  animation: glitch-soft 2.4s steps(2, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-orb,
+  .error-card-enter,
+  .animate-pulse-soft,
+  .animate-spin-very-slow,
+  .animate-float-y,
+  .animate-shake-soft,
+  .animate-glitch-soft {
+    animation: none !important;
   }
 }

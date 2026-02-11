@@ -1,4 +1,5 @@
-import React from "react";
+﻿import React from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Enhanced Spinner component for loading states.
@@ -9,10 +10,12 @@ const Spinner = ({
   variant = "primary",
   type = "circle",
   className = "",
-  label = "Loading...",
+  label,
   ...props
 }) => {
-  // Size styles
+  const { t } = useTranslation();
+  const resolvedLabel = label || t("common.loading");
+
   const sizeStyles = {
     xs: "w-3 h-3",
     sm: "w-4 h-4",
@@ -21,7 +24,6 @@ const Spinner = ({
     xl: "w-12 h-12",
   };
 
-  // Variant styles with better contrast
   const variantStyles = {
     primary: "text-blue-600 dark:text-blue-400",
     secondary: "text-gray-600 dark:text-gray-400",
@@ -32,17 +34,15 @@ const Spinner = ({
     current: "text-current",
   };
 
-  // Add validation for safe array access
   const safeSize = sizeStyles[size] ? size : "md";
   const safeVariant = variantStyles[variant] ? variant : "primary";
 
-  // Different spinner types
   if (type === "dots") {
     return (
       <div
         className={`flex space-x-1 ${className}`}
         role="status"
-        aria-label={label}
+        aria-label={resolvedLabel}
         {...props}
       >
         {[0, 1, 2].map((i) => (
@@ -55,7 +55,7 @@ const Spinner = ({
             }}
           />
         ))}
-        <span className="sr-only">{label}</span>
+        <span className="sr-only">{resolvedLabel}</span>
       </div>
     );
   }
@@ -65,14 +65,14 @@ const Spinner = ({
       <div
         className={`${sizeStyles[safeSize]} ${variantStyles[safeVariant]} bg-current rounded-full animate-pulse ${className}`}
         role="status"
-        aria-label={label}
+        aria-label={resolvedLabel}
         style={{
           animationDuration: "1s",
           animationTimingFunction: "ease-in-out",
         }}
         {...props}
       >
-        <span className="sr-only">{label}</span>
+        <span className="sr-only">{resolvedLabel}</span>
       </div>
     );
   }
@@ -82,7 +82,7 @@ const Spinner = ({
       <div
         className={`flex space-x-1 ${className}`}
         role="status"
-        aria-label={label}
+        aria-label={resolvedLabel}
         {...props}
       >
         {[0, 1, 2].map((i) => (
@@ -100,22 +100,21 @@ const Spinner = ({
                 : "h-12"
             } ${variantStyles[safeVariant]} bg-current rounded-sm`}
             style={{
-              animation: `spinnerBars 1.2s ease-in-out infinite`,
+              animation: "spinnerBars 1.2s ease-in-out infinite",
               animationDelay: `${i * 0.1}s`,
             }}
           />
         ))}
-        <span className="sr-only">{label}</span>
+        <span className="sr-only">{resolvedLabel}</span>
       </div>
     );
   }
 
-  // Circle spinner with much better visibility
   return (
     <div
       className={`inline-block animate-spin ${sizeStyles[safeSize]} ${className}`}
       role="status"
-      aria-label={label}
+      aria-label={resolvedLabel}
       {...props}
     >
       <svg
@@ -124,7 +123,6 @@ const Spinner = ({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Background circle - very light */}
         <circle
           cx="12"
           cy="12"
@@ -133,7 +131,6 @@ const Spinner = ({
           strokeWidth="2"
           className="opacity-20"
         />
-        {/* Animated arc - much more visible */}
         <path
           d="M12 2 A10 10 0 0 1 22 12"
           stroke="currentColor"
@@ -142,9 +139,10 @@ const Spinner = ({
           className={`${variantStyles[safeVariant]} opacity-100 drop-shadow-sm`}
         />
       </svg>
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{resolvedLabel}</span>
     </div>
   );
 };
 
 export default Spinner;
+

@@ -23,6 +23,7 @@ export { default as Carousel } from "./molecules/Carousel";
 export { default as ComponentDemo } from "./molecules/ComponentDemo";
 export { default as FormField } from "./molecules/FormField";
 export { default as SearchBar } from "./molecules/SearchBar";
+export { default as Combobox } from "./molecules/Combobox";
 
 // === ORGANISMS ===
 export { default as ListingCard } from "./organisms/ListingCard";

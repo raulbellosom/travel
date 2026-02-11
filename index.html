@@ -1,29 +1,190 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Travel</title>
+
+    <!-- Primary Meta Tags -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>
+      Travel - Compra, Venta y Renta de Inmuebles | Plataforma Inmobiliaria
+    </title>
+    <meta
+      name="title"
+      content="Travel - Compra, Venta y Renta de Inmuebles | Plataforma Inmobiliaria"
+    />
+    <meta
+      name="description"
+      content="Descubre la plataforma líder en bienes raíces para comprar, vender y rentar propiedades. Casas, departamentos, terrenos y más. Encuentra tu hogar ideal o vende tu propiedad de manera rápida y segura con Travel."
+    />
+    <meta
+      name="keywords"
+      content="compra de casas, venta de inmuebles, renta de departamentos, propiedades en venta, casas en renta, bienes raíces, inmobiliaria, terrenos en venta, inversión inmobiliaria, vivienda, apartamentos, condominios"
+    />
+    <meta name="author" content="Travel Real Estate Platform" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="language" content="Spanish" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="rating" content="general" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.travel.com/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.travel.com/" />
+    <meta
+      property="og:title"
+      content="Travel - Compra, Venta y Renta de Inmuebles | Plataforma Inmobiliaria"
+    />
+    <meta
+      property="og:description"
+      content="Plataforma integral para comprar, vender y rentar propiedades. Encuentra tu hogar ideal o publica tus inmuebles de manera fácil y segura."
+    />
+    <meta
+      property="og:image"
+      content="https://www.travel.com/web/icon-512.png"
+    />
+    <meta property="og:site_name" content="Travel" />
+    <meta property="og:locale" content="es_ES" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://www.travel.com/" />
+    <meta
+      name="twitter:title"
+      content="Travel - Compra, Venta y Renta de Inmuebles"
+    />
+    <meta
+      name="twitter:description"
+      content="Descubre miles de propiedades en venta y renta. La mejor plataforma inmobiliaria para encontrar tu próximo hogar."
+    />
+    <meta
+      name="twitter:image"
+      content="https://www.travel.com/web/icon-512.png"
+    />
+
+    <!-- Favicons & Icons -->
+    <link rel="icon" type="image/x-icon" href="/web/favicon.ico" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/web/icon-192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="/web/icon-512.png"
+    />
+    <link rel="apple-touch-icon" href="/web/apple-touch-icon.png" />
+
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Travel" />
+
+    <!-- Android/Chrome Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#3B82F6" />
+    <meta name="application-name" content="Travel" />
+
+    <!-- Microsoft Meta Tags -->
+    <meta name="msapplication-TileColor" content="#3B82F6" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Sitemap & Robots -->
+    <link
+      rel="sitemap"
+      type="application/xml"
+      title="Sitemap"
+      href="/sitemap.xml"
+    />
+
+    <!-- Alternate Languages -->
+    <link rel="alternate" hreflang="es" href="https://www.travel.com/" />
+    <link rel="alternate" hreflang="en" href="https://www.travel.com/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://www.travel.com/" />
+
+    <!-- Preconnect to important domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Travel",
+        "url": "https://www.travel.com",
+        "logo": "https://www.travel.com/web/icon-512.png",
+        "description": "Plataforma integral para compra, venta y renta de inmuebles",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": "MX"
+        },
+        "sameAs": [
+          "https://www.facebook.com/travel",
+          "https://www.twitter.com/travel",
+          "https://www.instagram.com/travel"
+        ]
+      }
+    </script>
+
+    <!-- Structured Data - Website -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Travel",
+        "url": "https://www.travel.com",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://www.travel.com/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+
+    <!-- Structured Data - Real Estate Business -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateAgent",
+        "name": "Travel",
+        "description": "Plataforma digital para la compra, venta y renta de propiedades inmobiliarias",
+        "url": "https://www.travel.com",
+        "logo": "https://www.travel.com/web/icon-512.png",
+        "priceRange": "$$",
+        "areaServed": {
+          "@type": "Country",
+          "name": "México"
+        }
+      }
+    </script>
+
     <script>
-      // Evitar FOUC y respetar preferencia guardada antes de que cargue la app
       (function () {
         try {
-          const stored = localStorage.getItem("theme"); // 'light' | 'dark' | 'system' | null
+          const stored = localStorage.getItem("theme");
           const prefersDark = window.matchMedia(
-            "(prefers-color-scheme: dark)"
+            "(prefers-color-scheme: dark)",
           ).matches;
 
-          // Si no hay preferencia, respeta el sistema
           const isDark =
             stored === "dark" ||
             ((!stored || stored === "system") && prefersDark);
 
           document.documentElement.classList.toggle("dark", isDark);
-
-          // Si SOLO usas clase .dark, no seteamos data-theme para evitar conflictos.
-          // Si deseas usar data-theme para tus propios tokens, puedes reflejarlo:
-          // document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
         } catch (_) {}
       })();
     </script>

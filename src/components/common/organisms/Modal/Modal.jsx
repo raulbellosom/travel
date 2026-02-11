@@ -1,12 +1,9 @@
-import React, { useEffect } from "react";
+﻿import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { IconButton } from "../../atoms";
 
-/**
- * Modal component with backdrop, animations and accessibility.
- * Supports different sizes and variants.
- */
 const Modal = ({
   isOpen = false,
   onClose,
@@ -20,7 +17,10 @@ const Modal = ({
   className = "",
   ...props
 }) => {
-  // Size styles
+  const { t } = useTranslation();
+
+  const MotionDiv = motion.div;
+
   const sizeStyles = {
     xs: "max-w-md",
     sm: "max-w-lg",
@@ -30,7 +30,6 @@ const Modal = ({
     full: "max-w-[95vw]",
   };
 
-  // Variant styles
   const variantStyles = {
     default: "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
     primary:
@@ -42,7 +41,6 @@ const Modal = ({
     danger: "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800",
   };
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (event) => {
       if (closeOnEscape && event.key === "Escape" && isOpen) {
@@ -52,7 +50,6 @@ const Modal = ({
 
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-      // Prevent body scroll
       document.body.style.overflow = "hidden";
     }
 
@@ -62,14 +59,12 @@ const Modal = ({
     };
   }, [isOpen, closeOnEscape, onClose]);
 
-  // Backdrop click handler
   const handleBackdropClick = (event) => {
     if (closeOnBackdrop && event.target === event.currentTarget) {
       onClose?.();
     }
   };
 
-  // Animation variants
   const backdropVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
@@ -114,7 +109,7 @@ const Modal = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <MotionDiv
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           variants={backdropVariants}
           initial="hidden"
@@ -123,11 +118,9 @@ const Modal = ({
           onClick={handleBackdropClick}
           {...props}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-          {/* Modal */}
-          <motion.div
+          <MotionDiv
             className={modalStyles}
             variants={modalVariants}
             initial="hidden"
@@ -137,7 +130,6 @@ const Modal = ({
             aria-modal="true"
             aria-labelledby={title ? "modal-title" : undefined}
           >
-            {/* Header */}
             {(title || showCloseButton) && (
               <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                 {title && (
@@ -154,20 +146,22 @@ const Modal = ({
                     variant="ghost"
                     size="sm"
                     onClick={onClose}
-                    aria-label="Close modal"
+                    aria-label={t("modal.close")}
                     className="ml-auto"
                   />
                 )}
               </div>
             )}
 
-            {/* Content */}
             <div className="flex-1 overflow-auto p-6">{children}</div>
-          </motion.div>
-        </motion.div>
+          </MotionDiv>
+        </MotionDiv>
       )}
     </AnimatePresence>
   );
 };
 
 export default Modal;
+
+
+

@@ -20,13 +20,22 @@
     "dashboard": "Panel",
     "login": "Iniciar Sesión",
     "register": "Registrarse",
-    "logout": "Cerrar Sesión"
+    "logout": "Cerrar Sesión",
+    "myProperties": "Mis propiedades",
+    "leads": "Leads",
+    "profile": "Perfil",
+    "realEstate": "Bienes raices",
+    "vacation": "Rentas vacacionales",
+    "services": "Servicios"
   },
   "sidebar": {
     "overview": "Resumen",
     "listings": "Mis Anuncios",
     "profile": "Perfil",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "leads": "Leads",
+    "dashboardTitle": "Dashboard",
+    "defaultUser": "Usuario"
   },
   "auth": {
     "login": {
@@ -127,5 +136,790 @@
   "language": {
     "spanish": "Español",
     "english": "English"
+  },
+  "errors": {
+    "400": {
+      "title": "Solicitud Incorrecta",
+      "subtitle": "Algo salió mal con tu solicitud",
+      "message": "No se pudo procesar la solicitud. Por favor verifica la información e intenta de nuevo.",
+      "tips": [
+        "Verifica los datos ingresados",
+        "Intenta recargar la página",
+        "Limpia el caché de tu navegador"
+      ]
+    },
+    "403": {
+      "title": "Acceso Denegado",
+      "subtitle": "No tienes permiso para acceder a este recurso",
+      "message": "Esta página está restringida. Necesitas los permisos adecuados para ver este contenido.",
+      "tips": [
+        "Asegúrate de haber iniciado sesión",
+        "Verifica que tengas los permisos necesarios",
+        "Contacta a soporte si crees que esto es un error"
+      ]
+    },
+    "404": {
+      "title": "Página No Encontrada",
+      "subtitle": "¡Ups! La página que buscas no existe",
+      "message": "No pudimos encontrar la página que solicitaste. Puede que haya sido movida o eliminada.",
+      "tips": [
+        "Verifica que la URL esté bien escrita",
+        "Intenta usar el menú de navegación",
+        "Regresa a la página de inicio"
+      ]
+    },
+    "500": {
+      "title": "Error del Servidor",
+      "subtitle": "¡Ups! Algo salió mal de nuestro lado",
+      "message": "Estamos experimentando dificultades técnicas. Nuestro equipo ha sido notificado y está trabajando en ello.",
+      "tips": [
+        "Intenta de nuevo en unos minutos",
+        "Recarga la página",
+        "Contacta a soporte si el problema persiste"
+      ]
+    },
+    "503": {
+      "title": "Servicio No Disponible",
+      "subtitle": "El servicio está temporalmente no disponible",
+      "message": "Estamos realizando mantenimiento o experimentando alto tráfico. Por favor intenta de nuevo en breve.",
+      "tips": [
+        "Espera unos minutos e intenta de nuevo",
+        "Revisa nuestra página de estado",
+        "Síguenos en redes sociales para actualizaciones"
+      ]
+    },
+    "general": {
+      "title": "¡Ups! Algo Salió Mal",
+      "subtitle": "Ocurrió un error inesperado",
+      "message": "Encontramos un problema inesperado. Por favor intenta de nuevo.",
+      "tips": [
+        "Recarga la página",
+        "Limpia el caché de tu navegador",
+        "Intenta de nuevo más tarde"
+      ]
+    },
+    "actions": {
+      "goHome": "Ir al Inicio",
+      "goBack": "Regresar",
+      "tryAgain": "Intentar de Nuevo",
+      "contactSupport": "Contactar Soporte"
+    },
+    "helpfulTips": "Consejos utiles",
+    "footerSupport": "Si el problema persiste, por favor contacta a nuestro equipo de soporte."
+  },
+  "routeGuards": {
+    "validatingSession": "Validando sesion"
+  },
+  "navbar": {
+    "brand": "Real Estate SaaS",
+    "toggleMenu": "Abrir menu",
+    "tagline": "Propiedades y experiencias",
+    "searchPlaceholder": "Buscar propiedades...",
+    "publish": "Publicar anuncio"
+  },
+  "dashboardNavbar": {
+    "title": "Dashboard",
+    "welcome": "Bienvenido, {{name}}",
+    "defaultUser": "Usuario",
+    "openMenu": "Abrir menu"
+  },
+  "loadingScreen": {
+    "title": "Validando sesion",
+    "message": "Espera un momento mientras cargamos tu informacion.",
+    "badge": "SaaS"
+  },
+  "listingCard": {
+    "noImage": "Sin imagen",
+    "fallbackTitle": "Propiedad",
+    "locationUnavailable": "Ubicacion no disponible",
+    "viewDetail": "Ver detalle"
+  },
+  "loginPage": {
+    "title": "Iniciar sesion",
+    "subtitle": "Accede a tu panel para administrar tus propiedades y leads.",
+    "fields": {
+      "email": "Correo electronico",
+      "password": "Contrasena"
+    },
+    "actions": {
+      "submit": "Iniciar sesion",
+      "validating": "Validando...",
+      "resendVerification": "Reenviar correo de verificacion",
+      "resending": "Reenviando correo de verificacion..."
+    },
+    "links": {
+      "forgotPassword": "Olvidaste tu contrasena?",
+      "noAccount": "No tienes cuenta?",
+      "createAccount": "Crear cuenta"
+    },
+    "messages": {
+      "resendSuccess": "Te enviamos un nuevo correo de verificacion."
+    },
+    "errors": {
+      "login": "No pudimos iniciar sesion.",
+      "resend": "No se pudo reenviar el correo."
+    }
+  },
+  "registerPage": {
+    "title": "Crear cuenta",
+    "subtitle": "Registrate para publicar propiedades y administrar tus contactos.",
+    "fields": {
+      "fullName": "Nombre completo",
+      "email": "Correo electronico",
+      "phoneOptional": "Telefono (opcional)",
+      "password": "Contrasena",
+      "confirmPassword": "Confirmar contrasena",
+      "terms": "Acepto terminos y condiciones."
+    },
+    "actions": {
+      "submit": "Crear cuenta",
+      "creating": "Creando cuenta..."
+    },
+    "links": {
+      "hasAccount": "Ya tienes cuenta?",
+      "login": "Iniciar sesion"
+    },
+    "errors": {
+      "passwordMismatch": "Las contrasenas no coinciden.",
+      "passwordLength": "La contrasena debe tener al menos 8 caracteres.",
+      "termsRequired": "Debes aceptar terminos y condiciones.",
+      "create": "No pudimos crear tu cuenta."
+    }
+  },
+  "forgotPasswordPage": {
+    "title": "Recuperar contrasena",
+    "subtitle": "Ingresa tu correo y te enviaremos un enlace para restablecerla.",
+    "fields": {
+      "email": "Correo electronico"
+    },
+    "actions": {
+      "submit": "Enviar enlace",
+      "sending": "Enviando..."
+    },
+    "links": {
+      "backToLogin": "Volver a iniciar sesion"
+    },
+    "messages": {
+      "success": "Te enviamos un correo con instrucciones para restablecer tu contrasena."
+    },
+    "errors": {
+      "request": "No se pudo iniciar la recuperacion."
+    }
+  },
+  "resetPasswordPage": {
+    "title": "Restablecer contrasena",
+    "subtitle": "Define una nueva contrasena para tu cuenta.",
+    "fields": {
+      "password": "Nueva contrasena",
+      "confirmPassword": "Confirmar contrasena"
+    },
+    "actions": {
+      "submit": "Cambiar contrasena",
+      "updating": "Actualizando..."
+    },
+    "links": {
+      "backToLogin": "Volver a iniciar sesion"
+    },
+    "invalid": {
+      "title": "Enlace invalido",
+      "subtitle": "Este enlace de recuperacion no es valido o ya expiro.",
+      "action": "Solicitar un nuevo enlace"
+    },
+    "messages": {
+      "success": "Contrasena actualizada correctamente. Ya puedes iniciar sesion."
+    },
+    "errors": {
+      "passwordLength": "La contrasena debe tener al menos 8 caracteres.",
+      "passwordMismatch": "Las contrasenas no coinciden.",
+      "update": "No se pudo cambiar la contrasena."
+    }
+  },
+  "verifyEmailPage": {
+    "title": "Verificacion de correo",
+    "subtitle": "Debes verificar tu correo antes de iniciar sesion.",
+    "actions": {
+      "resend": "Reenviar correo",
+      "resending": "Reenviando..."
+    },
+    "links": {
+      "toLogin": "Ir a iniciar sesion"
+    },
+    "messages": {
+      "validating": "Validando tu correo...",
+      "success": "Correo verificado correctamente. Ya puedes iniciar sesion.",
+      "resendSuccess": "Te enviamos un nuevo correo de verificacion.",
+      "instructions": "Revisa tu bandeja de entrada y abre el enlace de verificacion. Si no lo encuentras, puedes solicitar uno nuevo."
+    },
+    "errors": {
+      "verify": "No pudimos verificar tu correo.",
+      "resend": "No pudimos reenviar el correo."
+    }
+  },
+  "createPropertyPage": {
+    "title": "Crear propiedad",
+    "subtitle": "Completa la informacion para guardar tu publicacion.",
+    "submit": "Guardar propiedad",
+    "errors": {
+      "create": "No se pudo crear la propiedad."
+    }
+  },
+  "editPropertyPage": {
+    "title": "Editar propiedad",
+    "loading": "Cargando propiedad...",
+    "submit": "Guardar cambios",
+    "errors": {
+      "load": "No se pudo cargar la propiedad.",
+      "save": "No se pudo guardar la propiedad.",
+      "notFound": "Propiedad no encontrada."
+    }
+  },
+  "settingsPage": {
+    "title": "Configuracion",
+    "subtitle": "Este modulo queda listo para integrar configuraciones avanzadas de marca, dominio y automatizaciones."
+  },
+  "dashboardPage": {
+    "title": "Dashboard",
+    "subtitle": "Resumen de actividad de tu cuenta.",
+    "loading": "Cargando resumen...",
+    "errors": {
+      "load": "No se pudo cargar el dashboard."
+    },
+    "stats": {
+      "properties": "Propiedades",
+      "published": "Publicadas",
+      "drafts": "Borradores",
+      "leads": "Leads",
+      "newLeads": "Leads nuevos",
+      "views": "Vistas"
+    },
+    "recentProperties": {
+      "title": "Propiedades recientes",
+      "viewAll": "Ver todas",
+      "empty": "Aun no tienes propiedades."
+    },
+    "recentLeads": {
+      "title": "Leads recientes",
+      "viewAll": "Ver todos",
+      "empty": "No hay leads aun."
+    }
+  },
+  "myPropertiesPage": {
+    "title": "Mis propiedades",
+    "subtitle": "Gestiona tus publicaciones y su estado.",
+    "loading": "Cargando...",
+    "empty": "Aun no has creado propiedades.",
+    "confirmDeactivate": "Seguro que deseas desactivar esta propiedad?",
+    "table": {
+      "title": "Titulo",
+      "location": "Ubicacion",
+      "status": "Estado",
+      "price": "Precio",
+      "actions": "Acciones"
+    },
+    "actions": {
+      "create": "Crear propiedad",
+      "edit": "Editar",
+      "toDraft": "Pasar a borrador",
+      "publish": "Publicar",
+      "delete": "Eliminar"
+    },
+    "errors": {
+      "load": "No se pudieron cargar tus propiedades.",
+      "toggleStatus": "No se pudo cambiar el estado.",
+      "delete": "No se pudo eliminar la propiedad."
+    }
+  },
+  "leadsPage": {
+    "title": "Leads",
+    "summary": "Total: {{total}} - Nuevos: {{new}} - Ganados: {{won}}",
+    "loading": "Cargando leads...",
+    "empty": "No hay leads para mostrar.",
+    "noPhone": "-",
+    "filters": {
+      "status": "Filtrar por estado",
+      "all": "Todos"
+    },
+    "table": {
+      "date": "Fecha",
+      "contact": "Contacto",
+      "property": "Propiedad",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "actions": {
+      "sendEmail": "Enviar email"
+    },
+    "errors": {
+      "load": "No se pudieron cargar los leads.",
+      "update": "No se pudo actualizar el lead."
+    }
+  },
+  "profilePage": {
+    "title": "Perfil",
+    "emailVerified": "Email verificado",
+    "emailNotVerified": "Email no verificado",
+    "sections": {
+      "personal": "Informacion personal y profesional",
+      "preferences": "Preferencias"
+    },
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
+      "phone": "Telefono",
+      "whatsappNumber": "WhatsApp",
+      "companyName": "Empresa",
+      "websiteUrl": "Sitio web",
+      "facebookUrl": "Facebook",
+      "instagramUrl": "Instagram",
+      "bio": "Biografia"
+    },
+    "preferences": {
+      "theme": "Tema",
+      "language": "Idioma",
+      "currency": "Moneda",
+      "measurement": "Sistema de medida",
+      "metric": "Metrico",
+      "imperial": "Imperial",
+      "notificationsEmail": "Recibir notificaciones por email"
+    },
+    "actions": {
+      "saving": "Guardando...",
+      "saveProfile": "Guardar perfil",
+      "savePreferences": "Guardar preferencias"
+    },
+    "messages": {
+      "profileSaved": "Perfil actualizado correctamente.",
+      "preferencesSaved": "Preferencias guardadas."
+    },
+    "errors": {
+      "profile": "No se pudo actualizar tu perfil.",
+      "preferences": "No se pudieron guardar las preferencias."
+    },
+    "summary": {
+      "defaultName": "Usuario",
+      "location": "Puerto Vallarta, Jalisco",
+      "profileProgress": "Perfil completado"
+    },
+    "sidebar": {
+      "title": "Configuracion",
+      "items": {
+        "personalInfo": "Informacion personal",
+        "address": "Direccion",
+        "preferences": "Preferencias",
+        "emergencyContact": "Contacto de emergencia",
+        "identity": "Identificacion oficial",
+        "privacyNotifications": "Privacidad y notificaciones"
+      }
+    }
+  },
+  "propertyDetailPage": {
+    "loading": "Cargando detalle...",
+    "backHome": "Volver al inicio",
+    "noImage": "Sin imagen",
+    "features": {
+      "bedrooms": "rec",
+      "bathrooms": "banos",
+      "area": "m2"
+    },
+    "owner": {
+      "title": "Agente responsable",
+      "unavailable": "No disponible",
+      "noPhone": "Sin telefono",
+      "rating": "Agente recomendado"
+    },
+    "contact": {
+      "title": "Contactar agente",
+      "fields": {
+        "name": "Nombre",
+        "email": "Email",
+        "phoneOptional": "Telefono (opcional)",
+        "message": "Mensaje"
+      },
+      "actions": {
+        "send": "Enviar mensaje",
+        "sending": "Enviando..."
+      },
+      "success": "Tu mensaje fue enviado correctamente.",
+      "errors": {
+        "send": "No pudimos enviar tu mensaje."
+      }
+    },
+    "errors": {
+      "notFound": "Propiedad no encontrada.",
+      "load": "No se pudo cargar la propiedad."
+    },
+    "priceHint": "Precio estimado de publicacion",
+    "verifiedListing": "Publicacion verificada",
+    "descriptionTitle": "Descripcion",
+    "galleryTitle": "Galeria de imagenes",
+    "amenitiesTitle": "Amenidades",
+    "stats": {
+      "bedrooms": "Habitaciones",
+      "bathrooms": "Banos",
+      "totalArea": "Area total",
+      "type": "Tipo"
+    }
+  },
+  "propertyStatus": {
+    "draft": "Borrador",
+    "published": "Publicada",
+    "inactive": "Inactiva"
+  },
+  "leadStatus": {
+    "new": "Nuevo",
+    "contacted": "Contactado",
+    "in_progress": "En proceso",
+    "closed_won": "Ganado",
+    "closed_lost": "Perdido"
+  },
+  "homePage": {
+    "catalogTitle": "Catalogo de propiedades",
+    "catalogSubtitle": "Explora propiedades disponibles para venta, renta y renta vacacional.",
+    "noMainImage": "Sin imagen principal",
+    "viewDetail": "Ver detalle",
+    "emptyFiltered": "No encontramos propiedades con esos filtros.",
+    "units": {
+      "squareMeters": "m2"
+    },
+    "filters": {
+      "city": "Ciudad",
+      "propertyType": "Tipo de propiedad",
+      "operation": "Operacion",
+      "sort": "Ordenar por",
+      "all": "Todos",
+      "allOperations": "Todas",
+      "title": "Filtros avanzados",
+      "minPrice": "Precio minimo",
+      "maxPrice": "Precio maximo"
+    },
+    "enums": {
+      "propertyType": {
+        "house": "Casa",
+        "apartment": "Departamento",
+        "land": "Terreno",
+        "commercial": "Comercial",
+        "office": "Oficina",
+        "warehouse": "Bodega"
+      },
+      "operation": {
+        "sale": "Venta",
+        "rent": "Renta",
+        "vacation_rental": "Renta vacacional",
+        "transfer": "Traspaso"
+      }
+    },
+    "sort": {
+      "recent": "Mas recientes",
+      "priceAsc": "Precio: menor a mayor",
+      "priceDesc": "Precio: mayor a menor"
+    },
+    "pagination": {
+      "pageOf": "Pagina {{page}} de {{totalPages}}",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "errors": {
+      "loadProperties": "No se pudieron cargar las propiedades."
+    },
+    "heroBadge": "Selecciones premium"
+  },
+  "propertyForm": {
+    "sections": {
+      "basicInfo": "Informacion basica",
+      "pricing": "Precios y publicacion",
+      "location": "Ubicacion",
+      "features": "Caracteristicas",
+      "amenities": "Amenidades"
+    },
+    "fields": {
+      "slug": "Slug",
+      "title": "Titulo",
+      "description": "Descripcion",
+      "propertyType": "Tipo de propiedad",
+      "operationType": "Tipo de operacion",
+      "price": "Precio",
+      "currency": "Moneda",
+      "pricePer": "Precio por",
+      "status": "Estado",
+      "priceNegotiable": "Precio negociable",
+      "featured": "Destacada",
+      "streetAddress": "Calle y numero",
+      "neighborhood": "Colonia",
+      "city": "Ciudad",
+      "state": "Estado",
+      "country": "Pais",
+      "postalCode": "Codigo postal",
+      "bedrooms": "Recamaras",
+      "bathrooms": "Banos",
+      "parkingSpaces": "Estacionamientos",
+      "totalArea": "Area total",
+      "builtArea": "Area construida",
+      "videoUrl": "URL de video",
+      "virtualTourUrl": "URL de tour virtual",
+      "latitude": "Latitud",
+      "longitude": "Longitud"
+    },
+    "actions": {
+      "saving": "Guardando...",
+      "saveProperty": "Guardar propiedad"
+    },
+    "amenities": {
+      "loading": "Cargando amenidades...",
+      "empty": "No hay amenidades activas disponibles.",
+      "selected": "{{count}} seleccionadas",
+      "selectedLabel": "Activa",
+      "selectLabel": "Elegir"
+    },
+    "locationCombobox": {
+      "countryPlaceholder": "Escribe para buscar pais...",
+      "statePlaceholder": "Escribe para buscar estado...",
+      "cityPlaceholder": "Escribe para buscar ciudad...",
+      "noResultsCountry": "No se encontro un pais",
+      "noResultsState": "No se encontro un estado",
+      "noResultsCity": "No se encontro una ciudad"
+    },
+    "options": {
+      "propertyType": {
+        "house": "Casa",
+        "apartment": "Departamento",
+        "land": "Terreno",
+        "commercial": "Comercial",
+        "office": "Oficina",
+        "warehouse": "Bodega",
+        "eventHall": "Salon de eventos",
+        "condo": "Condominio",
+        "villa": "Villa",
+        "building": "Edificio"
+      },
+      "operationType": {
+        "sale": "Venta",
+        "rent": "Renta",
+        "vacationRental": "Renta vacacional",
+        "transfer": "Traspaso"
+      },
+      "status": {
+        "draft": "Borrador",
+        "published": "Publicada",
+        "inactive": "Inactiva"
+      },
+      "pricePer": {
+        "total": "Total",
+        "sqm": "Metro cuadrado",
+        "sqft": "Pie cuadrado"
+      }
+    }
+  },
+  "rootAmenitiesPage": {
+    "title": "Panel root: Amenidades",
+    "subtitle": "Ruta oculta para gestionar catalogo de amenidades y precargar seed base.",
+    "createTitle": "Crear amenidad",
+    "loading": "Cargando amenidades...",
+    "empty": "No hay amenidades para mostrar.",
+    "searchPlaceholder": "Buscar por slug, nombre o categoria...",
+    "allCategories": "Todas las categorias",
+    "seedInfo": "Seed disponible con {{count}} amenidades preconfiguradas con icono.",
+    "seedResult": "Seed completado. Creadas: {{created}}. Omitidas: {{skipped}}. Errores: {{errors}}.",
+    "fields": {
+      "slug": "Slug",
+      "nameEs": "Nombre (ES)",
+      "nameEn": "Nombre (EN)",
+      "category": "Categoria"
+    },
+    "categories": {
+      "general": "General",
+      "security": "Seguridad",
+      "outdoor": "Exterior",
+      "services": "Servicios",
+      "tech": "Tecnologia"
+    },
+    "status": {
+      "enabled": "Activa",
+      "disabled": "Inactiva"
+    },
+    "table": {
+      "icon": "Icono",
+      "slug": "Slug",
+      "name": "Nombre",
+      "category": "Categoria",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "actions": {
+      "seed": "Ejecutar seed",
+      "seeding": "Sembrando catalogo...",
+      "saving": "Guardando...",
+      "create": "Crear amenidad",
+      "edit": "Editar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "enable": "Activar",
+      "disable": "Desactivar"
+    },
+    "errors": {
+      "load": "No se pudieron cargar las amenidades.",
+      "create": "No se pudo crear la amenidad.",
+      "update": "No se pudo actualizar la amenidad.",
+      "toggle": "No se pudo cambiar el estado.",
+      "seed": "No se pudo ejecutar el seed."
+    }
+  },
+  "searchBar": {
+    "tabs": {
+      "rentals": "Rentas",
+      "realEstate": "Bienes raices",
+      "services": "Servicios"
+    },
+    "actions": {
+      "hide": "Ocultar busqueda",
+      "show": "Mostrar busqueda"
+    },
+    "guestsCount": "{{count}} huespedes",
+    "searchPlaceholder": "Buscar {{type}}...",
+    "datePlaceholder": "Entrada / Salida",
+    "searchFor": "Buscar {{type}}"
+  },
+  "carousel": {
+    "noImages": "No hay imagenes disponibles",
+    "aria": {
+      "carousel": "Carrusel de imagenes",
+      "slide": "Diapositiva {{index}}",
+      "previousImage": "Imagen anterior",
+      "nextImage": "Siguiente imagen",
+      "goToSlide": "Ir a la diapositiva {{index}}",
+      "playSlideshow": "Reproducir presentacion",
+      "pauseSlideshow": "Pausar presentacion"
+    }
+  },
+  "errorsDemo": {
+    "title": "Demo de paginas de error",
+    "subtitle": "Componentes de error animados con soporte i18n",
+    "instructions": "Haz clic en cualquier tarjeta para ver el componente de error en accion",
+    "viewDemo": "Ver demo",
+    "featuresTitle": "Caracteristicas",
+    "features": {
+      "uniqueAnimations": {
+        "title": "Animaciones unicas",
+        "description": "Cada error tiene su propia animacion personalizada"
+      },
+      "multilanguage": {
+        "title": "Multiidioma",
+        "description": "Espanol e ingles con i18next"
+      },
+      "theme": {
+        "title": "Tema claro/oscuro",
+        "description": "Adaptacion automatica al tema del sistema"
+      },
+      "responsive": {
+        "title": "Responsive",
+        "description": "Diseno mobile-first totalmente adaptable"
+      },
+      "tips": {
+        "title": "Tips utiles",
+        "description": "Sugerencias contextuales para cada error"
+      },
+      "quickActions": {
+        "title": "Acciones rapidas",
+        "description": "Botones para volver, ir al inicio o reintentar"
+      }
+    },
+    "docs": {
+      "title": "Documentacion completa",
+      "description": "Consulta la documentacion para aprender como usar estos componentes en tu aplicacion",
+      "action": "Ver docs"
+    },
+    "backHome": "Volver al inicio",
+    "cards": {
+      "400": {
+        "name": "Bad Request",
+        "description": "Solicitud incorrecta"
+      },
+      "403": {
+        "name": "Forbidden",
+        "description": "Acceso denegado"
+      },
+      "404": {
+        "name": "Not Found",
+        "description": "Pagina no encontrada"
+      },
+      "500": {
+        "name": "Server Error",
+        "description": "Error del servidor"
+      },
+      "503": {
+        "name": "Service Unavailable",
+        "description": "Servicio no disponible"
+      }
+    }
+  },
+  "modal": {
+    "close": "Cerrar modal"
+  },
+  "dateRangePicker": {
+    "dayHeaders": [
+      "Do",
+      "Lu",
+      "Ma",
+      "Mi",
+      "Ju",
+      "Vi",
+      "Sa"
+    ],
+    "placeholders": {
+      "single": "Selecciona fecha",
+      "range": "Selecciona fechas"
+    },
+    "nights": "{{count}} noches",
+    "actions": {
+      "clear": "Limpiar"
+    },
+    "aria": {
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "close": "Cerrar"
+    }
+  },
+  "footer": {
+    "brand": "Real Estate SaaS",
+    "tagline": "Marketplace inmobiliario",
+    "description": "Encuentra propiedades para vivir, invertir o vacacionar con una experiencia moderna y segura.",
+    "sections": {
+      "explore": "Explora",
+      "legal": "Contacto",
+      "newsletter": "Suscribete"
+    },
+    "links": {
+      "home": "Inicio",
+      "dashboard": "Dashboard",
+      "properties": "Mis propiedades",
+      "profile": "Perfil"
+    },
+    "contact": {
+      "city": "Puerto Vallarta, Jalisco",
+      "email": "hola@realestate-saas.com",
+      "phone": "+52 322 123 4567"
+    },
+    "newsletter": {
+      "text": "Recibe novedades, oportunidades y alertas de nuevas propiedades.",
+      "placeholder": "Tu correo electronico",
+      "action": "Suscribirme"
+    },
+    "copyright": "? {{year}} Real Estate SaaS. Todos los derechos reservados."
+  },
+  "authLayout": {
+    "platform": "Plataforma inmobiliaria",
+    "backToSite": "Volver al catalogo",
+    "secureAccess": "Acceso seguro",
+    "heroTitle": "Gestiona propiedades, leads y clientes desde un solo lugar",
+    "heroSubtitle": "Publica tus inmuebles, recibe contactos y administra tu perfil con una experiencia premium.",
+    "multilingual": "Interfaz multi idioma",
+    "accountAccess": "Acceso de cuenta",
+    "pageSubtitle": "Ingresa con tu cuenta para continuar.",
+    "pageTitles": {
+      "login": "Iniciar sesion",
+      "register": "Crear cuenta",
+      "forgotPassword": "Recuperar contrasena",
+      "resetPassword": "Restablecer contrasena",
+      "verifyEmail": "Verificar correo"
+    }
   }
 }

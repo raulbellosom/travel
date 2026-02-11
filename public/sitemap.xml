@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+                            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+    <!-- Página principal -->
+    <url>
+        <loc>https://www.travel.com/</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+
+    <!-- Páginas principales de búsqueda -->
+    <url>
+        <loc>https://www.travel.com/properties</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://www.travel.com/search</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- Páginas de categorías -->
+    <url>
+        <loc>https://www.travel.com/buy</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://www.travel.com/rent</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://www.travel.com/sell</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Autenticación y registro -->
+    <url>
+        <loc>https://www.travel.com/login</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    <url>
+        <loc>https://www.travel.com/register</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    <!-- Páginas informativas -->
+    <url>
+        <loc>https://www.travel.com/about</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <url>
+        <loc>https://www.travel.com/contact</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <url>
+        <loc>https://www.travel.com/terms</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+    <url>
+        <loc>https://www.travel.com/privacy</loc>
+        <lastmod>2026-02-10</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+    <!-- 
+  Nota: Este es un sitemap base. Para propiedades individuales,
+  se recomienda crear un sitemap dinámico que se genere automáticamente
+  con las URLs de todas las propiedades activas.
+  
+  Ejemplo de entrada de propiedad:
+  <url>
+    <loc>https://www.travel.com/property/[id]</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://www.travel.com/images/property-[id].jpg</image:loc>
+      <image:title>Título de la propiedad</image:title>
+    </image:image>
+  </url>
+  
+  Para generar esto automáticamente, considera usar un script de build
+  o un endpoint de API que genere el sitemap-properties.xml dinámicamente.
+  -->
+
+</urlset>

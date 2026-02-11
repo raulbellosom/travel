@@ -1,7 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
+﻿import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Home, List, User, Settings, X } from "lucide-react";
+import { Home, List, User, Settings, Inbox, X } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import BrandLogo from "../common/BrandLogo";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
@@ -10,22 +11,22 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const navigation = [
     { name: t("sidebar.overview"), href: "/dashboard", icon: Home },
-    { name: t("sidebar.listings"), href: "/dashboard/listings", icon: List },
-    { name: t("sidebar.profile"), href: "/dashboard/profile", icon: User },
+    { name: t("sidebar.listings"), href: "/mis-propiedades", icon: List },
+    { name: t("sidebar.leads"), href: "/leads", icon: Inbox },
+    { name: t("sidebar.profile"), href: "/perfil", icon: User },
     {
       name: t("sidebar.settings"),
-      href: "/dashboard/settings",
+      href: "/configuracion",
       icon: Settings,
     },
   ];
 
   const isActive = (href) => {
-    return location.pathname === href;
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
   return (
     <>
-      {/* Mobile backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-gray-600 bg-opacity-75 lg:hidden z-40"
@@ -33,7 +34,6 @@ const Sidebar = ({ isOpen, onClose }) => {
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
@@ -41,20 +41,23 @@ const Sidebar = ({ isOpen, onClose }) => {
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-          <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-            Dashboard
-          </span>
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <BrandLogo size="sm" mode="adaptive" alt={t("navbar.brand")} className="rounded-lg" />
+            <div className="leading-tight">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("navbar.brand")}</p>
+              <p className="text-xs text-indigo-600 dark:text-indigo-400">{t("sidebar.dashboardTitle")}</p>
+            </div>
+          </div>
           <button
             onClick={onClose}
             className="lg:hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            aria-label={t("common.close")}
           >
             <X size={24} />
           </button>
         </div>
 
-        {/* User info */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -64,7 +67,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {user?.name || "Usuario"}
+                {user?.name || t("sidebar.defaultUser")}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {user?.email}
@@ -73,7 +76,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="mt-6 px-3">
           <div className="space-y-1">
             {navigation.map((item) => {
@@ -114,3 +116,4 @@ const Sidebar = ({ isOpen, onClose }) => {
 };
 
 export default Sidebar;
+

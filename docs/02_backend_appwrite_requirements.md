@@ -1,613 +1,281 @@
-# 02_BACKEND_APPWRITE_REQUIREMENTS – REAL ESTATE SAAS PLATFORM
+﻿# 02_BACKEND_APPWRITE_REQUIREMENTS - REAL ESTATE SAAS PLATFORM
 
 ## Referencia
 
-Este documento se rige estrictamente por:
+Este documento se rige por:
 
-- 00_ai_project_context.md
-- 00_project_brief.md
-- 01_frontend_requirements.md
-
----
-
-## 1. Plataforma Backend
-
-- **Appwrite self-hosted** (última versión estable >= 1.5.x)
-- **PostgreSQL** como motor de base de datos
-- Appwrite como **fuente única de verdad** para datos
-- Uso exclusivo de capacidades reales de Appwrite
+- `00_ai_project_context.md`
+- `00_project_brief.md`
+- `01_frontend_requirements.md`
 
 ---
 
-## 2. Servicios de Appwrite Utilizados
+## 1. Principio Arquitectonico
 
-### 2.1 Auth (Autenticación)
+El backend se disena como **single-tenant por instancia**:
 
-**Propósito**: Gestión de identidad y sesiones
-
-**Métodos soportados**:
-
-- Email/Password (principal)
-- OAuth (futuro): Google, Facebook
-- Magic URL (futuro)
-- Phone/SMS (futuro)
-
-**Características**:
-
-- Verificación de email obligatoria
-- Recuperación de contraseña
-- Sesiones persistentes
-- Límites de sesiones concurrentes
+- Una instancia Appwrite por cliente.
+- Un database principal por cliente (`main`).
+- Buckets y Functions propios por cliente.
+- Sin shared database entre clientes.
 
 ---
 
-### 2.2 Databases (Base de Datos)
+## 2. Stack Backend
 
-**Propósito**: Almacenamiento de datos estructurados
-
-**Database ID**: `main`
-
-**Colecciones previstas** (ver 03_appwrite_db_schema.md):
-
-- `users` - Perfiles de usuario extendidos
-- `properties` - Propiedades/inmuebles
-- `property_images` - Imágenes de propiedades
-- `property_amenities` - Amenidades por propiedad
-- `leads` - Contactos/leads recibidos
-- `organizations` - Organizaciones (futuro multi-tenant)
-- `organization_members` - Miembros de org (futuro)
-- `user_preferences` - Preferencias de usuario
-- `audits` - Auditoría de acciones (opcional)
-
-**Características**:
-
-- Relationships entre colecciones
-- Índices para búsquedas eficientes
-- Full-text search (PostgreSQL)
-- Permisos a nivel de documento
+- Appwrite self-hosted (>= 1.8.x recomendado).
+- PostgreSQL como motor de datos.
+- Node.js >= 18 para Functions.
+- SDK `node-appwrite` >= 17.0.0.
 
 ---
 
-### 2.3 Storage (Almacenamiento)
+## 3. Servicios Appwrite Utilizados
 
-**Propósito**: Gestión de archivos multimedia
+### 3.1 Auth
 
-**Buckets previstos**:
+- Email/password en MVP.
+- Verificacion de email obligatoria.
+- Recovery de password.
+- Sesiones persistentes seguras.
 
-| Bucket ID         | Propósito                   | Max Size | Public | Extensiones          |
-| ----------------- | --------------------------- | -------- | ------ | -------------------- |
-| `property-images` | Imágenes de propiedades     | 10 MB    | Yes    | jpg, jpeg, png, webp |
-| `avatars`         | Avatares de usuarios        | 5 MB     | No     | jpg, jpeg, png, webp |
-| `documents`       | Documentos legales (futuro) | 20 MB    | No     | pdf, doc, docx       |
+### 3.2 Databases
 
-**Características**:
+Colecciones minimas:
 
-- Compresión automática de imágenes
-- Generación de thumbnails
-- CDN para servir medios
-- Validación de tipos de archivo
-- Límites de tamaño por bucket
+- `users`
+- `user_preferences`
+- `properties`
+- `property_images`
+- `amenities`
+- `property_amenities`
+- `leads`
+- `reservations`
+- `reservation_payments`
+- `reservation_vouchers`
+- `reviews`
+- `analytics_daily`
+- `activity_logs`
+- `email_verifications`
 
----
+### 3.3 Storage
 
-### 2.4 Functions (Funciones Cloud)
+Buckets minimos:
 
-**Propósito**: Lógica de negocio, automatizaciones, integraciones
+- `property-images` (public read)
+- `avatars` (private/controlled read)
+- `documents` (private)
 
-**Runtime**: Node.js >= 18
+### 3.4 Functions
 
-**SDK**: node-appwrite >= 17.0.0
+- Triggers de auth/database/storage.
+- Endpoints HTTP para flujos publicos (lead/reserva/review).
+- Webhooks de pago para Stripe/Mercado Pago.
 
-**Functions previstas** (ver 06_appwrite_functions_catalog.md):
+### 3.5 Messaging
 
-- `send-lead-notification` - Notificar al admin cuando llega lead
-- `property-published-webhook` - Acciones cuando se publica propiedad
-- `image-processor` - Procesar y optimizar imágenes
-- `seo-sitemap-generator` - Generar sitemap.xml (futuro)
-- `whatsapp-integration` - Integración WhatsApp (futuro)
+- SMTP como base.
+- Plantillas para verificacion, reservas, voucher y notificaciones.
 
-**Características**:
+### 3.6 Estadisticas y visualizacion
 
-- Event triggers (database, storage, auth)
-- Scheduled tasks (cron)
-- HTTP endpoints
-- Variables de entorno por función
-
----
-
-### 2.5 Messaging (Mensajería)
-
-**Propósito**: Envío de emails y notificaciones
-
-**Providers**:
-
-- SMTP (principal)
-- SendGrid (futuro)
-- Mailgun (futuro)
-
-**Plantillas de email**:
-
-- Verificación de email
-- Recuperación de contraseña
-- Nuevo lead recibido
-- Propiedad publicada (confirmación)
-- Bienvenida (onboarding)
-
-**Características**:
-
-- Templates con variables
-- Scheduling
-- Tracking de apertura/clicks (futuro)
+- KPIs diarios materializados en `analytics_daily`.
+- Dashboard consume agregados para graficas y cards.
+- Actualizacion por Function programada (cron) o evento.
 
 ---
 
-### 2.6 Realtime (Opcional)
+## 4. Modelo de Roles y Seguridad
 
-**Propósito**: Actualizaciones en tiempo real
+Roles de negocio (campo `users.role`):
 
-**Uso futuro**:
+- `root` (interno proveedor, oculto)
+- `owner` (dueno de instancia cliente)
+- `staff_manager`
+- `staff_editor`
+- `staff_support`
 
-- Notificaciones de nuevos leads
-- Actualización de estadísticas
-- Chat interno (futuro)
+Reglas:
 
----
-
-## 3. Autenticación y Sesiones
-
-### 3.1 Roles de Aplicación
-
-El sistema maneja roles a nivel de aplicación (no de Appwrite Auth):
-
-- **Admin**: Propietario de la instancia/organización
-- **Agent**: Agente inmobiliario (futuro multi-tenant)
-- **User**: Usuario público (futuro para favoritos)
-
-Los roles se almacenan en la colección `users` (campo `role`).
-
-### 3.2 Manejo de Sesiones
-
-- Sesiones gestionadas por Appwrite Auth
-- Cookie `a_session_*` (httpOnly)
-- Expiración: 30 días (configurable)
-- Renovación automática
-- Logout limpia sesión completamente
-
-### 3.3 Verificación de Email
-
-- **Obligatoria** para acceso completo
-- Email enviado automáticamente al registrarse
-- Usuario puede reenviar email de verificación
-- Token expira en 7 días
+- `root` nunca aparece en listados del dashboard normal.
+- `owner` puede crear/desactivar staff.
+- Staff opera solo en modulos permitidos.
+- Ninguna decision de seguridad depende solo del frontend.
 
 ---
 
-## 4. Base de Datos - Principios
+## 5. Principios de Datos
 
-### 4.1 Nomenclatura
+### 5.1 Estandar comun
 
-- **Collections**: snake_case (ej: `property_images`)
-- **Attributes**: camelCase (ej: `createdAt`, `propertyType`)
-- **IDs**: Auto-generados por Appwrite
-- **Relationships**: explícitos con IDs
+Todas las colecciones de negocio deben incluir:
 
-### 4.2 Campos Comunes (Estándar)
+- `createdAt` (datetime)
+- `updatedAt` (datetime)
+- `enabled` (boolean)
 
-Todas las colecciones principales deben incluir:
+### 5.2 Auditoria obligatoria
 
-- `createdAt` (datetime) - Fecha de creación
-- `updatedAt` (datetime) - Última actualización
-- `enabled` (boolean, default: true) - Soft delete
+Toda accion critica debe registrar entrada en `activity_logs`:
 
-Colecciones multi-tenant (futuro):
+- Actor (`actorUserId`, `actorRole`)
+- Entidad (`entityType`, `entityId`)
+- Accion (`create`, `update`, `delete`, `status_change`, etc.)
+- Snapshot antes/despues (`beforeData`, `afterData`)
+- Timestamp
 
-- `organizationId` (string) - FK a organizations
+### 5.3 Consistencia funcional
 
-### 4.3 Índices
-
-Crear índices para:
-
-- Campos usados en filtros (ej: `propertyType`, `operationType`, `status`)
-- Campos usados en ordenamiento (ej: `price`, `createdAt`)
-- Búsquedas de texto (fulltext)
-- Foreign keys (ej: `userId`, `propertyId`)
-
-**Nomenclatura de índices**:
-
-- `idx_<collection>_<field>` (ej: `idx_properties_status`)
-- `uq_<collection>_<field>` para unique (ej: `uq_users_email`)
-- `fk_<collection>_<field>` para foreign keys (ej: `fk_leads_propertyId`)
+- Estados de reserva y pago deben ser trazables.
+- Toda confirmacion de pago depende de webhook validado.
+- Emision de voucher solo despues de `paymentStatus=paid`.
 
 ---
 
-## 5. Permisos
+## 6. Permisos (Backend First)
 
-### 5.1 Estrategia de Permisos
+Primitivas Appwrite usadas:
 
-Appwrite maneja permisos a nivel de documento con:
+- `Role.any()`
+- `Role.users()`
+- `Role.user(userId)`
 
-- `Role.any()` - Cualquier usuario (público)
-- `Role.user(userId)` - Usuario específico
-- `Role.users()` - Cualquier usuario autenticado
-- `Role.team(teamId)` - Team específico (futuro multi-tenant)
+Notas:
 
-### 5.2 Permisos por Colección (Fase 0)
+- No se usa modelo multi-tenant por Team para separar clientes.
+- El aislamiento entre clientes se resuelve por **instancias separadas**.
 
-**users** (perfiles):
-
-- Read: `Role.user(userId)` (solo su perfil)
-- Write: `Role.user(userId)` (solo su perfil)
-
-**properties** (propiedades):
-
-- Read: `Role.any()` si `status=published` y `enabled=true`
-- Read: `Role.user(userId)` (propietario) siempre
-- Create: `Role.users()` (cualquier autenticado)
-- Update: `Role.user(userId)` (propietario)
-- Delete: `Role.user(userId)` (propietario)
-
-**leads** (contactos):
-
-- Read: `Role.user(userId)` (admin de la propiedad)
-- Create: `Role.any()` (formulario público)
-- Update: `Role.user(userId)` (admin)
-- Delete: `Role.user(userId)` (admin)
-
-**property_images**:
-
-- Read: `Role.any()` (en contexto de propiedad pública)
-- Create/Update/Delete: `Role.user(userId)` (propietario de propiedad)
+Colecciones sensibles (`reservation_payments`, `activity_logs`) son system-only
+para lectura/escritura directa y se exponen por Functions controladas.
 
 ---
 
-## 6. Storage (Detalle)
+## 7. Reservas y Pagos
 
-### 6.1 Bucket: property-images
+### 7.1 Flujo base
 
-**Configuración**:
+1. Visitante crea reservacion (`pending`).
+2. Se genera intento de pago.
+3. Pasarela confirma via webhook.
+4. Sistema actualiza pago y reservacion (`confirmed`).
+5. Sistema genera voucher.
 
-```
-bucketId: property-images
-maxFileSize: 10485760 (10 MB)
-allowedFileExtensions: ['jpg', 'jpeg', 'png', 'webp']
-encryption: false
-antivirus: true
-enabled: true
-```
+### 7.2 Integraciones
 
-**Permisos**:
+- Stripe: `payment_intent` + `webhook`.
+- Mercado Pago: `preference/payment` + `webhook`.
 
-- Read: `Role.any()` (público)
-- Create: `Role.users()` (autenticados)
-- Update: `Role.user(userId)` (propietario archivo)
-- Delete: `Role.user(userId)` (propietario archivo)
+### 7.3 Reglas no negociables
 
-**Procesamiento**:
-
-- Compresión automática (calidad 85%)
-- Conversión a WebP (futuro)
-- Thumbnails: 200x200, 400x400, 800x800
-
-### 6.2 Bucket: avatars
-
-**Configuración**:
-
-```
-bucketId: avatars
-maxFileSize: 5242880 (5 MB)
-allowedFileExtensions: ['jpg', 'jpeg', 'png', 'webp']
-encryption: false
-antivirus: true
-enabled: true
-```
-
-**Permisos**:
-
-- Read: `Role.users()` (autenticados)
-- Create/Update/Delete: `Role.user(userId)` (propietario)
+- Validar firma de webhook.
+- Idempotencia por `providerEventId`.
+- No confirmar reserva por callback del frontend.
 
 ---
 
-## 7. Functions - Estructura Estándar
+## 8. Functions - Estructura Estandar
 
-### 7.1 Estructura de Carpetas
+Cada Function:
 
-Cada función debe seguir esta estructura:
+- `functions/<name>/.env.example`
+- `functions/<name>/README.md`
+- `functions/<name>/package.json`
+- `functions/<name>/src/index.js`
 
-```
-functions/
-└── send-lead-notification/
-    ├── .env.example
-    ├── README.md
-    ├── package.json
-    └── src/
-        └── index.js
-```
+Politicas:
 
-### 7.2 package.json (Template)
-
-```json
-{
-  "name": "send-lead-notification",
-  "version": "1.0.0",
-  "description": "Envía notificación cuando se recibe un lead",
-  "main": "src/index.js",
-  "scripts": {
-    "start": "node src/index.js"
-  },
-  "dependencies": {
-    "node-appwrite": "^17.0.0"
-  }
-}
-```
-
-### 7.3 src/index.js (Template)
-
-```javascript
-import { Client, Databases } from "node-appwrite";
-
-export default async ({ req, res, log, error }) => {
-  const client = new Client()
-    .setEndpoint(process.env.APPWRITE_ENDPOINT)
-    .setProject(process.env.APPWRITE_PROJECT_ID)
-    .setKey(process.env.APPWRITE_API_KEY);
-
-  const databases = new Databases(client);
-
-  try {
-    // Lógica de la función
-    log("Function executed successfully");
-
-    return res.json({ success: true });
-  } catch (err) {
-    error("Function error: " + err.message);
-    return res.json({ success: false, error: err.message }, 500);
-  }
-};
-```
-
-### 7.4 Variables de Entorno por Función
-
-Todas las funciones requieren:
-
-```
-APPWRITE_ENDPOINT
-APPWRITE_PROJECT_ID
-APPWRITE_API_KEY
-```
-
-Variables adicionales según función:
-
-```
-SMTP_HOST
-SMTP_PORT
-SMTP_USER
-SMTP_PASSWORD
-WHATSAPP_API_KEY
-```
+- Sin secrets hardcodeados.
+- Validacion de env requerida al inicio.
+- Logs estructurados con `requestId`.
 
 ---
 
-## 8. Eventos y Triggers
+## 9. Eventos y Triggers
 
-### 8.1 Database Events
+Eventos minimos recomendados:
 
-Appwrite puede disparar funciones ante eventos de database:
-
-**Evento**: `databases.*.collections.*.documents.*.create`
-**Uso**: Cuando se crea un lead
-**Function**: `send-lead-notification`
-
-**Evento**: `databases.*.collections.*.documents.*.update`
-**Uso**: Cuando se actualiza una propiedad
-**Function**: `property-published-webhook` (si cambia a published)
-
-### 8.2 Storage Events
-
-**Evento**: `buckets.*.files.*.create`
-**Uso**: Cuando se sube una imagen
-**Function**: `image-processor`
-
-### 8.3 Scheduled Tasks (Cron)
-
-**Función**: `seo-sitemap-generator`
-**Schedule**: `0 2 * * *` (diario a las 2 AM)
-**Propósito**: Regenerar sitemap.xml
+- `users.*.create` -> `user-create-profile`
+- `databases.*.collections.leads.documents.*.create` -> `send-lead-notification`
+- `databases.*.collections.reservations.documents.*.create` -> `reservation-created-notification`
+- `databases.*.collections.reservation_payments.documents.*.update` -> `issue-reservation-voucher` (si paid)
 
 ---
 
-## 9. Messaging - Plantillas
+## 10. Logging y Monitoreo
 
-### 9.1 Email Verification
+### 10.1 Logs de ejecucion
 
-**Template ID**: `email-verification`
+- `log()` para eventos funcionales.
+- `error()` para fallas.
+- Incluir `entityId`, `actorUserId`, `requestId`.
 
-**Variables**:
+### 10.2 Panel de auditoria root
 
-- `{{name}}` - Nombre del usuario
-- `{{url}}` - URL de verificación
-
-**Asunto**: Verifica tu email - {{appName}}
-
-### 9.2 Password Recovery
-
-**Template ID**: `password-recovery`
-
-**Variables**:
-
-- `{{name}}` - Nombre del usuario
-- `{{url}}` - URL de recuperación
-
-**Asunto**: Recupera tu contraseña - {{appName}}
-
-### 9.3 New Lead Notification
-
-**Template ID**: `new-lead`
-
-**Variables**:
-
-- `{{adminName}}` - Nombre del admin
-- `{{leadName}}` - Nombre del lead
-- `{{leadEmail}}` - Email del lead
-- `{{leadPhone}}` - Teléfono del lead
-- `{{propertyTitle}}` - Título de la propiedad
-- `{{leadMessage}}` - Mensaje del lead
-- `{{dashboardUrl}}` - URL al dashboard
-
-**Asunto**: Nuevo contacto para {{propertyTitle}}
+- Ruta oculta de ActivityLog en frontend.
+- Solo `root` puede acceder.
+- Debe permitir filtros por fecha, actor, entidad y accion.
 
 ---
 
-## 10. Seguridad
+## 11. Backup y Recuperacion
 
-### 10.1 API Keys
+Minimo por instancia cliente:
 
-- **Nunca** exponer API keys en frontend
-- API keys solo en backend/functions
-- Scope mínimo necesario por API key
-- Rotación periódica de keys (cada 6 meses)
-
-### 10.2 Environment Variables
-
-- Todas las variables sensibles en `.env`
-- `.env.example` sin valores reales
-- Nunca commitear `.env` al repositorio
-- Usar secrets manager en producción
-
-### 10.3 Validación de Inputs
-
-- Validar todos los inputs en el backend
-- No confiar en validaciones de frontend
-- Sanitizar datos antes de guardar
-- Prevenir SQL injection (Appwrite lo maneja)
-
-### 10.4 Rate Limiting
-
-Configurar límites en Appwrite:
-
-- Login: 10 intentos / 15 minutos
-- API calls: 60 requests / minuto (configuración global)
-- File uploads: 20 archivos / hora por usuario
+- Backup DB diario (retencion 30 dias).
+- Backup storage semanal (retencion 60 dias).
+- Procedimiento documentado de restore.
 
 ---
 
-## 11. Logging y Monitoreo
+## 12. Provisioning de Nueva Instancia Cliente
 
-### 11.1 Logs de Appwrite
+Checklist:
 
-- Activar logs en producción
-- Nivel: INFO mínimo, DEBUG en desarrollo
-- Retención: 30 días
-- Revisar logs regularmente
-
-### 11.2 Logs de Functions
-
-Usar `log()` y `error()` en funciones:
-
-```javascript
-log("Info message");
-error("Error message");
-```
-
-### 11.3 Auditoría (Futuro)
-
-Collection `audits` para rastrear:
-
-- Creación/edición/eliminación de propiedades
-- Login exitoso/fallido
-- Cambios de permisos
-- Acciones críticas
+1. Crear proyecto Appwrite dedicado.
+2. Crear `database main`.
+3. Crear colecciones + indices de `03_appwrite_db_schema.md`.
+4. Crear buckets requeridos.
+5. Deploy de functions requeridas.
+6. Configurar variables de entorno (`08_env_reference.md`).
+7. Crear usuario `owner`.
+8. Crear usuario `root` interno y marcarlo no listable.
+9. Ejecutar smoke test:
+   - login
+   - alta propiedad
+   - lead publico
+   - reserva + pago sandbox
+   - voucher
+   - ActivityLog
 
 ---
 
-## 12. Backup y Recuperación
+## 13. Seguridad
 
-### 12.1 Backup de Database
-
-- **Frecuencia**: Diario (automático)
-- **Retención**: 30 días
-- **Método**: Dump de PostgreSQL
-- **Ubicación**: Storage externo seguro
-
-### 12.2 Backup de Storage
-
-- **Frecuencia**: Semanal
-- **Método**: Sync a S3 compatible
-- **Retención**: 60 días
-
-### 12.3 Plan de Recuperación
-
-Documentar procedimiento de restore:
-
-1. Detener Appwrite
-2. Restaurar database desde dump
-3. Restaurar storage desde backup
-4. Reiniciar Appwrite
-5. Verificar integridad
+- API keys por funcion con scope minimo.
+- Rotacion de secrets cada 6 meses.
+- Rate limiting en endpoints publicos (leads/reservas/reviews).
+- Sanitizacion de payloads y validacion estricta.
 
 ---
 
-## 13. Performance
-
-### 13.1 Caching
-
-- Appwrite maneja cache interno
-- Considerar Redis para cache adicional (futuro)
-- Cache de queries frecuentes
-
-### 13.2 Índices de Database
-
-- Crear índices para todos los campos filtrados
-- Monitorear queries lentas
-- Optimizar queries N+1
-
-### 13.3 CDN para Storage
-
-- Configurar CDN delante de Storage
-- Cloudflare o similar
-- Cache de imágenes por 1 año (immutable)
-
----
-
-## 14. Deployment
-
-### 14.1 Infraestructura
-
-- Appwrite self-hosted en servidor dedicado
-- Docker Compose
-- Reverse proxy (Nginx/Caddy)
-- SSL/TLS con Let's Encrypt
-
-### 14.2 Proceso de Deploy
-
-1. Backup de database
-2. Pull de última imagen de Appwrite
-3. Ejecutar migraciones (si aplica)
-4. Restart de servicios
-5. Verificación de salud
-
----
-
-## 15. Relación con Documentos Posteriores
+## 14. Relacion con Documentos Posteriores
 
 Este documento habilita:
 
-- 03_appwrite_db_schema.md (schema detallado de collections)
-- 05_permissions_and_roles.md (permisos granulares)
-- 06_appwrite_functions_catalog.md (catálogo completo de funciones)
-- 08_env_reference.md (variables de entorno completas)
+- `03_appwrite_db_schema.md`
+- `05_permissions_and_roles.md`
+- `06_appwrite_functions_catalog.md`
+- `08_env_reference.md`
 
 ---
 
-## 16. Estado del Documento
+## 15. Estado del Documento
 
-Este documento es:
-
-- ✅ Definitivo para Fase 0
-- 📝 Sujeto a extensión en fases posteriores
-- 🔒 No negociable en uso de Appwrite como backend
+- Definitivo para arquitectura single-tenant por instancia.
+- Preparado para reservas, pagos y auditoria root.
+- Sujeto a ampliaciones por cliente sin romper base comun.
 
 ---
 
-**Última actualización**: Febrero 2026
-**Versión**: 1.0.0
+Ultima actualizacion: 2026-02-10
+Version: 2.0.0

@@ -1,469 +1,247 @@
-# 00_PROJECT_BRIEF – REAL ESTATE SAAS PLATFORM
+﻿# 00_PROJECT_BRIEF - REAL ESTATE SAAS PLATFORM (SINGLE-TENANT)
 
 ## Documento Base
 
-Este documento define el **Project Brief oficial** del sistema SaaS inmobiliario.
-
-Todas las decisiones técnicas, restricciones y reglas arquitectónicas que aquí se aplican
-están definidas previamente en:
+Este documento define el alcance funcional y de negocio del producto.
+Las reglas tecnicas detalladas viven en:
 
 - `00_ai_project_context.md`
-
-Este documento **no redefine reglas técnicas**, únicamente establece el alcance funcional,
-la visión del producto y los criterios de éxito.
+- `01_frontend_requirements.md`
+- `02_backend_appwrite_requirements.md`
 
 ---
 
-## 1. Visión del Producto
+## 1. Vision del Producto
 
-El proyecto consiste en el desarrollo de un **SaaS inmobiliario multi-tenant**
-que permite a agentes inmobiliarios, agencias y grupos corporativos:
+El producto es una **plantilla SaaS inmobiliaria** que se entrega como
+**instancia dedicada por cliente**.
 
-- Publicar y gestionar propiedades de todo tipo
-- Tener presencia digital profesional con su propia marca
-- Generar leads y gestionar contactos
-- Operar completamente desde dispositivos móviles
-- Escalar desde un solo usuario hasta cientos de agentes
+Modelo operativo:
 
-El sistema está diseñado como un **producto comercial real** que se vende
-como suscripción mensual/anual a diferentes tipos de clientes del sector inmobiliario.
+- Este repositorio funciona como **demo/portafolio**.
+- Cuando entra un cliente nuevo, se crea una **nueva instancia exclusiva**:
+  - Frontend independiente
+  - Proyecto Appwrite independiente
+  - Base de datos independiente
+  - Buckets y Functions independientes
+- No existe mezcla de datos entre clientes.
 
 ---
 
 ## 2. Problema que Resuelve
 
-### 2.1 Problemas de los Agentes Independientes
+### 2.1 Para agentes y brokers
 
-- No tienen presencia digital profesional
-- Dependen de portales inmobiliarios (Inmuebles24, Vivanuncios) que cobran altas comisiones
-- No controlan sus leads ni datos de clientes
-- Usan herramientas genéricas no especializadas en inmobiliaria
-- No pueden personalizar su marca
+- Necesitan pagina profesional para publicar propiedades.
+- Necesitan recibir reservas y mensajes sin depender de portales externos.
+- Necesitan control real sobre sus leads, reseñas y conversiones.
 
-### 2.2 Problemas de Agencias Pequeñas y Medianas
+### 2.2 Para equipos pequenos
 
-- Sistemas inmobiliarios tradicionales son caros ($500-$2000 USD/mes)
-- Requieren instalación local o infraestructura compleja
-- No están optimizados para móvil
-- No permiten customización de marca
-- Difíciles de usar y aprender
+- Requieren usuarios de staff con permisos restringidos.
+- Necesitan delegar operacion diaria (contenido, mensajes, leads).
+- Necesitan trazabilidad para auditoria de cambios.
 
-### 2.3 Problemas de Grupos Corporativos
+### 2.3 Para operacion del proveedor SaaS
 
-- Necesitan gestionar múltiples sucursales y agentes
-- Requieren reportes y analytics centralizados
-- Necesitan control de permisos granular
-- Quieren integración con sus sistemas existentes (CRM, ERP)
+- Se requiere control root interno para soporte y diagnostico.
+- Se requiere panel oculto de ActivityLog para auditoria forense.
+- Se requiere onboarding repetible por cliente (provisioning).
 
 ---
 
-## 3. Solución Propuesta
+## 3. Solucion Propuesta
 
-El SaaS inmobiliario ofrece:
+### 3.1 Core funcional por instancia cliente
 
-### 3.1 Para Todos los Usuarios
+- Landing y catalogo publico de propiedades.
+- Detalle de propiedad con formulario de contacto.
+- Reservas online por propiedad.
+- Reseñas verificadas por reservacion.
+- Dashboard con metricas operativas y comerciales.
 
-- **SaaS puro**: Sin instalación, acceso web inmediato
-- **Mobile-first**: Funciona perfectamente en smartphone y tablet
-- **Presencia digital**: Landing page profesional con su marca
-- **Gestión completa**: CRUD de propiedades con galería rica
-- **Multi-idioma**: Español e inglés desde el inicio
-- **SEO optimizado**: Cada propiedad indexable por Google
-- **Leads centralizados**: Todos los contactos en un solo lugar
+### 3.2 Preparacion comercial y financiera
 
-### 3.2 Para Agentes Individuales (Plan Solo)
+- Arquitectura lista para Stripe y/o Mercado Pago.
+- Registro de pagos y reconciliacion por webhook.
+- Emision de voucher de reservacion.
+- Estados de reservacion y pago trazables.
 
-- Una sola cuenta de administrador
-- Catálogo ilimitado de propiedades
-- Personalización básica de marca
-- Formularios de contacto
-- Galería de fotos profesional
+### 3.3 Control operativo y seguridad
 
-### 3.3 Para Agencias (Plan Team)
-
-- Múltiples usuarios/agentes
-- Cada agente gestiona su cartera
-- Admin puede ver y gestionar todo
-- Asignación de propiedades a agentes
-- Reportes por agente
-
-### 3.4 Para Grupos Corporativos (Plan Enterprise)
-
-- Multi-sucursal
-- Roles y permisos avanzados
-- Reportes y analytics centralizados
-- API para integraciones
-- Soporte prioritario
-- Custom domain
+- Usuario `owner` por cliente con control completo de negocio.
+- Usuarios `staff` creados por owner con permisos granulares.
+- Usuario `root` interno, oculto y no listable, con acceso total.
+- ActivityLog detallado (quien, cuando, entidad, antes, despues).
 
 ---
 
 ## 4. Usuarios Objetivo
 
-### 4.1 Primarios
+### 4.1 En la instancia de cliente
 
-1. **Agente Inmobiliario Independiente**
-   - Persona física
-   - 5-50 propiedades en cartera
-   - Trabaja desde smartphone
-   - Necesita presencia digital profesional
-   - Presupuesto: $20-50 USD/mes
+1. **Owner (dueno del negocio)**
+   - Administra propiedades, reservas, pagos y staff.
+2. **Staff (operadores internos)**
+   - Atienden mensajes, actualizan contenido, gestionan leads.
+   - Acceso restringido por modulos.
+3. **Visitante publico**
+   - Navega propiedades, contacta, reserva y deja reseña.
 
-2. **Agencia Pequeña**
-   - 2-10 agentes
-   - 50-200 propiedades
-   - Necesitan colaboración
-   - Presupuesto: $100-300 USD/mes
+### 4.2 En la operacion del proveedor
 
-3. **Grupo Inmobiliario**
-   - 10-100 agentes
-   - Múltiples sucursales
-   - 200-1000+ propiedades
-   - Presupuesto: $500-2000 USD/mes
-
-### 4.2 Secundarios
-
-4. **Desarrolladores Inmobiliarios**
-   - Venden proyectos nuevos
-   - Necesitan catálogo de unidades
-   - Calculadoras de financiamiento
-
-5. **Administradores de Propiedades**
-   - Rentas de largo plazo
-   - Gestión de inquilinos
-   - Control de pagos
+4. **Root interno (RacoonDevs)**
+   - Soporte, auditoria y recuperacion de incidentes.
+   - Acceso a panel oculto ActivityLog.
 
 ---
 
-## 5. Alcance Funcional del Sistema
+## 5. Alcance Funcional del MVP
 
-### 5.1 Incluye (Fase 0 - MVP)
+### 5.1 Incluye
 
-#### Landing Page Pública
+#### Sitio publico
 
-- Página principal moderna y atractiva (ref: v3.png)
-- Catálogo de propiedades con paginación
-- Filtros básicos:
-  - Tipo de operación (venta/renta)
-  - Tipo de propiedad
-  - Rango de precio
-  - Ubicación (ciudad/estado)
-  - Recámaras/baños
-- Ordenamiento (recientes, precio, tamaño)
-- Vista en grid y lista
-- Detalle de propiedad profesional (ref: details.png):
-  - Galería de imágenes completa
-  - Información detallada
-  - Características y amenidades
-  - Mapa de ubicación
-  - Formulario de contacto
-  - Botón WhatsApp directo
-- Diseño responsive (mobile-first)
-- Modo claro/oscuro
-- Multi-idioma (es/en)
+- Home con listado de propiedades publicadas.
+- Filtros y ordenamiento.
+- Detalle de propiedad con galeria y datos principales.
+- Formulario de contacto y CTA de reserva.
 
-#### Panel Administrativo
+#### Reservas y pagos (MVP preparado)
 
-- Dashboard con estadísticas básicas
-- Gestión de propiedades (CRUD):
-  - Crear propiedad
-  - Editar propiedad
-  - Eliminar propiedad
-  - Cambiar estado (activo/inactivo)
-- Gestión de imágenes:
-  - Subida múltiple
-  - Reordenamiento drag & drop
-  - Establecer imagen principal
-  - Eliminar imágenes
-- Formulario de propiedad completo:
-  - Información básica
-  - Ubicación
-  - Características
-  - Precio y términos
-  - Descripción
-  - Amenidades
-- Gestión de leads/contactos:
-  - Lista de contactos
-  - Detalle de contacto
-  - Origen del lead
-  - Estado (nuevo/contactado/cerrado)
-- Perfil de usuario:
-  - Datos personales
-  - Foto de perfil
-  - Información de contacto
-  - Configuración de marca (logo, colores)
+- Crear reservacion desde sitio publico.
+- Estados de reservacion (`pending`, `confirmed`, `cancelled`, `completed`).
+- Integracion inicial con pasarela de pago:
+  - Stripe
+  - Mercado Pago
+- Registro de transacciones y webhooks.
+- Voucher de reservacion al confirmar pago.
 
-#### Autenticación
+#### Reseñas
 
-- Registro de usuario
-- Login con email/password
-- Verificación de email
-- Recuperación de contraseña
-- Logout
-- Sesión persistente
+- Reseña vinculada a reservacion completada.
+- Moderacion basica por owner/staff autorizado.
 
-#### Sistema de Propiedades
+#### Dashboard privado
 
-Tipos de inmuebles:
+- Vista de resumen con metricas.
+- CRUD de propiedades.
+- Gestion de leads y mensajes.
+- Gestion de reservas y pagos.
+- Gestion de reseñas.
+- Gestion de usuarios staff (crear, editar permisos, desactivar).
 
-- Casas
-- Departamentos
-- Terrenos
-- Locales comerciales
-- Oficinas
-- Bodegas
-- Salones de eventos
+#### Seguridad y auditoria
 
-Tipos de operación:
+- Permisos por rol y por modulo.
+- ActivityLog con before/after snapshot en cambios criticos.
+- Panel oculto root para auditoria avanzada.
 
-- Venta
-- Renta
-- Renta vacacional
+### 5.2 No incluye en MVP
 
-Campos por propiedad:
-
-- Título
-- Descripción
-- Tipo de inmueble
-- Tipo de operación
-- Precio
-- Moneda
-- Superficie total
-- Superficie construida
-- Recámaras
-- Baños
-- Estacionamientos
-- Ubicación (calle, colonia, ciudad, estado, país, código postal)
-- Coordenadas GPS
-- Amenidades (array)
-- Estado (activo/inactivo/vendido/rentado)
-- Fecha de creación
-- Última actualización
+- Multitenancy compartido en una sola base de datos.
+- Marketplace comun entre clientes.
+- Facturacion fiscal automatica avanzada.
+- Integraciones CRM/ERP enterprise.
 
 ---
 
-### 5.2 NO Incluye (Fase 0)
+## 6. Modelo de Entrega SaaS
 
-- Sistema de pagos/suscripciones
-- Multi-tenant con organizaciones
-- Roles avanzados (solo admin/agente básico)
-- Reportes complejos
-- Integraciones externas (CRM, pagos)
-- API pública
-- Calculadora de hipotecas
-- Sistema de favoritos
-- Comparador de propiedades
-- Búsqueda geoespacial avanzada
-- Tours virtuales 360°
-- Chat en tiempo real
+### 6.1 Producto de portafolio
 
-Estas características se implementarán en fases posteriores.
+- Esta instancia muestra capacidades base del producto.
+- Sirve para ventas, demos y validacion rapida.
+
+### 6.2 Instancia por cliente
+
+- Cada cliente recibe un deploy aislado.
+- Se permite personalizacion futura de branding:
+  - Colores
+  - Tipografias
+  - Ajustes de layout
 
 ---
 
-## 6. Diseño de Referencia
+## 7. Metricas de Exito
 
-### 6.1 Landing Page
+### 7.1 Tecnicas
 
-- Inspiración: `refs/v3.png`
-- Diseño moderno, limpio, visual
-- Grid de propiedades con imágenes grandes
-- Filtros laterales o top
-- Tarjetas de propiedad atractivas
-- Call-to-action claros
+- Provisioning completo por cliente en < 2 horas.
+- Errores criticos de permisos: 0 en produccion.
+- Trazabilidad completa de acciones criticas: 100%.
 
-### 6.2 Detalle de Propiedad
+### 7.2 Funcionales
 
-- Inspiración: `refs/details.png`
-- Galería principal prominente
-- Información organizada en secciones
-- Mapa integrado
-- Formulario de contacto visible
-- Datos del agente/empresa
+- Creacion de reservacion de punta a punta sin friccion.
+- Emision correcta de voucher al confirmar pago.
+- Staff operando con permisos restringidos sin bloqueos.
 
----
+### 7.3 Negocio
 
-## 7. Modelo de Monetización (Futuro)
-
-### Plan Solo
-
-- $29 USD/mes
-- 1 usuario administrador
-- Propiedades ilimitadas
-- Landing page personalizada
-- Soporte por email
-
-### Plan Team
-
-- $99 USD/mes
-- Hasta 10 usuarios
-- Propiedades ilimitadas
-- Multi-agente
-- Reportes básicos
-- Soporte prioritario
-
-### Plan Enterprise
-
-- $299 USD/mes
-- Usuarios ilimitados
-- Multi-sucursal
-- API acceso
-- Custom domain
-- Soporte dedicado
+- Tiempo de entrega por cliente predecible.
+- Capacidad de replicar modelo en multiples clientes.
 
 ---
 
-## 8. Métricas de Éxito
+## 8. Restricciones y Consideraciones
 
-### 8.1 Técnicas
+### 8.1 Tecnicas
 
-- Tiempo de carga < 3 segundos
-- 100% responsive (mobile/tablet/desktop)
-- 95%+ disponibilidad
-- 0 errores críticos en producción
+- Backend Appwrite self-hosted.
+- No mock data en flujos funcionales.
+- Eventos criticos respaldados por Functions.
 
-### 8.2 Funcionales
+### 8.2 Seguridad
 
-- Usuario puede crear propiedad en < 5 minutos
-- Landing page genera leads verificables
-- Panel funciona en smartphone sin problemas
-- SEO: propiedades indexadas por Google
+- Root no visible en listados ni UI publica.
+- Auditoria obligatoria para acciones de alto impacto.
+- Principio de minimo privilegio para staff.
 
-### 8.3 Negocio (Post-Lanzamiento)
+### 8.3 Operacion
 
-- 100 usuarios registrados primer mes
-- 10 clientes de pago primer trimestre
-- NPS > 50
-- Churn < 10% mensual
+- Cada instancia debe tener su propio `.env` y secretos.
+- No se comparten API keys ni credenciales entre clientes.
 
 ---
 
-## 9. Restricciones y Consideraciones
+## 9. Roadmap de Alto Nivel
 
-### 9.1 Técnicas
+### Fase 0 (actual)
 
-- Definidas en `00_ai_project_context.md`
-- Stack: React + Vite + Appwrite
-- Mobile-first obligatorio
-- No TypeScript
+- Base funcional de propiedades, leads, reservas y roles.
+- Auditoria root y panel oculto ActivityLog.
 
-### 9.2 Legales
+### Fase 1
 
-- GDPR compliance (futuro)
-- Protección de datos personales
-- Términos y condiciones
-- Política de privacidad
+- Mejoras de pagos (refunds, conciliacion avanzada).
+- Plantillas de branding por cliente.
+- Reporteria visual ampliada.
 
-### 9.3 Operacionales
+### Fase 2
 
-- Self-hosted en infraestructura propia inicialmente
-- Escalabilidad considerada desde arquitectura
-- Backup diario de datos
+- Automatizaciones comerciales.
+- Integraciones externas (CRM, marketing, BI).
 
 ---
 
-## 10. Roadmap de Alto Nivel
+## 10. Criterios de Aceptacion del MVP
 
-### Q1 2026 - Fase 0 (MVP)
-
-- Autenticación
-- CRUD propiedades
-- Landing page pública
-- Panel administrativo básico
-- Deploy en producción
-
-### Q2 2026 - Fase 1
-
-- Multi-tenant real
-- Sistema de suscripciones
-- Roles y permisos avanzados
-- Reportes básicos
-
-### Q3 2026 - Fase 2
-
-- Integración pagos (Stripe)
-- WhatsApp Business API
-- Email marketing
-- Búsqueda geoespacial
-
-### Q4 2026 - Fase 3
-
-- CRM completo
-- API pública
-- Integraciones (Zapier)
-- Mobile apps (iOS/Android)
+1. Se puede crear una nueva instancia de cliente aislada sin tocar datos de otras.
+2. Owner puede crear usuarios staff y limitar accesos por modulo.
+3. Visitante puede reservar desde pagina publica.
+4. Pago exitoso confirma reservacion y genera voucher.
+5. Root puede auditar cambios con detalle before/after.
 
 ---
 
-## 11. Stakeholders
+## 11. Fuera de Alcance (Explicito)
 
-- **Product Owner**: Equipo RacoonDevs
-- **Desarrolladores**: Equipo técnico interno + IA Agents
-- **Usuarios Beta**: 5-10 agentes inmobiliarios
-- **Usuarios Finales**: Agentes, agencias, grupos inmobiliarios
-
----
-
-## 12. Criterios de Aceptación (MVP)
-
-### Landing Page
-
-✅ Usuario puede ver catálogo de propiedades
-✅ Usuario puede filtrar por tipo, precio, ubicación
-✅ Usuario puede ver detalle de propiedad con galería
-✅ Usuario puede contactar vía formulario o WhatsApp
-✅ Página responsive en mobile/tablet/desktop
-✅ Soporta modo claro/oscuro
-✅ Multi-idioma es/en
-
-### Panel Admin
-
-✅ Administrador puede crear propiedad completa
-✅ Administrador puede subir múltiples imágenes
-✅ Administrador puede editar propiedades existentes
-✅ Administrador puede activar/desactivar propiedades
-✅ Administrador puede ver leads recibidos
-✅ Panel funciona en smartphone
-✅ Sesión persiste entre visitas
-
-### Sistema
-
-✅ Autenticación segura con Appwrite
-✅ Datos almacenados en Appwrite Database
-✅ Imágenes en Appwrite Storage
-✅ Permisos correctos (solo admin ve panel)
-✅ Sin errores de consola
-✅ Build exitoso sin warnings
+- Mezclar multiples clientes en la misma base de datos.
+- Exponer panel root al owner o staff.
+- Permitir bypass de auditoria en acciones criticas.
 
 ---
 
-## 13. Fuera de Alcance (Explícitamente)
-
-- ❌ Sistema de pagos (Fase 1)
-- ❌ Multi-tenant con organizaciones (Fase 1)
-- ❌ CRM completo (Fase 2)
-- ❌ Tours virtuales (Fase 3)
-- ❌ Mobile apps nativas (Fase 3)
-- ❌ Integración con portales externos (Fase 2)
-- ❌ Sistema de mensajería interna (Fase 2)
-- ❌ Firma digital de contratos (Fase 3)
-
----
-
-## 14. Próximos Pasos
-
-1. Revisar y aprobar este Project Brief
-2. Crear documentos técnicos detallados:
-   - 01_frontend_requirements.md
-   - 02_backend_appwrite_requirements.md
-   - 03_appwrite_db_schema.md
-   - etc.
-3. Iniciar desarrollo de Fase 0
-4. Testing con usuarios beta
-5. Deploy en producción
-
----
-
-**Fecha de creación**: Febrero 2026
-**Versión**: 1.0.0
-**Estado**: ✅ Aprobado para desarrollo
+Ultima actualizacion: 2026-02-10
+Version: 2.0.0

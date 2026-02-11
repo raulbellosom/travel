@@ -1,666 +1,754 @@
-# 03_APPWRITE_DB_SCHEMA.md – REAL ESTATE SAAS PLATFORM
+﻿# 03_APPWRITE_DB_SCHEMA.md - REAL ESTATE SAAS PLATFORM
 
 ## Referencia
 
-Este documento se rige estrictamente por:
+Este documento depende de:
 
-- 00_ai_project_context.md
-- 00_project_brief.md
-- 01_frontend_requirements.md
-- 02_backend_appwrite_requirements.md
+- `00_project_brief.md`
+- `02_backend_appwrite_requirements.md`
 
 ---
 
-## Propósito de este Documento
+## Proposito
 
-Este archivo es la **fuente de verdad para el schema del backend**.
-Los agentes AI **DEBEN** mantenerlo sincronizado con la consola de Appwrite.
+Fuente de verdad del schema Appwrite para una instancia dedicada por cliente.
 
----
+Regla principal:
 
-## Cómo Actualizar este Mirror
-
-Cuando cambies el schema del backend:
-
-1. Actualizar este archivo primero (o en el mismo commit)
-2. Aplicar los cambios correspondientes en la consola de Appwrite (o via SDK/CLI)
-3. Asegurar que existan índices para cada patrón de query usado por frontend/functions
+- Una instancia Appwrite por cliente.
+- Este schema se aplica completo en cada nueva instancia.
 
 ---
 
-## Formato de Índices
+## Convenciones Obligatorias
 
-Todos los índices deben documentarse usando el siguiente formato:
+### Reglas de atributos Appwrite
 
-| Index Name             | Type     | Attributes  | Notes                  |
-| ---------------------- | -------- | ----------- | ---------------------- |
-| idx_collection_attr    | key      | attribute ↑ | descripción del índice |
-| uq_collection_attr     | unique   | attribute ↑ | unicidad               |
-| full_collection_attr   | fulltext | attribute   | búsqueda texto         |
-| spatial_collection_loc | spatial  | location    | geoespacial            |
+1. Si `required = yes`, entonces `default` debe ser `-`.
+2. Si `default` tiene valor, entonces `required` debe ser `no`.
+3. `string` siempre define `size` (longitud maxima por elemento).
+4. `integer` y `float` siempre definen `min` y `max` en `constraint`.
+5. Atributos array se documentan unicamente en `Type` usando `[]`.
+6. Para arrays de `string[]`, el `size` aplica a cada elemento.
+7. Campos JSON se guardan como `string` serializado y con `size` definido.
 
-**Reglas**:
+### Formato de tablas de atributos
 
-- **Index Name**: Máximo 60 caracteres
-  - Formato: `<tipo>_<collection>_<campos>`
-  - Tipo prefix: `idx_` para key, `uq_` para unique, `full_` para fulltext, `spatial_` para spatial
-- **Type**: `key`, `unique`, `fulltext`, o `spatial`
-- **Attributes**: Cada campo con flecha de dirección
-  - ↑ = ASC (ascendente)
-  - ↓ = DESC (descendente)
-  - Múltiples campos separados por coma: `field1 ↑, field2 ↓`
-  - Para fulltext y spatial: no usar flechas
+| Attribute | Type | Size | Required | Default | Constraint |
+| --------- | ---- | ---- | -------- | ------- | ---------- |
+
+### Formato de indices
+
+- Tipos permitidos: `idx` (key), `uq` (unique), `full` (fulltext).
+- Direccion en keys/composite: `↑` asc, `↓` desc.
+- Fulltext no usa flechas.
+
+| Index Name | Type | Attributes | Notes |
+| ---------- | ---- | ---------- | ----- |
+
+### Campos de sistema Appwrite
+
+Estos campos existen en todos los documentos y no se crean como atributos manuales:
+
+- `$id` (string): ID unico del documento.
+- `$createdAt` (datetime): fecha/hora de creacion.
+- `$updatedAt` (datetime): fecha/hora de ultima actualizacion.
+
+Regla:
+
+- En este documento, cualquier indice temporal debe usar `$createdAt` o `$updatedAt`, no `createdAt`/`updatedAt` custom.
 
 ---
 
 ## Instancia Appwrite
 
-- **Endpoint**: https://appwrite.racoondevs.com
-- **Project ID**: (definir al crear proyecto)
-- **Appwrite Version**: >= 1.5.x
-- **Database Engine**: PostgreSQL
-- **Notes**: Instancia self-hosted de RacoonDevs
-
----
-
-## Database
-
-- **Database ID**: `main`
-- **Database Name**: Real Estate SaaS Database
+- Endpoint: `https://appwrite.racoondevs.com`
+- Version recomendada: `>= 1.8.x`
+- Database ID: `main`
+- Database Name: `RealEstateClientDB`
 
 ---
 
 ## Storage Buckets
 
-| Bucket ID       | Purpose                     | Max Size | Extensions        | Public | Notes                                  |
-| --------------- | --------------------------- | -------- | ----------------- | ------ | -------------------------------------- |
-| property-images | Imágenes de propiedades     | 10 MB    | jpg,jpeg,png,webp | Yes    | Lectura pública, escritura autenticada |
-| avatars         | Avatares de usuarios        | 5 MB     | jpg,jpeg,png,webp | No     | Solo lectura para autenticados         |
-| documents       | Documentos legales (futuro) | 20 MB    | pdf,doc,docx      | No     | Privado                                |
+| Bucket ID         | Purpose                  | Max Size | Public | Extensions        |
+| ----------------- | ------------------------ | -------- | ------ | ----------------- |
+| `property-images` | Imagenes publicas        | 10 MB    | Yes    | jpg,jpeg,png,webp |
+| `avatars`         | Avatares internos        | 5 MB     | No     | jpg,jpeg,png,webp |
+| `documents`       | Contratos y comprobantes | 20 MB    | No     | pdf,jpg,jpeg,png  |
 
 ---
 
 ## Collections - Resumen
 
-| Collection ID        | Purpose                        | Phase |
-| -------------------- | ------------------------------ | ----- |
-| users                | Perfiles de usuario extendidos | 0     |
-| user_preferences     | Preferencias UX                | 0     |
-| properties           | Propiedades/inmuebles          | 0     |
-| property_images      | Imágenes de propiedades        | 0     |
-| amenities            | Catálogo de amenidades         | 0     |
-| property_amenities   | Relación propiedad-amenidades  | 0     |
-| leads                | Contactos/leads                | 0     |
-| organizations        | Organizaciones multi-tenant    | 1     |
-| organization_members | Miembros de organización       | 1     |
-| favorites            | Propiedades favoritas (futuro) | 2     |
-| audits               | Auditoría de acciones          | 2     |
+| Collection ID          | Purpose                                 | Phase |
+| ---------------------- | --------------------------------------- | ----- |
+| `users`                | Perfiles y roles internos               | 0     |
+| `user_preferences`     | Preferencias de UI y branding base      | 0     |
+| `properties`           | Catalogo de propiedades                 | 0     |
+| `property_images`      | Galeria por propiedad                   | 0     |
+| `amenities`            | Catalogo de amenidades                  | 0     |
+| `property_amenities`   | Relacion many-to-many                   | 0     |
+| `leads`                | Mensajes/contactos                      | 0     |
+| `reservations`         | Reservaciones                           | 0     |
+| `reservation_payments` | Intentos/confirmaciones de pago         | 0     |
+| `reservation_vouchers` | Voucher emitido por reserva pagada      | 0     |
+| `reviews`              | Resenas de clientes                     | 0     |
+| `analytics_daily`      | Agregados diarios para dashboard        | 0     |
+| `activity_logs`        | Auditoria detallada (panel oculto root) | 0     |
+| `email_verifications`  | Tokens de verificacion de correo        | 0     |
 
 ---
 
 ## Collection: users
 
-**Purpose**: Perfiles de usuario extendidos (mirror de Auth + datos adicionales)
-
-**Document ID**: Preferido que coincida con Auth userId
+Purpose: perfiles de usuarios internos de la instancia.
 
 ### Attributes
 
-| Attribute           | Type     | Size | Required | Default | Constraint  | Notes                                  |
-| ------------------- | -------- | ---- | -------- | ------- | ----------- | -------------------------------------- |
-| authId              | string   | 64   | yes      | -       | -           | FK a Appwrite Auth userId              |
-| email               | email    | 254  | yes      | -       | -           | Debe coincidir con Auth email          |
-| emailVerified       | boolean  | -    | no       | false   | -           | Sincronizar con Auth                   |
-| firstName           | string   | 80   | yes      | -       | -           | Nombre(s)                              |
-| lastName            | string   | 80   | yes      | -       | -           | Apellido(s)                            |
-| phone               | string   | 20   | no       | -       | -           | Teléfono con formato internacional     |
-| phoneVerified       | boolean  | -    | no       | false   | -           | Verificación de teléfono               |
-| avatarFileId        | string   | 64   | no       | -       | -           | FK a bucket avatars                    |
-| role                | enum     | -    | no       | agent   | admin,agent | Rol en la aplicación                   |
-| companyName         | string   | 120  | no       | -       | -           | Nombre de empresa (agente individual)  |
-| bio                 | string   | 500  | no       | -       | -           | Biografía corta                        |
-| whatsappNumber      | string   | 20   | no       | -       | -           | WhatsApp (puede ser diferente a phone) |
-| websiteUrl          | URL      | -    | no       | -       | -           | Website personal/empresa               |
-| facebookUrl         | URL      | -    | no       | -       | -           | Facebook profile                       |
-| instagramUrl        | URL      | -    | no       | -       | -           | Instagram profile                      |
-| enabled             | boolean  | -    | no       | true    | -           | Soft delete                            |
-| onboardingCompleted | boolean  | -    | no       | false   | -           | Si completó onboarding                 |
-| createdAt           | datetime | -    | yes      | now     | -           | Auto                                   |
-| updatedAt           | datetime | -    | yes      | now     | -           | Auto                                   |
+| Attribute    | Type    | Size | Required | Default | Constraint                                                    |
+| ------------ | ------- | ---- | -------- | ------- | ------------------------------------------------------------- |
+| `authId`     | string  | 64   | yes      | -       | regex `^[A-Za-z0-9._-]{1,64}$`                                |
+| `email`      | email   | 254  | yes      | -       | email valido                                                  |
+| `firstName`  | string  | 80   | yes      | -       | min 1                                                         |
+| `lastName`   | string  | 80   | yes      | -       | min 1                                                         |
+| `phone`      | string  | 20   | no       | -       | regex telefono internacional                                  |
+| `birthDate`  | string  | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                |
+| `role`       | enum    | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support` |
+| `scopesJson` | string  | 4000 | no       | -       | JSON array serializado                                        |
+| `isHidden`   | boolean | -    | no       | false   | -                                                             |
+| `enabled`    | boolean | -    | no       | true    | -                                                             |
+
+Notas:
+
+- `authId`: Debe coincidir con Auth user id
+- `email`: Unico
+- `birthDate`: Fecha de nacimiento en formato `YYYY-MM-DD`
+- `role`: Rol de aplicacion
+- `scopesJson`: Permisos finos
+- `isHidden`: `true` para root
+- `enabled`: Soft delete
 
 ### Indexes
 
-| Index Name          | Type   | Attributes  | Notes             |
-| ------------------- | ------ | ----------- | ----------------- |
-| uq_users_authid     | unique | authId ↑    | Unicidad con Auth |
-| uq_users_email      | unique | email ↑     | Unicidad de email |
-| idx_users_role      | key    | role ↑      | Filtrar por rol   |
-| idx_users_enabled   | key    | enabled ↑   | Filtrar activos   |
-| idx_users_createdat | key    | createdAt ↓ | Ordenar por fecha |
+| Index Name            | Type | Attributes     | Notes                    |
+| --------------------- | ---- | -------------- | ------------------------ |
+| `uq_users_authid`     | uq   | `authId ↑`     | Unico por Auth ID        |
+| `uq_users_email`      | uq   | `email ↑`      | Unico por email          |
+| `idx_users_role`      | idx  | `role ↑`       | Filtro por rol           |
+| `idx_users_hidden`    | idx  | `isHidden ↑`   | Excluir root en listados |
+| `idx_users_enabled`   | idx  | `enabled ↑`    | Usuarios activos         |
+| `idx_users_createdat` | idx  | `$createdAt ↓` | Orden reciente           |
 
-### Permissions (Fase 0)
+### Permissions
 
-- Read: `Role.user({userId})` - Solo su propio perfil
-- Create: System only (vía función al registrarse)
-- Update: `Role.user({userId})` - Solo su propio perfil
-- Delete: `Role.user({userId})` - Solo su propio perfil (soft delete)
+- Lectura/actualizacion directa: `Role.user(authId)`.
+- Gestion de staff/roles: solo via Functions (owner/root).
 
 ---
 
 ## Collection: user_preferences
 
-**Purpose**: Preferencias de UX por usuario (tema, idioma, configuración)
+Purpose: preferencias de UI y branding base por usuario.
 
 ### Attributes
 
-| Attribute          | Type     | Size | Required | Default | Constraint        | Notes                              |
-| ------------------ | -------- | ---- | -------- | ------- | ----------------- | ---------------------------------- |
-| userId             | string   | 64   | yes      | -       | -                 | FK a users.$id                     |
-| theme              | enum     | -    | no       | system  | light,dark,system | Tema visual                        |
-| locale             | enum     | -    | no       | es      | es,en             | Idioma preferido                   |
-| currency           | enum     | -    | no       | MXN     | USD,MXN,EUR       | Moneda para mostrar precios        |
-| measurementSystem  | enum     | -    | no       | metric  | metric,imperial   | m² vs sq ft                        |
-| brandColor         | string   | 7    | no       | #0F172A | -                 | Color primario (hex)               |
-| brandLogo          | string   | 64   | no       | -       | -                 | FK a bucket avatars (logo empresa) |
-| notificationsEmail | boolean  | -    | no       | true    | -                 | Recibir notificaciones por email   |
-| notificationsSms   | boolean  | -    | no       | false   | -                 | Recibir notificaciones por SMS     |
-| customDomain       | string   | 120  | no       | -       | -                 | Dominio personalizado (futuro)     |
-| seoTitle           | string   | 160  | no       | -       | -                 | Título SEO personalizado           |
-| seoDescription     | string   | 320  | no       | -       | -                 | Descripción SEO                    |
-| enabled            | boolean  | -    | no       | true    | -                 | -                                  |
-| createdAt          | datetime | -    | yes      | now     | -                 | Auto                               |
-| updatedAt          | datetime | -    | yes      | now     | -                 | Auto                               |
+| Attribute             | Type    | Size | Required | Default   | Constraint                |
+| --------------------- | ------- | ---- | -------- | --------- | ------------------------- |
+| `userId`              | string  | 64   | yes      | -         | FK logical a `users.$id`  |
+| `theme`               | enum    | -    | no       | `system`  | `light`,`dark`,`system`   |
+| `locale`              | enum    | -    | no       | `es`      | `es`,`en`                 |
+| `brandPrimaryColor`   | string  | 7    | no       | `#0F172A` | regex `^#[0-9A-Fa-f]{6}$` |
+| `brandSecondaryColor` | string  | 7    | no       | `#16A34A` | regex `^#[0-9A-Fa-f]{6}$` |
+| `brandFontHeading`    | string  | 80   | no       | `Poppins` | min 1                     |
+| `brandFontBody`       | string  | 80   | no       | `Inter`   | min 1                     |
+| `enabled`             | boolean | -    | no       | true      | -                         |
+
+Notas:
+
+- `userId`: Un registro por usuario
+- `brandPrimaryColor`: Hex
+- `brandSecondaryColor`: Hex
 
 ### Indexes
 
-| Index Name            | Type   | Attributes | Notes                       |
-| --------------------- | ------ | ---------- | --------------------------- |
-| uq_userprefs_userid   | unique | userId ↑   | Una preferencia por usuario |
-| idx_userprefs_enabled | key    | enabled ↑  | Filtrar activos             |
+| Index Name             | Type | Attributes | Notes                   |
+| ---------------------- | ---- | ---------- | ----------------------- |
+| `uq_userprefs_userid`  | uq   | `userId ↑` | Un registro por usuario |
+| `idx_userprefs_locale` | idx  | `locale ↑` | Filtro idioma           |
 
 ### Permissions
 
-- Read: `Role.user({userId})` via userId
-- Create: `Role.user({userId})` via userId
-- Update: `Role.user({userId})` via userId
-- Delete: `Role.user({userId})` via userId
+- `Role.user(userId)` para lectura y escritura.
 
 ---
 
 ## Collection: properties
 
-**Purpose**: Propiedades/inmuebles publicados por agentes
+Purpose: catalogo de propiedades del cliente.
 
 ### Attributes
 
-| Attribute       | Type     | Size | Required | Default | Constraint                                                                       | Notes                                       |
-| --------------- | -------- | ---- | -------- | ------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
-| userId          | string   | 64   | yes      | -       | -                                                                                | FK a users.$id (propietario)                |
-| slug            | string   | 150  | yes      | -       | -                                                                                | URL-friendly unique identifier              |
-| title           | string   | 200  | yes      | -       | -                                                                                | Título de la propiedad                      |
-| description     | string   | 5000 | yes      | -       | -                                                                                | Descripción detallada                       |
-| propertyType    | enum     | -    | yes      | -       | house,apartment,land,commercial,office,warehouse,event_hall,condo,villa,building | Tipo de inmueble                            |
-| operationType   | enum     | -    | yes      | -       | sale,rent,vacation_rental,transfer                                               | Tipo de operación                           |
-| price           | double   | -    | yes      | -       | -                                                                                | Precio en moneda base                       |
-| currency        | enum     | -    | no       | MXN     | USD,MXN,EUR                                                                      | Moneda del precio                           |
-| pricePer        | enum     | -    | no       | total   | total,sqm,sqft                                                                   | Precio total o por unidad                   |
-| priceNegotiable | boolean  | -    | no       | false   | -                                                                                | Si el precio es negociable                  |
-| totalArea       | double   | -    | no       | -       | -                                                                                | Superficie total (m²)                       |
-| builtArea       | double   | -    | no       | -       | -                                                                                | Superficie construida (m²)                  |
-| bedrooms        | integer  | -    | no       | 0       | -                                                                                | Número de recámaras                         |
-| bathrooms       | double   | -    | no       | 0       | -                                                                                | Número de baños (0.5 = medio baño)          |
-| parkingSpaces   | integer  | -    | no       | 0       | -                                                                                | Número de estacionamientos                  |
-| floors          | integer  | -    | no       | -       | -                                                                                | Número de pisos (edificio/casa)             |
-| yearBuilt       | integer  | -    | no       | -       | -                                                                                | Año de construcción                         |
-| streetAddress   | string   | 200  | no       | -       | -                                                                                | Calle y número                              |
-| neighborhood    | string   | 100  | no       | -       | -                                                                                | Colonia/barrio                              |
-| city            | string   | 100  | yes      | -       | -                                                                                | Ciudad                                      |
-| state           | string   | 100  | yes      | -       | -                                                                                | Estado/provincia                            |
-| country         | string   | 2    | yes      | MX      | -                                                                                | Código país ISO (MX, US, etc)               |
-| postalCode      | string   | 10   | no       | -       | -                                                                                | Código postal                               |
-| latitude        | double   | -    | no       | -       | -                                                                                | Coordenada GPS                              |
-| longitude       | double   | -    | no       | -       | -                                                                                | Coordenada GPS                              |
-| locationGeoJSON | string   | 500  | no       | -       | -                                                                                | GeoJSON Point para búsquedas espaciales     |
-| mainImageId     | string   | 64   | no       | -       | -                                                                                | FK a property_images.$id (imagen principal) |
-| videoUrl        | URL      | -    | no       | -       | -                                                                                | URL de video (YouTube, Vimeo)               |
-| virtualTourUrl  | URL      | -    | no       | -       | -                                                                                | URL de tour virtual 360°                    |
-| status          | enum     | -    | no       | draft   | draft,published,sold,rented,inactive                                             | Estado de la propiedad                      |
-| featured        | boolean  | -    | no       | false   | -                                                                                | Si es propiedad destacada                   |
-| views           | integer  | -    | no       | 0       | -                                                                                | Contador de vistas                          |
-| contactCount    | integer  | -    | no       | 0       | -                                                                                | Contador de contactos recibidos             |
-| publishedAt     | datetime | -    | no       | -       | -                                                                                | Fecha de publicación                        |
-| soldAt          | datetime | -    | no       | -       | -                                                                                | Fecha de venta/renta                        |
-| enabled         | boolean  | -    | no       | true    | -                                                                                | Soft delete                                 |
-| createdAt       | datetime | -    | yes      | now     | -                                                                                | Auto                                        |
-| updatedAt       | datetime | -    | yes      | now     | -                                                                                | Auto                                        |
+| Attribute          | Type     | Size | Required | Default | Constraint                                                   |
+| ------------------ | -------- | ---- | -------- | ------- | ------------------------------------------------------------ |
+| `ownerUserId`      | string   | 64   | yes      | -       | FK logical a `users.$id`                                     |
+| `slug`             | string   | 150  | yes      | -       | regex slug unico                                             |
+| `title`            | string   | 200  | yes      | -       | min 3                                                        |
+| `description`      | string   | 5000 | yes      | -       | min 20                                                       |
+| `propertyType`     | enum     | -    | yes      | -       | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse` |
+| `operationType`    | enum     | -    | yes      | -       | `sale`,`rent`,`vacation_rental`                              |
+| `price`            | float    | -    | yes      | -       | min `0`, max `999999999`                                     |
+| `currency`         | enum     | -    | no       | `MXN`   | `MXN`,`USD`,`EUR`                                            |
+| `city`             | string   | 100  | yes      | -       | min 2                                                        |
+| `state`            | string   | 100  | yes      | -       | min 2                                                        |
+| `country`          | string   | 2    | no       | `MX`    | ISO2                                                         |
+| `bedrooms`         | integer  | -    | no       | 0       | min `0`, max `50`                                            |
+| `bathrooms`        | float    | -    | no       | 0       | min `0`, max `50`                                            |
+| `maxGuests`        | integer  | -    | no       | 0       | min `1`, max `500`                                           |
+| `galleryImageIds`  | string[] | 64   | no       | -       | max 50 elementos, cada elemento size 64                      |
+| `status`           | enum     | -    | no       | `draft` | `draft`,`published`,`inactive`,`archived`                    |
+| `featured`         | boolean  | -    | no       | false   | -                                                            |
+| `views`            | integer  | -    | no       | 0       | min `0`, max `2147483647`                                    |
+| `contactCount`     | integer  | -    | no       | 0       | min `0`, max `2147483647`                                    |
+| `reservationCount` | integer  | -    | no       | 0       | min `0`, max `2147483647`                                    |
+| `enabled`          | boolean  | -    | no       | true    | -                                                            |
+
+Notas:
+
+- `ownerUserId`: Propietario interno
+- `slug`: URL publica
+- `price`: Precio base
+- `bathrooms`: Permite medios banos
+- `maxGuests`: Reservas
+- `galleryImageIds`: `string[]` para lista rapida de file IDs
+- `views`: Contador
+- `contactCount`: Contador
+- `reservationCount`: Contador
+- `enabled`: Soft delete
 
 ### Indexes
 
-| Index Name                   | Type     | Attributes        | Notes                         |
-| ---------------------------- | -------- | ----------------- | ----------------------------- |
-| uq_properties_slug           | unique   | slug ↑            | Slug único para URLs          |
-| idx_properties_userid        | key      | userId ↑          | Propiedades por usuario       |
-| idx_properties_status        | key      | status ↑          | Filtrar por estado            |
-| idx_properties_propertytype  | key      | propertyType ↑    | Filtrar por tipo              |
-| idx_properties_operationtype | key      | operationType ↑   | Filtrar por operación         |
-| idx_properties_price         | key      | price ↑           | Ordenar por precio            |
-| idx_properties_city          | key      | city ↑            | Filtrar por ciudad            |
-| idx_properties_state         | key      | state ↑           | Filtrar por estado            |
-| idx_properties_bedrooms      | key      | bedrooms ↑        | Filtrar por recámaras         |
-| idx_properties_bathrooms     | key      | bathrooms ↑       | Filtrar por baños             |
-| idx_properties_createdat     | key      | createdAt ↓       | Ordenar por fecha             |
-| idx_properties_publishedat   | key      | publishedAt ↓     | Propiedades recientes         |
-| idx_properties_featured      | key      | featured ↓        | Destacadas primero            |
-| full_properties_search       | fulltext | title,description | Búsqueda texto completo       |
-| spatial_properties_location  | spatial  | locationGeoJSON   | Búsqueda geoespacial (futuro) |
+| Index Name                   | Type | Attributes               | Notes                  |
+| ---------------------------- | ---- | ------------------------ | ---------------------- |
+| `uq_properties_slug`         | uq   | `slug ↑`                 | Slug unico             |
+| `idx_properties_owneruserid` | idx  | `ownerUserId ↑`          | Dashboard del owner    |
+| `idx_properties_status`      | idx  | `status ↑`               | Publicadas/borrador    |
+| `idx_properties_city`        | idx  | `city ↑`                 | Filtro geografico      |
+| `idx_properties_featured`    | idx  | `featured ↓`             | Destacadas primero     |
+| `idx_properties_createdat`   | idx  | `$createdAt ↓`           | Recientes              |
+| `idx_properties_status_date` | idx  | `status ↑, $createdAt ↓` | Lista publica paginada |
+| `full_properties_search`     | full | `title,description`      | Fulltext               |
 
 ### Permissions
 
-- Read:
-  - `Role.any()` si `status=published` AND `enabled=true`
-  - `Role.user({userId})` (propietario) siempre
-- Create: `Role.users()` (cualquier autenticado)
-- Update: `Role.user({userId})` (propietario)
-- Delete: `Role.user({userId})` (propietario, soft delete)
+- Lectura publica solo para propiedades `published` y `enabled=true`.
+- Escritura por owner/staff via Functions con validacion de scope.
 
 ---
 
 ## Collection: property_images
 
-**Purpose**: Imágenes asociadas a propiedades
+Purpose: metadata de imagen por propiedad.
 
 ### Attributes
 
-| Attribute   | Type     | Size | Required | Default | Constraint | Notes                           |
-| ----------- | -------- | ---- | -------- | ------- | ---------- | ------------------------------- |
-| propertyId  | string   | 64   | yes      | -       | -          | FK a properties.$id             |
-| fileId      | string   | 64   | yes      | -       | -          | FK a bucket property-images     |
-| title       | string   | 200  | no       | -       | -          | Título descriptivo de la imagen |
-| description | string   | 500  | no       | -       | -          | Descripción (alt text)          |
-| order       | integer  | -    | no       | 0       | -          | Orden de presentación           |
-| isMain      | boolean  | -    | no       | false   | -          | Si es imagen principal          |
-| width       | integer  | -    | no       | -       | -          | Ancho en px (metadata)          |
-| height      | integer  | -    | no       | -       | -          | Alto en px (metadata)           |
-| fileSize    | integer  | -    | no       | -       | -          | Tamaño en bytes                 |
-| mimeType    | string   | 50   | no       | -       | -          | Tipo MIME                       |
-| enabled     | boolean  | -    | no       | true    | -          | Soft delete                     |
-| createdAt   | datetime | -    | yes      | now     | -          | Auto                            |
-| updatedAt   | datetime | -    | yes      | now     | -          | Auto                            |
+| Attribute    | Type    | Size | Required | Default | Constraint                            |
+| ------------ | ------- | ---- | -------- | ------- | ------------------------------------- |
+| `propertyId` | string  | 64   | yes      | -       | FK logical a `properties.$id`         |
+| `fileId`     | string  | 64   | yes      | -       | FK logical a bucket `property-images` |
+| `altText`    | string  | 200  | no       | -       | min 3                                 |
+| `sortOrder`  | integer | -    | no       | 0       | min `0`, max `999`                    |
+| `isMain`     | boolean | -    | no       | false   | -                                     |
+| `width`      | integer | -    | no       | -       | min `1`, max `20000`                  |
+| `height`     | integer | -    | no       | -       | min `1`, max `20000`                  |
+| `fileSize`   | integer | -    | no       | -       | min `1`, max `10485760`               |
+| `enabled`    | boolean | -    | no       | true    | -                                     |
+
+Notas:
+
+- `altText`: SEO/accesibilidad
+- `sortOrder`: Orden de galeria
+- `isMain`: Imagen principal
+- `width`: Metadato
+- `height`: Metadato
+- `fileSize`: Bytes
+- `enabled`: Soft delete
 
 ### Indexes
 
-| Index Name                | Type | Attributes             | Notes                    |
-| ------------------------- | ---- | ---------------------- | ------------------------ |
-| idx_propimages_propertyid | key  | propertyId ↑           | Imágenes por propiedad   |
-| idx_propimages_order      | key  | propertyId ↑, order ↑  | Ordenar imágenes         |
-| idx_propimages_ismain     | key  | propertyId ↑, isMain ↓ | Obtener imagen principal |
+| Index Name                  | Type | Attributes                  | Notes                               |
+| --------------------------- | ---- | --------------------------- | ----------------------------------- |
+| `idx_propimages_propertyid` | idx  | `propertyId ↑`              | Todas las imagenes de una propiedad |
+| `idx_propimages_sortorder`  | idx  | `propertyId ↑, sortOrder ↑` | Orden de galeria                    |
+| `idx_propimages_main`       | idx  | `propertyId ↑, isMain ↓`    | Encontrar principal rapido          |
 
 ### Permissions
 
-- Read: `Role.any()` (en contexto de propiedad pública)
-- Create: `Role.user({userId})` via propertyId->userId
-- Update: `Role.user({userId})` via propertyId->userId
-- Delete: `Role.user({userId})` via propertyId->userId
+- Lectura publica en contexto de propiedad publicada.
+- Escritura por owner/staff autorizado.
 
 ---
 
 ## Collection: amenities
 
-**Purpose**: Catálogo global de amenidades disponibles
+Purpose: catalogo global de amenidades.
 
 ### Attributes
 
-| Attribute | Type     | Size | Required | Default | Constraint                                                                  | Notes                  |
-| --------- | -------- | ---- | -------- | ------- | --------------------------------------------------------------------------- | ---------------------- |
-| name_es   | string   | 100  | yes      | -       | -                                                                           | Nombre en español      |
-| name_en   | string   | 100  | yes      | -       | -                                                                           | Nombre en inglés       |
-| slug      | string   | 100  | yes      | -       | -                                                                           | Identificador único    |
-| iconName  | string   | 50   | no       | -       | -                                                                           | Nombre de ícono Lucide |
-| category  | enum     | -    | no       | general | general,security,services,outdoor,views,kitchen,bathroom,climate,technology | Categoría              |
-| enabled   | boolean  | -    | no       | true    | -                                                                           | Soft delete            |
-| createdAt | datetime | -    | yes      | now     | -                                                                           | Auto                   |
-| updatedAt | datetime | -    | yes      | now     | -                                                                           | Auto                   |
+| Attribute  | Type    | Size | Required | Default   | Constraint                                       |
+| ---------- | ------- | ---- | -------- | --------- | ------------------------------------------------ |
+| `slug`     | string  | 100  | yes      | -         | regex slug unico                                 |
+| `name_es`  | string  | 100  | yes      | -         | min 2                                            |
+| `name_en`  | string  | 100  | yes      | -         | min 2                                            |
+| `category` | enum    | -    | no       | `general` | `general`,`security`,`outdoor`,`services`,`tech` |
+| `enabled`  | boolean | -    | no       | true      | -                                                |
 
-### Ejemplos de Amenidades
-
-**General**: Amueblado, Cocina equipada, Clóset, Cuarto de servicio, Bodega
-**Seguridad**: Vigilancia 24/7, Caseta de vigilancia, Circuito cerrado, Alarma
-**Servicios**: Gas natural, Internet, Cable, Agua caliente, Cisterna, Tinacos
-**Outdoor**: Jardín, Patio, Terraza, Roof garden, Alberca, Asador
-**Vistas**: Vista al mar, Vista a la montaña, Vista a la ciudad, Vista al parque
-**Cocina**: Barra desayunadora, Despensa, Alacena
-**Baño**: Jacuzzi, Tina, Regadera, Tocador
-**Clima**: Aire acondicionado, Calefacción, Ventiladores
-**Tecnología**: Domótica, Paneles solares, Sistema de audio
+Notas:
 
 ### Indexes
 
-| Index Name             | Type   | Attributes | Notes                 |
-| ---------------------- | ------ | ---------- | --------------------- |
-| uq_amenities_slug      | unique | slug ↑     | Slug único            |
-| idx_amenities_category | key    | category ↑ | Filtrar por categoría |
-| idx_amenities_enabled  | key    | enabled ↑  | Solo activas          |
+| Index Name               | Type | Attributes   | Notes                |
+| ------------------------ | ---- | ------------ | -------------------- |
+| `uq_amenities_slug`      | uq   | `slug ↑`     | Unico                |
+| `idx_amenities_category` | idx  | `category ↑` | Filtro por categoria |
+| `idx_amenities_enabled`  | idx  | `enabled ↑`  | Solo activas         |
 
 ### Permissions
 
-- Read: `Role.any()` si enabled=true
-- Create/Update/Delete: Admin only (via funciones)
+- Lectura publica de amenidades activas.
+- Escritura solo por owner/root via Function.
 
 ---
 
 ## Collection: property_amenities
 
-**Purpose**: Relación muchos-a-muchos entre properties y amenities
+Purpose: relacion many-to-many entre propiedades y amenidades.
 
 ### Attributes
 
-| Attribute  | Type     | Size | Required | Default | Constraint | Notes               |
-| ---------- | -------- | ---- | -------- | ------- | ---------- | ------------------- |
-| propertyId | string   | 64   | yes      | -       | -          | FK a properties.$id |
-| amenityId  | string   | 64   | yes      | -       | -          | FK a amenities.$id  |
-| createdAt  | datetime | -    | yes      | now     | -          | Auto                |
+| Attribute    | Type   | Size | Required | Default | Constraint                    |
+| ------------ | ------ | ---- | -------- | ------- | ----------------------------- |
+| `propertyId` | string | 64   | yes      | -       | FK logical a `properties.$id` |
+| `amenityId`  | string | 64   | yes      | -       | FK logical a `amenities.$id`  |
+
+Notas:
 
 ### Indexes
 
-| Index Name              | Type   | Attributes                | Notes                       |
-| ----------------------- | ------ | ------------------------- | --------------------------- |
-| idx_propamen_propertyid | key    | propertyId ↑              | Amenidades de una propiedad |
-| idx_propamen_amenityid  | key    | amenityId ↑               | Propiedades con amenidad    |
-| uq_propamen_combo       | unique | propertyId ↑, amenityId ↑ | Evitar duplicados           |
+| Index Name                | Type | Attributes                  | Notes                    |
+| ------------------------- | ---- | --------------------------- | ------------------------ |
+| `uq_propamen_combo`       | uq   | `propertyId ↑, amenityId ↑` | Evita duplicados         |
+| `idx_propamen_propertyid` | idx  | `propertyId ↑`              | Amenidades de propiedad  |
+| `idx_propamen_amenityid`  | idx  | `amenityId ↑`               | Propiedades por amenidad |
 
 ### Permissions
 
-- Read: `Role.any()` (en contexto de propiedad pública)
-- Create/Delete: `Role.user({userId})` via propertyId->userId
+- Lectura publica en contexto de propiedad publicada.
+- Escritura por owner/staff autorizado.
 
 ---
 
 ## Collection: leads
 
-**Purpose**: Contactos/leads recibidos de formularios
+Purpose: mensajes de contacto del sitio publico.
 
 ### Attributes
 
-| Attribute       | Type     | Size | Required | Default  | Constraint                                       | Notes                                   |
-| --------------- | -------- | ---- | -------- | -------- | ------------------------------------------------ | --------------------------------------- |
-| propertyId      | string   | 64   | yes      | -        | -                                                | FK a properties.$id                     |
-| propertyOwnerId | string   | 64   | yes      | -        | -                                                | FK a users.$id (duplicar para permisos) |
-| name            | string   | 120  | yes      | -        | -                                                | Nombre del contacto                     |
-| email           | email    | 254  | yes      | -        | -                                                | Email del contacto                      |
-| phone           | string   | 20   | no       | -        | -                                                | Teléfono del contacto                   |
-| message         | string   | 2000 | yes      | -        | -                                                | Mensaje del contacto                    |
-| source          | enum     | -    | no       | web_form | web_form,whatsapp,phone,email,other              | Fuente del lead                         |
-| status          | enum     | -    | no       | new      | new,contacted,in_progress,closed_won,closed_lost | Estado del lead                         |
-| rating          | integer  | -    | no       | -        | 1-5                                              | Calificación del lead (importancia)     |
-| notes           | string   | 2000 | no       | -        | -                                                | Notas internas del agente               |
-| followUpDate    | datetime | -    | no       | -        | -                                                | Fecha de seguimiento                    |
-| closedAt        | datetime | -    | no       | -        | -                                                | Fecha de cierre                         |
-| enabled         | boolean  | -    | no       | true     | -                                                | Soft delete                             |
-| createdAt       | datetime | -    | yes      | now      | -                                                | Auto                                    |
-| updatedAt       | datetime | -    | yes      | now      | -                                                | Auto                                    |
+| Attribute         | Type    | Size | Required | Default | Constraint                                   |
+| ----------------- | ------- | ---- | -------- | ------- | -------------------------------------------- |
+| `propertyId`      | string  | 64   | yes      | -       | FK logical a `properties.$id`                |
+| `propertyOwnerId` | string  | 64   | yes      | -       | FK logical a `users.$id`                     |
+| `name`            | string  | 120  | yes      | -       | min 2                                        |
+| `email`           | email   | 254  | yes      | -       | email valido                                 |
+| `phone`           | string  | 20   | no       | -       | regex telefono internacional                 |
+| `message`         | string  | 2000 | yes      | -       | min 5                                        |
+| `status`          | enum    | -    | no       | `new`   | `new`,`contacted`,`closed_won`,`closed_lost` |
+| `notes`           | string  | 4000 | no       | -       | -                                            |
+| `enabled`         | boolean | -    | no       | true    | -                                            |
+
+Notas:
+
+- `propertyOwnerId`: Permisos
+- `name`: Contacto
+- `email`: Contacto
+- `phone`: Contacto
+- `message`: Mensaje
+- `status`: Pipeline
+- `notes`: Notas internas
+- `enabled`: Soft delete
 
 ### Indexes
 
-| Index Name             | Type | Attributes        | Notes                   |
-| ---------------------- | ---- | ----------------- | ----------------------- |
-| idx_leads_propertyid   | key  | propertyId ↑      | Leads de una propiedad  |
-| idx_leads_ownerid      | key  | propertyOwnerId ↑ | Leads de un usuario     |
-| idx_leads_status       | key  | status ↑          | Filtrar por estado      |
-| idx_leads_createdat    | key  | createdAt ↓       | Leads recientes primero |
-| idx_leads_followupdate | key  | followUpDate ↑    | Próximos seguimientos   |
+| Index Name            | Type | Attributes                        | Notes            |
+| --------------------- | ---- | --------------------------------- | ---------------- |
+| `idx_leads_ownerid`   | idx  | `propertyOwnerId ↑`               | Inbox por owner  |
+| `idx_leads_status`    | idx  | `status ↑`                        | Filtro pipeline  |
+| `idx_leads_createdat` | idx  | `$createdAt ↓`                    | Recientes        |
+| `idx_leads_ownerdate` | idx  | `propertyOwnerId ↑, $createdAt ↓` | Dashboard rapido |
 
 ### Permissions
 
-- Read: `Role.user({propertyOwnerId})` (solo el dueño de la propiedad)
-- Create: `Role.any()` (formulario público)
-- Update: `Role.user({propertyOwnerId})` (solo el dueño)
-- Delete: `Role.user({propertyOwnerId})` (soft delete)
+- Creacion publica via Function.
+- Lectura/escritura para owner/staff con scope de leads.
 
 ---
 
-## Collection: organizations (Fase 1 - Multi-Tenant)
+## Collection: reservations
 
-**Purpose**: Organizaciones/agencias para multi-tenant
+Purpose: reservaciones por propiedad.
 
 ### Attributes
 
-| Attribute          | Type     | Size | Required | Default | Constraint                 | Notes                                  |
-| ------------------ | -------- | ---- | -------- | ------- | -------------------------- | -------------------------------------- |
-| name               | string   | 150  | yes      | -       | -                          | Nombre de la organización              |
-| slug               | string   | 100  | yes      | -       | -                          | Slug único (para subdomain)            |
-| logoFileId         | string   | 64   | no       | -       | -                          | FK a bucket avatars                    |
-| description        | string   | 1000 | no       | -       | -                          | Descripción de la empresa              |
-| website            | URL      | -    | no       | -       | -                          | Website corporativo                    |
-| email              | email    | 254  | no       | -       | -                          | Email de contacto                      |
-| phone              | string   | 20   | no       | -       | -                          | Teléfono corporativo                   |
-| address            | string   | 300  | no       | -       | -                          | Dirección física                       |
-| city               | string   | 100  | no       | -       | -                          | Ciudad                                 |
-| state              | string   | 100  | no       | -       | -                          | Estado                                 |
-| country            | string   | 2    | no       | MX      | -                          | País                                   |
-| ownerId            | string   | 64   | yes      | -       | -                          | FK a users.$id (dueño/admin principal) |
-| plan               | enum     | -    | no       | solo    | solo,team,enterprise       | Plan de suscripción                    |
-| maxUsers           | integer  | -    | no       | 1       | -                          | Máximo de usuarios permitidos          |
-| maxProperties      | integer  | -    | no       | 9999    | -                          | Máximo de propiedades (-1 = ilimitado) |
-| customDomain       | string   | 120  | no       | -       | -                          | Dominio personalizado                  |
-| brandColor         | string   | 7    | no       | #0F172A | -                          | Color primario                         |
-| status             | enum     | -    | no       | active  | active,suspended,cancelled | Estado de la organización              |
-| trialEndsAt        | datetime | -    | no       | -       | -                          | Fin del período de prueba              |
-| subscriptionEndsAt | datetime | -    | no       | -       | -                          | Fin de suscripción                     |
-| enabled            | boolean  | -    | no       | true    | -                          | Soft delete                            |
-| createdAt          | datetime | -    | yes      | now     | -                          | Auto                                   |
-| updatedAt          | datetime | -    | yes      | now     | -                          | Auto                                   |
+| Attribute         | Type     | Size | Required | Default   | Constraint                                              |
+| ----------------- | -------- | ---- | -------- | --------- | ------------------------------------------------------- |
+| `propertyId`      | string   | 64   | yes      | -         | FK logical a `properties.$id`                           |
+| `propertyOwnerId` | string   | 64   | yes      | -         | FK logical a `users.$id`                                |
+| `guestName`       | string   | 120  | yes      | -         | min 2                                                   |
+| `guestEmail`      | email    | 254  | yes      | -         | email valido                                            |
+| `guestPhone`      | string   | 20   | no       | -         | regex telefono internacional                            |
+| `checkInDate`     | datetime | -    | yes      | -         | ISO 8601 UTC                                            |
+| `checkOutDate`    | datetime | -    | yes      | -         | ISO 8601 UTC, > `checkInDate`                           |
+| `guestCount`      | integer  | -    | yes      | -         | min `1`, max `500`                                      |
+| `nights`          | integer  | -    | yes      | -         | min `1`, max `365`                                      |
+| `baseAmount`      | float    | -    | yes      | -         | min `0`, max `999999999`                                |
+| `feesAmount`      | float    | -    | no       | 0         | min `0`, max `999999999`                                |
+| `taxAmount`       | float    | -    | no       | 0         | min `0`, max `999999999`                                |
+| `totalAmount`     | float    | -    | yes      | -         | min `0`, max `999999999`                                |
+| `currency`        | enum     | -    | no       | `MXN`     | `MXN`,`USD`,`EUR`                                       |
+| `status`          | enum     | -    | no       | `pending` | `pending`,`confirmed`,`cancelled`,`completed`,`expired` |
+| `paymentStatus`   | enum     | -    | no       | `unpaid`  | `unpaid`,`pending`,`paid`,`failed`,`refunded`           |
+| `paymentProvider` | enum     | -    | no       | -         | `stripe`,`mercadopago`,`manual`                         |
+| `externalRef`     | string   | 120  | no       | -         | id externo de reserva/pago                              |
+| `specialRequests` | string   | 2000 | no       | -         | -                                                       |
+| `enabled`         | boolean  | -    | no       | true      | -                                                       |
+
+Notas:
+
+- `nights`: Calculado
+- `status`: Estado reserva
+- `paymentStatus`: Estado pago
+- `enabled`: Soft delete
 
 ### Indexes
 
-| Index Name       | Type   | Attributes | Notes                        |
-| ---------------- | ------ | ---------- | ---------------------------- |
-| uq_orgs_slug     | unique | slug ↑     | Slug único                   |
-| idx_orgs_ownerid | key    | ownerId ↑  | Organizaciones de un usuario |
-| idx_orgs_status  | key    | status ↑   | Filtrar por estado           |
-| idx_orgs_plan    | key    | plan ↑     | Filtrar por plan             |
+| Index Name                       | Type | Attributes                        | Notes                  |
+| -------------------------------- | ---- | --------------------------------- | ---------------------- |
+| `idx_reservations_propertyid`    | idx  | `propertyId ↑`                    | Reservas por propiedad |
+| `idx_reservations_ownerid`       | idx  | `propertyOwnerId ↑`               | Reservas por owner     |
+| `idx_reservations_checkin`       | idx  | `checkInDate ↑`                   | Agenda                 |
+| `idx_reservations_status`        | idx  | `status ↑`                        | Filtro de estado       |
+| `idx_reservations_paymentstatus` | idx  | `paymentStatus ↑`                 | Filtro de pago         |
+| `idx_reservations_createdat`     | idx  | `$createdAt ↓`                    | Recientes              |
+| `idx_reservations_ownerdate`     | idx  | `propertyOwnerId ↑, $createdAt ↓` | Dashboard              |
 
 ### Permissions
 
-- Read: `Role.user({ownerId})` O miembro del team
-- Create: `Role.users()` (cualquier autenticado)
-- Update: `Role.user({ownerId})` (solo owner)
-- Delete: `Role.user({ownerId})` (soft delete)
+- Creacion publica via Function.
+- Lectura/escritura para owner/staff con scope de reservas.
 
 ---
 
-## Collection: organization_members (Fase 1 - Multi-Tenant)
+## Collection: reservation_payments
 
-**Purpose**: Miembros de organizaciones con roles
+Purpose: ledger de intentos y resultados de pago.
 
 ### Attributes
 
-| Attribute      | Type     | Size | Required | Default | Constraint         | Notes                              |
-| -------------- | -------- | ---- | -------- | ------- | ------------------ | ---------------------------------- |
-| organizationId | string   | 64   | yes      | -       | -                  | FK a organizations.$id             |
-| userId         | string   | 64   | yes      | -       | -                  | FK a users.$id                     |
-| role           | enum     | -    | no       | member  | owner,admin,member | Rol en la organización             |
-| permissions    | string   | 1000 | no       | "[]"    | -                  | JSON array de permisos específicos |
-| invitedBy      | string   | 64   | no       | -       | -                  | FK a users.$id (quien invitó)      |
-| joinedAt       | datetime | -    | yes      | now     | -                  | Fecha de ingreso                   |
-| enabled        | boolean  | -    | no       | true    | -                  | Soft delete (salida del usuario)   |
-| createdAt      | datetime | -    | yes      | now     | -                  | Auto                               |
-| updatedAt      | datetime | -    | yes      | now     | -                  | Auto                               |
+| Attribute           | Type     | Size  | Required | Default   | Constraint                                 |
+| ------------------- | -------- | ----- | -------- | --------- | ------------------------------------------ |
+| `reservationId`     | string   | 64    | yes      | -         | FK logical a `reservations.$id`            |
+| `propertyOwnerId`   | string   | 64    | yes      | -         | FK logical a `users.$id`                   |
+| `provider`          | enum     | -     | yes      | -         | `stripe`,`mercadopago`                     |
+| `providerPaymentId` | string   | 120   | no       | -         | ID de pago externo                         |
+| `providerEventId`   | string   | 120   | no       | -         | ID unico de webhook para idempotencia      |
+| `amount`            | float    | -     | yes      | -         | min `0`, max `999999999`                   |
+| `currency`          | enum     | -     | no       | `MXN`     | `MXN`,`USD`,`EUR`                          |
+| `status`            | enum     | -     | no       | `pending` | `pending`,`approved`,`rejected`,`refunded` |
+| `rawPayload`        | string   | 20000 | no       | -         | JSON serializado de proveedor              |
+| `processedAt`       | datetime | -     | no       | -         | ISO 8601 UTC                               |
+| `enabled`           | boolean  | -     | no       | true      | -                                          |
+
+Notas:
 
 ### Indexes
 
-| Index Name            | Type   | Attributes                 | Notes               |
-| --------------------- | ------ | -------------------------- | ------------------- |
-| idx_orgmembers_orgid  | key    | organizationId ↑           | Miembros de una org |
-| idx_orgmembers_userid | key    | userId ↑                   | Orgs de un usuario  |
-| uq_orgmembers_combo   | unique | organizationId ↑, userId ↑ | Evitar duplicados   |
-| idx_orgmembers_role   | key    | role ↑                     | Filtrar por rol     |
+| Index Name                      | Type | Attributes          | Notes                |
+| ------------------------------- | ---- | ------------------- | -------------------- |
+| `idx_respayments_reservationid` | idx  | `reservationId ↑`   | Pagos por reserva    |
+| `idx_respayments_ownerid`       | idx  | `propertyOwnerId ↑` | Dashboard pagos      |
+| `idx_respayments_provider`      | idx  | `provider ↑`        | Filtro proveedor     |
+| `uq_respayments_eventid`        | uq   | `providerEventId ↑` | Idempotencia webhook |
+| `idx_respayments_status`        | idx  | `status ↑`          | Filtro de estado     |
+| `idx_respayments_createdat`     | idx  | `$createdAt ↓`      | Recientes            |
 
 ### Permissions
 
-- Read: `Role.team({organizationId})`
-- Create: `Role.user({organizationId.ownerId})` O admin
-- Update: `Role.user({organizationId.ownerId})` O admin
-- Delete: `Role.user({organizationId.ownerId})` O admin O mismo usuario
+- Solo system/functions.
+- Lectura al dashboard via endpoint controlado.
+
+---
+
+## Collection: reservation_vouchers
+
+Purpose: comprobante emitido cuando la reserva queda confirmada.
+
+### Attributes
+
+| Attribute         | Type     | Size | Required | Default | Constraint                      |
+| ----------------- | -------- | ---- | -------- | ------- | ------------------------------- |
+| `reservationId`   | string   | 64   | yes      | -       | FK logical a `reservations.$id` |
+| `propertyOwnerId` | string   | 64   | yes      | -       | FK logical a `users.$id`        |
+| `voucherCode`     | string   | 40   | yes      | -       | regex `^[A-Z0-9-]{6,40}$`       |
+| `voucherUrl`      | string   | 750  | no       | -       | URL interna o publica           |
+| `qrPayload`       | string   | 2000 | no       | -       | JSON o token para QR            |
+| `issuedAt`        | datetime | -    | yes      | -       | ISO 8601 UTC                    |
+| `sentToEmail`     | email    | 254  | no       | -       | email valido                    |
+| `enabled`         | boolean  | -    | no       | true    | -                               |
+
+Notas:
+
+- `voucherCode`: Unico
+- `voucherUrl`: PDF/web
+
+### Indexes
+
+| Index Name                      | Type | Attributes          | Notes               |
+| ------------------------------- | ---- | ------------------- | ------------------- |
+| `uq_resvouchers_code`           | uq   | `voucherCode ↑`     | Codigo unico        |
+| `idx_resvouchers_reservationid` | idx  | `reservationId ↑`   | Voucher por reserva |
+| `idx_resvouchers_ownerid`       | idx  | `propertyOwnerId ↑` | Dashboard owner     |
+
+### Permissions
+
+- Escritura solo por Functions.
+- Lectura por owner/staff autorizado o endpoint publico por token.
+
+---
+
+## Collection: reviews
+
+Purpose: resenas asociadas a reservas completadas.
+
+### Attributes
+
+| Attribute         | Type     | Size | Required | Default   | Constraint                       |
+| ----------------- | -------- | ---- | -------- | --------- | -------------------------------- |
+| `propertyId`      | string   | 64   | yes      | -         | FK logical a `properties.$id`    |
+| `reservationId`   | string   | 64   | yes      | -         | FK logical a `reservations.$id`  |
+| `authorName`      | string   | 120  | yes      | -         | min 2                            |
+| `authorEmailHash` | string   | 128  | no       | -         | hash sha256/base64               |
+| `rating`          | integer  | -    | yes      | -         | min `1`, max `5`                 |
+| `title`           | string   | 160  | no       | -         | min 3                            |
+| `comment`         | string   | 3000 | yes      | -         | min 10                           |
+| `status`          | enum     | -    | no       | `pending` | `pending`,`published`,`rejected` |
+| `publishedAt`     | datetime | -    | no       | -         | ISO 8601 UTC                     |
+| `enabled`         | boolean  | -    | no       | true      | -                                |
+
+Notas:
+
+- `reservationId`: Elegibilidad
+- `authorName`: Publico
+- `authorEmailHash`: Anti abuso
+- `status`: Moderacion
+- `enabled`: Soft delete
+
+### Indexes
+
+| Index Name               | Type | Attributes     | Notes                 |
+| ------------------------ | ---- | -------------- | --------------------- |
+| `idx_reviews_propertyid` | idx  | `propertyId ↑` | Resenas por propiedad |
+| `idx_reviews_status`     | idx  | `status ↑`     | Cola de moderacion    |
+| `idx_reviews_rating`     | idx  | `rating ↓`     | Top rating            |
+| `idx_reviews_createdat`  | idx  | `$createdAt ↓` | Recientes             |
+
+### Permissions
+
+- Creacion publica via Function con validacion de reserva.
+- Moderacion por owner/staff con scope.
+
+---
+
+## Collection: analytics_daily
+
+Purpose: agregados diarios para estadisticas y visualizaciones.
+
+### Attributes
+
+| Attribute             | Type     | Size | Required | Default | Constraint                   |
+| --------------------- | -------- | ---- | -------- | ------- | ---------------------------- |
+| `metricDate`          | datetime | -    | yes      | -       | ISO 8601 UTC, truncado a dia |
+| `propertiesPublished` | integer  | -    | no       | 0       | min `0`, max `2147483647`    |
+| `leadsCreated`        | integer  | -    | no       | 0       | min `0`, max `2147483647`    |
+| `reservationsCreated` | integer  | -    | no       | 0       | min `0`, max `2147483647`    |
+| `paymentsApproved`    | integer  | -    | no       | 0       | min `0`, max `2147483647`    |
+| `grossRevenue`        | float    | -    | no       | 0       | min `0`, max `999999999`     |
+| `currency`            | enum     | -    | no       | `MXN`   | `MXN`,`USD`,`EUR`            |
+| `payloadJson`         | string   | 8000 | no       | -       | JSON serializado             |
+
+Notas:
+
+- `metricDate`: Clave diaria
+- `propertiesPublished`: KPI
+- `leadsCreated`: KPI
+- `reservationsCreated`: KPI
+- `paymentsApproved`: KPI
+- `grossRevenue`: KPI
+- `payloadJson`: KPIs extra
+
+### Indexes
+
+| Index Name                | Type | Attributes     | Notes               |
+| ------------------------- | ---- | -------------- | ------------------- |
+| `uq_analytics_metricdate` | uq   | `metricDate ↑` | Un registro por dia |
+| `idx_analytics_createdat` | idx  | `$createdAt ↓` | Recientes           |
+
+### Permissions
+
+- Escritura por Function agregadora.
+- Lectura por owner/staff con permiso de analitica.
+
+---
+
+## Collection: activity_logs
+
+Purpose: auditoria forense para panel root.
+
+### Attributes
+
+| Attribute       | Type     | Size  | Required | Default | Constraint                                                    |
+| --------------- | -------- | ----- | -------- | ------- | ------------------------------------------------------------- |
+| `actorUserId`   | string   | 64    | yes      | -       | FK logical a `users.$id`                                      |
+| `actorRole`     | string   | 40    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support` |
+| `action`        | string   | 80    | yes      | -       | verbo de accion                                               |
+| `entityType`    | string   | 80    | yes      | -       | nombre coleccion o dominio                                    |
+| `entityId`      | string   | 64    | no       | -       | ID de entidad                                                 |
+| `beforeData`    | string   | 20000 | no       | -       | JSON serializado antes del cambio                             |
+| `afterData`     | string   | 20000 | no       | -       | JSON serializado despues del cambio                           |
+| `changedFields` | string[] | 120   | no       | -       | max 100 elementos                                             |
+| `changeSummary` | string   | 500   | no       | -       | resumen corto                                                 |
+| `requestId`     | string   | 100   | no       | -       | correlacion                                                   |
+| `ipHash`        | string   | 128   | no       | -       | hash no reversible                                            |
+| `userAgent`     | string   | 500   | no       | -       | -                                                             |
+| `severity`      | enum     | -     | no       | `info`  | `info`,`warning`,`critical`                                   |
+
+Notas:
+
+- `actorUserId`: Actor
+- `action`: `create`,`update`,`delete`, etc
+- `entityType`: `properties`,`reservations`, etc
+- `changedFields`: Lista de campos tocados
+- `ipHash`: Privacidad
+
+### Indexes
+
+| Index Name                 | Type | Attributes                   | Notes               |
+| -------------------------- | ---- | ---------------------------- | ------------------- |
+| `idx_activity_actoruserid` | idx  | `actorUserId ↑`              | Auditoria por actor |
+| `idx_activity_entitytype`  | idx  | `entityType ↑`               | Filtro entidad      |
+| `idx_activity_entityid`    | idx  | `entityId ↑`                 | Historial puntual   |
+| `idx_activity_action`      | idx  | `action ↑`                   | Filtro accion       |
+| `idx_activity_severity`    | idx  | `severity ↑`                 | Criticidad          |
+| `idx_activity_createdat`   | idx  | `$createdAt ↓`               | Timeline            |
+| `idx_activity_entitydate`  | idx  | `entityType ↑, $createdAt ↓` | Consulta combinada  |
+
+### Permissions
+
+- Escritura solo por backend/functions.
+- Lectura completa solo root via endpoint protegido.
+
+---
+
+## Collection: email_verifications
+
+Purpose: tokens temporales para verificar email.
+
+### Attributes
+
+| Attribute     | Type     | Size | Required | Default | Constraint                |
+| ------------- | -------- | ---- | -------- | ------- | ------------------------- |
+| `userAuthId`  | string   | 64   | yes      | -       | FK logical a Auth user id |
+| `email`       | email    | 254  | yes      | -       | email valido              |
+| `token`       | string   | 128  | yes      | -       | unico                     |
+| `expireAt`    | datetime | -    | yes      | -       | ISO 8601 UTC, > now       |
+| `used`        | boolean  | -    | no       | false   | -                         |
+| `invalidated` | boolean  | -    | no       | false   | -                         |
+
+Notas:
+
+- `email`: Objetivo
+- `token`: Token de verificacion
+- `expireAt`: Vencimiento
+- `used`: Ya usado
+- `invalidated`: Invalidado por reenvio
+
+### Indexes
+
+| Index Name                        | Type | Attributes                            | Notes              |
+| --------------------------------- | ---- | ------------------------------------- | ------------------ |
+| `uq_emailverifications_token`     | uq   | `token ↑`                             | Token unico        |
+| `idx_emailverifications_userauth` | idx  | `userAuthId ↑`                        | Tokens por usuario |
+| `idx_emailverifications_expireat` | idx  | `expireAt ↑`                          | Limpieza           |
+| `idx_emailverifications_state`    | idx  | `userAuthId ↑, used ↑, invalidated ↑` | Token activo       |
+
+### Permissions
+
+- Solo system/functions.
 
 ---
 
 ## Relationships Summary
 
-```
-users (1) ←→ (N) properties (userId)
-users (1) ←→ (1) user_preferences (userId)
-properties (1) ←→ (N) property_images (propertyId)
-properties (1) ←→ (N) property_amenities (propertyId)
-amenities (1) ←→ (N) property_amenities (amenityId)
-properties (1) ←→ (N) leads (propertyId)
-users (1) ←→ (N) leads (propertyOwnerId)
-
-# Fase 1
-organizations (1) ←→ (N) organization_members (organizationId)
-users (1) ←→ (N) organization_members (userId)
-organizations (1) ←→ (N) properties (organizationId) [futuro]
-```
-
----
-
-## Data Seeding (Inicial)
-
-### Amenidades Base (es/en)
-
-Al inicializar la base de datos, insertar amenidades comunes:
-
-```javascript
-const amenitiesBase = [
-  {
-    slug: "furnished",
-    name_es: "Amueblado",
-    name_en: "Furnished",
-    category: "general",
-  },
-  {
-    slug: "equipped-kitchen",
-    name_es: "Cocina equipada",
-    name_en: "Equipped kitchen",
-    category: "kitchen",
-  },
-  {
-    slug: "closets",
-    name_es: "Clósets",
-    name_en: "Closets",
-    category: "general",
-  },
-  {
-    slug: "24-7-security",
-    name_es: "Vigilancia 24/7",
-    name_en: "24/7 Security",
-    category: "security",
-  },
-  { slug: "pool", name_es: "Alberca", name_en: "Pool", category: "outdoor" },
-  { slug: "garden", name_es: "Jardín", name_en: "Garden", category: "outdoor" },
-  {
-    slug: "terrace",
-    name_es: "Terraza",
-    name_en: "Terrace",
-    category: "outdoor",
-  },
-  {
-    slug: "parking",
-    name_es: "Estacionamiento",
-    name_en: "Parking",
-    category: "general",
-  },
-  {
-    slug: "elevator",
-    name_es: "Elevador",
-    name_en: "Elevator",
-    category: "services",
-  },
-  {
-    slug: "air-conditioning",
-    name_es: "Aire acondicionado",
-    name_en: "Air conditioning",
-    category: "climate",
-  },
-  // ... más amenidades
-];
-```
-
----
-
-## Consideraciones de Performance
-
-### Queries Frecuentes Optimizados
-
-1. **Listado público de propiedades**:
-
-   ```
-   Query: status=published, enabled=true, orderBy=createdAt DESC
-   Índices: idx_properties_status, idx_properties_createdat
-   ```
-
-2. **Búsqueda por ciudad y tipo**:
-
-   ```
-   Query: city=X, propertyType=Y, status=published
-   Índices: idx_properties_city, idx_properties_propertytype, idx_properties_status
-   ```
-
-3. **Propiedades de un usuario**:
-
-   ```
-   Query: userId=X, orderBy=createdAt DESC
-   Índice: idx_properties_userid, idx_properties_createdat
-   ```
-
-4. **Leads de un usuario**:
-   ```
-   Query: propertyOwnerId=X, status=new
-   Índice: idx_leads_ownerid, idx_leads_status
-   ```
-
-### Caching Recomendado
-
-- Catálogo de amenidades (raramente cambia)
-- Propiedades publicadas (cache de 5 minutos)
-- Contadores de vistas (actualización batch)
+- `users (1) -> (N) properties`
+- `users (1) -> (1) user_preferences`
+- `properties (1) -> (N) property_images`
+- `properties (1) -> (N) property_amenities`
+- `amenities (1) -> (N) property_amenities`
+- `properties (1) -> (N) leads`
+- `properties (1) -> (N) reservations`
+- `reservations (1) -> (N) reservation_payments`
+- `reservations (1) -> (1) reservation_vouchers`
+- `properties (1) -> (N) reviews`
 
 ---
 
 ## Migraciones y Versionado
 
-### Cambios de Schema
+Formato obligatorio:
 
-Documentar cambios en este archivo con formato:
-
-```
+```md
 ## Migration: YYYY-MM-DD-description
 
 ### Added
-- Collection X
-- Attribute Y en Collection Z
 
 ### Modified
-- Attribute A cambió de tipo X a Y
 
 ### Deprecated
-- Attribute B (usar C en su lugar)
 
 ### Removed
-- Collection obsoleta
 ```
+
+## Migration: 2026-02-10-single-tenant-reservations-audit
+
+### Added
+
+- Colecciones `reservations`, `reservation_payments`, `reservation_vouchers`, `reviews`, `analytics_daily`, `activity_logs`.
+- Campos `users.role`, `users.scopesJson`, `users.isHidden`.
+- Convencion de atributos completa: size, default, min/max, array.
+
+### Deprecated
+
+- Colecciones `organizations` y `organization_members`.
 
 ---
 
 ## Estado del Documento
 
-Este documento es:
-
-- ✅ Definitivo para Fase 0
-- 📝 Se actualizará con nuevas colecciones en fases posteriores
-- 🔒 Debe mantenerse sincronizado con Appwrite en todo momento
+- Definitivo para el schema Appwrite de cada instancia cliente.
+- Alineado con reservas, pagos, vouchers, staff y auditoria root.
+- Debe mantenerse sincronizado con Appwrite en cada cambio.
 
 ---
 
-**Última actualización**: Febrero 2026
-**Versión**: 1.0.0
-**Schema Version**: 1.0 (Fase 0)
+Ultima actualizacion: 2026-02-10
+Version: 2.1.0
+Schema Version: 2.1

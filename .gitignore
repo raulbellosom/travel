@@ -24,3 +24,19 @@ dist-ssr
 *.sw?
 
 pnpm-lock.yaml
+
+/refs
+
+*.rar
+*.zip
+*.7z
+*.tar
+*.gz
+*.tar.gz
+*.tgz
+
+.env
+*.env.*.local
+.env.local
+.env.*.local
+*.env

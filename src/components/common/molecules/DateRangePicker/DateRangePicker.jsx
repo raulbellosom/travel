@@ -10,18 +10,18 @@ import {
 } from "lucide-react";
 
 /**
- * DatePicker – Unificado (range | single)
+ * DatePicker unificado (range | single)
  *
  * Props principales:
  * - mode: 'range' | 'single' (default 'range')
  * - value: { startDate:Date|null, endDate:Date|null } | Date|null
  * - onChange: (next) => void
  * - inline: boolean (si true, no se muestra trigger; el calendario queda embebido)
- * - renderTrigger: ({open,toggle,formatted}) => ReactNode (para personalizar el "handler")
+ * - renderTrigger: ({open,toggle,formatted}) => ReactNode (para personalizar el handler)
  * - numberOfMonths: 1 | 2 (auto por ancho si no se pasa)
  * - pricing: { 'YYYY-MM-DD': number } (opcional)
  * - disabledDates: Date[]
- * - availableDates: Date[] (si no está vacío, sólo se permiten esas fechas)
+ * - availableDates: Date[] (si no esta vacio, solo se permiten esas fechas)
  * - minDate: Date
  * - maxDate: Date
  * - showPrices: boolean
@@ -29,8 +29,8 @@ import {
  * - className: string
  *
  * Accesibilidad:
- * - botón de limpiar
- * - navegación de mes
+ * - boton de limpiar
+ * - navegacion de mes
  */
 
 export default function DatePicker({
@@ -50,8 +50,9 @@ export default function DatePicker({
   placeholder,
   className = "",
 }) {
-  const { i18n } = useTranslation();
-  const locale = i18n.language === "es" ? "es-ES" : "en-US";
+  const { i18n, t } = useTranslation();
+  const locale = i18n.language === "es" ? "es-MX" : "en-US";
+  const MotionDiv = motion.div;
 
   // --- control interno vs controlado
   const isRange = mode === "range";
@@ -77,7 +78,7 @@ export default function DatePicker({
     else setInternalRange(r);
   };
 
-  // cierre automático por modo
+  // cierre automatico por modo
   const closeOnSelect =
     typeof propCloseOnSelect === "boolean" ? propCloseOnSelect : !isRange; // single:true, range:false
 
@@ -85,7 +86,7 @@ export default function DatePicker({
   const initialMonth = useMemo(() => {
     const d = current?.startDate || new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
-  }, [current?.startDate]); // eslint-disable-line
+  }, [current?.startDate]);
 
   const [month, setMonth] = useState(initialMonth);
 
@@ -123,10 +124,9 @@ export default function DatePicker({
   const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
   const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, 1);
 
-  const dayNameHeaders =
-    i18n.language === "es"
-      ? ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"]
-      : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const dayNameHeaders = t("dateRangePicker.dayHeaders", {
+    returnObjects: true,
+  });
 
   const monthTitle = (d) =>
     d.toLocaleDateString(locale, { month: "long", year: "numeric" });
@@ -149,7 +149,7 @@ export default function DatePicker({
     gridStart.setDate(start.getDate() - start.getDay()); // empieza domingo
     const arr = [];
     const cur = new Date(gridStart);
-    // 6 semanas visibles típicamente
+    // 6 semanas visibles tipicamente
     while (cur <= end || cur.getDay() !== 0) {
       arr.push(new Date(cur));
       cur.setDate(cur.getDate() + 1);
@@ -157,7 +157,7 @@ export default function DatePicker({
     return arr;
   };
 
-  // --- selección (single o range)
+  // --- seleccion (single o range)
   const [hoverDate, setHoverDate] = useState(null);
 
   const inHoverRange = (d) => {
@@ -215,30 +215,17 @@ export default function DatePicker({
     if (!isRange) {
       return current?.startDate
         ? fmtDay(current.startDate)
-        : placeholder ||
-            (i18n.language === "es" ? "Selecciona fecha" : "Select date");
+        : placeholder || t("dateRangePicker.placeholders.single");
     }
     const { startDate, endDate } = current || {};
-    if (!startDate)
-      return (
-        placeholder ||
-        (i18n.language === "es" ? "Selecciona fechas" : "Select dates")
-      );
+    if (!startDate) {
+      return placeholder || t("dateRangePicker.placeholders.range");
+    }
     if (!endDate) return fmtDay(startDate);
-    return `${fmtDay(startDate)} – ${fmtDay(endDate)}${
-      nights
-        ? `  ·  ${nights} ${
-            i18n.language === "es"
-              ? nights === 1
-                ? "noche"
-                : "noches"
-              : nights === 1
-              ? "night"
-              : "nights"
-          }`
-        : ""
+    return `${fmtDay(startDate)} - ${fmtDay(endDate)}${
+      nights ? `  -  ${t("dateRangePicker.nights", { count: nights })}` : ""
     }`;
-  }, [current, nights, placeholder, i18n.language]);
+  }, [current, nights, placeholder, t]);
 
   // --- precio
   const priceOf = (d) => pricing[keyOf(d)];
@@ -264,7 +251,7 @@ export default function DatePicker({
     </button>
   );
 
-  // --- Mes (sólo grid; el título está en el header global para evitar duplicación)
+  // --- Mes (solo grid; el titulo esta en el header global para evitar duplicacion)
   const MonthGrid = ({ base }) => {
     const days = daysInGrid(base);
     const inThisMonth = (d) => d.getMonth() === base.getMonth();
@@ -275,7 +262,7 @@ export default function DatePicker({
           numMonths === 1 ? "p-4 w-full" : "p-6 w-80"
         }`}
       >
-        {/* Encabezados de días */}
+        {/* Encabezados de dias */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {dayNameHeaders.map((d) => (
             <div key={d} className="h-8 flex items-center justify-center">
@@ -286,7 +273,7 @@ export default function DatePicker({
           ))}
         </div>
 
-        {/* Días */}
+        {/* Dias */}
         <div className="grid grid-cols-7 gap-1">
           {days.map((d, idx) => {
             const disabled = isDisabled(d);
@@ -343,14 +330,14 @@ export default function DatePicker({
         className,
       ].join(" ")}
     >
-      {/* Header único (sin duplicar títulos en cada grid) */}
+      {/* Header unico (sin duplicar titulos en cada grid) */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
           <button
             type="button"
             onClick={() => setMonth(addMonths(month, -1))}
             className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            aria-label="Previous month"
+            aria-label={t("dateRangePicker.aria.previousMonth")}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -358,7 +345,7 @@ export default function DatePicker({
             {monthTitle(month)}
             {numMonths === 2 && (
               <>
-                <span className="mx-2">–</span>
+                <span className="mx-2">-</span>
                 {monthTitle(addMonths(month, 1))}
               </>
             )}
@@ -367,7 +354,7 @@ export default function DatePicker({
             type="button"
             onClick={() => setMonth(addMonths(month, +1))}
             className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            aria-label="Next month"
+            aria-label={t("dateRangePicker.aria.nextMonth")}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -376,14 +363,7 @@ export default function DatePicker({
         <div className="flex items-center gap-3">
           {isRange && current?.startDate && current?.endDate && (
             <span className="text-sm text-gray-600 dark:text-gray-400 font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-              {nights}{" "}
-              {i18n.language === "es"
-                ? nights === 1
-                  ? "noche"
-                  : "noches"
-                : nights === 1
-                ? "night"
-                : "nights"}
+              {t("dateRangePicker.nights", { count: nights })}
             </span>
           )}
           {(current?.startDate || current?.endDate) && (
@@ -392,7 +372,7 @@ export default function DatePicker({
               onClick={() => setRange({ startDate: null, endDate: null })}
               className="text-sm px-3 py-1 rounded-md border border-transparent hover:border-gray-200 dark:hover:border-gray-700 text-gray-600 dark:text-gray-300"
             >
-              {i18n.language === "es" ? "Limpiar" : "Clear"}
+              {t("dateRangePicker.actions.clear")}
             </button>
           )}
           {!inline && (
@@ -400,7 +380,7 @@ export default function DatePicker({
               type="button"
               onClick={() => setIsOpen(false)}
               className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label="Close"
+              aria-label={t("dateRangePicker.aria.close")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -436,7 +416,7 @@ export default function DatePicker({
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <MotionDiv
             className={`absolute z-50 mt-2 ${
               numMonths === 1 ? "left-0 w-96" : "left-0 w-[760px]"
             } max-w-[calc(100vw-2rem)]`}
@@ -446,9 +426,14 @@ export default function DatePicker({
             transition={{ duration: 0.18 }}
           >
             {CalendarPanel}
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </div>
   );
 }
+
+
+
+
+

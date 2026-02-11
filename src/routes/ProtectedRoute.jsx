@@ -1,25 +1,23 @@
-import { Navigate, useLocation } from "react-router-dom";
+﻿import { Navigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
-import Spinner from "../components/loaders/Spinner";
+import LoadingScreen from "../components/loaders/LoadingScreen";
 
 const ProtectedRoute = ({ children }) => {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <LoadingScreen transparent title={t("routeGuards.validatingSession")} />;
   }
 
   if (!user) {
-    // Guardar la ruta intentada para redirigir después del login
-    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
 };
 
 export default ProtectedRoute;
+

@@ -20,13 +20,22 @@
     "dashboard": "Dashboard",
     "login": "Login",
     "register": "Register",
-    "logout": "Logout"
+    "logout": "Logout",
+    "myProperties": "My properties",
+    "leads": "Leads",
+    "profile": "Profile",
+    "realEstate": "Real estate",
+    "vacation": "Vacation rentals",
+    "services": "Services"
   },
   "sidebar": {
     "overview": "Overview",
     "listings": "My Listings",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "leads": "Leads",
+    "dashboardTitle": "Dashboard",
+    "defaultUser": "User"
   },
   "auth": {
     "login": {
@@ -127,5 +136,790 @@
   "language": {
     "spanish": "Español",
     "english": "English"
+  },
+  "errors": {
+    "400": {
+      "title": "Bad Request",
+      "subtitle": "Something went wrong with your request",
+      "message": "The request could not be processed. Please check the information and try again.",
+      "tips": [
+        "Verify the entered data",
+        "Try reloading the page",
+        "Clear your browser cache"
+      ]
+    },
+    "403": {
+      "title": "Access Denied",
+      "subtitle": "You don't have permission to access this resource",
+      "message": "This page is restricted. You need proper permissions to view this content.",
+      "tips": [
+        "Make sure you're logged in",
+        "Check if you have the proper permissions",
+        "Contact support if you believe this is an error"
+      ]
+    },
+    "404": {
+      "title": "Page Not Found",
+      "subtitle": "Oops! The page you're looking for doesn't exist",
+      "message": "The page you requested could not be found. It might have been moved or deleted.",
+      "tips": [
+        "Check the URL for typos",
+        "Try using the navigation menu",
+        "Return to the home page"
+      ]
+    },
+    "500": {
+      "title": "Server Error",
+      "subtitle": "Oops! Something went wrong on our end",
+      "message": "We're experiencing technical difficulties. Our team has been notified and is working on it.",
+      "tips": [
+        "Try again in a few minutes",
+        "Refresh the page",
+        "Contact support if the problem persists"
+      ]
+    },
+    "503": {
+      "title": "Service Unavailable",
+      "subtitle": "The service is temporarily unavailable",
+      "message": "We're performing maintenance or experiencing high traffic. Please try again shortly.",
+      "tips": [
+        "Wait a few minutes and try again",
+        "Check our status page",
+        "Follow us on social media for updates"
+      ]
+    },
+    "general": {
+      "title": "Oops! Something Went Wrong",
+      "subtitle": "An unexpected error occurred",
+      "message": "We encountered an unexpected problem. Please try again.",
+      "tips": [
+        "Refresh the page",
+        "Clear your browser cache",
+        "Try again later"
+      ]
+    },
+    "actions": {
+      "goHome": "Go to Home",
+      "goBack": "Go Back",
+      "tryAgain": "Try Again",
+      "contactSupport": "Contact Support"
+    },
+    "helpfulTips": "Helpful tips",
+    "footerSupport": "If the problem persists, please contact our support team."
+  },
+  "routeGuards": {
+    "validatingSession": "Validating session"
+  },
+  "navbar": {
+    "brand": "Real Estate SaaS",
+    "toggleMenu": "Open menu",
+    "tagline": "Properties and experiences",
+    "searchPlaceholder": "Search properties...",
+    "publish": "Publish listing"
+  },
+  "dashboardNavbar": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {{name}}",
+    "defaultUser": "User",
+    "openMenu": "Open menu"
+  },
+  "loadingScreen": {
+    "title": "Validating session",
+    "message": "Please wait while we load your information.",
+    "badge": "SaaS"
+  },
+  "listingCard": {
+    "noImage": "No image",
+    "fallbackTitle": "Property",
+    "locationUnavailable": "Location unavailable",
+    "viewDetail": "View detail"
+  },
+  "loginPage": {
+    "title": "Sign in",
+    "subtitle": "Access your panel to manage your properties and leads.",
+    "fields": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "actions": {
+      "submit": "Sign in",
+      "validating": "Validating...",
+      "resendVerification": "Resend verification email",
+      "resending": "Resending verification email..."
+    },
+    "links": {
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create account"
+    },
+    "messages": {
+      "resendSuccess": "We sent you a new verification email."
+    },
+    "errors": {
+      "login": "We could not sign you in.",
+      "resend": "Could not resend the email."
+    }
+  },
+  "registerPage": {
+    "title": "Create account",
+    "subtitle": "Sign up to publish properties and manage your contacts.",
+    "fields": {
+      "fullName": "Full name",
+      "email": "Email",
+      "phoneOptional": "Phone (optional)",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "terms": "I accept terms and conditions."
+    },
+    "actions": {
+      "submit": "Create account",
+      "creating": "Creating account..."
+    },
+    "links": {
+      "hasAccount": "Already have an account?",
+      "login": "Sign in"
+    },
+    "errors": {
+      "passwordMismatch": "Passwords do not match.",
+      "passwordLength": "Password must be at least 8 characters.",
+      "termsRequired": "You must accept terms and conditions.",
+      "create": "We could not create your account."
+    }
+  },
+  "forgotPasswordPage": {
+    "title": "Recover password",
+    "subtitle": "Enter your email and we will send a reset link.",
+    "fields": {
+      "email": "Email"
+    },
+    "actions": {
+      "submit": "Send link",
+      "sending": "Sending..."
+    },
+    "links": {
+      "backToLogin": "Back to sign in"
+    },
+    "messages": {
+      "success": "We sent you an email with instructions to reset your password."
+    },
+    "errors": {
+      "request": "Could not start recovery."
+    }
+  },
+  "resetPasswordPage": {
+    "title": "Reset password",
+    "subtitle": "Set a new password for your account.",
+    "fields": {
+      "password": "New password",
+      "confirmPassword": "Confirm password"
+    },
+    "actions": {
+      "submit": "Change password",
+      "updating": "Updating..."
+    },
+    "links": {
+      "backToLogin": "Back to sign in"
+    },
+    "invalid": {
+      "title": "Invalid link",
+      "subtitle": "This recovery link is invalid or expired.",
+      "action": "Request a new link"
+    },
+    "messages": {
+      "success": "Password updated successfully. You can now sign in."
+    },
+    "errors": {
+      "passwordLength": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "update": "Could not update password."
+    }
+  },
+  "verifyEmailPage": {
+    "title": "Email verification",
+    "subtitle": "You must verify your email before signing in.",
+    "actions": {
+      "resend": "Resend email",
+      "resending": "Resending..."
+    },
+    "links": {
+      "toLogin": "Go to sign in"
+    },
+    "messages": {
+      "validating": "Validating your email...",
+      "success": "Email verified successfully. You can now sign in.",
+      "resendSuccess": "We sent you a new verification email.",
+      "instructions": "Check your inbox and open the verification link. If you cannot find it, you can request a new one."
+    },
+    "errors": {
+      "verify": "We could not verify your email.",
+      "resend": "We could not resend the email."
+    }
+  },
+  "createPropertyPage": {
+    "title": "Create property",
+    "subtitle": "Complete the information to save your listing.",
+    "submit": "Save property",
+    "errors": {
+      "create": "Could not create the property."
+    }
+  },
+  "editPropertyPage": {
+    "title": "Edit property",
+    "loading": "Loading property...",
+    "submit": "Save changes",
+    "errors": {
+      "load": "Could not load the property.",
+      "save": "Could not save the property.",
+      "notFound": "Property not found."
+    }
+  },
+  "settingsPage": {
+    "title": "Settings",
+    "subtitle": "This module is ready for advanced brand, domain, and automation settings."
+  },
+  "dashboardPage": {
+    "title": "Dashboard",
+    "subtitle": "Activity summary for your account.",
+    "loading": "Loading summary...",
+    "errors": {
+      "load": "Could not load the dashboard."
+    },
+    "stats": {
+      "properties": "Properties",
+      "published": "Published",
+      "drafts": "Drafts",
+      "leads": "Leads",
+      "newLeads": "New leads",
+      "views": "Views"
+    },
+    "recentProperties": {
+      "title": "Recent properties",
+      "viewAll": "View all",
+      "empty": "You do not have properties yet."
+    },
+    "recentLeads": {
+      "title": "Recent leads",
+      "viewAll": "View all",
+      "empty": "There are no leads yet."
+    }
+  },
+  "myPropertiesPage": {
+    "title": "My properties",
+    "subtitle": "Manage your listings and their status.",
+    "loading": "Loading...",
+    "empty": "You have not created properties yet.",
+    "confirmDeactivate": "Are you sure you want to deactivate this property?",
+    "table": {
+      "title": "Title",
+      "location": "Location",
+      "status": "Status",
+      "price": "Price",
+      "actions": "Actions"
+    },
+    "actions": {
+      "create": "Create property",
+      "edit": "Edit",
+      "toDraft": "Move to draft",
+      "publish": "Publish",
+      "delete": "Delete"
+    },
+    "errors": {
+      "load": "Could not load your properties.",
+      "toggleStatus": "Could not change status.",
+      "delete": "Could not delete property."
+    }
+  },
+  "leadsPage": {
+    "title": "Leads",
+    "summary": "Total: {{total}} - New: {{new}} - Won: {{won}}",
+    "loading": "Loading leads...",
+    "empty": "There are no leads to show.",
+    "noPhone": "-",
+    "filters": {
+      "status": "Filter by status",
+      "all": "All"
+    },
+    "table": {
+      "date": "Date",
+      "contact": "Contact",
+      "property": "Property",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "sendEmail": "Send email"
+    },
+    "errors": {
+      "load": "Could not load leads.",
+      "update": "Could not update lead."
+    }
+  },
+  "profilePage": {
+    "title": "Profile",
+    "emailVerified": "Verified email",
+    "emailNotVerified": "Unverified email",
+    "sections": {
+      "personal": "Personal and professional information",
+      "preferences": "Preferences"
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Phone",
+      "whatsappNumber": "WhatsApp",
+      "companyName": "Company",
+      "websiteUrl": "Website",
+      "facebookUrl": "Facebook",
+      "instagramUrl": "Instagram",
+      "bio": "Biography"
+    },
+    "preferences": {
+      "theme": "Theme",
+      "language": "Language",
+      "currency": "Currency",
+      "measurement": "Measurement system",
+      "metric": "Metric",
+      "imperial": "Imperial",
+      "notificationsEmail": "Receive email notifications"
+    },
+    "actions": {
+      "saving": "Saving...",
+      "saveProfile": "Save profile",
+      "savePreferences": "Save preferences"
+    },
+    "messages": {
+      "profileSaved": "Profile updated successfully.",
+      "preferencesSaved": "Preferences saved."
+    },
+    "errors": {
+      "profile": "Could not update your profile.",
+      "preferences": "Could not save preferences."
+    },
+    "summary": {
+      "defaultName": "User",
+      "location": "Puerto Vallarta, Jalisco",
+      "profileProgress": "Profile completion"
+    },
+    "sidebar": {
+      "title": "Settings",
+      "items": {
+        "personalInfo": "Personal information",
+        "address": "Address",
+        "preferences": "Preferences",
+        "emergencyContact": "Emergency contact",
+        "identity": "Official ID",
+        "privacyNotifications": "Privacy and notifications"
+      }
+    }
+  },
+  "propertyDetailPage": {
+    "loading": "Loading details...",
+    "backHome": "Back to home",
+    "noImage": "No image",
+    "features": {
+      "bedrooms": "beds",
+      "bathrooms": "baths",
+      "area": "sq m"
+    },
+    "owner": {
+      "title": "Listing agent",
+      "unavailable": "Not available",
+      "noPhone": "No phone",
+      "rating": "Recommended agent"
+    },
+    "contact": {
+      "title": "Contact agent",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "phoneOptional": "Phone (optional)",
+        "message": "Message"
+      },
+      "actions": {
+        "send": "Send message",
+        "sending": "Sending..."
+      },
+      "success": "Your message was sent successfully.",
+      "errors": {
+        "send": "We could not send your message."
+      }
+    },
+    "errors": {
+      "notFound": "Property not found.",
+      "load": "Could not load the property."
+    },
+    "priceHint": "Estimated listing price",
+    "verifiedListing": "Verified listing",
+    "descriptionTitle": "Description",
+    "galleryTitle": "Image gallery",
+    "amenitiesTitle": "Amenities",
+    "stats": {
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "totalArea": "Total area",
+      "type": "Type"
+    }
+  },
+  "propertyStatus": {
+    "draft": "Draft",
+    "published": "Published",
+    "inactive": "Inactive"
+  },
+  "leadStatus": {
+    "new": "New",
+    "contacted": "Contacted",
+    "in_progress": "In progress",
+    "closed_won": "Won",
+    "closed_lost": "Lost"
+  },
+  "homePage": {
+    "catalogTitle": "Property catalog",
+    "catalogSubtitle": "Explore available properties for sale, rent, and vacation rental.",
+    "noMainImage": "No main image",
+    "viewDetail": "View detail",
+    "emptyFiltered": "No properties found for these filters.",
+    "units": {
+      "squareMeters": "sq m"
+    },
+    "filters": {
+      "city": "City",
+      "propertyType": "Property type",
+      "operation": "Operation",
+      "sort": "Sort by",
+      "all": "All",
+      "allOperations": "All",
+      "title": "Advanced filters",
+      "minPrice": "Min price",
+      "maxPrice": "Max price"
+    },
+    "enums": {
+      "propertyType": {
+        "house": "House",
+        "apartment": "Apartment",
+        "land": "Land",
+        "commercial": "Commercial",
+        "office": "Office",
+        "warehouse": "Warehouse"
+      },
+      "operation": {
+        "sale": "Sale",
+        "rent": "Rent",
+        "vacation_rental": "Vacation rental",
+        "transfer": "Transfer"
+      }
+    },
+    "sort": {
+      "recent": "Most recent",
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low"
+    },
+    "pagination": {
+      "pageOf": "Page {{page}} of {{totalPages}}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "errors": {
+      "loadProperties": "Could not load properties."
+    },
+    "heroBadge": "Premium selections"
+  },
+  "propertyForm": {
+    "sections": {
+      "basicInfo": "Basic information",
+      "pricing": "Pricing and publishing",
+      "location": "Location",
+      "features": "Features",
+      "amenities": "Amenities"
+    },
+    "fields": {
+      "slug": "Slug",
+      "title": "Title",
+      "description": "Description",
+      "propertyType": "Property type",
+      "operationType": "Operation type",
+      "price": "Price",
+      "currency": "Currency",
+      "pricePer": "Price per",
+      "status": "Status",
+      "priceNegotiable": "Negotiable price",
+      "featured": "Featured",
+      "streetAddress": "Street and number",
+      "neighborhood": "Neighborhood",
+      "city": "City",
+      "state": "State",
+      "country": "Country",
+      "postalCode": "Postal code",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "parkingSpaces": "Parking spaces",
+      "totalArea": "Total area",
+      "builtArea": "Built area",
+      "videoUrl": "Video URL",
+      "virtualTourUrl": "Virtual tour URL",
+      "latitude": "Latitude",
+      "longitude": "Longitude"
+    },
+    "actions": {
+      "saving": "Saving...",
+      "saveProperty": "Save property"
+    },
+    "amenities": {
+      "loading": "Loading amenities...",
+      "empty": "There are no active amenities available.",
+      "selected": "{{count}} selected",
+      "selectedLabel": "Selected",
+      "selectLabel": "Select"
+    },
+    "locationCombobox": {
+      "countryPlaceholder": "Type to search country...",
+      "statePlaceholder": "Type to search state...",
+      "cityPlaceholder": "Type to search city...",
+      "noResultsCountry": "No country found",
+      "noResultsState": "No state found",
+      "noResultsCity": "No city found"
+    },
+    "options": {
+      "propertyType": {
+        "house": "House",
+        "apartment": "Apartment",
+        "land": "Land",
+        "commercial": "Commercial",
+        "office": "Office",
+        "warehouse": "Warehouse",
+        "eventHall": "Event hall",
+        "condo": "Condo",
+        "villa": "Villa",
+        "building": "Building"
+      },
+      "operationType": {
+        "sale": "Sale",
+        "rent": "Rent",
+        "vacationRental": "Vacation rental",
+        "transfer": "Transfer"
+      },
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "inactive": "Inactive"
+      },
+      "pricePer": {
+        "total": "Total",
+        "sqm": "Square meter",
+        "sqft": "Square foot"
+      }
+    }
+  },
+  "rootAmenitiesPage": {
+    "title": "Root panel: Amenities",
+    "subtitle": "Hidden route to manage the amenities catalog and run seed data.",
+    "createTitle": "Create amenity",
+    "loading": "Loading amenities...",
+    "empty": "No amenities to display.",
+    "searchPlaceholder": "Search by slug, name or category...",
+    "allCategories": "All categories",
+    "seedInfo": "Seed available with {{count}} preconfigured amenities and icons.",
+    "seedResult": "Seed completed. Created: {{created}}. Skipped: {{skipped}}. Errors: {{errors}}.",
+    "fields": {
+      "slug": "Slug",
+      "nameEs": "Name (ES)",
+      "nameEn": "Name (EN)",
+      "category": "Category"
+    },
+    "categories": {
+      "general": "General",
+      "security": "Security",
+      "outdoor": "Outdoor",
+      "services": "Services",
+      "tech": "Tech"
+    },
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "table": {
+      "icon": "Icon",
+      "slug": "Slug",
+      "name": "Name",
+      "category": "Category",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "seed": "Run seed",
+      "seeding": "Seeding catalog...",
+      "saving": "Saving...",
+      "create": "Create amenity",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "enable": "Enable",
+      "disable": "Disable"
+    },
+    "errors": {
+      "load": "Could not load amenities.",
+      "create": "Could not create the amenity.",
+      "update": "Could not update the amenity.",
+      "toggle": "Could not change status.",
+      "seed": "Could not run seed."
+    }
+  },
+  "searchBar": {
+    "tabs": {
+      "rentals": "Rentals",
+      "realEstate": "Real estate",
+      "services": "Services"
+    },
+    "actions": {
+      "hide": "Hide search",
+      "show": "Show search"
+    },
+    "guestsCount": "{{count}} guests",
+    "searchPlaceholder": "Search {{type}}...",
+    "datePlaceholder": "Check-in / Check-out",
+    "searchFor": "Search {{type}}"
+  },
+  "carousel": {
+    "noImages": "No images available",
+    "aria": {
+      "carousel": "Image carousel",
+      "slide": "Slide {{index}}",
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "goToSlide": "Go to slide {{index}}",
+      "playSlideshow": "Play slideshow",
+      "pauseSlideshow": "Pause slideshow"
+    }
+  },
+  "errorsDemo": {
+    "title": "Error pages demo",
+    "subtitle": "Animated error components with i18n support",
+    "instructions": "Click any card to preview the error component in action",
+    "viewDemo": "View demo",
+    "featuresTitle": "Features",
+    "features": {
+      "uniqueAnimations": {
+        "title": "Unique animations",
+        "description": "Each error has its own custom animation"
+      },
+      "multilanguage": {
+        "title": "Multilanguage",
+        "description": "Spanish and English with i18next"
+      },
+      "theme": {
+        "title": "Light/dark theme",
+        "description": "Automatic adaptation to system theme"
+      },
+      "responsive": {
+        "title": "Responsive",
+        "description": "Fully adaptive mobile-first design"
+      },
+      "tips": {
+        "title": "Helpful tips",
+        "description": "Contextual suggestions for each error"
+      },
+      "quickActions": {
+        "title": "Quick actions",
+        "description": "Buttons to go back, go home, or retry"
+      }
+    },
+    "docs": {
+      "title": "Full documentation",
+      "description": "Read the documentation to learn how to use these components in your application",
+      "action": "View docs"
+    },
+    "backHome": "Back to home",
+    "cards": {
+      "400": {
+        "name": "Bad Request",
+        "description": "Bad request"
+      },
+      "403": {
+        "name": "Forbidden",
+        "description": "Access denied"
+      },
+      "404": {
+        "name": "Not Found",
+        "description": "Page not found"
+      },
+      "500": {
+        "name": "Server Error",
+        "description": "Server error"
+      },
+      "503": {
+        "name": "Service Unavailable",
+        "description": "Service unavailable"
+      }
+    }
+  },
+  "modal": {
+    "close": "Close modal"
+  },
+  "dateRangePicker": {
+    "dayHeaders": [
+      "Su",
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa"
+    ],
+    "placeholders": {
+      "single": "Select date",
+      "range": "Select dates"
+    },
+    "nights": "{{count}} nights",
+    "actions": {
+      "clear": "Clear"
+    },
+    "aria": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "close": "Close"
+    }
+  },
+  "footer": {
+    "brand": "Real Estate SaaS",
+    "tagline": "Real estate marketplace",
+    "description": "Find properties to live, invest, or vacation with a modern and secure experience.",
+    "sections": {
+      "explore": "Explore",
+      "legal": "Contact",
+      "newsletter": "Subscribe"
+    },
+    "links": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "properties": "My properties",
+      "profile": "Profile"
+    },
+    "contact": {
+      "city": "Puerto Vallarta, Jalisco",
+      "email": "hello@realestate-saas.com",
+      "phone": "+52 322 123 4567"
+    },
+    "newsletter": {
+      "text": "Get updates, opportunities, and alerts for new properties.",
+      "placeholder": "Your email address",
+      "action": "Subscribe"
+    },
+    "copyright": "? {{year}} Real Estate SaaS. All rights reserved."
+  },
+  "authLayout": {
+    "platform": "Real estate platform",
+    "backToSite": "Back to catalog",
+    "secureAccess": "Secure access",
+    "heroTitle": "Manage properties, leads, and clients from one place",
+    "heroSubtitle": "Publish listings, receive contacts, and manage your profile with a premium experience.",
+    "multilingual": "Multilingual interface",
+    "accountAccess": "Account access",
+    "pageSubtitle": "Sign in with your account to continue.",
+    "pageTitles": {
+      "login": "Sign in",
+      "register": "Create account",
+      "forgotPassword": "Recover password",
+      "resetPassword": "Reset password",
+      "verifyEmail": "Verify email"
+    }
   }
 }

@@ -1,48 +1,63 @@
+﻿# Real Estate SaaS Docs (Single-Tenant by Design)
 
-# Sayulita Travel · Fase 0 (Appwrite)
+Este directorio documenta una plataforma inmobiliaria SaaS de tipo **productized service**:
 
-Este paquete te guía para levantar el **núcleo** del backend estilo Airbnb sobre Appwrite.
+- La app de este repo es la **instancia demo/portafolio**.
+- Cada cliente recibe una **instancia dedicada y aislada** (frontend + Appwrite + base de datos + storage + functions).
+- **No** hay convivencia de clientes en la misma base de datos.
 
-## 0) Requisitos
-- Appwrite en tu servidor (ya listo ✅)
-- Appwrite CLI en tu máquina de trabajo
-- Llave API con permisos de **Projects, Databases, Functions, Messaging, Storage**
+## Objetivo de la documentacion
 
-## 1) Qué vamos a crear
-- **Database `travel`** con colecciones base
-- **Storage buckets**: `media`, `docs`
-- **Messaging**: plantillas mínimas
-- **Functions** (stubs): `availability-check`, `pricing-quote`, `booking-create-hold`
+1. Estandarizar como se provisiona una nueva instancia para un cliente.
+2. Mantener seguridad, permisos y trazabilidad (auditoria completa).
+3. Preparar reservas, pagos (Stripe/Mercado Pago), vouchers y metricas.
 
-## 2) Estructuras de colecciones (fase 0)
-Consulta `collections_phase0.json` para ver atributos sugeridos, tipos y campos obligatorios. Úsalo como guía al crear las colecciones desde el panel o con Appwrite CLI.
+## Orden recomendado de lectura
 
-## 3) Orden recomendado
-1. **Teams (Partners)**: un Team por organización (partner).  
-2. **Database**: crear DB `travel`.  
-3. **Colecciones** (en este orden):  
-   `users_profile` → `orgs` → `org_members` → `listings` → `listing_units` → `rate_plans` → `inventory_calendar` → `booking_policies` → `bookings` → `conversations` → `messages`.  
-4. **Storage**: buckets `media` (público lectura) y `docs` (privado).  
-5. **Messaging**: cargar plantillas mínimas (`emails/`).  
-6. **Functions**: deploy de los stubs y setear variables de entorno.  
+1. `00_project_brief.md`
+2. `01_frontend_requirements.md`
+3. `02_backend_appwrite_requirements.md`
+4. `03_appwrite_db_schema.md`
+5. `05_permissions_and_roles.md`
+6. `06_appwrite_functions_catalog.md`
+7. `07_frontend_routes_and_flows.md`
+8. `08_env_reference.md`
+9. `10_master_plan_checklist.md`
 
-## 4) Permisos (patrón)
-- `listings`: lectura pública solo si `status=active`; escritura `team:{orgTeamId}` y admin.  
-- `bookings`: lectura `guestId`, `team:{orgTeamId}`, admin; escritura por funciones y dueños según estado.  
-- `messages`: `participants[]` únicamente.  
+## Flujos clave del producto
 
-## 5) Functions (stubs)
-- `functions/availability-check/` → valida disponibilidad a partir de `inventory_calendar`.  
-- `functions/pricing-quote/` → devuelve desglose: precio base + fees + impuestos + descuentos.  
-- `functions/booking-create-hold/` → crea booking en `hold` con TTL corto.  
+- Catalogo publico por cliente.
+- Contacto y mensajeria de leads.
+- Reservas por propiedad con estado y disponibilidad.
+- Pagos online (Stripe/Mercado Pago) con webhooks.
+- Emision de voucher de reservacion.
+- Reviews post-estadia.
+- Dashboard con estadisticas.
+- Panel oculto root para auditoria (`ActivityLog`).
 
-Cada carpeta incluye `index.js` y `package.json` de ejemplo.
+## Provisioning por cliente (resumen)
 
-## 6) Próximos pasos
-- Implementar webhooks de pagos (`payments:webhook`)
-- Indexación de búsqueda (Typesense/OpenSearch)
-- Notificaciones (Messaging) y Realtime channels
+1. Clonar plantilla de frontend.
+2. Crear proyecto Appwrite dedicado.
+3. Crear `database main`, colecciones e indices.
+4. Crear buckets y functions.
+5. Configurar variables `.env` de instancia.
+6. Crear usuario `owner` del cliente.
+7. Crear usuario `root` interno (no visible en UI publica).
+8. Ejecutar smoke test de reservas, pagos y logs.
+
+## Criterio no negociable
+
+Todo cambio funcional debe mantener consistencia entre:
+
+- Requerimientos (`02`)
+- Esquema (`03`)
+- Permisos (`05`)
+- Functions (`06`)
+- Rutas/UX (`07`)
+- Variables (`08`)
 
 ---
 
-> Sugerencia: empieza creando **solo** `users_profile`, `orgs`, `org_members`, `listings`, `listing_units` y `rate_plans`. Con eso ya puedes publicar anuncios y cotizar precios.
+Ultima actualizacion: 2026-02-10
+Version: 2.0.0

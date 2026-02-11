@@ -1,323 +1,329 @@
-import React from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { MapPin, BedDouble, Bath, Landmark, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  Button,
-  Badge,
-  Avatar,
-  RatingStars,
-  ListingCard,
-  PriceBadge,
-  Spinner,
-} from "../components/common";
-import { ComponentDemo } from "../components/common/molecules";
+import { propertiesService } from "../services/propertiesService";
+import { getErrorMessage } from "../utils/errors";
 
-export default function Home() {
-  const { t } = useTranslation();
+const STOCK_IMAGES = [
+  "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80",
+];
 
-  // Sample listing data for demonstration
-  const sampleListings = [
-    {
-      id: "1",
-      title: "Casa Frente al Mar en Sayulita",
-      location: "Sayulita, Nayarit, México",
-      images: [
-        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
-      ],
-      price: 1200,
-      currency: "MXN",
-      rating: 4.8,
-      reviewCount: 124,
-      host: {
-        name: "María García",
-        avatar:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b047?w=100&q=80",
-        verified: true,
-      },
-      capacity: {
-        guests: 6,
-        bedrooms: 3,
-        bathrooms: 2,
-      },
-      badges: ["premium"],
-      area: 120,
-    },
-    {
-      id: "2",
-      title: "Departamento Moderno en Centro",
-      location: "Puerto Vallarta, Jalisco, México",
-      images: [
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
-      ],
-      price: 800,
-      currency: "MXN",
-      rating: 4.6,
-      reviewCount: 89,
-      host: {
-        name: "Carlos Mendoza",
-        avatar: null,
-        verified: true,
-      },
-      capacity: {
-        guests: 4,
-        bedrooms: 2,
-        bathrooms: 1,
-      },
-      badges: ["featured"],
-      area: 85,
-    },
-    {
-      id: "3",
-      title: "Villa de Lujo con Vista al Océano",
-      location: "Punta Mita, Nayarit, México",
-      images: [
-        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80",
-      ],
-      price: 2500,
-      currency: "MXN",
-      rating: 4.9,
-      reviewCount: 67,
-      host: {
-        name: "Ana López",
-        avatar:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80",
-        verified: true,
-      },
-      capacity: {
-        guests: 8,
-        bedrooms: 4,
-        bathrooms: 3,
-      },
-      badges: ["premium", "featured"],
-      area: 200,
-    },
-  ];
+const getPropertyImage = (property, index) => {
+  return (
+    property?.mainImageUrl ||
+    property?.coverImageUrl ||
+    property?.thumbnailUrl ||
+    STOCK_IMAGES[index % STOCK_IMAGES.length]
+  );
+};
 
-  const handleCardClick = (listing) => {
-    console.log("Card clicked:", listing);
-  };
-
-  const handleFavoriteClick = (listingId, isFavorited) => {
-    console.log("Favorite toggled:", listingId, isFavorited);
-  };
+const PropertyCard = ({ property, t, locale, index }) => {
+  const imageUrl = getPropertyImage(property, index);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-16">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              {t("home.hero.title", "Descubre Sayulita Travel")}
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-100">
-              {t(
-                "home.hero.subtitle",
-                "Encuentra el lugar perfecto para tus vacaciones"
-              )}
-            </p>
-            <Button
-              variant="primary"
-              size="lg"
-              className="bg-white text-blue-600 hover:bg-gray-100"
+    <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-700 dark:bg-slate-900">
+      <div className="relative h-52 overflow-hidden">
+        <img
+          src={imageUrl}
+          alt={property.title || t("listingCard.fallbackTitle")}
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-slate-950/10 to-transparent" />
+        <span className="absolute left-3 top-3 rounded-full bg-cyan-500/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+          {t(`homePage.enums.operation.${property.operationType}`, {
+            defaultValue: property.operationType,
+          })}
+        </span>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <header className="space-y-2">
+          <h3 className="line-clamp-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            {property.title}
+          </h3>
+          <p className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-300">
+            <MapPin size={14} />
+            {property.city}, {property.state}
+          </p>
+        </header>
+
+        <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-2 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <span className="flex items-center gap-1">
+            <BedDouble size={14} /> {property.bedrooms || 0}
+          </span>
+          <span className="flex items-center gap-1">
+            <Bath size={14} /> {property.bathrooms || 0}
+          </span>
+          <span className="flex items-center gap-1">
+            <Landmark size={14} /> {property.totalArea || 0} {t("homePage.units.squareMeters")}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <strong className="text-lg font-bold text-cyan-700 dark:text-cyan-300">
+            {new Intl.NumberFormat(locale, {
+              style: "currency",
+              currency: property.currency || "MXN",
+              maximumFractionDigits: 0,
+            }).format(property.price || 0)}
+          </strong>
+          <Link
+            to={`/propiedades/${property.slug}`}
+            className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
+          >
+            {t("homePage.viewDetail")}
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const Home = () => {
+  const { t, i18n } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const locale = i18n.language === "es" ? "es-MX" : "en-US";
+  const page = Number(searchParams.get("page") || 1);
+  const filters = useMemo(
+    () => ({
+      city: searchParams.get("city") || "",
+      propertyType: searchParams.get("type") || "",
+      operationType: searchParams.get("operation") || "",
+      minPrice: searchParams.get("minPrice") || "",
+      maxPrice: searchParams.get("maxPrice") || "",
+      bedrooms: searchParams.get("bedrooms") || "",
+      sort: searchParams.get("sort") || "recent",
+    }),
+    [searchParams]
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError("");
+
+    propertiesService
+      .listPublic({
+        page,
+        limit: 12,
+        filters,
+      })
+      .then((response) => {
+        if (!mounted) return;
+        setItems(response.documents || []);
+        setTotal(response.total || 0);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setError(getErrorMessage(err, t("homePage.errors.loadProperties")));
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [filters, page, t]);
+
+  const updateFilter = (key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (!value) next.delete(key);
+    else next.set(key, value);
+    if (key !== "page") next.set("page", "1");
+    setSearchParams(next);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / 12));
+
+  return (
+    <div className="pb-12">
+      <section className="relative overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=2000&q=80"
+          alt="Real estate banner"
+          className="h-[380px] w-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/55 to-cyan-700/55" />
+        <div className="absolute inset-0">
+          <div className="mx-auto flex h-full max-w-7xl items-end px-4 pb-10 sm:px-6 lg:px-8">
+            <div className="max-w-2xl space-y-4 text-white">
+              <span className="inline-flex rounded-full bg-cyan-500/85 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+                {t("homePage.heroBadge")}
+              </span>
+              <h1 className="text-4xl font-bold leading-tight sm:text-5xl">{t("homePage.catalogTitle")}</h1>
+              <p className="text-sm text-white/90 sm:text-base">{t("homePage.catalogSubtitle")}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative z-10 mx-auto -mt-10 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <SlidersHorizontal size={14} /> {t("homePage.filters.title")}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+            <label className="grid gap-1 text-sm xl:col-span-1">
+              <span>{t("homePage.filters.city")}</span>
+              <input
+                value={filters.city}
+                onChange={(event) => updateFilter("city", event.target.value)}
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </label>
+
+            <label className="grid gap-1 text-sm xl:col-span-1">
+              <span>{t("homePage.filters.propertyType")}</span>
+              <select
+                value={filters.propertyType}
+                onChange={(event) => updateFilter("type", event.target.value)}
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+              >
+                <option value="">{t("homePage.filters.all")}</option>
+                <option value="house">{t("homePage.enums.propertyType.house")}</option>
+                <option value="apartment">{t("homePage.enums.propertyType.apartment")}</option>
+                <option value="land">{t("homePage.enums.propertyType.land")}</option>
+                <option value="commercial">{t("homePage.enums.propertyType.commercial")}</option>
+                <option value="office">{t("homePage.enums.propertyType.office")}</option>
+                <option value="warehouse">{t("homePage.enums.propertyType.warehouse")}</option>
+              </select>
+            </label>
+
+            <label className="grid gap-1 text-sm xl:col-span-1">
+              <span>{t("homePage.filters.operation")}</span>
+              <select
+                value={filters.operationType}
+                onChange={(event) => updateFilter("operation", event.target.value)}
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+              >
+                <option value="">{t("homePage.filters.allOperations")}</option>
+                <option value="sale">{t("homePage.enums.operation.sale")}</option>
+                <option value="rent">{t("homePage.enums.operation.rent")}</option>
+                <option value="vacation_rental">{t("homePage.enums.operation.vacation_rental")}</option>
+                <option value="transfer">{t("homePage.enums.operation.transfer")}</option>
+              </select>
+            </label>
+
+            <label className="grid gap-1 text-sm xl:col-span-1">
+              <span>{t("homePage.filters.minPrice")}</span>
+              <input
+                type="number"
+                min="0"
+                value={filters.minPrice}
+                onChange={(event) => updateFilter("minPrice", event.target.value)}
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </label>
+
+            <label className="grid gap-1 text-sm xl:col-span-1">
+              <span>{t("homePage.filters.maxPrice")}</span>
+              <input
+                type="number"
+                min="0"
+                value={filters.maxPrice}
+                onChange={(event) => updateFilter("maxPrice", event.target.value)}
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </label>
+
+            <label className="grid gap-1 text-sm xl:col-span-1">
+              <span>{t("homePage.filters.sort")}</span>
+              <select
+                value={filters.sort}
+                onChange={(event) => updateFilter("sort", event.target.value)}
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+              >
+                <option value="recent">{t("homePage.sort.recent")}</option>
+                <option value="price-asc">{t("homePage.sort.priceAsc")}</option>
+                <option value="price-desc">{t("homePage.sort.priceDesc")}</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-4 flex flex-wrap gap-2">
+          {["sale", "rent", "vacation_rental", "transfer"].map((operationKey) => (
+            <button
+              key={operationKey}
+              type="button"
+              onClick={() => updateFilter("operation", filters.operationType === operationKey ? "" : operationKey)}
+              className={`inline-flex min-h-9 items-center rounded-full px-3 py-1 text-xs font-semibold transition ${
+                filters.operationType === operationKey
+                  ? "bg-cyan-500 text-white"
+                  : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              }`}
             >
-              {t("home.hero.cta", "Explorar Propiedades")}
-            </Button>
+              {t(`homePage.enums.operation.${operationKey}`)}
+            </button>
+          ))}
+        </div>
+
+        {loading ? <p className="text-sm text-slate-600 dark:text-slate-300">{t("homePage.loading")}</p> : null}
+
+        {error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+            {error}
           </div>
-        </div>
-      </section>
+        ) : null}
 
-      {/* Components Demo Section */}
-      <section className="py-12">
-        <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 text-center">
-            Sistema de Componentes UI
-          </h2>
-
-          {/* Buttons Demo */}
-          <ComponentDemo
-            title="Botones"
-            description="Componentes de botón con diferentes variantes y tamaños"
-            code={`<Button variant="primary" size="sm">Pequeño</Button>
-<Button variant="primary" size="md">Mediano</Button>
-<Button variant="primary" size="lg">Grande</Button>
-<Button variant="secondary" size="md">Secundario</Button>
-<Button variant="tertiary" size="md">Terciario</Button>
-<Button variant="destructive" size="md">Destructivo</Button>
-<Button variant="primary" size="md" loading>Cargando...</Button>`}
-          >
-            <div className="flex flex-wrap gap-4 items-center">
-              <Button variant="primary" size="sm">
-                Pequeño
-              </Button>
-              <Button variant="primary" size="md">
-                Mediano
-              </Button>
-              <Button variant="primary" size="lg">
-                Grande
-              </Button>
-              <Button variant="secondary" size="md">
-                Secundario
-              </Button>
-              <Button variant="tertiary" size="md">
-                Terciario
-              </Button>
-              <Button variant="destructive" size="md">
-                Destructivo
-              </Button>
-              <Button variant="primary" size="md" loading>
-                Cargando...
-              </Button>
-            </div>
-          </ComponentDemo>
-
-          {/* Badges Demo */}
-          <ComponentDemo
-            title="Badges"
-            description="Etiquetas para mostrar estado, categoría o información adicional"
-            code={`<Badge variant="info">Info</Badge>
-<Badge variant="success">Éxito</Badge>
-<Badge variant="warning">Advertencia</Badge>
-<Badge variant="danger">Peligro</Badge>
-<Badge variant="premium">Premium</Badge>
-<Badge variant="featured">Destacado</Badge>`}
-          >
-            <div className="flex flex-wrap gap-3">
-              <Badge variant="info">Info</Badge>
-              <Badge variant="success">Éxito</Badge>
-              <Badge variant="warning">Advertencia</Badge>
-              <Badge variant="danger">Peligro</Badge>
-              <Badge variant="premium">Premium</Badge>
-              <Badge variant="featured">Destacado</Badge>
-            </div>
-          </ComponentDemo>
-
-          {/* Avatars Demo */}
-          <ComponentDemo
-            title="Avatares"
-            description="Imágenes de perfil con soporte para iniciales y estados de presencia"
-            code={`<Avatar name="Juan Pérez" size="sm" />
-<Avatar name="María García" size="md" />
-<Avatar name="Carlos López" size="lg" status="online" />
-<Avatar
-  name="Ana Rodríguez"
-  src="https://images.unsplash.com/photo-1494790108755-2616b612b047?w=100&q=80"
-  size="xl"
-  status="away"
-/>`}
-          >
-            <div className="flex flex-wrap gap-4 items-center">
-              <Avatar name="Juan Pérez" size="sm" />
-              <Avatar name="María García" size="md" />
-              <Avatar name="Carlos López" size="lg" status="online" />
-              <Avatar
-                name="Ana Rodríguez"
-                src="https://images.unsplash.com/photo-1494790108755-2616b612b047?w=100&q=80"
-                size="xl"
-                status="away"
-              />
-            </div>
-          </ComponentDemo>
-
-          {/* Rating Stars Demo */}
-          <ComponentDemo
-            title="Calificaciones"
-            description="Componente de estrellas para mostrar calificaciones y reseñas"
-            code={`<RatingStars rating={4.8} reviewCount={124} showValue />
-<RatingStars rating={3.5} reviewCount={67} variant="compact" />
-<RatingStars rating={2.0} reviewCount={12} size="lg" />
-<RatingStars rating={5.0} showValue interactive />`}
-          >
-            <div className="space-y-3">
-              <RatingStars rating={4.8} reviewCount={124} showValue />
-              <RatingStars
-                rating={3.5}
-                reviewCount={67}
-                variant="compact"
-                showValue
-              />
-              <RatingStars rating={5.0} reviewCount={234} variant="detailed" />
-            </div>
-          </ComponentDemo>
-
-          {/* Price Badge Demo */}
-          <ComponentDemo
-            title="Precios"
-            description="Componentes para mostrar precios con diferentes variantes y divisas"
-            code={`<PriceBadge amount={1200} currency="MXN" period="night" />
-<PriceBadge
-  amount={150}
-  currency="USD"
-  period="night"
-  variant="highlighted"
-/>
-<PriceBadge
-  amount={2500}
-  currency="MXN"
-  period="night"
-  size="lg"
-  variant="large"
-/>`}
-          >
-            <div className="flex flex-wrap gap-4 items-center">
-              <PriceBadge amount={1200} currency="MXN" period="night" />
-              <PriceBadge
-                amount={150}
-                currency="USD"
-                period="night"
-                variant="highlighted"
-              />
-              <PriceBadge
-                amount={2500}
-                currency="MXN"
-                period="night"
-                size="lg"
-                variant="large"
-              />
-            </div>
-          </ComponentDemo>
-        </div>
-      </section>
-
-      {/* Listings Section */}
-      <section className="py-12 bg-white dark:bg-gray-800">
-        <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 text-center">
-            {t("home.listings.title", "Propiedades Destacadas")}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sampleListings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                onCardClick={handleCardClick}
-                onFavoriteClick={handleFavoriteClick}
-              />
-            ))}
+        {!loading && !error && items.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            {t("homePage.emptyFiltered")}
           </div>
-        </div>
-      </section>
+        ) : null}
 
-      {/* Loading State Demo */}
-      <section className="py-12">
-        <div className="mx-auto max-w-7xl px-4">
-          <ComponentDemo
-            title="Estados de Carga"
-            description="Spinners para mostrar estados de carga con diferentes tamaños y variantes"
-            code={`<Spinner size="sm" />
-<Spinner size="md" />
-<Spinner size="lg" variant="primary" />
-<Spinner size="xl" variant="secondary" />`}
-          >
-            <div className="flex justify-center gap-4">
-              <Spinner size="sm" />
-              <Spinner size="md" />
-              <Spinner size="lg" variant="primary" />
-              <Spinner size="xl" variant="secondary" />
+        {!loading && !error && items.length > 0 ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {items.map((property, index) => (
+                <PropertyCard key={property.$id} property={property} t={t} locale={locale} index={index} />
+              ))}
             </div>
-          </ComponentDemo>
-        </div>
+
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-300">
+              <span>
+                {t("homePage.pagination.pageOf", { page, totalPages })}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => updateFilter("page", String(page - 1))}
+                  className="min-h-11 rounded-xl border border-slate-300 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600"
+                >
+                  {t("homePage.pagination.previous")}
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => updateFilter("page", String(page + 1))}
+                  className="min-h-11 rounded-xl border border-slate-300 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600"
+                >
+                  {t("homePage.pagination.next")}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : null}
       </section>
     </div>
   );
-}
+};
+
+export default Home;

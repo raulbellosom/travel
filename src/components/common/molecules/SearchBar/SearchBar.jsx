@@ -1,13 +1,10 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, MapPin, Calendar, Users, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../../atoms";
 import DateRangePicker from "../DateRangePicker";
 
-/**
- * SearchBar component with tabbed interface for different search types.
- * Supports location search, date range selection, guest selection, and responsive design.
- */
 const SearchBar = ({
   onSearch,
   onTabChange,
@@ -17,26 +14,26 @@ const SearchBar = ({
   onToggleCollapse,
   ...props
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [guests, setGuests] = useState(1);
   const [dateRange, setDateRange] = useState(null);
   const [isExpanded, setIsExpanded] = useState(!collapsed);
 
-  // Tab configuration
+  const MotionDiv = motion.div;
+
   const tabs = [
-    { id: "rentals", label: "Rentals", icon: MapPin },
-    { id: "real-estate", label: "Real Estate", icon: MapPin },
-    { id: "services", label: "Services", icon: Users },
+    { id: "rentals", label: t("searchBar.tabs.rentals"), icon: MapPin },
+    { id: "real-estate", label: t("searchBar.tabs.realEstate"), icon: MapPin },
+    { id: "services", label: t("searchBar.tabs.services"), icon: Users },
   ];
 
-  // Handle tab change
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     onTabChange?.(tabId);
   };
 
-  // Handle search
   const handleSearch = () => {
     const searchData = {
       tab: activeTab,
@@ -47,21 +44,20 @@ const SearchBar = ({
     onSearch?.(searchData);
   };
 
-  // Handle mobile toggle
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
     onToggleCollapse?.(!isExpanded);
   };
 
-  // Guest options
   const guestOptions = Array.from({ length: 10 }, (_, i) => ({
     value: i + 1,
-    label: `${i + 1} guest${i + 1 > 1 ? "s" : ""}`,
+    label: t("searchBar.guestsCount", { count: i + 1 }),
   }));
+
+  const activeTabLabel = tabs.find((tab) => tab.id === activeTab)?.label || "";
 
   return (
     <div className={`w-full ${className}`} {...props}>
-      {/* Mobile Toggle Button */}
       <div className="md:hidden mb-4">
         <Button
           onClick={handleToggle}
@@ -69,13 +65,13 @@ const SearchBar = ({
           className="w-full justify-center"
           leftIcon={isExpanded ? X : Search}
         >
-          {isExpanded ? "Hide Search" : "Show Search"}
+          {isExpanded ? t("searchBar.actions.hide") : t("searchBar.actions.show")}
         </Button>
       </div>
 
       <AnimatePresence>
         {isExpanded && (
-          <motion.div
+          <MotionDiv
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -83,7 +79,6 @@ const SearchBar = ({
             className="overflow-hidden"
           >
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-              {/* Tabs */}
               <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -111,16 +106,12 @@ const SearchBar = ({
                 })}
               </div>
 
-              {/* Search Form */}
               <div className="space-y-4">
-                {/* Location Search */}
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder={`Search ${tabs
-                      .find((t) => t.id === activeTab)
-                      ?.label.toLowerCase()}...`}
+                    placeholder={t("searchBar.searchPlaceholder", { type: activeTabLabel.toLowerCase() })}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="
@@ -133,15 +124,13 @@ const SearchBar = ({
                   />
                 </div>
 
-                {/* Date Range and Guests Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Date Range */}
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
                     <DateRangePicker
                       value={dateRange}
                       onChange={setDateRange}
-                      placeholder="Check-in / Check-out"
+                      placeholder={t("searchBar.datePlaceholder")}
                       className="w-full"
                       inputClassName="
                         pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600
@@ -153,7 +142,6 @@ const SearchBar = ({
                     />
                   </div>
 
-                  {/* Guests */}
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
                     <select
@@ -172,7 +160,6 @@ const SearchBar = ({
                         </option>
                       ))}
                     </select>
-                    {/* Custom dropdown arrow */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                       <svg
                         className="w-5 h-5 text-gray-400"
@@ -191,18 +178,17 @@ const SearchBar = ({
                   </div>
                 </div>
 
-                {/* Search Button */}
                 <Button
                   onClick={handleSearch}
                   size="lg"
                   className="w-full justify-center"
                   leftIcon={Search}
                 >
-                  Search {tabs.find((t) => t.id === activeTab)?.label}
+                  {t("searchBar.searchFor", { type: activeTabLabel })}
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </div>
@@ -210,3 +196,6 @@ const SearchBar = ({
 };
 
 export default SearchBar;
+
+
+
