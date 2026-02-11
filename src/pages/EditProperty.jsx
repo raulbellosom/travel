@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
+import { INTERNAL_ROUTES } from "../utils/internalRoutes";
 
 const EditProperty = () => {
   const { t } = useTranslation();
@@ -32,7 +33,7 @@ const EditProperty = () => {
       .then(([doc, amenityOptions, selectedAmenityIds]) => {
         if (!mounted) return;
         if (doc.userId !== user?.$id) {
-          navigate("/dashboard", { replace: true });
+          navigate(INTERNAL_ROUTES.dashboard, { replace: true });
           return;
         }
 
@@ -64,7 +65,7 @@ const EditProperty = () => {
       const { amenityIds = [], ...propertyData } = values;
       await propertiesService.update(id, user.$id, propertyData);
       await amenitiesService.syncPropertyAmenities(id, amenityIds);
-      navigate("/mis-propiedades", { replace: true });
+      navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, t("editPropertyPage.errors.save")));
     } finally {

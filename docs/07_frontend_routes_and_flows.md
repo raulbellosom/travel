@@ -80,20 +80,20 @@
 
 | Ruta | Guard | Rol/Scope |
 | ---- | ----- | --------- |
-| `/dashboard` | InternalRoute | cualquier usuario interno |
-| `/mis-propiedades` | ScopeRoute | `properties.read` |
-| `/crear-propiedad` | ScopeRoute | `properties.write` |
-| `/editar-propiedad/:id` | ScopeRoute | `properties.write` |
-| `/leads` | ScopeRoute | `leads.read` |
-| `/clientes` | OwnerRoute | `owner` |
-| `/reservas` | ScopeRoute | `reservations.read` |
-| `/pagos` | ScopeRoute | `payments.read` |
-| `/resenas` | ScopeRoute | `reviews.moderate` |
-| `/equipo` | ScopeRoute | `staff.manage` |
+| `/app/dashboard` | InternalRoute | cualquier usuario interno |
+| `/app/mis-propiedades` | ScopeRoute | `properties.read` |
+| `/app/crear-propiedad` | ScopeRoute | `properties.write` |
+| `/app/editar-propiedad/:id` | ScopeRoute | `properties.write` |
+| `/app/leads` | ScopeRoute | `leads.read` |
+| `/app/clientes` | OwnerRoute | `owner` |
+| `/app/reservas` | ScopeRoute | `reservations.read` |
+| `/app/pagos` | ScopeRoute | `payments.read` |
+| `/app/resenas` | ScopeRoute | `reviews.moderate` |
+| `/app/equipo` | ScopeRoute | `staff.manage` |
 | `/perfil` | ProtectedRoute | usuario autenticado |
-| `/configuracion` | RoleRoute | `owner` o `root` |
+| `/app/configuracion` | RoleRoute | `owner` o `root` |
 
-En `/dashboard` se deben mostrar visualizaciones minimas:
+En `/app/dashboard` se deben mostrar visualizaciones minimas:
 
 - Leads por periodo.
 - Reservas por estado.
@@ -164,7 +164,7 @@ Regla:
 
 ## 7.4 Gestion de staff
 
-1. Owner entra a `/equipo`.
+1. Owner entra a `/app/equipo`.
 2. Crea usuario staff.
 3. Asigna rol/scopes.
 4. Cambios quedan en ActivityLog.

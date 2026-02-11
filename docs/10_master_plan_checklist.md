@@ -116,7 +116,7 @@ Enums canonicos:
 - [ ] Implementar modulo `/reservas`.
 - [ ] Implementar modulo `/pagos`.
 - [ ] Implementar modulo `/resenas` (moderacion).
-- [ ] Implementar modulo `/equipo` (staff management).
+- [ ] Implementar modulo `/app/equipo` (staff management).
 - [ ] Agregar filtros, paginacion y acciones por estado en cada modulo.
 - [ ] Renderizar menu sidebar por scopes reales de usuario.
 - [ ] Agregar `RoleRoute` y `ScopeRoute` efectivos en rutas privadas.
@@ -151,7 +151,7 @@ Enums canonicos:
 
 ## Fase 7 - Formularios de conexion Stripe y Mercado Pago (owner)
 
-- [ ] Crear pantalla de configuracion de pasarelas en `/configuracion`.
+- [ ] Crear pantalla de configuracion de pasarelas en `/app/configuracion`.
 - [ ] Formulario Stripe (keys, webhook secret, success/cancel URLs).
 - [ ] Formulario Mercado Pago (access token, public key, webhook secret).
 - [ ] Guardado seguro de secretos solo en backend/functions.

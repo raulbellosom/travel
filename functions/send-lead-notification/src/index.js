@@ -115,7 +115,7 @@ export default async ({ req, res, log, error }) => {
         <p><strong>Telefono:</strong> ${body.phone || "-"}</p>
         <p><strong>Mensaje:</strong></p>
         <p>${body.message || "-"}</p>
-        <p><a href="${config.appUrl}/leads">Ver leads en dashboard</a></p>
+        <p><a href="${config.appUrl}/app/leads">Ver leads en dashboard</a></p>
       `,
     });
 

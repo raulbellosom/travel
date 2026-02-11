@@ -3,6 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Home, List, User, Settings, Inbox, Users, X } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import BrandLogo from "../common/BrandLogo";
+import {
+  INTERNAL_ROUTES,
+} from "../../utils/internalRoutes";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
@@ -10,19 +13,19 @@ const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
 
   const navigation = [
-    { name: t("sidebar.overview"), href: "/dashboard", icon: Home },
-    { name: t("sidebar.listings"), href: "/mis-propiedades", icon: List },
-    { name: t("sidebar.leads"), href: "/leads", icon: Inbox },
+    { name: t("sidebar.overview"), href: INTERNAL_ROUTES.dashboard, icon: Home },
+    { name: t("sidebar.listings"), href: INTERNAL_ROUTES.myProperties, icon: List },
+    { name: t("sidebar.leads"), href: INTERNAL_ROUTES.leads, icon: Inbox },
     ...(user?.role === "owner"
-      ? [{ name: t("sidebar.clients", { defaultValue: "Clientes" }), href: "/clientes", icon: Users }]
+      ? [{ name: t("sidebar.clients", { defaultValue: "Clientes" }), href: INTERNAL_ROUTES.clients, icon: Users }]
       : []),
     ...(user?.role === "owner"
-      ? [{ name: t("sidebar.team", { defaultValue: "Equipo" }), href: "/equipo", icon: Users }]
+      ? [{ name: t("sidebar.team", { defaultValue: "Equipo" }), href: INTERNAL_ROUTES.team, icon: Users }]
       : []),
     { name: t("sidebar.profile"), href: "/perfil", icon: User },
     {
       name: t("sidebar.settings"),
-      href: "/configuracion",
+      href: INTERNAL_ROUTES.settings,
       icon: Settings,
     },
   ];

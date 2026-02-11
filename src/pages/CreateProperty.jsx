@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
+import { INTERNAL_ROUTES } from "../utils/internalRoutes";
 
 const CreateProperty = () => {
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ const CreateProperty = () => {
       const { amenityIds = [], ...propertyData } = values;
       const created = await propertiesService.create(user.$id, propertyData);
       await amenitiesService.syncPropertyAmenities(created.$id, amenityIds);
-      navigate("/mis-propiedades", { replace: true });
+      navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, t("createPropertyPage.errors.create")));
     } finally {

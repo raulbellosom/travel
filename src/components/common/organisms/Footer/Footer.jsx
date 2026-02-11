@@ -2,9 +2,14 @@
 import { useTranslation } from "react-i18next";
 import { Mail, Phone, MapPin, Sparkles } from "lucide-react";
 import BrandLogo from "../../BrandLogo";
+import { useAuth } from "../../../../hooks/useAuth";
+import { isInternalRole } from "../../../../utils/roles";
+import { INTERNAL_ROUTES } from "../../../../utils/internalRoutes";
 
 const Footer = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const showInternalLinks = isInternalRole(user?.role);
 
   return (
     <footer className="relative overflow-hidden border-t border-slate-800 bg-slate-950 text-slate-200">
@@ -31,12 +36,16 @@ const Footer = () => {
             <li>
               <Link className="hover:text-white" to="/">{t("footer.links.home")}</Link>
             </li>
-            <li>
-              <Link className="hover:text-white" to="/dashboard">{t("footer.links.dashboard")}</Link>
-            </li>
-            <li>
-              <Link className="hover:text-white" to="/mis-propiedades">{t("footer.links.properties")}</Link>
-            </li>
+            {showInternalLinks ? (
+              <li>
+                <Link className="hover:text-white" to={INTERNAL_ROUTES.dashboard}>{t("footer.links.dashboard")}</Link>
+              </li>
+            ) : null}
+            {showInternalLinks ? (
+              <li>
+                <Link className="hover:text-white" to={INTERNAL_ROUTES.myProperties}>{t("footer.links.properties")}</Link>
+              </li>
+            ) : null}
             <li>
               <Link className="hover:text-white" to="/perfil">{t("footer.links.profile")}</Link>
             </li>

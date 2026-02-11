@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
+import { isInternalRole } from "../utils/roles";
+import { INTERNAL_ROUTES } from "../utils/internalRoutes";
 
 const inputClass =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800";
@@ -31,8 +33,11 @@ const Login = () => {
     setEmailNotVerified(false);
 
     try {
-      await login(email, password);
-      const target = location.state?.from?.pathname || "/";
+      const nextUser = await login(email, password);
+      const fallbackTarget = isInternalRole(nextUser?.role)
+        ? INTERNAL_ROUTES.dashboard
+        : "/";
+      const target = location.state?.from?.pathname || fallbackTarget;
       navigate(target, { replace: true });
     } catch (err) {
       const message = getErrorMessage(err, t("loginPage.errors.login"));

@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
+import {
+  INTERNAL_ROUTES,
+  getInternalEditPropertyRoute,
+} from "../utils/internalRoutes";
 
 const MyProperties = () => {
   const { t, i18n } = useTranslation();
@@ -78,7 +82,7 @@ const MyProperties = () => {
           </p>
         </div>
         <Link
-          to="/crear-propiedad"
+          to={INTERNAL_ROUTES.createProperty}
           className="inline-flex min-h-11 items-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
         >
           {t("myPropertiesPage.actions.create")}
@@ -132,7 +136,7 @@ const MyProperties = () => {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Link
-                        to={`/editar-propiedad/${item.$id}`}
+                        to={getInternalEditPropertyRoute(item.$id)}
                         className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium dark:border-slate-600"
                       >
                         {t("myPropertiesPage.actions.edit")}

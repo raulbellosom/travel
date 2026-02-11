@@ -14,6 +14,7 @@ Allow: /sell
 
 # Bloquear áreas administrativas privadas
 Disallow: /admin/
+Disallow: /app/
 Disallow: /dashboard/settings
 Disallow: /api/
 

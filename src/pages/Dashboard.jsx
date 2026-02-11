@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { leadsService } from "../services/leadsService";
 import { getErrorMessage } from "../utils/errors";
+import { INTERNAL_ROUTES } from "../utils/internalRoutes";
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -106,7 +107,7 @@ const Dashboard = () => {
             <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t("dashboardPage.recentProperties.title")}</h2>
-                <Link to="/mis-propiedades" className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-400">
+                <Link to={INTERNAL_ROUTES.myProperties} className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-400">
                   {t("dashboardPage.recentProperties.viewAll")}
                 </Link>
               </div>
@@ -128,7 +129,7 @@ const Dashboard = () => {
             <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t("dashboardPage.recentLeads.title")}</h2>
-                <Link to="/leads" className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-400">
+                <Link to={INTERNAL_ROUTES.leads} className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-400">
                   {t("dashboardPage.recentLeads.viewAll")}
                 </Link>
               </div>

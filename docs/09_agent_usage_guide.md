@@ -151,7 +151,7 @@ Crea el componente PropertyCard siguiendo las especificaciones de 04_design_syst
 ✅ Implementar ruta con guard\*\*:
 
 ```
-Implementa la ruta /crear-propiedad según 07_frontend_routes_and_flows.md, sección 4.3. Debe usar ProtectedRoute guard y DashboardLayout. El formulario debe ser wizard (multi-paso) como está especificado.
+Implementa la ruta /app/crear-propiedad según 07_frontend_routes_and_flows.md, sección 4.3. Debe usar ProtectedRoute guard y DashboardLayout. El formulario debe ser wizard (multi-paso) como está especificado.
 ```
 
 **✅ Crear función de Appwrite**:
@@ -256,7 +256,7 @@ Usa tokens.css para estilos.
 **Ejemplo de prompt**:
 
 ```
-Implementa la página /mis-propiedades según 07, sección 4.2. Debe:
+Implementa la página /app/mis-propiedades según 07, sección 4.2. Debe:
 - Usar DashboardLayout
 - Tener guard ProtectedRoute
 - Cargar propiedades del usuario logueado

@@ -6,11 +6,14 @@ import {
   ChevronDown,
   FileText,
   KeyRound,
+  LayoutDashboard,
   LogOut,
   ShieldCheck,
   Star,
   UserCircle2,
 } from "lucide-react";
+import { isInternalRole } from "../../../../utils/roles";
+import { INTERNAL_ROUTES } from "../../../../utils/internalRoutes";
 
 const UserDropdown = ({ user, onLogout }) => {
   const { t } = useTranslation();
@@ -56,7 +59,16 @@ const UserDropdown = ({ user, onLogout }) => {
     await onLogout();
   };
 
+  const isInternalUser = isInternalRole(user?.role);
+
   const userMenuItems = [
+    ...(isInternalUser
+      ? [{
+        to: INTERNAL_ROUTES.dashboard,
+        icon: LayoutDashboard,
+        label: t("nav.dashboard"),
+      }]
+      : []),
     {
       to: "/perfil",
       icon: UserCircle2,

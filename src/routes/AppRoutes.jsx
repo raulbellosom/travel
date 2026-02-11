@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider } from "../contexts/AuthContext";
 import { UIProvider } from "../contexts/UIContext";
 import InternalRoute from "./InternalRoute";
@@ -38,6 +38,16 @@ import ServiceUnavailable from "../pages/ServiceUnavailable";
 import ErrorsDemo from "../pages/ErrorsDemo";
 import RootAmenitiesPanel from "../pages/RootAmenitiesPanel";
 import env from "../env";
+import {
+  INTERNAL_BASE_PATH,
+  INTERNAL_ROUTES,
+  getInternalEditPropertyRoute,
+} from "../utils/internalRoutes";
+
+const LegacyEditPropertyRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={getInternalEditPropertyRoute(id)} replace />;
+};
 
 const AppRoutes = () => {
   return (
@@ -104,13 +114,14 @@ const AppRoutes = () => {
             </Route>
 
             <Route
-              path="/"
+              path={INTERNAL_BASE_PATH}
               element={
                 <InternalRoute>
                   <DashboardLayout />
                 </InternalRoute>
               }
             >
+              <Route index element={<Navigate to={INTERNAL_ROUTES.dashboard} replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="mis-propiedades" element={<MyProperties />} />
               <Route path="crear-propiedad" element={<CreateProperty />} />
@@ -134,6 +145,36 @@ const AppRoutes = () => {
               />
               <Route path="configuracion" element={<Settings />} />
             </Route>
+
+            <Route
+              path="/dashboard"
+              element={<Navigate to={INTERNAL_ROUTES.dashboard} replace />}
+            />
+            <Route
+              path="/mis-propiedades"
+              element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />}
+            />
+            <Route
+              path="/crear-propiedad"
+              element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />}
+            />
+            <Route path="/editar-propiedad/:id" element={<LegacyEditPropertyRedirect />} />
+            <Route
+              path="/leads"
+              element={<Navigate to={INTERNAL_ROUTES.leads} replace />}
+            />
+            <Route
+              path="/clientes"
+              element={<Navigate to={INTERNAL_ROUTES.clients} replace />}
+            />
+            <Route
+              path="/equipo"
+              element={<Navigate to={INTERNAL_ROUTES.team} replace />}
+            />
+            <Route
+              path="/configuracion"
+              element={<Navigate to={INTERNAL_ROUTES.settings} replace />}
+            />
 
             <Route
               path={env.app.rootAmenitiesPath}

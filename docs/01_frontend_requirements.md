@@ -98,13 +98,13 @@ Publicas:
 
 Privadas:
 
-- `/dashboard`
-- `/mis-propiedades`
-- `/leads`
-- `/reservas`
-- `/pagos`
-- `/resenas`
-- `/equipo`
+- `/app/dashboard`
+- `/app/mis-propiedades`
+- `/app/leads`
+- `/app/reservas`
+- `/app/pagos`
+- `/app/resenas`
+- `/app/equipo`
 - `/perfil`
 
 Root oculta:
