@@ -67,6 +67,7 @@ const env = {
       createPaymentSession: get("APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID"),
       createReview: get("APPWRITE_FUNCTION_CREATE_REVIEW_ID"),
       dashboardMetrics: get("APPWRITE_FUNCTION_DASHBOARD_METRICS_ID"),
+      staffUserManagement: get("APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID"),
     },
   },
   app: {

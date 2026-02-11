@@ -125,7 +125,7 @@ Enums canonicos:
 
 ## Fase 5 - Staff management (solo admin interno del cliente)
 
-- [ ] Implementar function `staff-user-management`.
+- [x] Implementar function `staff-user-management` (accion `create_staff`).
 - [ ] UI para crear staff con rol (`staff_manager`, `staff_editor`, `staff_support`).
 - [ ] UI para asignar y revocar scopes finos (`staff.manage`, `reservations.read`, etc.).
 - [ ] UI para desactivar staff (`enabled=false`) sin borrado duro.

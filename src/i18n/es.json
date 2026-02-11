@@ -35,7 +35,9 @@
     "settings": "Configuración",
     "leads": "Leads",
     "dashboardTitle": "Dashboard",
-    "defaultUser": "Usuario"
+    "defaultUser": "Usuario",
+    "clients": "Clientes",
+    "team": "Equipo"
   },
   "auth": {
     "login": {
@@ -283,7 +285,9 @@
       "passwordMismatch": "Las contrasenas no coinciden.",
       "passwordLength": "La contrasena debe tener al menos 8 caracteres.",
       "termsRequired": "Debes aceptar terminos y condiciones.",
-      "create": "No pudimos crear tu cuenta."
+      "create": "No pudimos crear tu cuenta.",
+      "invalidEmail": "Ingresa un correo electronico valido.",
+      "passwordWeak": "La contrasena no cumple el nivel minimo de seguridad."
     }
   },
   "forgotPasswordPage": {
@@ -855,7 +859,15 @@
     "close": "Cerrar modal"
   },
   "dateRangePicker": {
-    "dayHeaders": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+    "dayHeaders": [
+      "Do",
+      "Lu",
+      "Ma",
+      "Mi",
+      "Ju",
+      "Vi",
+      "Sa"
+    ],
     "placeholders": {
       "single": "Selecciona fecha",
       "range": "Selecciona fechas"
@@ -912,6 +924,56 @@
       "forgotPassword": "Recuperar contrasena",
       "resetPassword": "Restablecer contrasena",
       "verifyEmail": "Verificar correo"
+    }
+  },
+  "passwordField": {
+    "show": "Mostrar contrasena",
+    "hide": "Ocultar contrasena"
+  },
+  "passwordStrength": {
+    "levels": {
+      "0": "Fortaleza: muy debil",
+      "1": "Fortaleza: debil",
+      "2": "Fortaleza: media",
+      "3": "Fortaleza: fuerte",
+      "4": "Fortaleza: muy fuerte"
+    },
+    "rules": {
+      "minLength": "Minimo 8 caracteres",
+      "upperLower": "Mayusculas y minusculas",
+      "number": "Al menos un numero",
+      "symbol": "Al menos un simbolo"
+    }
+  },
+  "teamPage": {
+    "title": "Equipo",
+    "subtitle": "Crea usuarios de staff con roles operativos. No se permite crear root ni client desde este panel.",
+    "fields": {
+      "fullName": "Nombre completo",
+      "email": "Correo electronico",
+      "role": "Rol de staff",
+      "password": "Contrasena",
+      "confirmPassword": "Confirmar contrasena"
+    },
+    "roles": {
+      "staff_manager": "Staff Manager",
+      "staff_editor": "Staff Editor",
+      "staff_support": "Staff Support"
+    },
+    "actions": {
+      "create": "Crear usuario de staff",
+      "creating": "Creando usuario..."
+    },
+    "messages": {
+      "created": "Usuario de staff creado correctamente."
+    },
+    "errors": {
+      "fullName": "El nombre completo debe tener al menos 3 caracteres.",
+      "invalidEmail": "Ingresa un correo electronico valido.",
+      "invalidRole": "Selecciona un rol de staff valido.",
+      "passwordMismatch": "Las contrasenas no coinciden.",
+      "passwordWeak": "La contrasena no cumple el nivel minimo de seguridad.",
+      "create": "No se pudo crear el usuario de staff."
     }
   }
 }

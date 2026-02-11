@@ -133,7 +133,8 @@ functions/
 ## 4.11 `staff-user-management`
 
 - Tipo: HTTP autenticado.
-- Operaciones: crear staff, cambiar role/scopes, desactivar staff.
+- Operacion MVP implementada: `create_staff`.
+- Operaciones siguientes: cambiar role/scopes y desactivar staff.
 - Solo `owner` o `root`.
 - Registra auditoria before/after.
 

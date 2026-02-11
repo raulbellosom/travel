@@ -35,7 +35,9 @@
     "settings": "Settings",
     "leads": "Leads",
     "dashboardTitle": "Dashboard",
-    "defaultUser": "User"
+    "defaultUser": "User",
+    "clients": "Clients",
+    "team": "Team"
   },
   "auth": {
     "login": {
@@ -283,7 +285,9 @@
       "passwordMismatch": "Passwords do not match.",
       "passwordLength": "Password must be at least 8 characters.",
       "termsRequired": "You must accept terms and conditions.",
-      "create": "We could not create your account."
+      "create": "We could not create your account.",
+      "invalidEmail": "Enter a valid email address.",
+      "passwordWeak": "The password does not meet the minimum security level."
     }
   },
   "forgotPasswordPage": {
@@ -855,7 +859,15 @@
     "close": "Close modal"
   },
   "dateRangePicker": {
-    "dayHeaders": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+    "dayHeaders": [
+      "Su",
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa"
+    ],
     "placeholders": {
       "single": "Select date",
       "range": "Select dates"
@@ -912,6 +924,56 @@
       "forgotPassword": "Recover password",
       "resetPassword": "Reset password",
       "verifyEmail": "Verify email"
+    }
+  },
+  "passwordField": {
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "passwordStrength": {
+    "levels": {
+      "0": "Strength: very weak",
+      "1": "Strength: weak",
+      "2": "Strength: fair",
+      "3": "Strength: strong",
+      "4": "Strength: very strong"
+    },
+    "rules": {
+      "minLength": "Minimum 8 characters",
+      "upperLower": "Uppercase and lowercase letters",
+      "number": "At least one number",
+      "symbol": "At least one symbol"
+    }
+  },
+  "teamPage": {
+    "title": "Team",
+    "subtitle": "Create staff users with operational roles. Creating root or client users is not allowed from this panel.",
+    "fields": {
+      "fullName": "Full name",
+      "email": "Email",
+      "role": "Staff role",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+    "roles": {
+      "staff_manager": "Staff Manager",
+      "staff_editor": "Staff Editor",
+      "staff_support": "Staff Support"
+    },
+    "actions": {
+      "create": "Create staff user",
+      "creating": "Creating user..."
+    },
+    "messages": {
+      "created": "Staff user created successfully."
+    },
+    "errors": {
+      "fullName": "Full name must be at least 3 characters long.",
+      "invalidEmail": "Enter a valid email address.",
+      "invalidRole": "Select a valid staff role.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordWeak": "The password does not meet the minimum security level.",
+      "create": "Could not create the staff user."
     }
   }
 }

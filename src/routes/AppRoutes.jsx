@@ -21,6 +21,7 @@ import CreateProperty from "../pages/CreateProperty";
 import EditProperty from "../pages/EditProperty";
 import Leads from "../pages/Leads";
 import Clients from "../pages/Clients";
+import Team from "../pages/Team";
 import Profile from "../pages/Profile";
 import Settings from "../pages/Settings";
 import UIDocsPage from "../pages/UIDocsPage";
@@ -93,6 +94,14 @@ const AppRoutes = () => {
                 element={
                   <OwnerRoute>
                     <Clients />
+                  </OwnerRoute>
+                }
+              />
+              <Route
+                path="equipo"
+                element={
+                  <OwnerRoute>
+                    <Team />
                   </OwnerRoute>
                 }
               />

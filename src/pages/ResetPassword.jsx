@@ -1,6 +1,7 @@
 ﻿import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
 
@@ -13,6 +14,8 @@ const ResetPassword = () => {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -77,26 +80,46 @@ const ResetPassword = () => {
       <form className="space-y-4" onSubmit={onSubmit}>
         <label className="grid gap-1 text-sm">
           <span>{t("resetPasswordPage.fields.password")}</span>
-          <input
-            required
-            type="password"
-            minLength={8}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-          />
+          <div className="relative">
+            <input
+              required
+              type={showPassword ? "text" : "password"}
+              minLength={8}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-11 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? t("passwordField.hide") : t("passwordField.show")}
+              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </label>
 
         <label className="grid gap-1 text-sm">
           <span>{t("resetPasswordPage.fields.confirmPassword")}</span>
-          <input
-            required
-            type="password"
-            minLength={8}
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-          />
+          <div className="relative">
+            <input
+              required
+              type={showConfirmPassword ? "text" : "password"}
+              minLength={8}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-11 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              aria-label={showConfirmPassword ? t("passwordField.hide") : t("passwordField.show")}
+              className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+            >
+              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </label>
 
         {error ? (
@@ -130,4 +153,3 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
-

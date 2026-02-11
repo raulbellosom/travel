@@ -16,6 +16,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     ...(user?.role === "owner"
       ? [{ name: t("sidebar.clients", { defaultValue: "Clientes" }), href: "/clientes", icon: Users }]
       : []),
+    ...(user?.role === "owner"
+      ? [{ name: t("sidebar.team", { defaultValue: "Equipo" }), href: "/equipo", icon: Users }]
+      : []),
     { name: t("sidebar.profile"), href: "/perfil", icon: User },
     {
       name: t("sidebar.settings"),
