@@ -1,5 +1,11 @@
 import env from "../env";
-import { databases, ensureAppwriteConfigured, ID, Query } from "../api/appwriteClient";
+import {
+  databases,
+  ensureAppwriteConfigured,
+  ID,
+  Query,
+  storage,
+} from "../api/appwriteClient";
 import { executeJsonFunction } from "../utils/functions";
 
 export const profileService = {
@@ -69,5 +75,36 @@ export const profileService = {
       );
     }
     return executeJsonFunction(functionId, patch);
+  },
+
+  async uploadAvatar(file) {
+    ensureAppwriteConfigured();
+    if (!env.appwrite.buckets.avatars) {
+      throw new Error("No esta configurada APPWRITE_BUCKET_AVATARS_ID.");
+    }
+
+    return storage.createFile({
+      bucketId: env.appwrite.buckets.avatars,
+      fileId: ID.unique(),
+      file,
+    });
+  },
+
+  getAvatarViewUrl(fileId) {
+    if (!fileId || !env.appwrite.buckets.avatars) return "";
+    return storage.getFileView({
+      bucketId: env.appwrite.buckets.avatars,
+      fileId,
+    });
+  },
+
+  async deleteAvatar(fileId) {
+    ensureAppwriteConfigured();
+    if (!fileId || !env.appwrite.buckets.avatars) return;
+
+    return storage.deleteFile({
+      bucketId: env.appwrite.buckets.avatars,
+      fileId,
+    });
   },
 };

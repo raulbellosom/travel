@@ -1,6 +1,15 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Mail, MapPin, UserCircle2, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import {
+  Camera,
+  KeyRound,
+  Mail,
+  MapPin,
+  ShieldCheck,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
 
@@ -24,9 +33,20 @@ const PROFILE_NAV_KEYS = [
   "privacyNotifications",
 ];
 
+const MAX_AVATAR_SIZE_MB = 5;
+const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
+
 const Profile = () => {
   const { t } = useTranslation();
-  const { user, profile, preferences, updateProfile, updatePreferences } = useAuth();
+  const {
+    user,
+    profile,
+    preferences,
+    updateProfile,
+    updatePreferences,
+    updateAvatar,
+    removeAvatar,
+  } = useAuth();
   const [profileForm, setProfileForm] = useState({
     firstName: "",
     lastName: "",
@@ -47,6 +67,8 @@ const Profile = () => {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -78,7 +100,12 @@ const Profile = () => {
   }, [profileForm.firstName, profileForm.lastName, t, user?.name]);
 
   const initials = useMemo(() => {
-    const base = fullName.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
+    const base = fullName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("");
     return base || "RE";
   }, [fullName]);
 
@@ -125,13 +152,98 @@ const Profile = () => {
     }
   };
 
+  const onAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      setError(
+        t("profilePage.errors.avatarSize", {
+          max: MAX_AVATAR_SIZE_MB,
+        })
+      );
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await updateAvatar(file);
+      setMessage(t("profilePage.messages.avatarUpdated"));
+    } catch (err) {
+      setError(getErrorMessage(err, t("profilePage.errors.avatarUpload")));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const onRemoveAvatar = async () => {
+    setRemovingAvatar(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await removeAvatar();
+      setMessage(t("profilePage.messages.avatarRemoved"));
+    } catch (err) {
+      setError(getErrorMessage(err, t("profilePage.errors.avatarRemove")));
+    } finally {
+      setRemovingAvatar(false);
+    }
+  };
+
   return (
     <section className="space-y-6">
       <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 text-xl font-black text-white shadow-md">
-              {initials}
+            <div className="space-y-2 text-center">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={fullName}
+                  className="h-20 w-20 rounded-full border border-slate-200 object-cover shadow-md dark:border-slate-700"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 text-xl font-black text-white shadow-md">
+                  {initials}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <label className="inline-flex min-h-9 cursor-pointer items-center justify-center gap-1 rounded-xl border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                  <Camera size={12} />
+                  {uploadingAvatar
+                    ? t("profilePage.actions.uploadingAvatar")
+                    : t("profilePage.actions.uploadAvatar")}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={onAvatarChange}
+                    disabled={uploadingAvatar || removingAvatar}
+                    className="hidden"
+                  />
+                </label>
+
+                {user?.avatarUrl ? (
+                  <button
+                    type="button"
+                    onClick={onRemoveAvatar}
+                    disabled={uploadingAvatar || removingAvatar}
+                    className="inline-flex min-h-9 items-center justify-center gap-1 rounded-xl border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/30"
+                  >
+                    <Trash2 size={12} />
+                    {removingAvatar
+                      ? t("profilePage.actions.removingAvatar")
+                      : t("profilePage.actions.removeAvatar")}
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -193,6 +305,22 @@ const Profile = () => {
               </li>
             ))}
           </ul>
+
+          <div className="mt-4 rounded-2xl border border-slate-200 p-3 text-sm dark:border-slate-700">
+            <p className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
+              {t("profilePage.security.title")}
+            </p>
+            <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">
+              {t("profilePage.security.subtitle")}
+            </p>
+            <Link
+              to="/recuperar-password"
+              className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <KeyRound size={14} />
+              {t("profilePage.security.action")}
+            </Link>
+          </div>
         </aside>
 
         <div className="space-y-5">
@@ -200,7 +328,7 @@ const Profile = () => {
             onSubmit={onSaveProfile}
             className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
           >
-            <h2 className="md:col-span-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 md:col-span-2">
               {t("profilePage.sections.personal")}
             </h2>
 
@@ -217,7 +345,7 @@ const Profile = () => {
               </label>
             ))}
 
-            <label className="md:col-span-2 grid gap-1 text-sm">
+            <label className="grid gap-1 text-sm md:col-span-2">
               <span>{t("profilePage.fields.bio")}</span>
               <textarea
                 rows={4}
@@ -242,7 +370,7 @@ const Profile = () => {
             onSubmit={onSavePreferences}
             className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
           >
-            <h2 className="md:col-span-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 md:col-span-2">
               {t("profilePage.sections.preferences")}
             </h2>
 
@@ -307,7 +435,7 @@ const Profile = () => {
               </select>
             </label>
 
-            <label className="md:col-span-2 inline-flex items-center gap-2 text-sm">
+            <label className="inline-flex items-center gap-2 text-sm md:col-span-2">
               <input
                 type="checkbox"
                 checked={preferencesForm.notificationsEmail}

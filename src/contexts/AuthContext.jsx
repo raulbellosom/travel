@@ -12,10 +12,8 @@ import env from "../env";
 
 const AuthContext = createContext(null);
 
-// Exportar el contexto como named export
 export { AuthContext };
 
-// Exportar AuthProvider como named export
 export function AuthProvider({ children }) {
   const [authUser, setAuthUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -28,30 +26,33 @@ export function AuthProvider({ children }) {
     setPreferences(null);
   }, []);
 
-  const loadProfileData = useCallback(async (userId) => {
-    try {
-      const [nextProfile, nextPreferences] = await Promise.all([
-        profileService.getProfile(userId),
-        profileService.getPreferencesByUserId(userId),
-      ]);
-      setProfile(nextProfile || null);
-      setPreferences(nextPreferences || null);
-    } catch (error) {
-      // Un perfil aún no creado no debe romper la sesión.
-      if (isUnauthorizedError(error)) {
-        clearSessionState();
+  const loadProfileData = useCallback(
+    async (userId) => {
+      try {
+        const [nextProfile, nextPreferences] = await Promise.all([
+          profileService.getProfile(userId),
+          profileService.getPreferencesByUserId(userId),
+        ]);
+        setProfile(nextProfile || null);
+        setPreferences(nextPreferences || null);
+      } catch (error) {
+        // A missing profile must not break session state.
+        if (isUnauthorizedError(error)) {
+          clearSessionState();
+        }
+        setProfile(null);
+        setPreferences(null);
       }
-      setProfile(null);
-      setPreferences(null);
-    }
-  }, [clearSessionState]);
+    },
+    [clearSessionState]
+  );
 
   const refreshSession = useCallback(async () => {
     try {
-      const user = await authService.getCurrentUser();
-      setAuthUser(user);
-      await loadProfileData(user.$id);
-      return user;
+      const currentUser = await authService.getCurrentUser();
+      setAuthUser(currentUser);
+      await loadProfileData(currentUser.$id);
+      return currentUser;
     } catch (error) {
       if (isUnauthorizedError(error)) {
         clearSessionState();
@@ -71,28 +72,34 @@ export function AuthProvider({ children }) {
       });
   }, [clearSessionState, refreshSession]);
 
-  const login = useCallback(async (email, password) => {
-    const user = await authService.login(email, password);
-    setAuthUser(user);
-    await loadProfileData(user.$id);
-    return user;
-  }, [loadProfileData]);
+  const login = useCallback(
+    async (email, password) => {
+      const nextUser = await authService.login(email, password);
+      setAuthUser(nextUser);
+      await loadProfileData(nextUser.$id);
+      return nextUser;
+    },
+    [loadProfileData]
+  );
 
   const register = useCallback(async ({ fullName, email, password }) => {
-    const user = await authService.register({ fullName, email, password });
+    const nextUser = await authService.register({ fullName, email, password });
     await authService.sendVerificationEmail({
-      userAuthId: user.$id,
-      email: user.email,
+      userAuthId: nextUser.$id,
+      email: nextUser.email,
     });
-    return user;
+    return nextUser;
   }, []);
 
-  const resendVerification = useCallback(async ({ email }) => {
-    return authService.resendVerificationEmail({
-      userAuthId: authUser?.$id,
-      email: email || authUser?.email,
-    });
-  }, [authUser?.$id, authUser?.email]);
+  const resendVerification = useCallback(
+    async ({ email }) => {
+      return authService.resendVerificationEmail({
+        userAuthId: authUser?.$id,
+        email: email || authUser?.email,
+      });
+    },
+    [authUser?.$id, authUser?.email]
+  );
 
   const verifyEmail = useCallback(async ({ token, userId, secret }) => {
     return authService.verifyEmail({ token, userId, secret });
@@ -111,33 +118,106 @@ export function AuthProvider({ children }) {
     clearSessionState();
   }, [clearSessionState]);
 
-  const updateProfile = useCallback(async (patch) => {
-    if (!authUser?.$id) throw new Error("No hay sesión activa.");
+  const updateAvatar = useCallback(
+    async (file) => {
+      if (!authUser?.$id) throw new Error("No hay sesion activa.");
+      if (!file) throw new Error("Debes seleccionar una imagen.");
 
-    const hasSyncFunction = Boolean(env.appwrite.functions.syncUserProfile);
+      const previousFileId = authUser?.prefs?.avatarFileId || "";
+      const uploaded = await profileService.uploadAvatar(file);
 
-    if (hasSyncFunction) {
-      await profileService.syncUserProfile(patch);
+      try {
+        await authService.updatePrefs({
+          avatarFileId: uploaded.$id,
+          avatarUpdatedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        await profileService.deleteAvatar(uploaded.$id).catch(() => {});
+        throw error;
+      }
+
+      if (previousFileId && previousFileId !== uploaded.$id) {
+        await profileService.deleteAvatar(previousFileId).catch(() => {});
+      }
+
       await refreshSession();
-      return;
+      return uploaded;
+    },
+    [authUser?.$id, authUser?.prefs?.avatarFileId, refreshSession]
+  );
+
+  const removeAvatar = useCallback(async () => {
+    if (!authUser?.$id) throw new Error("No hay sesion activa.");
+
+    const previousFileId = authUser?.prefs?.avatarFileId || "";
+    await authService.updatePrefs({
+      avatarFileId: "",
+      avatarUpdatedAt: "",
+    });
+
+    if (previousFileId) {
+      await profileService.deleteAvatar(previousFileId).catch(() => {});
     }
 
-    const nextProfile = await profileService.updateProfile(authUser.$id, patch);
-    setProfile(nextProfile);
-  }, [authUser?.$id, refreshSession]);
+    await refreshSession();
+  }, [authUser?.$id, authUser?.prefs?.avatarFileId, refreshSession]);
 
-  const updatePreferences = useCallback(async (patch) => {
-    if (!authUser?.$id) throw new Error("No hay sesión activa.");
-    const next = await profileService.upsertPreferences(authUser.$id, patch);
-    setPreferences(next);
-  }, [authUser?.$id]);
+  const updateProfile = useCallback(
+    async (patch) => {
+      if (!authUser?.$id) throw new Error("No hay sesion activa.");
+
+      const hasSyncFunction = Boolean(env.appwrite.functions.syncUserProfile);
+      const syncAllowedFields = new Set(["firstName", "lastName", "email", "phone"]);
+      const syncPatch = {};
+      const profilePatch = {};
+
+      Object.entries(patch || {}).forEach(([key, value]) => {
+        if (syncAllowedFields.has(key)) {
+          syncPatch[key] = value;
+        } else {
+          profilePatch[key] = value;
+        }
+      });
+
+      if (hasSyncFunction) {
+        if (Object.keys(syncPatch).length > 0) {
+          await profileService.syncUserProfile(syncPatch);
+        }
+        if (Object.keys(profilePatch).length > 0) {
+          await profileService.updateProfile(authUser.$id, profilePatch);
+        }
+        await refreshSession();
+        return;
+      }
+
+      const nextProfile = await profileService.updateProfile(authUser.$id, patch);
+      setProfile(nextProfile);
+    },
+    [authUser?.$id, refreshSession]
+  );
+
+  const updatePreferences = useCallback(
+    async (patch) => {
+      if (!authUser?.$id) throw new Error("No hay sesion activa.");
+      const nextPreferences = await profileService.upsertPreferences(authUser.$id, patch);
+      setPreferences(nextPreferences);
+    },
+    [authUser?.$id]
+  );
 
   const user = useMemo(() => {
     if (!authUser) return null;
+
     const fullName = [profile?.firstName, profile?.lastName]
       .filter(Boolean)
       .join(" ")
       .trim();
+    const avatarFileId = authUser?.prefs?.avatarFileId || "";
+    const avatarVersion = authUser?.prefs?.avatarUpdatedAt || "";
+    const baseAvatarUrl = profileService.getAvatarViewUrl(avatarFileId);
+    const avatarUrl = avatarVersion && baseAvatarUrl
+      ? `${baseAvatarUrl}${baseAvatarUrl.includes("?") ? "&" : "?"}v=${encodeURIComponent(avatarVersion)}`
+      : baseAvatarUrl;
 
     return {
       ...authUser,
@@ -145,6 +225,8 @@ export function AuthProvider({ children }) {
       name: fullName || authUser.name || authUser.email,
       email: authUser.email,
       emailVerified: Boolean(authUser.emailVerification),
+      avatarFileId,
+      avatarUrl,
     };
   }, [authUser, profile]);
 
@@ -165,6 +247,8 @@ export function AuthProvider({ children }) {
       resetPassword,
       updateProfile,
       updatePreferences,
+      updateAvatar,
+      removeAvatar,
     }),
     [
       user,
@@ -182,6 +266,8 @@ export function AuthProvider({ children }) {
       resetPassword,
       updateProfile,
       updatePreferences,
+      updateAvatar,
+      removeAvatar,
     ]
   );
 

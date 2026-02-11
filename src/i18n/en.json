@@ -217,7 +217,16 @@
     "toggleMenu": "Open menu",
     "tagline": "Properties and experiences",
     "searchPlaceholder": "Search properties...",
-    "publish": "Publish listing"
+    "publish": "Publish listing",
+    "userMenu": {
+      "defaultUser": "User",
+      "profile": "Edit profile",
+      "reservations": "My reservations",
+      "reviews": "My reviews",
+      "password": "Change password",
+      "privacy": "Privacy notice",
+      "terms": "Terms and conditions"
+    }
   },
   "dashboardNavbar": {
     "title": "Dashboard",
@@ -489,15 +498,24 @@
     "actions": {
       "saving": "Saving...",
       "saveProfile": "Save profile",
-      "savePreferences": "Save preferences"
+      "savePreferences": "Save preferences",
+      "uploadAvatar": "Upload photo",
+      "uploadingAvatar": "Uploading...",
+      "removeAvatar": "Remove photo",
+      "removingAvatar": "Removing..."
     },
     "messages": {
       "profileSaved": "Profile updated successfully.",
-      "preferencesSaved": "Preferences saved."
+      "preferencesSaved": "Preferences saved.",
+      "avatarUpdated": "Profile photo updated.",
+      "avatarRemoved": "Profile photo removed."
     },
     "errors": {
       "profile": "Could not update your profile.",
-      "preferences": "Could not save preferences."
+      "preferences": "Could not save preferences.",
+      "avatarUpload": "Could not upload profile image.",
+      "avatarRemove": "Could not remove profile image.",
+      "avatarSize": "Image exceeds the {{max}} MB limit."
     },
     "summary": {
       "defaultName": "User",
@@ -514,6 +532,11 @@
         "identity": "Official ID",
         "privacyNotifications": "Privacy and notifications"
       }
+    },
+    "security": {
+      "title": "Security",
+      "subtitle": "To change your password we will send a secure link to your email.",
+      "action": "Request password change"
     }
   },
   "propertyDetailPage": {
@@ -575,6 +598,100 @@
     "in_progress": "In progress",
     "closed_won": "Won",
     "closed_lost": "Lost"
+  },
+  "reservationStatus": {
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "completed": "Completed",
+    "expired": "Expired"
+  },
+  "paymentStatus": {
+    "unpaid": "Unpaid",
+    "pending": "Payment pending",
+    "paid": "Paid",
+    "failed": "Failed",
+    "refunded": "Refunded"
+  },
+  "reviewStatus": {
+    "pending": "In review",
+    "published": "Published",
+    "rejected": "Rejected"
+  },
+  "myReservationsPage": {
+    "title": "My reservations",
+    "subtitle": "Check the status of your reservations and payments.",
+    "loading": "Loading reservations...",
+    "empty": "You do not have reservations yet.",
+    "stats": {
+      "total": "Total",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed"
+    },
+    "labels": {
+      "property": "Property",
+      "guests": "guests",
+      "created": "Created"
+    },
+    "errors": {
+      "load": "Could not load your reservations."
+    }
+  },
+  "myReviewsPage": {
+    "title": "My reviews",
+    "subtitle": "History of reviews submitted from your account.",
+    "loading": "Loading reviews...",
+    "empty": "You have not published reviews yet.",
+    "stats": {
+      "total": "Total reviews",
+      "average": "Average rating"
+    },
+    "labels": {
+      "property": "Property",
+      "created": "Created"
+    },
+    "errors": {
+      "load": "Could not load your reviews."
+    }
+  },
+  "privacyPage": {
+    "title": "Privacy notice",
+    "updated": "Last update: February 2026",
+    "intro": "This document summarizes how we process your personal data within the platform. The final legal version may vary by client and jurisdiction.",
+    "sections": {
+      "data": {
+        "title": "Data we collect",
+        "body": "We collect account, profile, reservation, payment, and activity data to operate the service securely."
+      },
+      "usage": {
+        "title": "How data is used",
+        "body": "We use your data to authenticate access, confirm reservations, issue vouchers, prevent fraud, and improve experience."
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": "You can request access, correction, or deletion of your data according to applicable laws and the service provider agreement."
+      }
+    }
+  },
+  "termsPage": {
+    "title": "Terms and conditions",
+    "updated": "Last update: February 2026",
+    "intro": "These terms define platform usage rules for guests, hosts, and internal operators.",
+    "sections": {
+      "access": {
+        "title": "Access and accounts",
+        "body": "You must keep your account secure and provide truthful information. Unauthorized use may result in suspension."
+      },
+      "reservations": {
+        "title": "Reservations and payments",
+        "body": "Reservations depend on availability, payment confirmation, and each property's cancellation policies."
+      },
+      "liability": {
+        "title": "Liability",
+        "body": "Final contractual and operational liability may belong to the instance provider according to its legal configuration."
+      }
+    }
   },
   "homePage": {
     "catalogTitle": "Property catalog",

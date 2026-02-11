@@ -137,4 +137,17 @@ export const authService = {
       password,
     });
   },
+
+  async updatePrefs(patch) {
+    ensureAppwriteConfigured();
+    const current = await account.get();
+    const nextPrefs = {
+      ...(current?.prefs || {}),
+      ...(patch || {}),
+    };
+
+    return account.updatePrefs({
+      prefs: nextPrefs,
+    });
+  },
 };

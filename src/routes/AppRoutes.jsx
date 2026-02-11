@@ -5,6 +5,7 @@ import InternalRoute from "./InternalRoute";
 import OwnerRoute from "./OwnerRoute";
 import RootRoute from "./RootRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
+import ProtectedRoute from "./ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
@@ -24,6 +25,10 @@ import Clients from "../pages/Clients";
 import Team from "../pages/Team";
 import Profile from "../pages/Profile";
 import Settings from "../pages/Settings";
+import MyReservations from "../pages/MyReservations";
+import MyReviews from "../pages/MyReviews";
+import PrivacyNotice from "../pages/PrivacyNotice";
+import TermsConditions from "../pages/TermsConditions";
 import UIDocsPage from "../pages/UIDocsPage";
 import NotFound from "../pages/NotFound";
 import BadRequest from "../pages/BadRequest";
@@ -43,6 +48,32 @@ const AppRoutes = () => {
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Home />} />
               <Route path="propiedades/:slug" element={<PropertyDetail />} />
+              <Route
+                path="perfil"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="mis-reservas"
+                element={
+                  <ProtectedRoute>
+                    <MyReservations />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="mis-resenas"
+                element={
+                  <ProtectedRoute>
+                    <MyReviews />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="aviso-privacidad" element={<PrivacyNotice />} />
+              <Route path="terminos-condiciones" element={<TermsConditions />} />
               <Route path="ui-docs" element={<UIDocsPage />} />
               <Route path="errors-demo" element={<ErrorsDemo />} />
             </Route>
@@ -66,11 +97,7 @@ const AppRoutes = () => {
               />
               <Route
                 path="recuperar-password"
-                element={
-                  <PublicOnlyRoute>
-                    <ForgotPassword />
-                  </PublicOnlyRoute>
-                }
+                element={<ForgotPassword />}
               />
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="verify-email" element={<VerifyEmail />} />
@@ -105,7 +132,6 @@ const AppRoutes = () => {
                   </OwnerRoute>
                 }
               />
-              <Route path="perfil" element={<Profile />} />
               <Route path="configuracion" element={<Settings />} />
             </Route>
 

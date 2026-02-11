@@ -217,7 +217,16 @@
     "toggleMenu": "Abrir menu",
     "tagline": "Propiedades y experiencias",
     "searchPlaceholder": "Buscar propiedades...",
-    "publish": "Publicar anuncio"
+    "publish": "Publicar anuncio",
+    "userMenu": {
+      "defaultUser": "Usuario",
+      "profile": "Editar perfil",
+      "reservations": "Mis reservas",
+      "reviews": "Mis resenas",
+      "password": "Cambiar contrasena",
+      "privacy": "Aviso de privacidad",
+      "terms": "Terminos y condiciones"
+    }
   },
   "dashboardNavbar": {
     "title": "Dashboard",
@@ -489,15 +498,24 @@
     "actions": {
       "saving": "Guardando...",
       "saveProfile": "Guardar perfil",
-      "savePreferences": "Guardar preferencias"
+      "savePreferences": "Guardar preferencias",
+      "uploadAvatar": "Subir foto",
+      "uploadingAvatar": "Subiendo...",
+      "removeAvatar": "Eliminar foto",
+      "removingAvatar": "Eliminando..."
     },
     "messages": {
       "profileSaved": "Perfil actualizado correctamente.",
-      "preferencesSaved": "Preferencias guardadas."
+      "preferencesSaved": "Preferencias guardadas.",
+      "avatarUpdated": "Foto de perfil actualizada.",
+      "avatarRemoved": "Foto de perfil eliminada."
     },
     "errors": {
       "profile": "No se pudo actualizar tu perfil.",
-      "preferences": "No se pudieron guardar las preferencias."
+      "preferences": "No se pudieron guardar las preferencias.",
+      "avatarUpload": "No se pudo subir la imagen de perfil.",
+      "avatarRemove": "No se pudo eliminar la imagen de perfil.",
+      "avatarSize": "La imagen supera el maximo de {{max}} MB."
     },
     "summary": {
       "defaultName": "Usuario",
@@ -514,6 +532,11 @@
         "identity": "Identificacion oficial",
         "privacyNotifications": "Privacidad y notificaciones"
       }
+    },
+    "security": {
+      "title": "Seguridad",
+      "subtitle": "Para cambiar la contrasena te enviaremos un enlace seguro por correo.",
+      "action": "Solicitar cambio de contrasena"
     }
   },
   "propertyDetailPage": {
@@ -575,6 +598,100 @@
     "in_progress": "En proceso",
     "closed_won": "Ganado",
     "closed_lost": "Perdido"
+  },
+  "reservationStatus": {
+    "pending": "Pendiente",
+    "confirmed": "Confirmada",
+    "cancelled": "Cancelada",
+    "completed": "Completada",
+    "expired": "Expirada"
+  },
+  "paymentStatus": {
+    "unpaid": "Sin pago",
+    "pending": "Pago pendiente",
+    "paid": "Pagada",
+    "failed": "Pago fallido",
+    "refunded": "Reembolsada"
+  },
+  "reviewStatus": {
+    "pending": "En revision",
+    "published": "Publicada",
+    "rejected": "Rechazada"
+  },
+  "myReservationsPage": {
+    "title": "Mis reservas",
+    "subtitle": "Consulta el estado de tus reservaciones y pagos.",
+    "loading": "Cargando reservas...",
+    "empty": "Aun no tienes reservas registradas.",
+    "stats": {
+      "total": "Total",
+      "pending": "Pendientes",
+      "confirmed": "Confirmadas",
+      "completed": "Completadas"
+    },
+    "labels": {
+      "property": "Propiedad",
+      "guests": "huespedes",
+      "created": "Creada"
+    },
+    "errors": {
+      "load": "No se pudieron cargar tus reservas."
+    }
+  },
+  "myReviewsPage": {
+    "title": "Mis resenas",
+    "subtitle": "Historial de resenas enviadas desde tu cuenta.",
+    "loading": "Cargando resenas...",
+    "empty": "Aun no has publicado resenas.",
+    "stats": {
+      "total": "Total de resenas",
+      "average": "Promedio de calificacion"
+    },
+    "labels": {
+      "property": "Propiedad",
+      "created": "Creada"
+    },
+    "errors": {
+      "load": "No se pudieron cargar tus resenas."
+    }
+  },
+  "privacyPage": {
+    "title": "Aviso de privacidad",
+    "updated": "Ultima actualizacion: Febrero 2026",
+    "intro": "Este documento resume como tratamos tus datos personales dentro de la plataforma. La version legal final puede variar por cliente y jurisdiccion.",
+    "sections": {
+      "data": {
+        "title": "Datos que recopilamos",
+        "body": "Recopilamos informacion de cuenta, perfil, reservas, pagos y actividad para operar el servicio de forma segura."
+      },
+      "usage": {
+        "title": "Uso de la informacion",
+        "body": "Usamos tus datos para autenticarte, confirmar reservas, emitir comprobantes, prevenir fraude y mejorar la experiencia."
+      },
+      "rights": {
+        "title": "Tus derechos",
+        "body": "Puedes solicitar acceso, rectificacion o eliminacion de tus datos segun las leyes aplicables y el contrato con el proveedor del servicio."
+      }
+    }
+  },
+  "termsPage": {
+    "title": "Terminos y condiciones",
+    "updated": "Ultima actualizacion: Febrero 2026",
+    "intro": "Estos terminos definen las reglas de uso de la plataforma para clientes, anfitriones y operadores internos.",
+    "sections": {
+      "access": {
+        "title": "Acceso y cuentas",
+        "body": "Debes mantener segura tu cuenta y proporcionar informacion veraz. El uso no autorizado puede causar suspension."
+      },
+      "reservations": {
+        "title": "Reservas y pagos",
+        "body": "Las reservas dependen de disponibilidad, confirmacion de pago y politicas de cancelacion de cada propiedad."
+      },
+      "liability": {
+        "title": "Responsabilidad",
+        "body": "La responsabilidad contractual y operativa final puede recaer en el proveedor de la instancia segun su configuracion legal."
+      }
+    }
   },
   "homePage": {
     "catalogTitle": "Catalogo de propiedades",
