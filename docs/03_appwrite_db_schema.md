@@ -1,4 +1,4 @@
-# 03_APPWRITE_DB_SCHEMA.md - INMOBO PLATFORM
+﻿# 03_APPWRITE_DB_SCHEMA.md - INMOBO PLATFORM
 
 ## Referencia
 
@@ -58,6 +58,14 @@ Regla:
 
 - En este documento, cualquier indice temporal debe usar `$createdAt` o `$updatedAt`, no `createdAt`/`updatedAt` custom.
 
+### Semantica de ownership (critico)
+
+- `properties.ownerUserId` y campos derivados `propertyOwnerId` representan al usuario interno responsable de operacion/permisos.
+- No representan al dueno legal del inmueble.
+- En esta plataforma el catalogo interno es compartido por instancia: owner/staff con scope valido deben poder operar sobre todo el catalogo.
+- `ownerUserId/propertyOwnerId` no deben usarse como segmentacion obligatoria por usuario en listados internos; se usan para trazabilidad, responsable operativo y analitica.
+- Si se necesita modelar dueno legal externo (sin cuenta), debe manejarse como entidad de contacto separada y referenciarse desde `properties`.
+
 ---
 
 ## Instancia Appwrite
@@ -93,7 +101,7 @@ Regla:
 | `reservations`         | Reservaciones                           | 0     |
 | `reservation_payments` | Intentos/confirmaciones de pago         | 0     |
 | `reservation_vouchers` | Voucher emitido por reserva pagada      | 0     |
-| `reviews`              | Resenas de clientes                     | 0     |
+| `reviews`              | Reseñas de clientes                     | 0     |
 | `analytics_daily`      | Agregados diarios para dashboard        | 0     |
 | `activity_logs`        | Auditoria detallada (panel oculto root) | 0     |
 | `email_verifications`  | Tokens de verificacion de correo        | 0     |
@@ -112,9 +120,9 @@ Purpose: perfiles de usuarios de la instancia (internos + clientes finales).
 | `firstName`           | string  | 80   | yes      | -       | min 1                                                                  |
 | `lastName`            | string  | 80   | yes      | -       | min 1                                                                  |
 | `phoneCountryCode`    | string  | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
-| `phone`               | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                        |
+| `phone`               | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                         |
 | `whatsappCountryCode` | string  | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
-| `whatsappNumber`      | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                        |
+| `whatsappNumber`      | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                         |
 | `birthDate`           | string  | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                         |
 | `role`                | enum    | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
 | `scopesJson`          | string  | 4000 | no       | -       | JSON array serializado                                                 |
@@ -196,7 +204,7 @@ Purpose: catalogo de propiedades del cliente.
 
 | Attribute          | Type     | Size | Required | Default | Constraint                                                   |
 | ------------------ | -------- | ---- | -------- | ------- | ------------------------------------------------------------ |
-| `ownerUserId`      | string   | 64   | yes      | -       | FK logical a `users.$id`                                     |
+| `ownerUserId`      | string   | 64   | yes      | -       | FK logical a `users.$id` (responsable interno)               |
 | `slug`             | string   | 150  | yes      | -       | regex slug unico                                             |
 | `title`            | string   | 200  | yes      | -       | min 3                                                        |
 | `description`      | string   | 5000 | yes      | -       | min 20                                                       |
@@ -220,7 +228,7 @@ Purpose: catalogo de propiedades del cliente.
 
 Notas:
 
-- `ownerUserId`: Propietario interno
+- `ownerUserId`: Usuario interno responsable (owner/staff). No es dueno legal del inmueble
 - `slug`: URL publica
 - `price`: Precio base
 - `bathrooms`: Permite medios banos
@@ -362,7 +370,7 @@ Purpose: mensajes de contacto del sitio publico.
 | Attribute         | Type    | Size | Required | Default | Constraint                                   |
 | ----------------- | ------- | ---- | -------- | ------- | -------------------------------------------- |
 | `propertyId`      | string  | 64   | yes      | -       | FK logical a `properties.$id`                |
-| `propertyOwnerId` | string  | 64   | yes      | -       | FK logical a `users.$id`                     |
+| `propertyOwnerId` | string  | 64   | yes      | -       | FK logical a `users.$id` (denormalizado)     |
 | `name`            | string  | 120  | yes      | -       | min 2                                        |
 | `email`           | email   | 254  | yes      | -       | email valido                                 |
 | `phone`           | string  | 20   | no       | -       | regex telefono internacional                 |
@@ -373,7 +381,7 @@ Purpose: mensajes de contacto del sitio publico.
 
 Notas:
 
-- `propertyOwnerId`: Permisos
+- `propertyOwnerId`: Copia de `properties.ownerUserId` para permisos/filtros (no dueno legal)
 - `name`: Contacto
 - `email`: Contacto
 - `phone`: Contacto
@@ -407,7 +415,7 @@ Purpose: reservaciones por propiedad.
 | Attribute         | Type     | Size | Required | Default   | Constraint                                              |
 | ----------------- | -------- | ---- | -------- | --------- | ------------------------------------------------------- |
 | `propertyId`      | string   | 64   | yes      | -         | FK logical a `properties.$id`                           |
-| `propertyOwnerId` | string   | 64   | yes      | -         | FK logical a `users.$id`                                |
+| `propertyOwnerId` | string   | 64   | yes      | -         | FK logical a `users.$id` (denormalizado)               |
 | `guestUserId`     | string   | 64   | yes      | -         | FK logical a Auth/App `users.$id` del cliente           |
 | `guestName`       | string   | 120  | yes      | -         | min 2                                                   |
 | `guestEmail`      | email    | 254  | yes      | -         | email valido                                            |
@@ -434,6 +442,7 @@ Notas:
 - `status`: Estado reserva
 - `paymentStatus`: Estado pago
 - `guestUserId`: Usuario autenticado que crea la reserva
+- `propertyOwnerId`: Copia de `properties.ownerUserId` para permisos/filtros (no dueno legal)
 - `enabled`: Soft delete
 
 ### Indexes
@@ -466,7 +475,7 @@ Purpose: ledger de intentos y resultados de pago.
 | Attribute           | Type     | Size  | Required | Default   | Constraint                                 |
 | ------------------- | -------- | ----- | -------- | --------- | ------------------------------------------ |
 | `reservationId`     | string   | 64    | yes      | -         | FK logical a `reservations.$id`            |
-| `propertyOwnerId`   | string   | 64    | yes      | -         | FK logical a `users.$id`                   |
+| `propertyOwnerId`   | string   | 64    | yes      | -         | FK logical a `users.$id` (denormalizado)  |
 | `provider`          | enum     | -     | yes      | -         | `stripe`,`mercadopago`                     |
 | `providerPaymentId` | string   | 120   | no       | -         | ID de pago externo                         |
 | `providerEventId`   | string   | 120   | no       | -         | ID unico de webhook para idempotencia      |
@@ -478,6 +487,8 @@ Purpose: ledger de intentos y resultados de pago.
 | `enabled`           | boolean  | -     | no       | true      | -                                          |
 
 Notas:
+
+- `propertyOwnerId`: Copia de `reservations.propertyOwnerId` para dashboard y permisos
 
 ### Indexes
 
@@ -506,7 +517,7 @@ Purpose: comprobante emitido cuando la reserva queda confirmada.
 | Attribute         | Type     | Size | Required | Default | Constraint                      |
 | ----------------- | -------- | ---- | -------- | ------- | ------------------------------- |
 | `reservationId`   | string   | 64   | yes      | -       | FK logical a `reservations.$id` |
-| `propertyOwnerId` | string   | 64   | yes      | -       | FK logical a `users.$id`        |
+| `propertyOwnerId` | string   | 64   | yes      | -       | FK logical a `users.$id` (denormalizado) |
 | `voucherCode`     | string   | 40   | yes      | -       | regex `^[A-Z0-9-]{6,40}$`       |
 | `voucherUrl`      | string   | 750  | no       | -       | URL interna o publica           |
 | `qrPayload`       | string   | 2000 | no       | -       | JSON o token para QR            |
@@ -518,6 +529,7 @@ Notas:
 
 - `voucherCode`: Unico
 - `voucherUrl`: PDF/web
+- `propertyOwnerId`: Copia de `reservations.propertyOwnerId` para dashboard y permisos
 
 ### Indexes
 
@@ -536,7 +548,7 @@ Notas:
 
 ## Collection: reviews
 
-Purpose: resenas asociadas a reservas completadas.
+Purpose: reseñas asociadas a reservas completadas.
 
 ### Attributes
 
@@ -557,7 +569,7 @@ Purpose: resenas asociadas a reservas completadas.
 Notas:
 
 - `reservationId`: Elegibilidad
-- `authorUserId`: Usuario autenticado que envia la resena
+- `authorUserId`: Usuario autenticado que envia la reseña
 - `authorName`: Publico
 - `authorEmailHash`: Anti abuso
 - `status`: Moderacion
@@ -567,8 +579,8 @@ Notas:
 
 | Index Name                 | Type | Attributes       | Notes                 |
 | -------------------------- | ---- | ---------------- | --------------------- |
-| `idx_reviews_propertyid`   | idx  | `propertyId ↑`   | Resenas por propiedad |
-| `idx_reviews_authoruserid` | idx  | `authorUserId ↑` | Resenas por cliente   |
+| `idx_reviews_propertyid`   | idx  | `propertyId ↑`   | Reseñas por propiedad |
+| `idx_reviews_authoruserid` | idx  | `authorUserId ↑` | Reseñas por cliente   |
 | `idx_reviews_status`       | idx  | `status ↑`       | Cola de moderacion    |
 | `idx_reviews_rating`       | idx  | `rating ↓`       | Top rating            |
 | `idx_reviews_createdat`    | idx  | `$createdAt ↓`   | Recientes             |
@@ -767,6 +779,14 @@ Formato obligatorio:
 - `create-reservation-public`, `create-payment-session` y `create-review-public` pasan a flujo autenticado para clientes registrados.
 - `activity_logs.actorRole` agrega `client`.
 
+## Migration: 2026-02-12-ownership-semantics-clarification
+
+### Modified
+
+- Se aclara semantica: `ownerUserId`/`propertyOwnerId` = usuario interno responsable (operacion/permisos), no dueno legal del inmueble.
+- Se documenta que el dueno legal externo debe modelarse como entidad de contacto separada y referenciarse desde `properties`.
+- Se aclara que el catalogo interno es compartido por instancia y que `ownerUserId/propertyOwnerId` no deben forzar segmentacion de visibilidad por usuario.
+
 ---
 
 ## Estado del Documento
@@ -777,7 +797,6 @@ Formato obligatorio:
 
 ---
 
-Ultima actualizacion: 2026-02-11
-Version: 2.2.0
+Ultima actualizacion: 2026-02-12
+Version: 2.2.1
 Schema Version: 2.2
-

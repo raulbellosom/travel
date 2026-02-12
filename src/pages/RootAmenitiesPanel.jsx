@@ -5,8 +5,11 @@ import {
   DEFAULT_AMENITIES_CATALOG,
   getAmenityIcon,
 } from "../data/amenitiesCatalog";
+import { Select, TablePagination } from "../components/common";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
+import { Sparkles } from "lucide-react";
+import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 
 const emptyForm = {
   slug: "",
@@ -27,6 +30,8 @@ const RootAmenitiesPanel = () => {
   const [editId, setEditId] = useState("");
   const [editForm, setEditForm] = useState(emptyForm);
   const [filters, setFilters] = useState({ search: "", category: "all" });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   const localeNameField = i18n.language === "es" ? "name_es" : "name_en";
 
@@ -37,11 +42,11 @@ const RootAmenitiesPanel = () => {
       const docs = await amenitiesService.listAll();
       setAmenities(docs || []);
     } catch (err) {
-      setError(getErrorMessage(err, t("rootAmenitiesPage.errors.load")));
+      setError(getErrorMessage(err, i18n.t("rootAmenitiesPage.errors.load")));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [i18n]);
 
   useEffect(() => {
     loadAmenities();
@@ -75,6 +80,24 @@ const RootAmenitiesPanel = () => {
         return haystack.includes(normalizedSearch);
       });
   }, [amenities, filters.category, filters.search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters.category, filters.search]);
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredAmenities.length / pageSize)),
+    [filteredAmenities.length, pageSize]
+  );
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  const paginatedAmenities = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredAmenities.slice(start, start + pageSize);
+  }, [filteredAmenities, page, pageSize]);
 
   const handleCreate = async (event) => {
     event.preventDefault();
@@ -150,6 +173,26 @@ const RootAmenitiesPanel = () => {
     }
   };
 
+  const categoryOptions = useMemo(
+    () =>
+      AMENITY_CATEGORY_VALUES.map((category) => ({
+        value: category,
+        label: t(`rootAmenitiesPage.categories.${category}`),
+      })),
+    [t]
+  );
+
+  const categoryFilterOptions = useMemo(
+    () => [
+      { value: "all", label: t("rootAmenitiesPage.allCategories") },
+      ...AMENITY_CATEGORY_VALUES.map((category) => ({
+        value: category,
+        label: t(`rootAmenitiesPage.categories.${category}`),
+      })),
+    ],
+    [t]
+  );
+
   return (
     <section className="space-y-6">
       <header className="space-y-1">
@@ -215,19 +258,14 @@ const RootAmenitiesPanel = () => {
           </label>
           <label className="grid gap-1 text-sm">
             <span>{t("rootAmenitiesPage.fields.category")}</span>
-            <select
+            <Select
               value={form.category}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, category: event.target.value }))
+              onChange={(value) =>
+                setForm((prev) => ({ ...prev, category: value }))
               }
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-            >
-              {AMENITY_CATEGORY_VALUES.map((category) => (
-                <option key={category} value={category}>
-                  {t(`rootAmenitiesPage.categories.${category}`)}
-                </option>
-              ))}
-            </select>
+              options={categoryOptions}
+              size="md"
+            />
           </label>
           <label className="grid gap-1 text-sm">
             <span>{t("rootAmenitiesPage.fields.nameEs")}</span>
@@ -275,20 +313,14 @@ const RootAmenitiesPanel = () => {
             placeholder={t("rootAmenitiesPage.searchPlaceholder")}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
           />
-          <select
+          <Select
             value={filters.category}
-            onChange={(event) =>
-              setFilters((prev) => ({ ...prev, category: event.target.value }))
+            onChange={(value) =>
+              setFilters((prev) => ({ ...prev, category: value }))
             }
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-          >
-            <option value="all">{t("rootAmenitiesPage.allCategories")}</option>
-            {AMENITY_CATEGORY_VALUES.map((category) => (
-              <option key={category} value={category}>
-                {t(`rootAmenitiesPage.categories.${category}`)}
-              </option>
-            ))}
-          </select>
+            options={categoryFilterOptions}
+            size="md"
+          />
         </div>
 
         {loading ? (
@@ -298,174 +330,186 @@ const RootAmenitiesPanel = () => {
         ) : null}
 
         {!loading && filteredAmenities.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {t("rootAmenitiesPage.empty")}
-          </p>
+          <EmptyStatePanel
+            icon={Sparkles}
+            title={t("rootAmenitiesPage.empty")}
+            description={t("rootAmenitiesPage.searchPlaceholder")}
+            compact
+          />
         ) : null}
 
         {!loading && filteredAmenities.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                <tr>
-                  <th className="px-3 py-2">{t("rootAmenitiesPage.table.icon")}</th>
-                  <th className="px-3 py-2">{t("rootAmenitiesPage.table.slug")}</th>
-                  <th className="px-3 py-2">{t("rootAmenitiesPage.table.name")}</th>
-                  <th className="px-3 py-2">{t("rootAmenitiesPage.table.category")}</th>
-                  <th className="px-3 py-2">{t("rootAmenitiesPage.table.status")}</th>
-                  <th className="px-3 py-2">{t("rootAmenitiesPage.table.actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAmenities.map((item) => {
-                  const isEditing = editId === item.$id;
-                  const translatedName =
-                    item[localeNameField] || item.name_es || item.name_en || item.slug;
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                  <tr>
+                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.icon")}</th>
+                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.slug")}</th>
+                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.name")}</th>
+                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.category")}</th>
+                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.status")}</th>
+                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.actions")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedAmenities.map((item) => {
+                    const isEditing = editId === item.$id;
+                    const translatedName =
+                      item[localeNameField] || item.name_es || item.name_en || item.slug;
 
-                  return (
-                    <tr
-                      key={item.$id}
-                      className="border-t border-slate-200 align-top dark:border-slate-700"
-                    >
-                      <td className="px-3 py-2 text-xl">{getAmenityIcon(item)}</td>
-                      <td className="px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-200">
-                        {isEditing ? (
-                          <input
-                            value={editForm.slug}
-                            onChange={(event) =>
-                              setEditForm((prev) => ({
-                                ...prev,
-                                slug: event.target.value,
-                              }))
-                            }
-                            className="w-44 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-                          />
-                        ) : (
-                          item.slug
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        {isEditing ? (
-                          <div className="grid gap-2">
-                            <input
-                              value={editForm.name_es}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  name_es: event.target.value,
-                                }))
-                              }
-                              className="w-52 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-                            />
-                            <input
-                              value={editForm.name_en}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  name_en: event.target.value,
-                                }))
-                              }
-                              className="w-52 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-                            />
-                          </div>
-                        ) : (
-                          <div>
-                            <p className="font-medium text-slate-900 dark:text-slate-100">
-                              {translatedName}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-300">
-                              {item.name_es} / {item.name_en}
-                            </p>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        {isEditing ? (
-                          <select
-                            value={editForm.category}
-                            onChange={(event) =>
-                              setEditForm((prev) => ({
-                                ...prev,
-                                category: event.target.value,
-                              }))
-                            }
-                            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-                          >
-                            {AMENITY_CATEGORY_VALUES.map((category) => (
-                              <option key={category} value={category}>
-                                {t(`rootAmenitiesPage.categories.${category}`)}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                            {t(`rootAmenitiesPage.categories.${item.category}`)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                            item.enabled
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                              : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
-                          }`}
-                        >
-                          {item.enabled
-                            ? t("rootAmenitiesPage.status.enabled")
-                            : t("rootAmenitiesPage.status.disabled")}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-wrap gap-2">
+                    return (
+                      <tr
+                        key={item.$id}
+                        className="border-t border-slate-200 align-top dark:border-slate-700"
+                      >
+                        <td className="px-3 py-2 text-xl">{getAmenityIcon(item)}</td>
+                        <td className="px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-200">
                           {isEditing ? (
-                            <>
-                              <button
-                                type="button"
-                                disabled={saving}
-                                onClick={handleSaveEdit}
-                                className="rounded-md border border-sky-300 px-2 py-1 text-xs font-medium text-sky-700 dark:border-sky-700 dark:text-sky-300"
-                              >
-                                {t("rootAmenitiesPage.actions.save")}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={saving}
-                                onClick={cancelEdit}
-                                className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
-                              >
-                                {t("rootAmenitiesPage.actions.cancel")}
-                              </button>
-                            </>
+                            <input
+                              value={editForm.slug}
+                              onChange={(event) =>
+                                setEditForm((prev) => ({
+                                  ...prev,
+                                  slug: event.target.value,
+                                }))
+                              }
+                              className="w-44 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+                            />
                           ) : (
-                            <>
-                              <button
-                                type="button"
-                                disabled={saving}
-                                onClick={() => startEdit(item)}
-                                className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
-                              >
-                                {t("rootAmenitiesPage.actions.edit")}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={saving}
-                                onClick={() => handleToggleEnabled(item)}
-                                className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
-                              >
-                                {item.enabled
-                                  ? t("rootAmenitiesPage.actions.disable")
-                                  : t("rootAmenitiesPage.actions.enable")}
-                              </button>
-                            </>
+                            item.slug
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-3 py-2">
+                          {isEditing ? (
+                            <div className="grid gap-2">
+                              <input
+                                value={editForm.name_es}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    name_es: event.target.value,
+                                  }))
+                                }
+                                className="w-52 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+                              />
+                              <input
+                                value={editForm.name_en}
+                                onChange={(event) =>
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    name_en: event.target.value,
+                                  }))
+                                }
+                                className="w-52 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="font-medium text-slate-900 dark:text-slate-100">
+                                {translatedName}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-300">
+                                {item.name_es} / {item.name_en}
+                              </p>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          {isEditing ? (
+                            <Select
+                              value={editForm.category}
+                              onChange={(value) =>
+                                setEditForm((prev) => ({
+                                  ...prev,
+                                  category: value,
+                                }))
+                              }
+                              options={categoryOptions}
+                              size="sm"
+                              className="text-xs"
+                            />
+                          ) : (
+                            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                              {t(`rootAmenitiesPage.categories.${item.category}`)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                              item.enabled
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                                : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                            }`}
+                          >
+                            {item.enabled
+                              ? t("rootAmenitiesPage.status.enabled")
+                              : t("rootAmenitiesPage.status.disabled")}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-wrap gap-2">
+                            {isEditing ? (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={handleSaveEdit}
+                                  className="rounded-md border border-sky-300 px-2 py-1 text-xs font-medium text-sky-700 dark:border-sky-700 dark:text-sky-300"
+                                >
+                                  {t("rootAmenitiesPage.actions.save")}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={cancelEdit}
+                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
+                                >
+                                  {t("rootAmenitiesPage.actions.cancel")}
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={() => startEdit(item)}
+                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
+                                >
+                                  {t("rootAmenitiesPage.actions.edit")}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={() => handleToggleEnabled(item)}
+                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
+                                >
+                                  {item.enabled
+                                    ? t("rootAmenitiesPage.actions.disable")
+                                    : t("rootAmenitiesPage.actions.enable")}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              totalItems={filteredAmenities.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value);
+                setPage(1);
+              }}
+            />
           </div>
         ) : null}
       </article>

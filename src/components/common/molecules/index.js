@@ -7,6 +7,8 @@ export { default as Card } from "./Card";
 export { default as FormField } from "./FormField";
 export { default as SearchBar } from "./SearchBar";
 export { default as Combobox } from "./Combobox";
+export { default as StatsCardsRow } from "./StatsCardsRow";
+export { default as TablePagination } from "./TablePagination";
 
 // TODO: Export remaining molecules
 // export { default as FilterGroup } from './FilterGroup';

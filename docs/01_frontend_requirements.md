@@ -80,7 +80,6 @@ Variables clave:
 
 - `VITE_INSTANCE_MODE`
 - `VITE_INSTANCE_SLUG`
-- `VITE_ROOT_PANEL_PATH`
 - IDs de colecciones Appwrite
 - IDs de functions de lead/reserva/pago/review
 
@@ -99,17 +98,18 @@ Publicas:
 Privadas:
 
 - `/app/dashboard`
-- `/app/mis-propiedades`
+- `/app/my-properties`
 - `/app/leads`
-- `/app/reservas`
-- `/app/pagos`
-- `/app/resenas`
-- `/app/equipo`
+- `/app/reservations`
+- `/app/payments`
+- `/app/reviews`
+- `/app/team`
 - `/perfil`
 
 Root oculta:
 
-- `/__root/activity`
+- `/app/activity`
+- `/app/amenities`
 
 ---
 
@@ -165,6 +165,8 @@ Root oculta:
 - Carga progresiva y skeletons.
 - Estados vacios por modulo.
 - Mensajes de error claros (`403`, `404`, `409`, `422`, `500`).
+- Copy orientado a usuario final: lenguaje simple, accionable y sin jerga tecnica.
+- No exponer terminos internos (`root`, `owner`, `client`, `scope`, IDs tecnicos, restricciones de backend) en vistas no-root.
 - Componentes reutilizables de tabla, filtros y formularios.
 
 ---
@@ -204,5 +206,5 @@ Root oculta:
 
 ---
 
-Ultima actualizacion: 2026-02-10
-Version: 2.0.0
+Ultima actualizacion: 2026-02-12
+Version: 2.0.1

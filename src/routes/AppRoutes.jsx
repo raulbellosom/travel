@@ -4,6 +4,9 @@ import { UIProvider } from "../contexts/UIContext";
 import InternalRoute from "./InternalRoute";
 import OwnerRoute from "./OwnerRoute";
 import RootRoute from "./RootRoute";
+import RoleRoute from "./RoleRoute";
+import ScopeRoute from "./ScopeRoute";
+import ClientRoute from "./ClientRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
 import ProtectedRoute from "./ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
@@ -23,10 +26,16 @@ import EditProperty from "../pages/EditProperty";
 import Leads from "../pages/Leads";
 import Clients from "../pages/Clients";
 import Team from "../pages/Team";
+import AppReservations from "../pages/AppReservations";
+import AppPayments from "../pages/AppPayments";
+import AppReviews from "../pages/AppReviews";
 import Profile from "../pages/Profile";
+import AppProfile from "../pages/AppProfile";
 import Settings from "../pages/Settings";
 import MyReservations from "../pages/MyReservations";
 import MyReviews from "../pages/MyReviews";
+import ReserveProperty from "../pages/ReserveProperty";
+import VoucherLookup from "../pages/VoucherLookup";
 import PrivacyNotice from "../pages/PrivacyNotice";
 import TermsConditions from "../pages/TermsConditions";
 import UIDocsPage from "../pages/UIDocsPage";
@@ -37,7 +46,7 @@ import ServerError from "../pages/ServerError";
 import ServiceUnavailable from "../pages/ServiceUnavailable";
 import ErrorsDemo from "../pages/ErrorsDemo";
 import RootAmenitiesPanel from "../pages/RootAmenitiesPanel";
-import env from "../env";
+import RootActivityLog from "../pages/RootActivityLog";
 import {
   INTERNAL_BASE_PATH,
   INTERNAL_ROUTES,
@@ -58,12 +67,14 @@ const AppRoutes = () => {
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Home />} />
               <Route path="propiedades/:slug" element={<PropertyDetail />} />
+              <Route path="reservar/:slug" element={<ReserveProperty />} />
+              <Route path="voucher/:code" element={<VoucherLookup />} />
               <Route
                 path="perfil"
                 element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
+                  <ClientRoute>
+                    <Profile mode="client" />
+                  </ClientRoute>
                 }
               />
               <Route
@@ -123,12 +134,64 @@ const AppRoutes = () => {
             >
               <Route index element={<Navigate to={INTERNAL_ROUTES.dashboard} replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-              <Route path="mis-propiedades" element={<MyProperties />} />
-              <Route path="crear-propiedad" element={<CreateProperty />} />
-              <Route path="editar-propiedad/:id" element={<EditProperty />} />
-              <Route path="leads" element={<Leads />} />
               <Route
-                path="clientes"
+                path="my-properties"
+                element={
+                  <ScopeRoute scope="properties.read">
+                    <MyProperties />
+                  </ScopeRoute>
+                }
+              />
+              <Route
+                path="properties/new"
+                element={
+                  <ScopeRoute scope="properties.write">
+                    <CreateProperty />
+                  </ScopeRoute>
+                }
+              />
+              <Route
+                path="properties/:id/edit"
+                element={
+                  <ScopeRoute scope="properties.write">
+                    <EditProperty />
+                  </ScopeRoute>
+                }
+              />
+              <Route
+                path="leads"
+                element={
+                  <ScopeRoute scope="leads.read">
+                    <Leads />
+                  </ScopeRoute>
+                }
+              />
+              <Route
+                path="reservations"
+                element={
+                  <ScopeRoute scope="reservations.read">
+                    <AppReservations />
+                  </ScopeRoute>
+                }
+              />
+              <Route
+                path="payments"
+                element={
+                  <ScopeRoute scope="payments.read">
+                    <AppPayments />
+                  </ScopeRoute>
+                }
+              />
+              <Route
+                path="reviews"
+                element={
+                  <ScopeRoute scope="reviews.moderate">
+                    <AppReviews />
+                  </ScopeRoute>
+                }
+              />
+              <Route
+                path="clients"
                 element={
                   <OwnerRoute>
                     <Clients />
@@ -136,14 +199,48 @@ const AppRoutes = () => {
                 }
               />
               <Route
-                path="equipo"
+                path="team"
                 element={
-                  <OwnerRoute>
+                  <ScopeRoute scope="staff.manage">
                     <Team />
-                  </OwnerRoute>
+                  </ScopeRoute>
                 }
               />
-              <Route path="configuracion" element={<Settings />} />
+              <Route
+                path="activity"
+                element={
+                  <RootRoute>
+                    <RootActivityLog />
+                  </RootRoute>
+                }
+              />
+              <Route
+                path="amenities"
+                element={
+                  <RootRoute>
+                    <RootAmenitiesPanel />
+                  </RootRoute>
+                }
+              />
+              <Route path="profile" element={<AppProfile />} />
+              <Route
+                path="settings"
+                element={
+                  <RoleRoute minimumRole="owner">
+                    <Settings />
+                  </RoleRoute>
+                }
+              />
+              <Route path="mis-propiedades" element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />} />
+              <Route path="crear-propiedad" element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />} />
+              <Route path="editar-propiedad/:id" element={<LegacyEditPropertyRedirect />} />
+              <Route path="reservas" element={<Navigate to={INTERNAL_ROUTES.reservations} replace />} />
+              <Route path="pagos" element={<Navigate to={INTERNAL_ROUTES.payments} replace />} />
+              <Route path="resenas" element={<Navigate to={INTERNAL_ROUTES.reviews} replace />} />
+              <Route path="clientes" element={<Navigate to={INTERNAL_ROUTES.clients} replace />} />
+              <Route path="equipo" element={<Navigate to={INTERNAL_ROUTES.team} replace />} />
+              <Route path="perfil" element={<Navigate to={INTERNAL_ROUTES.profile} replace />} />
+              <Route path="configuracion" element={<Navigate to={INTERNAL_ROUTES.settings} replace />} />
             </Route>
 
             <Route
@@ -155,16 +252,53 @@ const AppRoutes = () => {
               element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />}
             />
             <Route
+              path="/my-properties"
+              element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />}
+            />
+            <Route
               path="/crear-propiedad"
               element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />}
             />
+            <Route
+              path="/properties/new"
+              element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />}
+            />
             <Route path="/editar-propiedad/:id" element={<LegacyEditPropertyRedirect />} />
+            <Route path="/properties/:id/edit" element={<LegacyEditPropertyRedirect />} />
             <Route
               path="/leads"
               element={<Navigate to={INTERNAL_ROUTES.leads} replace />}
             />
             <Route
+              path="/reservas"
+              element={<Navigate to={INTERNAL_ROUTES.reservations} replace />}
+            />
+            <Route
+              path="/reservations"
+              element={<Navigate to={INTERNAL_ROUTES.reservations} replace />}
+            />
+            <Route
+              path="/pagos"
+              element={<Navigate to={INTERNAL_ROUTES.payments} replace />}
+            />
+            <Route
+              path="/payments"
+              element={<Navigate to={INTERNAL_ROUTES.payments} replace />}
+            />
+            <Route
+              path="/resenas"
+              element={<Navigate to={INTERNAL_ROUTES.reviews} replace />}
+            />
+            <Route
+              path="/reviews"
+              element={<Navigate to={INTERNAL_ROUTES.reviews} replace />}
+            />
+            <Route
               path="/clientes"
+              element={<Navigate to={INTERNAL_ROUTES.clients} replace />}
+            />
+            <Route
+              path="/clients"
               element={<Navigate to={INTERNAL_ROUTES.clients} replace />}
             />
             <Route
@@ -172,24 +306,21 @@ const AppRoutes = () => {
               element={<Navigate to={INTERNAL_ROUTES.team} replace />}
             />
             <Route
+              path="/team"
+              element={<Navigate to={INTERNAL_ROUTES.team} replace />}
+            />
+            <Route
+              path="/app/profile"
+              element={<Navigate to={INTERNAL_ROUTES.profile} replace />}
+            />
+            <Route
               path="/configuracion"
               element={<Navigate to={INTERNAL_ROUTES.settings} replace />}
             />
-
             <Route
-              path={env.app.rootAmenitiesPath}
-              element={
-                <RootRoute>
-                  <RootAmenitiesPanel />
-                </RootRoute>
-              }
+              path="/settings"
+              element={<Navigate to={INTERNAL_ROUTES.settings} replace />}
             />
-            {env.app.rootPanelPath !== env.app.rootAmenitiesPath ? (
-              <Route
-                path={env.app.rootPanelPath}
-                element={<Navigate to={env.app.rootAmenitiesPath} replace />}
-              />
-            ) : null}
 
             <Route
               path="/auth/login"

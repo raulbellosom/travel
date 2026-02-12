@@ -37,7 +37,15 @@
     "dashboardTitle": "Dashboard",
     "defaultUser": "User",
     "clients": "Clients",
-    "team": "Team"
+    "team": "Team",
+    "reservations": "Reservations",
+    "payments": "Payments",
+    "reviews": "Reviews",
+    "rootActivity": "Root: Audit",
+    "rootAmenities": "Root: Amenities",
+    "navigation": "Navigation",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu"
   },
   "auth": {
     "login": {
@@ -232,7 +240,81 @@
     "title": "Dashboard",
     "welcome": "Welcome, {{name}}",
     "defaultUser": "User",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "shellHint": "Panel optimized for mobile and desktop",
+    "toggleTheme": "Toggle theme",
+    "toggleLanguage": "Switch language",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode"
+  },
+  "globalSearch": {
+    "placeholder": "Search CRM: client, message, reservation, payment, or action...",
+    "aria": {
+      "desktopInput": "Dashboard global search",
+      "mobileInput": "Dashboard global search modal",
+      "openMobile": "Open global search"
+    },
+    "groups": {
+      "actions": "Actions",
+      "properties": "Properties",
+      "leads": "Messages and clients",
+      "reservations": "Reservations",
+      "payments": "Payments"
+    },
+    "states": {
+      "loading": "Loading searchable data...",
+      "empty": "No results for this query."
+    },
+    "quickActions": {
+      "dashboard": {
+        "title": "Open dashboard",
+        "subtitle": "General operation overview"
+      },
+      "properties": {
+        "title": "Open properties",
+        "subtitle": "Portfolio and listing status"
+      },
+      "leads": {
+        "title": "Open messages and leads",
+        "subtitle": "Client inbox and conversations"
+      },
+      "reservations": {
+        "title": "Open reservations",
+        "subtitle": "Filter by date, status, or payment"
+      },
+      "payments": {
+        "title": "Open payments",
+        "subtitle": "Track charges and references"
+      },
+      "profile": {
+        "title": "Open my profile",
+        "subtitle": "Edit account and preferences"
+      },
+      "newProperty": {
+        "title": "New property",
+        "subtitle": "Create a new listing"
+      },
+      "team": {
+        "title": "Manage team",
+        "subtitle": "Internal user administration"
+      },
+      "settings": {
+        "title": "Open settings",
+        "subtitle": "Advanced system preferences"
+      }
+    },
+    "dynamic": {
+      "openConversation": "Open conversation for {{name}}",
+      "sendEmail": "Send email to {{name}}",
+      "openReservation": "Open reservation #{{id}}",
+      "openPayment": "Open payment #{{id}}"
+    },
+    "fallbacks": {
+      "property": "Property",
+      "client": "Client"
+    }
   },
   "loadingScreen": {
     "title": "Validating session",
@@ -455,7 +537,13 @@
   },
   "leadsPage": {
     "title": "Leads",
+    "subtitle": "Track pipeline progress and the status of every contact.",
     "summary": "Total: {{total}} - New: {{new}} - Won: {{won}}",
+    "metrics": {
+      "total": "Total",
+      "new": "New",
+      "won": "Won"
+    },
     "loading": "Loading leads...",
     "empty": "There are no leads to show.",
     "noPhone": "-",
@@ -609,7 +697,9 @@
       "bathrooms": "Bathrooms",
       "totalArea": "Total area",
       "type": "Type"
-    }
+    },
+    "reserveHint": "Book online with instant confirmation and digital voucher.",
+    "reserveCta": "Book now"
   },
   "propertyStatus": {
     "draft": "Draft",
@@ -856,7 +946,7 @@
   },
   "rootAmenitiesPage": {
     "title": "Root panel: Amenities",
-    "subtitle": "Hidden route to manage the amenities catalog and run seed data.",
+    "subtitle": "Internal module to manage the amenities catalog and run seed data.",
     "createTitle": "Create amenity",
     "loading": "Loading amenities...",
     "empty": "No amenities to display.",
@@ -1036,7 +1126,9 @@
       "home": "Home",
       "dashboard": "Dashboard",
       "properties": "My properties",
-      "profile": "Profile"
+      "profile": "Profile",
+      "privacy": "Privacy notice",
+      "terms": "Terms and conditions"
     },
     "contact": {
       "city": "Puerto Vallarta, Jalisco",
@@ -1048,7 +1140,7 @@
       "placeholder": "Your email address",
       "action": "Subscribe"
     },
-    "copyright": "? {{year}} Inmobo. All rights reserved."
+    "copyright": "{{year}} Inmobo. All rights reserved."
   },
   "authLayout": {
     "platform": "Real estate platform",
@@ -1088,33 +1180,253 @@
   },
   "teamPage": {
     "title": "Team",
-    "subtitle": "Create staff users with operational roles. Creating root or client users is not allowed from this panel.",
+    "subtitle": "Add team members and assign permissions based on responsibilities.",
+    "createTitle": "Add member",
+    "listTitle": "Current team",
+    "loading": "Loading team...",
+    "empty": "No team members found yet.",
     "fields": {
-      "fullName": "Full name",
       "email": "Email",
-      "role": "Staff role",
+      "role": "Role",
       "password": "Password",
-      "confirmPassword": "Confirm password"
+      "confirmPassword": "Confirm password",
+      "scopes": "Permissions",
+      "status": "Status",
+      "search": "Search user",
+      "passwordSection": "Access security",
+      "avatar": "Profile photo",
+      "firstName": "First name",
+      "lastName": "Last name"
     },
     "roles": {
-      "staff_manager": "Staff Manager",
-      "staff_editor": "Staff Editor",
-      "staff_support": "Staff Support"
+      "staff_manager": "Team manager",
+      "staff_editor": "Operations editor",
+      "staff_support": "Operations support"
+    },
+    "scopeOptions": {
+      "staff_manage": "Manage team",
+      "properties_read": "View properties",
+      "properties_write": "Edit properties",
+      "leads_read": "View leads",
+      "leads_write": "Manage leads",
+      "reservations_read": "View reservations",
+      "reservations_write": "Manage reservations",
+      "payments_read": "View payments",
+      "reviews_moderate": "Moderate reviews"
+    },
+    "status": {
+      "enabled": "Active",
+      "disabled": "Inactive"
+    },
+    "metrics": {
+      "total": "Total members",
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "actions": {
-      "create": "Create staff user",
-      "creating": "Creating user..."
+      "create": "Create member",
+      "creating": "Creating member...",
+      "enable": "Enable",
+      "disable": "Disable",
+      "reset": "Reset form",
+      "savePermissions": "Save permissions",
+      "permissions": "Permissions",
+      "uploadPhoto": "Upload photo",
+      "changePhoto": "Change photo",
+      "removePhoto": "Remove photo"
     },
     "messages": {
-      "created": "Staff user created successfully."
+      "created": "Team member created successfully.",
+      "updated": "Team member updated successfully.",
+      "enabled": "Team member enabled successfully.",
+      "disabled": "Team member disabled successfully.",
+      "avatarUpdated": "Profile photo updated successfully."
     },
     "errors": {
-      "fullName": "Full name must be at least 3 characters long.",
       "invalidEmail": "Enter a valid email address.",
-      "invalidRole": "Select a valid staff role.",
+      "invalidRole": "Select a valid role.",
       "passwordMismatch": "Passwords do not match.",
-      "passwordWeak": "The password does not meet the minimum security level.",
-      "create": "Could not create the staff user."
+      "passwordWeak": "Password does not meet the minimum security level.",
+      "create": "Could not create the team member.",
+      "load": "Could not load team members.",
+      "update": "Could not update the team member.",
+      "toggle": "Could not change team member status.",
+      "avatarUpload": "Could not update the profile photo.",
+      "avatarSize": "Image exceeds the {{max}} MB limit.",
+      "firstName": "First name must have at least 2 characters.",
+      "lastName": "Last name must have at least 2 characters."
+    },
+    "summary": "Total: {{total}} - Active: {{active}} - Inactive: {{inactive}}",
+    "tabs": {
+      "list": "Directory",
+      "manage": "Manage"
+    },
+    "placeholders": {
+      "search": "Search by name, email or role"
+    },
+    "filters": {
+      "allRoles": "All roles",
+      "allStatuses": "All statuses"
+    },
+    "table": {
+      "member": "Member",
+      "role": "Role",
+      "permissions": "Permissions",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "hints": {
+      "avatar": "PNG, JPG or WEBP - max {{max}} MB"
+    },
+    "permissionsModal": {
+      "title": "Edit role and permissions"
+    },
+    "permissionsStorageHint": "Permissions are stored in users.role and users.scopesJson. Changes are applied when you save."
+  },
+  "reservePropertyPage": {
+    "title": "Reserve property",
+    "loading": "Loading reservation flow...",
+    "labels": {
+      "operation": "Operation",
+      "maxGuests": "Max guests",
+      "nightlyRate": "Nightly rate"
+    },
+    "form": {
+      "title": "Complete your reservation",
+      "fields": {
+        "dateRange": "Stay dates",
+        "guestCount": "Guests",
+        "guestNameOptional": "Guest name (optional)",
+        "provider": "Payment provider",
+        "specialRequestsOptional": "Special requests (optional)"
+      }
+    },
+    "summary": {
+      "nights": "Nights",
+      "baseAmount": "Subtotal",
+      "total": "Total"
+    },
+    "actions": {
+      "processing": "Processing...",
+      "payAndConfirm": "Pay and confirm",
+      "backToHome": "Back to home"
+    },
+    "messages": {
+      "redirecting": "Redirecting to payment provider..."
+    },
+    "errors": {
+      "notFound": "Property not found.",
+      "load": "Could not load reservation screen.",
+      "create": "Could not create reservation.",
+      "invalidDates": "Select a valid date range.",
+      "invalidGuests": "Guests must be greater than zero.",
+      "verifyEmail": "Verify your email before booking.",
+      "missingReservation": "Reservation id was not generated.",
+      "missingCheckout": "Checkout URL was not generated."
+    }
+  },
+  "voucherPage": {
+    "title": "Reservation voucher",
+    "subtitle": "Review official details of your confirmed reservation.",
+    "loading": "Looking up voucher...",
+    "labels": {
+      "code": "Voucher code",
+      "property": "Property",
+      "guest": "Guest",
+      "dates": "Dates",
+      "total": "Total",
+      "status": "Status"
+    },
+    "actions": {
+      "backHome": "Back to home"
+    },
+    "errors": {
+      "load": "Could not fetch voucher.",
+      "notFound": "Voucher not found or unavailable."
+    }
+  },
+  "appReservationsPage": {
+    "title": "Reservations",
+    "subtitle": "Manage reservations, statuses, and operational follow-up.",
+    "loading": "Loading reservations...",
+    "empty": "No reservations to display.",
+    "stats": {
+      "total": "Total",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "paid": "Paid"
+    },
+    "filters": {
+      "status": "Reservation status",
+      "paymentStatus": "Payment status",
+      "all": "All"
+    },
+    "actions": {
+      "markConfirmed": "Mark confirmed",
+      "markCompleted": "Mark completed",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "load": "Could not load reservations.",
+      "update": "Could not update reservation."
+    }
+  },
+  "appPaymentsPage": {
+    "title": "Payments",
+    "subtitle": "Track payment attempts and confirmations by reservation.",
+    "loading": "Loading payments...",
+    "empty": "No payments to display.",
+    "filters": {
+      "provider": "Provider",
+      "status": "Status",
+      "all": "All"
+    },
+    "table": {
+      "date": "Date",
+      "provider": "Provider",
+      "reservationId": "Reservation",
+      "status": "Status",
+      "amount": "Amount",
+      "reference": "Reference"
+    },
+    "errors": {
+      "load": "Could not load payments."
+    }
+  },
+  "appReviewsPage": {
+    "title": "Reviews moderation",
+    "subtitle": "Review and moderate customer review queue.",
+    "loading": "Loading reviews...",
+    "empty": "No reviews to moderate.",
+    "filters": {
+      "status": "Status",
+      "all": "All"
+    },
+    "actions": {
+      "publish": "Publish",
+      "reject": "Reject"
+    },
+    "errors": {
+      "load": "Could not load reviews.",
+      "update": "Could not update review."
+    }
+  },
+  "rootActivityPage": {
+    "title": "Root panel: Activity logs",
+    "subtitle": "Forensic audit of critical actions in this instance.",
+    "loading": "Loading activity...",
+    "empty": "No activity logs to display.",
+    "filters": {
+      "action": "Action",
+      "actorUserId": "Actor",
+      "entityType": "Entity",
+      "severity": "Severity",
+      "fromDate": "From",
+      "toDate": "To",
+      "all": "All"
+    },
+    "errors": {
+      "load": "Could not load root audit logs."
     }
   }
 }

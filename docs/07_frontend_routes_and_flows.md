@@ -81,17 +81,17 @@
 | Ruta | Guard | Rol/Scope |
 | ---- | ----- | --------- |
 | `/app/dashboard` | InternalRoute | cualquier usuario interno |
-| `/app/mis-propiedades` | ScopeRoute | `properties.read` |
-| `/app/crear-propiedad` | ScopeRoute | `properties.write` |
-| `/app/editar-propiedad/:id` | ScopeRoute | `properties.write` |
+| `/app/my-properties` | ScopeRoute | `properties.read` |
+| `/app/properties/new` | ScopeRoute | `properties.write` |
+| `/app/properties/:id/edit` | ScopeRoute | `properties.write` |
 | `/app/leads` | ScopeRoute | `leads.read` |
-| `/app/clientes` | OwnerRoute | `owner` |
-| `/app/reservas` | ScopeRoute | `reservations.read` |
-| `/app/pagos` | ScopeRoute | `payments.read` |
-| `/app/resenas` | ScopeRoute | `reviews.moderate` |
-| `/app/equipo` | ScopeRoute | `staff.manage` |
+| `/app/clients` | OwnerRoute | `owner` |
+| `/app/reservations` | ScopeRoute | `reservations.read` |
+| `/app/payments` | ScopeRoute | `payments.read` |
+| `/app/reviews` | ScopeRoute | `reviews.moderate` |
+| `/app/team` | ScopeRoute | `staff.manage` |
 | `/perfil` | ProtectedRoute | usuario autenticado |
-| `/app/configuracion` | RoleRoute | `owner` o `root` |
+| `/app/settings` | RoleRoute | `owner` o `root` |
 
 En `/app/dashboard` se deben mostrar visualizaciones minimas:
 
@@ -105,7 +105,8 @@ En `/app/dashboard` se deben mostrar visualizaciones minimas:
 
 | Ruta | Guard | Visible en menu |
 | ---- | ----- | --------------- |
-| `/__root/activity` | RootRoute | No |
+| `/app/activity` | RootRoute | Si (solo root) |
+| `/app/amenities` | RootRoute | Si (solo root) |
 
 Panel `ActivityLog`:
 
@@ -164,14 +165,14 @@ Regla:
 
 ## 7.4 Gestion de staff
 
-1. Owner entra a `/app/equipo`.
+1. Owner entra a `/app/team`.
 2. Crea usuario staff.
 3. Asigna rol/scopes.
 4. Cambios quedan en ActivityLog.
 
 ## 7.5 Auditoria root
 
-1. Root accede manualmente a `/__root/activity`.
+1. Root accede al modulo interno `/app/activity`.
 2. Filtra por entidad (ej. `reservations`).
 3. Revisa before/after de cambios.
 

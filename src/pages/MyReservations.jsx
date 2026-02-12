@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { reservationsService } from "../services/reservationsService";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
+import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 
 const formatDate = (value, locale) => {
   if (!value) return "-";
@@ -65,7 +66,7 @@ const MyReservations = () => {
         setPropertyNames(Object.fromEntries(entries));
       } catch (err) {
         if (!mounted) return;
-        setError(getErrorMessage(err, t("myReservationsPage.errors.load")));
+        setError(getErrorMessage(err, i18n.t("myReservationsPage.errors.load")));
       } finally {
         if (mounted) {
           setLoading(false);
@@ -77,7 +78,7 @@ const MyReservations = () => {
     return () => {
       mounted = false;
     };
-  }, [t, user?.$id]);
+  }, [i18n, user?.$id]);
 
   const totals = useMemo(() => {
     const byStatus = reservations.reduce((acc, item) => {
@@ -143,9 +144,11 @@ const MyReservations = () => {
       ) : null}
 
       {!loading && !error && reservations.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          {t("myReservationsPage.empty")}
-        </div>
+        <EmptyStatePanel
+          icon={CalendarDays}
+          title={t("myReservationsPage.empty")}
+          description={t("myReservationsPage.subtitle")}
+        />
       ) : null}
 
       {!loading && !error && reservations.length > 0 ? (

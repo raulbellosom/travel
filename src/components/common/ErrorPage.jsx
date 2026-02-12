@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -152,7 +151,6 @@ const ErrorPage = ({
   showTips = true,
   showActions = true,
 }) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
 
@@ -174,6 +172,18 @@ const ErrorPage = ({
   };
 
   const Icon = useMemo(() => theme.icon, [theme.icon]);
+  const goHome = () => {
+    window.location.assign("/");
+  };
+
+  const goBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    window.location.assign("/");
+  };
 
   return (
     <div
@@ -238,7 +248,7 @@ const ErrorPage = ({
               {showActions ? (
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <button
-                    onClick={() => navigate("/")}
+                    onClick={goHome}
                     className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r px-5 py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 ${theme.primaryButton}`}
                   >
                     <Home className="h-5 w-5" aria-hidden />
@@ -246,7 +256,7 @@ const ErrorPage = ({
                   </button>
 
                   <button
-                    onClick={() => navigate(-1)}
+                    onClick={goBack}
                     className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white/80 px-5 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-white dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900"
                   >
                     <ArrowLeft className="h-5 w-5" aria-hidden />

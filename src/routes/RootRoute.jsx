@@ -2,11 +2,13 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LoadingScreen from "../components/loaders/LoadingScreen";
 import { useAuth } from "../hooks/useAuth";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 const RootRoute = ({ children }) => {
   const { t } = useTranslation();
   const { user, loading } = useAuth();
   const location = useLocation();
+  usePageSeo({ robots: "noindex, nofollow" });
 
   if (loading) {
     return (

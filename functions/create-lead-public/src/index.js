@@ -17,6 +17,7 @@ const cfg = () => ({
   databaseId: process.env.APPWRITE_DATABASE_ID || "main",
   propertiesCollectionId: process.env.APPWRITE_COLLECTION_PROPERTIES_ID || "properties",
   leadsCollectionId: process.env.APPWRITE_COLLECTION_LEADS_ID || "leads",
+  activityLogsCollectionId: process.env.APPWRITE_COLLECTION_ACTIVITY_LOGS_ID || "",
 });
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
@@ -59,25 +60,29 @@ export default async ({ req, res, error }) => {
       return res.json({ ok: false, error: "Property not available" }, 404);
     }
 
-    const propertyOwnerId = property.ownerUserId || property.userId;
+    const propertyOwnerId = property.ownerUserId;
     if (!propertyOwnerId) {
       return res.json({ ok: false, error: "Property owner not configured" }, 422);
+    }
+
+    const leadData = {
+      propertyId,
+      propertyOwnerId,
+      name,
+      email,
+      message,
+      status: "new",
+      enabled: true,
+    };
+    if (phone) {
+      leadData.phone = phone;
     }
 
     const lead = await db.createDocument(
       config.databaseId,
       config.leadsCollectionId,
       ID.unique(),
-      {
-        propertyId,
-        propertyOwnerId,
-        name,
-        email,
-        phone: phone || null,
-        message,
-        status: "new",
-        enabled: true,
-      },
+      leadData,
       [
         Permission.read(Role.user(propertyOwnerId)),
         Permission.update(Role.user(propertyOwnerId)),
@@ -93,6 +98,28 @@ export default async ({ req, res, error }) => {
         contactCount: Number(property.contactCount || 0) + 1,
       }
     );
+
+    if (config.activityLogsCollectionId) {
+      await db.createDocument(
+        config.databaseId,
+        config.activityLogsCollectionId,
+        ID.unique(),
+        {
+          actorUserId: propertyOwnerId,
+          actorRole: "owner",
+          action: "lead.create_public",
+          entityType: "leads",
+          entityId: lead.$id,
+          afterData: JSON.stringify({
+            propertyId,
+            propertyOwnerId,
+            email,
+            status: "new",
+          }).slice(0, 20000),
+          severity: "info",
+        }
+      ).catch(() => {});
+    }
 
     return res.json({ ok: true, leadId: lead.$id }, 200);
   } catch (err) {

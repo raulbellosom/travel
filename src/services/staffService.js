@@ -9,7 +9,7 @@ export const STAFF_ROLES = [
 ];
 
 export const staffService = {
-  async createStaffUser({ fullName, email, password, role }) {
+  async execute(payload) {
     ensureAppwriteConfigured();
 
     const functionId = env.appwrite.functions.staffUserManagement;
@@ -19,12 +19,59 @@ export const staffService = {
       );
     }
 
-    return executeJsonFunction(functionId, {
+    return executeJsonFunction(functionId, payload);
+  },
+
+  async createStaffUser({
+    firstName,
+    lastName,
+    email,
+    password,
+    role,
+    scopes = [],
+    avatarFileId = "",
+  }) {
+    return this.execute({
       action: "create_staff",
-      fullName,
+      firstName,
+      lastName,
       email,
       password,
       role,
+      scopes,
+      avatarFileId,
+    });
+  },
+
+  async listStaff() {
+    const result = await this.execute({
+      action: "list_staff",
+    });
+    return result?.body?.data?.documents || [];
+  },
+
+  async updateStaff({ userId, role, scopes, avatarFileId }) {
+    const payload = {
+      action: "update_staff",
+      targetUserId: userId,
+      role,
+      scopes,
+    };
+
+    if (avatarFileId !== undefined) {
+      payload.avatarFileId = avatarFileId;
+    }
+
+    return this.execute({
+      ...payload,
+    });
+  },
+
+  async setStaffEnabled({ userId, enabled }) {
+    return this.execute({
+      action: "set_staff_enabled",
+      targetUserId: userId,
+      enabled: Boolean(enabled),
     });
   },
 };

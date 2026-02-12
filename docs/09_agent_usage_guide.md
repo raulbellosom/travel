@@ -121,6 +121,11 @@ Un agente debe leer los documentos en este orden estricto:
 - Error
 - Success
 
+- Redactar copy para usuario final:
+
+- Lenguaje simple y orientado a la accion
+- Sin exponer detalles internos de arquitectura, permisos o infraestructura en vistas no-root
+
 ---
 
 ### 4.2 El Agent NO DEBE
@@ -135,6 +140,7 @@ Un agente debe leer los documentos en este orden estricto:
 ❌ Cambiar stack tecnológico (es fijo)
 ❌ Usar emojis como iconos de UI
 ❌ Exponer API Keys en frontend
+- No mostrar en UI no-root terminos internos como `root`, `owner`, `client`, `scope`, IDs o restricciones de backend
 
 ---
 
@@ -151,7 +157,7 @@ Crea el componente PropertyCard siguiendo las especificaciones de 04_design_syst
 ✅ Implementar ruta con guard\*\*:
 
 ```
-Implementa la ruta /app/crear-propiedad según 07_frontend_routes_and_flows.md, sección 4.3. Debe usar ProtectedRoute guard y DashboardLayout. El formulario debe ser wizard (multi-paso) como está especificado.
+Implementa la ruta /app/properties/new según 07_frontend_routes_and_flows.md, sección 4.3. Debe usar ProtectedRoute guard y DashboardLayout. El formulario debe ser wizard (multi-paso) como está especificado.
 ```
 
 **✅ Crear función de Appwrite**:
@@ -256,7 +262,7 @@ Usa tokens.css para estilos.
 **Ejemplo de prompt**:
 
 ```
-Implementa la página /app/mis-propiedades según 07, sección 4.2. Debe:
+Implementa la página /app/my-properties según 07, sección 4.2. Debe:
 - Usar DashboardLayout
 - Tener guard ProtectedRoute
 - Cargar propiedades del usuario logueado
@@ -573,6 +579,7 @@ Antes de generar/modificar código, el agent debe verificar:
 - [ ] Tengo clara la arquitectura mobile-first
 - [ ] No estoy inventando decisiones no documentadas
 - [ ] Estoy usando el design system definido
+- [ ] El copy visible para usuario final no expone terminos internos ni restricciones tecnicas
 - [ ] Voy a actualizar documentación si añado algo nuevo
 
 ---
@@ -688,5 +695,5 @@ Este documento es:
 
 ---
 
-**Última actualización**: Febrero 2025
-**Versión**: 1.0.0
+**Ultima actualizacion**: Febrero 2026
+**Version**: 1.0.1

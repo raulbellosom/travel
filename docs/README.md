@@ -23,6 +23,8 @@ Este directorio documenta una plataforma inmobiliaria SaaS de tipo **productized
 7. `07_frontend_routes_and_flows.md`
 8. `08_env_reference.md`
 9. `10_master_plan_checklist.md`
+10. `11_schema_mapping_matrix.md`
+11. `12_env_traceability_matrix.md`
 
 ## Flujos clave del producto
 
@@ -59,5 +61,5 @@ Todo cambio funcional debe mantener consistencia entre:
 
 ---
 
-Ultima actualizacion: 2026-02-10
-Version: 2.0.0
+Ultima actualizacion: 2026-02-12
+Version: 2.1.0

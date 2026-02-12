@@ -1,15 +1,20 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Building2, Inbox } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { leadsService } from "../services/leadsService";
 import { getErrorMessage } from "../utils/errors";
 import { INTERNAL_ROUTES } from "../utils/internalRoutes";
+import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
+import { hasScope } from "../utils/roles";
 
 const Dashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const canReadProperties = hasScope(user, "properties.read");
+  const canReadLeads = hasScope(user, "leads.read");
   const [properties, setProperties] = useState([]);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +26,14 @@ const Dashboard = () => {
     setLoading(true);
     setError("");
 
-    Promise.all([propertiesService.listMine(user.$id), leadsService.listMine(user.$id)])
+    const propertiesPromise = canReadProperties
+      ? propertiesService.listMine(user.$id)
+      : Promise.resolve({ documents: [] });
+    const leadsPromise = canReadLeads
+      ? leadsService.listMine(user.$id)
+      : Promise.resolve({ documents: [] });
+
+    Promise.all([propertiesPromise, leadsPromise])
       .then(([propertiesResponse, leadsResponse]) => {
         if (!mounted) return;
         setProperties(propertiesResponse.documents || []);
@@ -29,7 +41,7 @@ const Dashboard = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(getErrorMessage(err, t("dashboardPage.errors.load")));
+        setError(getErrorMessage(err, i18n.t("dashboardPage.errors.load")));
       })
       .finally(() => {
         if (!mounted) return;
@@ -39,7 +51,7 @@ const Dashboard = () => {
     return () => {
       mounted = false;
     };
-  }, [t, user?.$id]);
+  }, [canReadLeads, canReadProperties, i18n, user?.$id]);
 
   const stats = useMemo(() => {
     const published = properties.filter((item) => item.status === "published").length;
@@ -111,19 +123,25 @@ const Dashboard = () => {
                   {t("dashboardPage.recentProperties.viewAll")}
                 </Link>
               </div>
-              <ul className="space-y-2">
-                {properties.slice(0, 5).map((item) => (
-                  <li key={item.$id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
-                    <p className="font-medium text-slate-900 dark:text-slate-100">{item.title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-300">
-                      {item.city}, {item.state} - {t(`propertyStatus.${item.status}`, { defaultValue: item.status })}
-                    </p>
-                  </li>
-                ))}
-                {properties.length === 0 ? (
-                  <li className="text-sm text-slate-500 dark:text-slate-300">{t("dashboardPage.recentProperties.empty")}</li>
-                ) : null}
-              </ul>
+              {properties.length > 0 ? (
+                <ul className="space-y-2">
+                  {properties.slice(0, 5).map((item) => (
+                    <li key={item.$id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
+                      <p className="font-medium text-slate-900 dark:text-slate-100">{item.title}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-300">
+                        {item.city}, {item.state} - {t(`propertyStatus.${item.status}`, { defaultValue: item.status })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyStatePanel
+                  icon={Building2}
+                  title={t("dashboardPage.recentProperties.empty")}
+                  compact
+                  className="border-dashed"
+                />
+              )}
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
@@ -133,19 +151,25 @@ const Dashboard = () => {
                   {t("dashboardPage.recentLeads.viewAll")}
                 </Link>
               </div>
-              <ul className="space-y-2">
-                {leads.slice(0, 5).map((lead) => (
-                  <li key={lead.$id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
-                    <p className="font-medium text-slate-900 dark:text-slate-100">{lead.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-300">
-                      {lead.email} - {t(`leadStatus.${lead.status}`, { defaultValue: lead.status })}
-                    </p>
-                  </li>
-                ))}
-                {leads.length === 0 ? (
-                  <li className="text-sm text-slate-500 dark:text-slate-300">{t("dashboardPage.recentLeads.empty")}</li>
-                ) : null}
-              </ul>
+              {leads.length > 0 ? (
+                <ul className="space-y-2">
+                  {leads.slice(0, 5).map((lead) => (
+                    <li key={lead.$id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
+                      <p className="font-medium text-slate-900 dark:text-slate-100">{lead.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-300">
+                        {lead.email} - {t(`leadStatus.${lead.status}`, { defaultValue: lead.status })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyStatePanel
+                  icon={Inbox}
+                  title={t("dashboardPage.recentLeads.empty")}
+                  compact
+                  className="border-dashed"
+                />
+              )}
             </div>
           </div>
         </>

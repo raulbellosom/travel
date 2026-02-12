@@ -37,7 +37,15 @@
     "dashboardTitle": "Dashboard",
     "defaultUser": "Usuario",
     "clients": "Clientes",
-    "team": "Equipo"
+    "team": "Equipo",
+    "reservations": "Reservas",
+    "payments": "Pagos",
+    "reviews": "Reseñas",
+    "rootActivity": "Root: Auditoria",
+    "rootAmenities": "Root: Amenidades",
+    "navigation": "Navegacion",
+    "collapse": "Colapsar menu",
+    "expand": "Expandir menu"
   },
   "auth": {
     "login": {
@@ -222,7 +230,7 @@
       "defaultUser": "Usuario",
       "profile": "Editar perfil",
       "reservations": "Mis reservas",
-      "reviews": "Mis resenas",
+      "reviews": "Mis reseñas",
       "password": "Cambiar contrasena",
       "privacy": "Aviso de privacidad",
       "terms": "Terminos y condiciones"
@@ -232,7 +240,81 @@
     "title": "Dashboard",
     "welcome": "Bienvenido, {{name}}",
     "defaultUser": "Usuario",
-    "openMenu": "Abrir menu"
+    "openMenu": "Abrir menu",
+    "collapseSidebar": "Colapsar barra lateral",
+    "expandSidebar": "Expandir barra lateral",
+    "shellHint": "Panel optimizado para movil y escritorio",
+    "toggleTheme": "Cambiar tema",
+    "toggleLanguage": "Cambiar idioma",
+    "lightMode": "Tema claro",
+    "darkMode": "Tema oscuro"
+  },
+  "globalSearch": {
+    "placeholder": "Buscar en CRM: cliente, mensaje, reserva, pago o accion...",
+    "aria": {
+      "desktopInput": "Busqueda global del dashboard",
+      "mobileInput": "Busqueda global del dashboard en modal",
+      "openMobile": "Abrir busqueda global"
+    },
+    "groups": {
+      "actions": "Acciones",
+      "properties": "Propiedades",
+      "leads": "Mensajes y clientes",
+      "reservations": "Reservas",
+      "payments": "Pagos"
+    },
+    "states": {
+      "loading": "Cargando datos de busqueda...",
+      "empty": "Sin resultados para esta busqueda."
+    },
+    "quickActions": {
+      "dashboard": {
+        "title": "Ir al dashboard",
+        "subtitle": "Resumen general de operacion"
+      },
+      "properties": {
+        "title": "Ver propiedades",
+        "subtitle": "Portafolio y estado de anuncios"
+      },
+      "leads": {
+        "title": "Abrir mensajes y leads",
+        "subtitle": "Inbox de clientes y conversaciones"
+      },
+      "reservations": {
+        "title": "Ver reservas",
+        "subtitle": "Filtrar por fecha, estado o pago"
+      },
+      "payments": {
+        "title": "Ver pagos",
+        "subtitle": "Seguimiento de cobros y referencias"
+      },
+      "profile": {
+        "title": "Ir a mi perfil",
+        "subtitle": "Editar datos y preferencias"
+      },
+      "newProperty": {
+        "title": "Nueva propiedad",
+        "subtitle": "Crear un nuevo anuncio"
+      },
+      "team": {
+        "title": "Administrar equipo",
+        "subtitle": "Gestion de usuarios internos"
+      },
+      "settings": {
+        "title": "Configuracion",
+        "subtitle": "Ajustes avanzados del sistema"
+      }
+    },
+    "dynamic": {
+      "openConversation": "Ir a conversacion de {{name}}",
+      "sendEmail": "Enviar email a {{name}}",
+      "openReservation": "Abrir reserva #{{id}}",
+      "openPayment": "Abrir pago #{{id}}"
+    },
+    "fallbacks": {
+      "property": "Propiedad",
+      "client": "Cliente"
+    }
   },
   "loadingScreen": {
     "title": "Validando sesion",
@@ -455,7 +537,13 @@
   },
   "leadsPage": {
     "title": "Leads",
+    "subtitle": "Da seguimiento al pipeline comercial y al estado de cada contacto.",
     "summary": "Total: {{total}} - Nuevos: {{new}} - Ganados: {{won}}",
+    "metrics": {
+      "total": "Total",
+      "new": "Nuevos",
+      "won": "Ganados"
+    },
     "loading": "Cargando leads...",
     "empty": "No hay leads para mostrar.",
     "noPhone": "-",
@@ -609,7 +697,9 @@
       "bathrooms": "Banos",
       "totalArea": "Area total",
       "type": "Tipo"
-    }
+    },
+    "reserveHint": "Reserva en linea con confirmacion y voucher digital.",
+    "reserveCta": "Reservar ahora"
   },
   "propertyStatus": {
     "draft": "Borrador",
@@ -663,12 +753,12 @@
     }
   },
   "myReviewsPage": {
-    "title": "Mis resenas",
-    "subtitle": "Historial de resenas enviadas desde tu cuenta.",
-    "loading": "Cargando resenas...",
-    "empty": "Aun no has publicado resenas.",
+    "title": "Mis reseñas",
+    "subtitle": "Historial de reseñas enviadas desde tu cuenta.",
+    "loading": "Cargando reseñas...",
+    "empty": "Aun no has publicado reseñas.",
     "stats": {
-      "total": "Total de resenas",
+      "total": "Total de reseñas",
       "average": "Promedio de calificacion"
     },
     "labels": {
@@ -676,7 +766,7 @@
       "created": "Creada"
     },
     "errors": {
-      "load": "No se pudieron cargar tus resenas."
+      "load": "No se pudieron cargar tus reseñas."
     }
   },
   "privacyPage": {
@@ -856,7 +946,7 @@
   },
   "rootAmenitiesPage": {
     "title": "Panel root: Amenidades",
-    "subtitle": "Ruta oculta para gestionar catalogo de amenidades y precargar seed base.",
+    "subtitle": "Modulo interno para gestionar el catalogo de amenidades y precargar seed base.",
     "createTitle": "Crear amenidad",
     "loading": "Cargando amenidades...",
     "empty": "No hay amenidades para mostrar.",
@@ -1036,7 +1126,9 @@
       "home": "Inicio",
       "dashboard": "Dashboard",
       "properties": "Mis propiedades",
-      "profile": "Perfil"
+      "profile": "Perfil",
+      "privacy": "Aviso de privacidad",
+      "terms": "Terminos y condiciones"
     },
     "contact": {
       "city": "Puerto Vallarta, Jalisco",
@@ -1048,7 +1140,7 @@
       "placeholder": "Tu correo electronico",
       "action": "Suscribirme"
     },
-    "copyright": "? {{year}} Inmobo. Todos los derechos reservados."
+    "copyright": "{{year}} Inmobo. Todos los derechos reservados."
   },
   "authLayout": {
     "platform": "Plataforma inmobiliaria",
@@ -1088,33 +1180,253 @@
   },
   "teamPage": {
     "title": "Equipo",
-    "subtitle": "Crea usuarios de staff con roles operativos. No se permite crear root ni client desde este panel.",
+    "subtitle": "Agrega miembros al equipo y asigna permisos segun sus tareas.",
+    "createTitle": "Agregar miembro",
+    "listTitle": "Equipo actual",
+    "loading": "Cargando equipo...",
+    "empty": "Aun no hay miembros registrados.",
     "fields": {
-      "fullName": "Nombre completo",
       "email": "Correo electronico",
-      "role": "Rol de staff",
+      "role": "Rol",
       "password": "Contrasena",
-      "confirmPassword": "Confirmar contrasena"
+      "confirmPassword": "Confirmar contrasena",
+      "scopes": "Permisos",
+      "status": "Estado",
+      "search": "Buscar usuario",
+      "passwordSection": "Seguridad de acceso",
+      "avatar": "Foto de perfil",
+      "firstName": "Nombre",
+      "lastName": "Apellidos"
     },
     "roles": {
-      "staff_manager": "Staff Manager",
-      "staff_editor": "Staff Editor",
-      "staff_support": "Staff Support"
+      "staff_manager": "Administrador de equipo",
+      "staff_editor": "Editor operativo",
+      "staff_support": "Soporte operativo"
+    },
+    "scopeOptions": {
+      "staff_manage": "Gestionar equipo",
+      "properties_read": "Ver propiedades",
+      "properties_write": "Editar propiedades",
+      "leads_read": "Ver leads",
+      "leads_write": "Gestionar leads",
+      "reservations_read": "Ver reservas",
+      "reservations_write": "Gestionar reservas",
+      "payments_read": "Ver pagos",
+      "reviews_moderate": "Moderar reseñas"
+    },
+    "status": {
+      "enabled": "Activo",
+      "disabled": "Inactivo"
+    },
+    "metrics": {
+      "total": "Total miembros",
+      "active": "Activos",
+      "inactive": "Inactivos"
     },
     "actions": {
-      "create": "Crear usuario de staff",
-      "creating": "Creando usuario..."
+      "create": "Crear miembro",
+      "creating": "Creando miembro...",
+      "enable": "Activar",
+      "disable": "Desactivar",
+      "reset": "Limpiar formulario",
+      "savePermissions": "Guardar permisos",
+      "permissions": "Permisos",
+      "uploadPhoto": "Subir foto",
+      "changePhoto": "Cambiar foto",
+      "removePhoto": "Quitar foto"
     },
     "messages": {
-      "created": "Usuario de staff creado correctamente."
+      "created": "Miembro creado correctamente.",
+      "updated": "Miembro actualizado correctamente.",
+      "enabled": "Miembro activado correctamente.",
+      "disabled": "Miembro desactivado correctamente.",
+      "avatarUpdated": "Foto de perfil actualizada correctamente."
     },
     "errors": {
-      "fullName": "El nombre completo debe tener al menos 3 caracteres.",
       "invalidEmail": "Ingresa un correo electronico valido.",
-      "invalidRole": "Selecciona un rol de staff valido.",
+      "invalidRole": "Selecciona un rol valido.",
       "passwordMismatch": "Las contrasenas no coinciden.",
       "passwordWeak": "La contrasena no cumple el nivel minimo de seguridad.",
-      "create": "No se pudo crear el usuario de staff."
+      "create": "No se pudo crear el miembro del equipo.",
+      "load": "No se pudo cargar el listado del equipo.",
+      "update": "No se pudo actualizar el miembro del equipo.",
+      "toggle": "No se pudo cambiar el estado del miembro del equipo.",
+      "avatarUpload": "No se pudo actualizar la foto de perfil.",
+      "avatarSize": "La imagen supera el maximo de {{max}} MB.",
+      "firstName": "El nombre debe tener al menos 2 caracteres.",
+      "lastName": "Los apellidos deben tener al menos 2 caracteres."
+    },
+    "summary": "Total: {{total}} - Activos: {{active}} - Inactivos: {{inactive}}",
+    "tabs": {
+      "list": "Listado",
+      "manage": "Gestion"
+    },
+    "placeholders": {
+      "search": "Buscar por nombre, correo o rol"
+    },
+    "filters": {
+      "allRoles": "Todos",
+      "allStatuses": "Todos"
+    },
+    "table": {
+      "member": "Miembro",
+      "role": "Rol",
+      "permissions": "Permisos",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "hints": {
+      "avatar": "PNG, JPG o WEBP - maximo {{max}} MB"
+    },
+    "permissionsModal": {
+      "title": "Editar rol y permisos"
+    },
+    "permissionsStorageHint": "Los permisos se guardan en users.role y users.scopesJson. Los cambios se aplican al guardar."
+  },
+  "reservePropertyPage": {
+    "title": "Reservar propiedad",
+    "loading": "Cargando flujo de reserva...",
+    "labels": {
+      "operation": "Operacion",
+      "maxGuests": "Huespedes maximos",
+      "nightlyRate": "Tarifa por noche"
+    },
+    "form": {
+      "title": "Completa tu reserva",
+      "fields": {
+        "dateRange": "Fechas de estancia",
+        "guestCount": "Numero de huespedes",
+        "guestNameOptional": "Nombre del huesped (opcional)",
+        "provider": "Pasarela de pago",
+        "specialRequestsOptional": "Solicitudes especiales (opcional)"
+      }
+    },
+    "summary": {
+      "nights": "Noches",
+      "baseAmount": "Subtotal",
+      "total": "Total"
+    },
+    "actions": {
+      "processing": "Procesando...",
+      "payAndConfirm": "Pagar y confirmar",
+      "backToHome": "Volver al inicio"
+    },
+    "messages": {
+      "redirecting": "Redirigiendo a la pasarela de pago..."
+    },
+    "errors": {
+      "notFound": "No encontramos la propiedad solicitada.",
+      "load": "No se pudo cargar la pantalla de reserva.",
+      "create": "No se pudo crear la reserva.",
+      "invalidDates": "Selecciona un rango de fechas valido.",
+      "invalidGuests": "El numero de huespedes debe ser mayor a cero.",
+      "verifyEmail": "Debes verificar tu correo antes de reservar.",
+      "missingReservation": "No se pudo generar la reserva.",
+      "missingCheckout": "No se pudo generar el link de pago."
+    }
+  },
+  "voucherPage": {
+    "title": "Voucher de reserva",
+    "subtitle": "Consulta la informacion oficial de tu reserva confirmada.",
+    "loading": "Buscando voucher...",
+    "labels": {
+      "code": "Codigo de voucher",
+      "property": "Propiedad",
+      "guest": "Huesped",
+      "dates": "Fechas",
+      "total": "Total",
+      "status": "Estado"
+    },
+    "actions": {
+      "backHome": "Volver al inicio"
+    },
+    "errors": {
+      "load": "No se pudo consultar el voucher.",
+      "notFound": "Voucher no encontrado o no disponible."
+    }
+  },
+  "appReservationsPage": {
+    "title": "Reservas",
+    "subtitle": "Gestiona reservas, estados y conciliacion operativa.",
+    "loading": "Cargando reservas...",
+    "empty": "No hay reservas para mostrar.",
+    "stats": {
+      "total": "Total",
+      "pending": "Pendientes",
+      "confirmed": "Confirmadas",
+      "paid": "Pagadas"
+    },
+    "filters": {
+      "status": "Estado de reserva",
+      "paymentStatus": "Estado de pago",
+      "all": "Todos"
+    },
+    "actions": {
+      "markConfirmed": "Marcar confirmada",
+      "markCompleted": "Marcar completada",
+      "cancel": "Cancelar"
+    },
+    "errors": {
+      "load": "No se pudieron cargar las reservas.",
+      "update": "No se pudo actualizar la reserva."
+    }
+  },
+  "appPaymentsPage": {
+    "title": "Pagos",
+    "subtitle": "Seguimiento de intentos y confirmaciones de pago por reserva.",
+    "loading": "Cargando pagos...",
+    "empty": "No hay pagos para mostrar.",
+    "filters": {
+      "provider": "Proveedor",
+      "status": "Estado",
+      "all": "Todos"
+    },
+    "table": {
+      "date": "Fecha",
+      "provider": "Proveedor",
+      "reservationId": "Reserva",
+      "status": "Estado",
+      "amount": "Monto",
+      "reference": "Referencia"
+    },
+    "errors": {
+      "load": "No se pudieron cargar los pagos."
+    }
+  },
+  "appReviewsPage": {
+    "title": "Moderación de reseñas",
+    "subtitle": "Revisa y publica reseñas pendientes de clientes.",
+    "loading": "Cargando reseñas...",
+    "empty": "No hay reseñas para moderar.",
+    "filters": {
+      "status": "Estado",
+      "all": "Todos"
+    },
+    "actions": {
+      "publish": "Publicar",
+      "reject": "Rechazar"
+    },
+    "errors": {
+      "load": "No se pudieron cargar las reseñas.",
+      "update": "No se pudo actualizar la reseña."
+    }
+  },
+  "rootActivityPage": {
+    "title": "Panel root: Activity logs",
+    "subtitle": "Auditoria forense de acciones criticas en la instancia.",
+    "loading": "Cargando actividad...",
+    "empty": "No hay registros de actividad para mostrar.",
+    "filters": {
+      "action": "Accion",
+      "actorUserId": "Actor",
+      "entityType": "Entidad",
+      "severity": "Severidad",
+      "fromDate": "Desde",
+      "toDate": "Hasta",
+      "all": "Todos"
+    },
+    "errors": {
+      "load": "No se pudo cargar la auditoria root."
     }
   }
 }

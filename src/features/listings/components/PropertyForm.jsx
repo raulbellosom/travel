@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Combobox from "../../../components/common/molecules/Combobox";
+import { Select } from "../../../components/common";
 import { getAmenityIcon } from "../../../data/amenitiesCatalog";
 import { locationOptionsService } from "../services/locationOptionsService";
 
@@ -41,17 +42,12 @@ const PROPERTY_TYPES = [
   { value: "commercial", key: "propertyForm.options.propertyType.commercial" },
   { value: "office", key: "propertyForm.options.propertyType.office" },
   { value: "warehouse", key: "propertyForm.options.propertyType.warehouse" },
-  { value: "event_hall", key: "propertyForm.options.propertyType.eventHall" },
-  { value: "condo", key: "propertyForm.options.propertyType.condo" },
-  { value: "villa", key: "propertyForm.options.propertyType.villa" },
-  { value: "building", key: "propertyForm.options.propertyType.building" },
 ];
 
 const OPERATION_TYPES = [
   { value: "sale", key: "propertyForm.options.operationType.sale" },
   { value: "rent", key: "propertyForm.options.operationType.rent" },
   { value: "vacation_rental", key: "propertyForm.options.operationType.vacationRental" },
-  { value: "transfer", key: "propertyForm.options.operationType.transfer" },
 ];
 
 const STATUS_OPTIONS = [
@@ -92,6 +88,51 @@ const PropertyForm = ({
   const amenityNameField = i18n.language === "es" ? "name_es" : "name_en";
 
   const countryOptions = useMemo(() => locationOptionsService.getCountries(), []);
+
+  const propertyTypeOptions = useMemo(
+    () =>
+      PROPERTY_TYPES.map((option) => ({
+        value: option.value,
+        label: t(option.key),
+      })),
+    [t]
+  );
+
+  const operationTypeOptions = useMemo(
+    () =>
+      OPERATION_TYPES.map((option) => ({
+        value: option.value,
+        label: t(option.key),
+      })),
+    [t]
+  );
+
+  const currencyOptions = useMemo(
+    () => [
+      { value: "MXN", label: "MXN" },
+      { value: "USD", label: "USD" },
+      { value: "EUR", label: "EUR" },
+    ],
+    []
+  );
+
+  const pricePerOptions = useMemo(
+    () => [
+      { value: "total", label: t("propertyForm.options.pricePer.total") },
+      { value: "sqm", label: t("propertyForm.options.pricePer.sqm") },
+      { value: "sqft", label: t("propertyForm.options.pricePer.sqft") },
+    ],
+    [t]
+  );
+
+  const statusOptions = useMemo(
+    () =>
+      STATUS_OPTIONS.map((option) => ({
+        value: option.value,
+        label: t(option.key),
+      })),
+    [t]
+  );
 
   const selectedCountry = useMemo(
     () => locationOptionsService.findCountry(form.country),
@@ -238,33 +279,23 @@ const PropertyForm = ({
           </label>
           <label className="grid gap-1 text-sm">
             <span>{t("propertyForm.fields.propertyType")} *</span>
-            <select
+            <Select
               required
               value={form.propertyType}
+              options={propertyTypeOptions}
               className={inputClassName}
-              onChange={(event) => onChange("propertyType", event.target.value)}
-            >
-              {PROPERTY_TYPES.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(option.key)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => onChange("propertyType", value)}
+            />
           </label>
           <label className="grid gap-1 text-sm">
             <span>{t("propertyForm.fields.operationType")} *</span>
-            <select
+            <Select
               required
               value={form.operationType}
+              options={operationTypeOptions}
               className={inputClassName}
-              onChange={(event) => onChange("operationType", event.target.value)}
-            >
-              {OPERATION_TYPES.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(option.key)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => onChange("operationType", value)}
+            />
           </label>
         </div>
       </section>
@@ -287,41 +318,30 @@ const PropertyForm = ({
           </label>
           <label className="grid gap-1 text-sm">
             <span>{t("propertyForm.fields.currency")}</span>
-            <select
+            <Select
               value={form.currency}
+              options={currencyOptions}
               className={inputClassName}
-              onChange={(event) => onChange("currency", event.target.value)}
-            >
-              <option value="MXN">MXN</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-            </select>
+              onChange={(value) => onChange("currency", value)}
+            />
           </label>
           <label className="grid gap-1 text-sm">
             <span>{t("propertyForm.fields.pricePer")}</span>
-            <select
+            <Select
               value={form.pricePer}
+              options={pricePerOptions}
               className={inputClassName}
-              onChange={(event) => onChange("pricePer", event.target.value)}
-            >
-              <option value="total">{t("propertyForm.options.pricePer.total")}</option>
-              <option value="sqm">{t("propertyForm.options.pricePer.sqm")}</option>
-              <option value="sqft">{t("propertyForm.options.pricePer.sqft")}</option>
-            </select>
+              onChange={(value) => onChange("pricePer", value)}
+            />
           </label>
           <label className="grid gap-1 text-sm">
             <span>{t("propertyForm.fields.status")}</span>
-            <select
+            <Select
               value={form.status}
+              options={statusOptions}
               className={inputClassName}
-              onChange={(event) => onChange("status", event.target.value)}
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(option.key)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => onChange("status", value)}
+            />
           </label>
           <label className="inline-flex items-center gap-2 text-sm">
             <input

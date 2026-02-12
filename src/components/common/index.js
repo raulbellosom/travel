@@ -24,6 +24,8 @@ export { default as ComponentDemo } from "./molecules/ComponentDemo";
 export { default as FormField } from "./molecules/FormField";
 export { default as SearchBar } from "./molecules/SearchBar";
 export { default as Combobox } from "./molecules/Combobox";
+export { default as StatsCardsRow } from "./molecules/StatsCardsRow";
+export { default as TablePagination } from "./molecules/TablePagination";
 
 // === ORGANISMS ===
 export { default as ListingCard } from "./organisms/ListingCard";

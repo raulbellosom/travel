@@ -64,10 +64,22 @@ const env = {
       sendLeadNotification: get("APPWRITE_FUNCTION_SEND_LEAD_NOTIFICATION_ID"),
       propertyViewCounter: get("APPWRITE_FUNCTION_PROPERTY_VIEW_COUNTER_ID"),
       createReservation: get("APPWRITE_FUNCTION_CREATE_RESERVATION_ID"),
+      reservationCreatedNotification: get(
+        "APPWRITE_FUNCTION_RESERVATION_CREATED_NOTIFICATION_ID"
+      ),
       createPaymentSession: get("APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID"),
+      paymentWebhookStripe: get("APPWRITE_FUNCTION_PAYMENT_WEBHOOK_STRIPE_ID"),
+      paymentWebhookMercadoPago: get(
+        "APPWRITE_FUNCTION_PAYMENT_WEBHOOK_MERCADOPAGO_ID"
+      ),
+      issueReservationVoucher: get(
+        "APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID"
+      ),
       createReview: get("APPWRITE_FUNCTION_CREATE_REVIEW_ID"),
+      moderateReview: get("APPWRITE_FUNCTION_MODERATE_REVIEW_ID"),
       dashboardMetrics: get("APPWRITE_FUNCTION_DASHBOARD_METRICS_ID"),
       staffUserManagement: get("APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID"),
+      activityLogQuery: get("APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID"),
     },
   },
   app: {
@@ -75,8 +87,6 @@ const env = {
     env: get("APP_ENV", "development"),
     url: get("APP_BASE_URL", "http://localhost:5173"),
     version: get("APP_VERSION", "1.0.0"),
-    rootPanelPath: get("ROOT_PANEL_PATH", "/__root/activity"),
-    rootAmenitiesPath: get("ROOT_AMENITIES_PATH", "/__root/amenities"),
   },
   features: {
     geolocation: toBool(get("FEATURE_GEOLOCATION"), true),
@@ -100,7 +110,14 @@ export const getMissingCriticalEnv = () => {
     "APPWRITE_COLLECTION_PROPERTIES_ID",
     "APPWRITE_COLLECTION_LEADS_ID",
     "APPWRITE_COLLECTION_RESERVATIONS_ID",
+    "APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID",
+    "APPWRITE_COLLECTION_RESERVATION_VOUCHERS_ID",
     "APPWRITE_COLLECTION_REVIEWS_ID",
+    "APPWRITE_COLLECTION_ACTIVITY_LOGS_ID",
+    "APPWRITE_FUNCTION_CREATE_LEAD_ID",
+    "APPWRITE_FUNCTION_CREATE_RESERVATION_ID",
+    "APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID",
+    "APPWRITE_FUNCTION_CREATE_REVIEW_ID",
   ];
 
   return required.filter((key) => !hasValue(get(key)));

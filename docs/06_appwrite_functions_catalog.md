@@ -133,10 +133,10 @@ functions/
 ## 4.11 `staff-user-management`
 
 - Tipo: HTTP autenticado.
-- Operacion MVP implementada: `create_staff`.
-- Operaciones siguientes: cambiar role/scopes y desactivar staff.
+- Operaciones implementadas: `create_staff`, `list_staff`, `update_staff`, `set_staff_enabled`.
 - Solo `owner` o `root`.
-- Registra auditoria before/after.
+- Bloquea gestion de cuentas `root` y `owner`.
+- Registra auditoria before/after en `activity_logs`.
 
 ## 4.12 `email-verification`
 
@@ -154,6 +154,8 @@ functions/
 - Tipo: HTTP autenticado.
 - Expone consulta filtrada de `activity_logs`.
 - Requiere rol `root`.
+- Soporta filtros por `action`, `actorUserId`, `entityType`, `severity`, `fromDate`, `toDate`.
+- Registra intentos denegados como `root_panel.access_denied`.
 
 ## 4.15 `dashboard-metrics-aggregator`
 
@@ -261,5 +263,5 @@ Errores:
 
 ---
 
-Ultima actualizacion: 2026-02-11
-Version: 2.2.0
+Ultima actualizacion: 2026-02-12
+Version: 2.3.0

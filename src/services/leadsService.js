@@ -3,15 +3,16 @@ import { databases, ensureAppwriteConfigured, ID, Query } from "../api/appwriteC
 import { executeJsonFunction } from "../utils/functions";
 
 export const leadsService = {
-  async listMine(userId, { status, propertyId } = {}) {
+  async listMine(_userId, { status, propertyId, propertyOwnerId } = {}) {
     ensureAppwriteConfigured();
     const queries = [
-      Query.equal("propertyOwnerId", userId),
+      Query.equal("enabled", true),
       Query.orderDesc("$createdAt"),
       Query.limit(200),
     ];
     if (status) queries.push(Query.equal("status", status));
     if (propertyId) queries.push(Query.equal("propertyId", propertyId));
+    if (propertyOwnerId) queries.push(Query.equal("propertyOwnerId", propertyOwnerId));
 
     return databases.listDocuments({
       databaseId: env.appwrite.databaseId,

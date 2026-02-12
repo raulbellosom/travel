@@ -20,6 +20,8 @@ import { propertiesService } from "../services/propertiesService";
 import { leadsService } from "../services/leadsService";
 import { executeJsonFunction } from "../utils/functions";
 import { getErrorMessage } from "../utils/errors";
+import Carousel from "../components/common/molecules/Carousel/Carousel";
+import { usePageSeo } from "../hooks/usePageSeo";
 
 const FALLBACK_BANNERS = [
   "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80",
@@ -47,6 +49,15 @@ const PropertyDetail = () => {
   });
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
+  usePageSeo({
+    title: property?.title
+      ? `${property.title} | Inmobo`
+      : "Inmobo | Detalle de propiedad",
+    description: property?.description
+      ? String(property.description).slice(0, 155)
+      : "Detalle de propiedad con galeria, amenidades y contacto.",
+    robots: "index, follow",
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -61,7 +72,7 @@ const PropertyDetail = () => {
         }
 
         const [ownerDoc, imageDocs, amenityDocs] = await Promise.all([
-          propertiesService.getOwnerProfile(doc.userId).catch(() => null),
+          propertiesService.getOwnerProfile(doc.ownerUserId).catch(() => null),
           propertiesService.listImages(doc.$id).catch(() => []),
           amenitiesService.listForProperty(doc.$id).catch(() => []),
         ]);
@@ -257,17 +268,32 @@ const PropertyDetail = () => {
 
           <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
             <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">{t("propertyDetailPage.galleryTitle")}</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {gallery.slice(0, 4).map((url) => (
-                <div key={url} className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
-                  <img src={url} alt={property.title} className="h-44 w-full object-cover" loading="lazy" />
-                </div>
-              ))}
-            </div>
+            <Carousel
+              images={gallery}
+              showArrows
+              showCounter
+              showDots
+              variant="default"
+              className="rounded-2xl"
+            />
           </article>
         </section>
 
         <aside className="space-y-5">
+          <article className="rounded-3xl border border-cyan-200 bg-cyan-50 p-5 shadow-sm dark:border-cyan-900/50 dark:bg-cyan-950/30">
+            <p className="text-sm text-cyan-700 dark:text-cyan-200">
+              {t("propertyDetailPage.reserveHint", {
+                defaultValue: "Reserva en línea con confirmación y voucher digital.",
+              })}
+            </p>
+            <Link
+              to={`/reservar/${property.slug}`}
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
+            >
+              {t("propertyDetailPage.reserveCta", { defaultValue: "Reservar ahora" })}
+            </Link>
+          </article>
+
           <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t("propertyDetailPage.owner.title")}</h2>
             <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">{ownerName}</p>

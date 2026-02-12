@@ -32,11 +32,6 @@ const EditProperty = () => {
     ])
       .then(([doc, amenityOptions, selectedAmenityIds]) => {
         if (!mounted) return;
-        if (doc.userId !== user?.$id) {
-          navigate(INTERNAL_ROUTES.dashboard, { replace: true });
-          return;
-        }
-
         setAmenities(amenityOptions || []);
         setInitialValues({
           ...doc,
@@ -55,7 +50,7 @@ const EditProperty = () => {
     return () => {
       mounted = false;
     };
-  }, [id, navigate, t, user?.$id]);
+  }, [id, t]);
 
   const handleSubmit = async (values) => {
     if (!id || !user?.$id) return;

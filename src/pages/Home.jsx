@@ -1,9 +1,12 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { MapPin, BedDouble, Bath, Landmark, SlidersHorizontal } from "lucide-react";
+import { MapPin, BedDouble, Bath, Landmark, SearchX, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
+import { usePageSeo } from "../hooks/usePageSeo";
+import { Select } from "../components/common";
+import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 
 const STOCK_IMAGES = [
   "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
@@ -86,6 +89,11 @@ const PropertyCard = ({ property, t, locale, index }) => {
 
 const Home = () => {
   const { t, i18n } = useTranslation();
+  usePageSeo({
+    title: "Inmobo | Catalogo de propiedades",
+    description: "Explora propiedades para venta, renta y renta vacacional.",
+    robots: "index, follow",
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -125,7 +133,7 @@ const Home = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(getErrorMessage(err, t("homePage.errors.loadProperties")));
+        setError(getErrorMessage(err, i18n.t("homePage.errors.loadProperties")));
       })
       .finally(() => {
         if (!mounted) return;
@@ -135,7 +143,7 @@ const Home = () => {
     return () => {
       mounted = false;
     };
-  }, [filters, page, t]);
+  }, [filters, page, i18n]);
 
   const updateFilter = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -146,6 +154,41 @@ const Home = () => {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / 12));
+
+  const propertyTypeOptions = useMemo(
+    () => [
+      { value: "", label: t("homePage.filters.all") },
+      { value: "house", label: t("homePage.enums.propertyType.house") },
+      { value: "apartment", label: t("homePage.enums.propertyType.apartment") },
+      { value: "land", label: t("homePage.enums.propertyType.land") },
+      { value: "commercial", label: t("homePage.enums.propertyType.commercial") },
+      { value: "office", label: t("homePage.enums.propertyType.office") },
+      { value: "warehouse", label: t("homePage.enums.propertyType.warehouse") },
+    ],
+    [t]
+  );
+
+  const operationOptions = useMemo(
+    () => [
+      { value: "", label: t("homePage.filters.allOperations") },
+      { value: "sale", label: t("homePage.enums.operation.sale") },
+      { value: "rent", label: t("homePage.enums.operation.rent") },
+      {
+        value: "vacation_rental",
+        label: t("homePage.enums.operation.vacation_rental"),
+      },
+    ],
+    [t]
+  );
+
+  const sortOptions = useMemo(
+    () => [
+      { value: "recent", label: t("homePage.sort.recent") },
+      { value: "price-asc", label: t("homePage.sort.priceAsc") },
+      { value: "price-desc", label: t("homePage.sort.priceDesc") },
+    ],
+    [t]
+  );
 
   return (
     <div className="pb-12">
@@ -188,34 +231,22 @@ const Home = () => {
 
             <label className="grid gap-1 text-sm xl:col-span-1">
               <span>{t("homePage.filters.propertyType")}</span>
-              <select
+              <Select
                 value={filters.propertyType}
-                onChange={(event) => updateFilter("type", event.target.value)}
-                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
-              >
-                <option value="">{t("homePage.filters.all")}</option>
-                <option value="house">{t("homePage.enums.propertyType.house")}</option>
-                <option value="apartment">{t("homePage.enums.propertyType.apartment")}</option>
-                <option value="land">{t("homePage.enums.propertyType.land")}</option>
-                <option value="commercial">{t("homePage.enums.propertyType.commercial")}</option>
-                <option value="office">{t("homePage.enums.propertyType.office")}</option>
-                <option value="warehouse">{t("homePage.enums.propertyType.warehouse")}</option>
-              </select>
+                onChange={(value) => updateFilter("type", value)}
+                options={propertyTypeOptions}
+                size="md"
+              />
             </label>
 
             <label className="grid gap-1 text-sm xl:col-span-1">
               <span>{t("homePage.filters.operation")}</span>
-              <select
+              <Select
                 value={filters.operationType}
-                onChange={(event) => updateFilter("operation", event.target.value)}
-                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
-              >
-                <option value="">{t("homePage.filters.allOperations")}</option>
-                <option value="sale">{t("homePage.enums.operation.sale")}</option>
-                <option value="rent">{t("homePage.enums.operation.rent")}</option>
-                <option value="vacation_rental">{t("homePage.enums.operation.vacation_rental")}</option>
-                <option value="transfer">{t("homePage.enums.operation.transfer")}</option>
-              </select>
+                onChange={(value) => updateFilter("operation", value)}
+                options={operationOptions}
+                size="md"
+              />
             </label>
 
             <label className="grid gap-1 text-sm xl:col-span-1">
@@ -242,15 +273,12 @@ const Home = () => {
 
             <label className="grid gap-1 text-sm xl:col-span-1">
               <span>{t("homePage.filters.sort")}</span>
-              <select
+              <Select
                 value={filters.sort}
-                onChange={(event) => updateFilter("sort", event.target.value)}
-                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
-              >
-                <option value="recent">{t("homePage.sort.recent")}</option>
-                <option value="price-asc">{t("homePage.sort.priceAsc")}</option>
-                <option value="price-desc">{t("homePage.sort.priceDesc")}</option>
-              </select>
+                onChange={(value) => updateFilter("sort", value)}
+                options={sortOptions}
+                size="md"
+              />
             </label>
           </div>
         </div>
@@ -258,7 +286,7 @@ const Home = () => {
 
       <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-wrap gap-2">
-          {["sale", "rent", "vacation_rental", "transfer"].map((operationKey) => (
+          {["sale", "rent", "vacation_rental"].map((operationKey) => (
             <button
               key={operationKey}
               type="button"
@@ -283,9 +311,11 @@ const Home = () => {
         ) : null}
 
         {!loading && !error && items.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-            {t("homePage.emptyFiltered")}
-          </div>
+          <EmptyStatePanel
+            icon={SearchX}
+            title={t("homePage.emptyFiltered")}
+            description={t("homePage.catalogSubtitle")}
+          />
         ) : null}
 
         {!loading && !error && items.length > 0 ? (

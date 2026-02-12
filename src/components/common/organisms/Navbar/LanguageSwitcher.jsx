@@ -4,10 +4,11 @@ import { Globe } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 const LanguageSwitcher = () => {
-  const { t } = useTranslation();
-  const { language, changeLanguage } = useUI();
+  const { t, i18n } = useTranslation();
+  const { changeLanguage } = useUI();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const language = i18n.resolvedLanguage || i18n.language || "es";
 
   const languages = [
     { code: "es", name: t("language.spanish"), flag: "🇲🇽" },

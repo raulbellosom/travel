@@ -9,6 +9,7 @@ import {
   Carousel,
   ComponentDemo,
   Navbar,
+  Select,
 } from "../../../components/common";
 import { ComponentSection } from "../components";
 import { useUIDocsTranslation } from "../../../hooks/useUIDocsTranslation";
@@ -71,6 +72,7 @@ export default function OrganismsSection({
     success: false,
     contact: false,
   });
+  const [uiDocsLanguage, setUiDocsLanguage] = useState("ES");
   const toggleModal = (k) => setModalStates((p) => ({ ...p, [k]: !p[k] }));
 
   return (
@@ -559,10 +561,17 @@ export default function OrganismsSection({
                 {/* Right side */}
                 <div className="flex items-center space-x-4">
                   {/* Language Switcher */}
-                  <select className="text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1">
-                    <option>ES</option>
-                    <option>EN</option>
-                  </select>
+                  <div className="w-20">
+                    <Select
+                      value={uiDocsLanguage}
+                      onChange={(value) => setUiDocsLanguage(value)}
+                      options={[
+                        { value: "ES", label: "ES" },
+                        { value: "EN", label: "EN" },
+                      ]}
+                      size="sm"
+                    />
+                  </div>
 
                   {/* Theme Toggle */}
                   <button className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">

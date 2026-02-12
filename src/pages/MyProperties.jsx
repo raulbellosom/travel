@@ -1,9 +1,12 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Building2 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
+import { TablePagination } from "../components/common";
+import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import {
   INTERNAL_ROUTES,
   getInternalEditPropertyRoute,
@@ -16,6 +19,8 @@ const MyProperties = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
 
@@ -27,11 +32,11 @@ const MyProperties = () => {
       const response = await propertiesService.listMine(user.$id);
       setItems(response.documents || []);
     } catch (err) {
-      setError(getErrorMessage(err, t("myPropertiesPage.errors.load")));
+      setError(getErrorMessage(err, i18n.t("myPropertiesPage.errors.load")));
     } finally {
       setLoading(false);
     }
-  }, [t, user?.$id]);
+  }, [i18n, user?.$id]);
 
   useEffect(() => {
     loadData();
@@ -69,6 +74,19 @@ const MyProperties = () => {
     () => items.filter((item) => item.enabled !== false),
     [items]
   );
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(activeItems.length / pageSize)),
+    [activeItems.length, pageSize]
+  );
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  const paginatedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return activeItems.slice(start, start + pageSize);
+  }, [activeItems, page, pageSize]);
 
   return (
     <section className="space-y-5">
@@ -97,74 +115,91 @@ const MyProperties = () => {
       ) : null}
 
       {!loading && activeItems.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          {t("myPropertiesPage.empty")}
-        </div>
+        <EmptyStatePanel
+          icon={Building2}
+          title={t("myPropertiesPage.empty")}
+          description={t("myPropertiesPage.subtitle")}
+          actionLabel={t("myPropertiesPage.actions.create")}
+          actionTo={INTERNAL_ROUTES.createProperty}
+        />
       ) : null}
 
       {!loading && activeItems.length > 0 ? (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-              <tr>
-                <th className="px-4 py-3">{t("myPropertiesPage.table.title")}</th>
-                <th className="px-4 py-3">{t("myPropertiesPage.table.location")}</th>
-                <th className="px-4 py-3">{t("myPropertiesPage.table.status")}</th>
-                <th className="px-4 py-3">{t("myPropertiesPage.table.price")}</th>
-                <th className="px-4 py-3">{t("myPropertiesPage.table.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeItems.map((item) => (
-                <tr key={item.$id} className="border-t border-slate-200 dark:border-slate-700">
-                  <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                    {item.title}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {item.city}, {item.state}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {t(`propertyStatus.${item.status}`, { defaultValue: item.status })}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {new Intl.NumberFormat(locale, {
-                      style: "currency",
-                      currency: item.currency || "MXN",
-                      maximumFractionDigits: 0,
-                    }).format(item.price || 0)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Link
-                        to={getInternalEditPropertyRoute(item.$id)}
-                        className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium dark:border-slate-600"
-                      >
-                        {t("myPropertiesPage.actions.edit")}
-                      </Link>
-                      <button
-                        type="button"
-                        disabled={busyId === item.$id}
-                        onClick={() => handleStatusToggle(item)}
-                        className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium disabled:opacity-60 dark:border-slate-600"
-                      >
-                        {item.status === "published"
-                          ? t("myPropertiesPage.actions.toDraft")
-                          : t("myPropertiesPage.actions.publish")}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyId === item.$id}
-                        onClick={() => handleDelete(item.$id)}
-                        className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-60 dark:border-red-800 dark:text-red-300"
-                      >
-                        {t("myPropertiesPage.actions.delete")}
-                      </button>
-                    </div>
-                  </td>
+        <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                <tr>
+                  <th className="px-4 py-3">{t("myPropertiesPage.table.title")}</th>
+                  <th className="px-4 py-3">{t("myPropertiesPage.table.location")}</th>
+                  <th className="px-4 py-3">{t("myPropertiesPage.table.status")}</th>
+                  <th className="px-4 py-3">{t("myPropertiesPage.table.price")}</th>
+                  <th className="px-4 py-3">{t("myPropertiesPage.table.actions")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedItems.map((item) => (
+                  <tr key={item.$id} className="border-t border-slate-200 dark:border-slate-700">
+                    <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                      {item.title}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {item.city}, {item.state}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {t(`propertyStatus.${item.status}`, { defaultValue: item.status })}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {new Intl.NumberFormat(locale, {
+                        style: "currency",
+                        currency: item.currency || "MXN",
+                        maximumFractionDigits: 0,
+                      }).format(item.price || 0)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          to={getInternalEditPropertyRoute(item.$id)}
+                          className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium dark:border-slate-600"
+                        >
+                          {t("myPropertiesPage.actions.edit")}
+                        </Link>
+                        <button
+                          type="button"
+                          disabled={busyId === item.$id}
+                          onClick={() => handleStatusToggle(item)}
+                          className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium disabled:opacity-60 dark:border-slate-600"
+                        >
+                          {item.status === "published"
+                            ? t("myPropertiesPage.actions.toDraft")
+                            : t("myPropertiesPage.actions.publish")}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyId === item.$id}
+                          onClick={() => handleDelete(item.$id)}
+                          className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-60 dark:border-red-800 dark:text-red-300"
+                        >
+                          {t("myPropertiesPage.actions.delete")}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={activeItems.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value);
+              setPage(1);
+            }}
+          />
         </div>
       ) : null}
     </section>

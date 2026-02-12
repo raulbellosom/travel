@@ -12,7 +12,7 @@ instancia:
 Entregar a agentes o equipos inmobiliarios una plataforma propia para:
 
 - publicar y administrar propiedades;
-- gestionar leads, reservas, pagos y resenas;
+- gestionar leads, reservas, pagos y reseñas;
 - operar usuarios internos de staff con permisos por modulo;
 - mantener auditoria completa con panel root oculto.
 

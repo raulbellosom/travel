@@ -1,15 +1,27 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { createContext, useContext, useLayoutEffect, useMemo, useState } from "react";
+import i18n from "../i18n";
 
 const UIContext = createContext(null);
+const THEME_STORAGE_KEY = "ui.theme.mode";
+const LEGACY_THEME_STORAGE_KEY = "theme";
+
+const readStoredTheme = () => {
+  const nextStored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (nextStored === "light" || nextStored === "dark" || nextStored === "system") {
+    return nextStored;
+  }
+
+  const legacyStored = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+  if (legacyStored === "light" || legacyStored === "dark" || legacyStored === "system") {
+    return legacyStored;
+  }
+
+  return "system";
+};
 
 export function UIProvider({ children }) {
-  const { i18n } = useTranslation();
-
   // 'light' | 'dark' | 'system'
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "system"
-  );
+  const [theme, setTheme] = useState(() => readStoredTheme());
 
   // Tema efectivo (considera el sistema si eligió 'system')
   const getEffectiveTheme = (t) => {
@@ -33,8 +45,8 @@ export function UIProvider({ children }) {
   };
 
   // Aplica al montar y cuando cambie 'theme'
-  useEffect(() => {
-    localStorage.setItem("theme", theme);
+  useLayoutEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
     applyTheme(theme);
 
     // Si es 'system', escucha cambios del SO
@@ -60,10 +72,9 @@ export function UIProvider({ children }) {
       changeTheme: (next) => setTheme(next), // 'light' | 'dark' | 'system'
       toggleTheme: () =>
         setTheme((t) => (getEffectiveTheme(t) === "dark" ? "light" : "dark")),
-      language: i18n.language,
       changeLanguage,
     }),
-    [theme, i18n.language]
+    [theme]
   );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

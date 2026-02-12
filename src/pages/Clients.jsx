@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Users } from "lucide-react";
+import { Select, TablePagination } from "../components/common";
 import { clientsService } from "../services/clientsService";
 import { getErrorMessage } from "../utils/errors";
-
-const LIMIT = 20;
+import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 
 const Clients = () => {
   const { t, i18n } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pageSize, setPageSize] = useState(5);
   const [meta, setMeta] = useState({
     total: 0,
     totalPages: 1,
@@ -36,7 +38,7 @@ const Clients = () => {
         createdFrom: filters.createdFrom,
         createdTo: filters.createdTo,
         page: filters.page,
-        limit: LIMIT,
+        limit: pageSize,
       });
       setItems(response.documents || []);
       setMeta({
@@ -46,11 +48,11 @@ const Clients = () => {
         truncated: Boolean(response.truncated),
       });
     } catch (err) {
-      setError(getErrorMessage(err, t("clientsPage.errors.load", { defaultValue: "No se pudieron cargar los clientes." })));
+      setError(getErrorMessage(err, i18n.t("clientsPage.errors.load", { defaultValue: "No se pudieron cargar los clientes." })));
     } finally {
       setLoading(false);
     }
-  }, [filters.createdFrom, filters.createdTo, filters.enabled, filters.page, filters.search, t]);
+  }, [filters.createdFrom, filters.createdTo, filters.enabled, filters.page, filters.search, i18n, pageSize]);
 
   useEffect(() => {
     loadClients();
@@ -62,6 +64,21 @@ const Clients = () => {
       total: meta.total,
     });
   }, [meta.total, t]);
+
+  const statusOptions = useMemo(
+    () => [
+      { value: "all", label: t("clientsPage.filters.all", { defaultValue: "Todos" }) },
+      {
+        value: "enabled",
+        label: t("clientsPage.filters.enabled", { defaultValue: "Activos" }),
+      },
+      {
+        value: "disabled",
+        label: t("clientsPage.filters.disabled", { defaultValue: "Inactivos" }),
+      },
+    ],
+    [t]
+  );
 
   const onFilterChange = (field, value) => {
     setFilters((prev) => ({
@@ -95,15 +112,12 @@ const Clients = () => {
 
         <label className="grid gap-1 text-sm">
           <span>{t("clientsPage.filters.status", { defaultValue: "Estado" })}</span>
-          <select
+          <Select
             value={filters.enabled}
-            onChange={(event) => onFilterChange("enabled", event.target.value)}
-            className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-          >
-            <option value="all">{t("clientsPage.filters.all", { defaultValue: "Todos" })}</option>
-            <option value="enabled">{t("clientsPage.filters.enabled", { defaultValue: "Activos" })}</option>
-            <option value="disabled">{t("clientsPage.filters.disabled", { defaultValue: "Inactivos" })}</option>
-          </select>
+            onChange={(value) => onFilterChange("enabled", value)}
+            options={statusOptions}
+            size="md"
+          />
         </label>
 
         <label className="grid gap-1 text-sm">
@@ -148,9 +162,12 @@ const Clients = () => {
       ) : null}
 
       {!loading && items.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          {t("clientsPage.empty", { defaultValue: "No hay clientes para mostrar." })}
-        </div>
+        <EmptyStatePanel
+          icon={Users}
+          title={t("clientsPage.empty", { defaultValue: "No hay clientes para mostrar." })}
+          description={summary}
+          compact
+        />
       ) : null}
 
       {!loading && items.length > 0 ? (
@@ -202,33 +219,17 @@ const Clients = () => {
             </table>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-300">
-            <span>
-              {t("clientsPage.pagination.pageOf", {
-                defaultValue: "Pagina {{page}} de {{totalPages}}",
-                page: meta.page,
-                totalPages: meta.totalPages,
-              })}
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={meta.page <= 1}
-                onClick={() => onFilterChange("page", meta.page - 1)}
-                className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600"
-              >
-                {t("clientsPage.pagination.previous", { defaultValue: "Anterior" })}
-              </button>
-              <button
-                type="button"
-                disabled={meta.page >= meta.totalPages}
-                onClick={() => onFilterChange("page", meta.page + 1)}
-                className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600"
-              >
-                {t("clientsPage.pagination.next", { defaultValue: "Siguiente" })}
-              </button>
-            </div>
-          </div>
+          <TablePagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            totalItems={meta.total}
+            pageSize={pageSize}
+            onPageChange={(value) => onFilterChange("page", value)}
+            onPageSizeChange={(value) => {
+              setPageSize(value);
+              onFilterChange("page", 1);
+            }}
+          />
         </div>
       ) : null}
     </section>

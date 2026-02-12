@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import Combobox from "../components/common/molecules/Combobox/Combobox";
+import { Select } from "../components/common";
 import { getErrorMessage } from "../utils/errors";
 import {
   formatPhoneForDisplay,
@@ -29,10 +30,6 @@ import {
 const PROFILE_TEXT_FIELDS = [
   "firstName",
   "lastName",
-  "companyName",
-  "websiteUrl",
-  "facebookUrl",
-  "instagramUrl",
 ];
 
 const PROFILE_EDIT_KEYS = [
@@ -41,16 +38,9 @@ const PROFILE_EDIT_KEYS = [
   "phone",
   "whatsappCountryCode",
   "whatsappNumber",
-  "bio",
 ];
 
-const PREFERENCE_KEYS = [
-  "theme",
-  "locale",
-  "currency",
-  "measurementSystem",
-  "notificationsEmail",
-];
+const PREFERENCE_KEYS = ["theme", "locale"];
 
 const MAX_AVATAR_SIZE_MB = 5;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
@@ -106,20 +96,12 @@ const buildProfileFormFromSources = ({ profile, user }) => {
         ? whatsappParts.localNumber
         : profile?.whatsappNumber || ""
     ),
-    companyName: profile?.companyName || "",
-    bio: profile?.bio || "",
-    websiteUrl: profile?.websiteUrl || "",
-    facebookUrl: profile?.facebookUrl || "",
-    instagramUrl: profile?.instagramUrl || "",
   };
 };
 
 const buildPreferencesForm = (preferences) => ({
   theme: preferences?.theme || "system",
   locale: preferences?.locale || "es",
-  currency: preferences?.currency || "MXN",
-  measurementSystem: preferences?.measurementSystem || "metric",
-  notificationsEmail: preferences?.notificationsEmail ?? true,
 });
 
 const hasChanged = (current, initial, keys) =>
@@ -134,8 +116,9 @@ const hasChanged = (current, initial, keys) =>
     return String(currentValue ?? "").trim() !== String(initialValue ?? "").trim();
   });
 
-const Profile = () => {
+const Profile = ({ mode = "client" }) => {
   const { t, i18n } = useTranslation();
+  const isInternalPanel = mode === "internal";
   const {
     user,
     profile,
@@ -243,7 +226,8 @@ const Profile = () => {
     }
 
     const nextProfile = {
-      ...profileForm,
+      firstName: String(profileForm.firstName || "").trim(),
+      lastName: String(profileForm.lastName || "").trim(),
       phone,
       phoneCountryCode: phone ? phoneCountryCode : "",
       whatsappNumber,
@@ -340,8 +324,38 @@ const Profile = () => {
     localNumber: profileForm.whatsappNumber,
   });
 
+  const themeOptions = useMemo(
+    () => [
+      { value: "system", label: t("theme.system") },
+      { value: "light", label: t("theme.light") },
+      { value: "dark", label: t("theme.dark") },
+    ],
+    [t]
+  );
+
+  const localeOptions = useMemo(
+    () => [
+      { value: "es", label: t("language.spanish") },
+      { value: "en", label: t("language.english") },
+    ],
+    [t]
+  );
+
   return (
     <section className="space-y-6">
+      {isInternalPanel ? (
+        <header className="rounded-2xl border border-cyan-200 bg-cyan-50/70 px-4 py-3 text-sm text-cyan-900 dark:border-cyan-900/60 dark:bg-cyan-950/20 dark:text-cyan-100">
+          <p className="font-semibold">
+            {t("profilePage.internal.title", { defaultValue: "Perfil del equipo" })}
+          </p>
+          <p className="text-xs opacity-90">
+            {t("profilePage.internal.subtitle", {
+              defaultValue: "Administra tu informacion dentro del panel administrativo.",
+            })}
+          </p>
+        </header>
+      ) : null}
+
       <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -508,24 +522,6 @@ const Profile = () => {
           )}
         </div>
 
-        <label className="grid gap-1 text-sm md:col-span-2">
-          <span>{t("profilePage.fields.bio")}</span>
-          {isEditingProfile ? (
-            <textarea
-              rows={4}
-              value={profileForm.bio}
-              onChange={(event) =>
-                setProfileForm((prev) => ({ ...prev, bio: event.target.value }))
-              }
-              className={inputClass}
-            />
-          ) : (
-            <span className="min-h-20 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
-              {String(profileForm.bio || "").trim() || t("profilePage.view.empty")}
-            </span>
-          )}
-        </label>
-
         <div className="flex flex-wrap items-center gap-3 md:col-span-2">
           <button
             type="button"
@@ -554,31 +550,26 @@ const Profile = () => {
 
         <label className="grid gap-1 text-sm">
           <span>{t("profilePage.preferences.theme")}</span>
-          <select
+          <Select
             value={preferencesForm.theme}
-            onChange={(event) =>
-              setPreferencesForm((prev) => ({ ...prev, theme: event.target.value }))
+            onChange={(value) =>
+              setPreferencesForm((prev) => ({ ...prev, theme: value }))
             }
+            options={themeOptions}
             className={inputClass}
-          >
-            <option value="system">{t("theme.system")}</option>
-            <option value="light">{t("theme.light")}</option>
-            <option value="dark">{t("theme.dark")}</option>
-          </select>
+          />
         </label>
 
         <label className="grid gap-1 text-sm">
           <span>{t("profilePage.preferences.language")}</span>
-          <select
+          <Select
             value={preferencesForm.locale}
-            onChange={(event) =>
-              setPreferencesForm((prev) => ({ ...prev, locale: event.target.value }))
+            onChange={(value) =>
+              setPreferencesForm((prev) => ({ ...prev, locale: value }))
             }
+            options={localeOptions}
             className={inputClass}
-          >
-            <option value="es">{t("language.spanish")}</option>
-            <option value="en">{t("language.english")}</option>
-          </select>
+          />
         </label>
 
         <button

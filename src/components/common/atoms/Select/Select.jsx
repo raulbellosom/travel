@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 /**
@@ -30,7 +30,8 @@ const Select = React.forwardRef(
   ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [internalValue, setInternalValue] = useState(value || "");
+    const [internalValue, setInternalValue] = useState(value ?? "");
+    const [openDirection, setOpenDirection] = useState("down");
 
     const selectRef = useRef(null);
     const listRef = useRef(null);
@@ -79,11 +80,11 @@ const Select = React.forwardRef(
 
     // Size styles (matching TextInput exactly)
     const sizeStyles = {
-      xs: "px-2 py-1 text-xs rounded",
-      sm: "px-3 py-1.5 text-sm rounded-md",
-      md: "px-4 py-2 text-base rounded-lg",
-      lg: "px-5 py-3 text-lg rounded-xl",
-      xl: "px-6 py-4 text-xl rounded-2xl",
+      xs: "min-h-8 px-2 py-1 text-xs rounded-md",
+      sm: "min-h-9 px-3 py-1.5 text-sm rounded-lg",
+      md: "min-h-11 px-3 py-2 text-sm rounded-xl",
+      lg: "min-h-12 px-4 py-3 text-base rounded-xl",
+      xl: "min-h-14 px-5 py-4 text-lg rounded-2xl",
     };
 
     // Validate size exists, fallback to md
@@ -127,8 +128,34 @@ const Select = React.forwardRef(
       className,
     ].join(" ");
 
+    const updateOpenDirection = useCallback(() => {
+      const triggerRect = selectRef.current?.getBoundingClientRect();
+      if (!triggerRect) {
+        setOpenDirection("down");
+        return;
+      }
+
+      const visibleOptions = Math.max(1, Math.min(options.length, 7));
+      const estimatedMenuHeight = visibleOptions * 40 + 16;
+      const viewportHeight =
+        typeof window !== "undefined" ? window.innerHeight : 900;
+      const safeOffset = 20;
+      const spaceBelow = viewportHeight - triggerRect.bottom - safeOffset;
+      const spaceAbove = triggerRect.top - safeOffset;
+
+      if (spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow) {
+        setOpenDirection("up");
+        return;
+      }
+
+      setOpenDirection("down");
+    }, [options.length]);
+
     const handleToggle = () => {
       if (disabled) return;
+      if (!isOpen) {
+        updateOpenDirection();
+      }
       setIsOpen(!isOpen);
       setActiveIndex(-1);
     };
@@ -212,9 +239,29 @@ const Select = React.forwardRef(
       };
 
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
       return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
+        {
+          document.removeEventListener("mousedown", handleClickOutside);
+          document.removeEventListener("touchstart", handleClickOutside);
+        };
     }, []);
+
+    useEffect(() => {
+      if (!isOpen) return;
+
+      const recalculatePosition = () => updateOpenDirection();
+      window.addEventListener("resize", recalculatePosition);
+      window.addEventListener("scroll", recalculatePosition, true);
+
+      return () => {
+        window.removeEventListener("resize", recalculatePosition);
+        window.removeEventListener("scroll", recalculatePosition, true);
+      };
+    }, [isOpen, updateOpenDirection]);
+
+    const MotionSvg = motion.svg;
+    const MotionDiv = motion.div;
 
     // Scroll active option into view
     useEffect(() => {
@@ -264,8 +311,8 @@ const Select = React.forwardRef(
             aria-invalid={hasError}
             {...props}
           >
-            <span className="flex items-center justify-between w-full">
-              <span className="flex items-center gap-2">
+            <span className="flex items-center justify-between w-full gap-2">
+              <span className="flex min-w-0 flex-1 items-center gap-2">
                 {selectedOption?.icon && (
                   <selectedOption.icon
                     className="w-5 h-5 text-gray-400"
@@ -275,14 +322,14 @@ const Select = React.forwardRef(
                 <span
                   className={
                     selectedOption
-                      ? "text-gray-900 dark:text-white"
-                      : "text-gray-500 dark:text-gray-400"
+                      ? "truncate whitespace-nowrap text-left text-gray-900 dark:text-white"
+                      : "truncate whitespace-nowrap text-left text-gray-500 dark:text-gray-400"
                   }
                 >
                   {selectedOption ? selectedOption.label : placeholder}
                 </span>
               </span>
-              <motion.svg
+              <MotionSvg
                 className="w-5 h-5 text-gray-400"
                 fill="none"
                 stroke="currentColor"
@@ -297,25 +344,29 @@ const Select = React.forwardRef(
                   strokeWidth={2}
                   d="M19 9l-7 7-7-7"
                 />
-              </motion.svg>
+              </MotionSvg>
             </span>
           </button>
 
           <AnimatePresence>
             {isOpen && (
-              <motion.div
+              <MotionDiv
                 initial={{ opacity: 0, y: -10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto"
+                className={`absolute left-0 right-0 z-[70] border border-slate-300 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800 ${
+                  openDirection === "up"
+                    ? "bottom-full mb-1 origin-bottom rounded-xl"
+                    : "top-full mt-1 origin-top rounded-xl"
+                }`}
               >
                 <ul
                   ref={listRef}
                   id={listboxId}
                   role="listbox"
                   aria-labelledby={selectId}
-                  className="py-1"
+                  className="max-h-[min(18rem,calc(100dvh-7rem))] overflow-auto py-1"
                 >
                   {options.map((option, index) => {
                     const isActive = index === activeIndex;
@@ -330,12 +381,12 @@ const Select = React.forwardRef(
                         role="option"
                         aria-selected={isSelected}
                         className={[
-                          "px-4 py-2 cursor-pointer flex items-center gap-2 transition-colors duration-150",
-                          isActive ? "bg-blue-100 dark:bg-blue-900" : "",
+                          "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors duration-150",
+                          isActive ? "bg-cyan-100/70 dark:bg-cyan-900/40" : "",
                           isSelected
-                            ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400"
-                            : "text-gray-900 dark:text-white",
-                          "hover:bg-gray-100 dark:hover:bg-gray-700",
+                            ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-200"
+                            : "text-slate-800 dark:text-slate-100",
+                          "hover:bg-slate-100 dark:hover:bg-slate-700",
                         ].join(" ")}
                         onClick={() => handleOptionSelect(option)}
                         onMouseEnter={() => setActiveIndex(index)}
@@ -349,14 +400,14 @@ const Select = React.forwardRef(
                         <div className="flex-1">
                           <div className="font-medium">{option.label}</div>
                           {option.description && (
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                            <div className="text-xs text-slate-500 dark:text-slate-300">
                               {option.description}
                             </div>
                           )}
                         </div>
                         {isSelected && (
                           <svg
-                            className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                            className="h-4 w-4 text-cyan-600 dark:text-cyan-300"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -374,7 +425,7 @@ const Select = React.forwardRef(
                     );
                   })}
                 </ul>
-              </motion.div>
+              </MotionDiv>
             )}
           </AnimatePresence>
         </div>

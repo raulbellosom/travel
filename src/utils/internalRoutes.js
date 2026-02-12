@@ -1,14 +1,25 @@
 export const INTERNAL_BASE_PATH = "/app";
 
+const withInternalBase = (segment) => `${INTERNAL_BASE_PATH}/${segment}`;
+
 export const INTERNAL_ROUTES = Object.freeze({
-  dashboard: `${INTERNAL_BASE_PATH}/dashboard`,
-  myProperties: `${INTERNAL_BASE_PATH}/mis-propiedades`,
-  createProperty: `${INTERNAL_BASE_PATH}/crear-propiedad`,
-  leads: `${INTERNAL_BASE_PATH}/leads`,
-  clients: `${INTERNAL_BASE_PATH}/clientes`,
-  team: `${INTERNAL_BASE_PATH}/equipo`,
-  settings: `${INTERNAL_BASE_PATH}/configuracion`,
+  dashboard: withInternalBase("dashboard"),
+  myProperties: withInternalBase("my-properties"),
+  createProperty: withInternalBase("properties/new"),
+  leads: withInternalBase("leads"),
+  reservations: withInternalBase("reservations"),
+  payments: withInternalBase("payments"),
+  reviews: withInternalBase("reviews"),
+  clients: withInternalBase("clients"),
+  team: withInternalBase("team"),
+  rootActivity: withInternalBase("activity"),
+  rootAmenities: withInternalBase("amenities"),
+  profile: withInternalBase("profile"),
+  settings: withInternalBase("settings"),
 });
 
 export const getInternalEditPropertyRoute = (id) =>
-  `${INTERNAL_BASE_PATH}/editar-propiedad/${id}`;
+  withInternalBase(`properties/${id}/edit`);
+
+export const getLegacyInternalEditPropertyRoute = (id) =>
+  withInternalBase(`editar-propiedad/${id}`);

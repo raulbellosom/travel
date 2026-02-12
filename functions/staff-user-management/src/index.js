@@ -1,4 +1,13 @@
-import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
+import {
+  Client,
+  Databases,
+  ID,
+  Permission,
+  Query,
+  Role,
+  Storage,
+  Users,
+} from "node-appwrite";
 import {
   getAuthenticatedUserId,
   getRequestId,
@@ -13,7 +22,13 @@ const ALLOWED_STAFF_ROLES = new Set([
   "staff_support",
 ]);
 
-const ALLOWED_ACTIONS = new Set(["create_staff"]);
+const STAFF_ROLE_LIST = Array.from(ALLOWED_STAFF_ROLES);
+const ALLOWED_ACTIONS = new Set([
+  "create_staff",
+  "list_staff",
+  "update_staff",
+  "set_staff_enabled",
+]);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
@@ -29,6 +44,7 @@ const getConfig = () => ({
     process.env.APPWRITE_COLLECTION_USER_PREFERENCES_ID || "user_preferences",
   activityLogsCollectionId:
     process.env.APPWRITE_COLLECTION_ACTIVITY_LOGS_ID || "",
+  avatarsBucketId: process.env.APPWRITE_BUCKET_AVATARS_ID || "",
 });
 
 const normalize = (value, max = 0) => {
@@ -37,8 +53,10 @@ const normalize = (value, max = 0) => {
 };
 
 const normalizeEmail = (value) => normalize(value, 254).toLowerCase();
-
 const isValidEmail = (value) => EMAIL_REGEX.test(String(value || ""));
+const normalizeBool = (value) =>
+  value === true || String(value || "").toLowerCase() === "true";
+const normalizeFileId = (value) => normalize(value, 64);
 
 const splitName = (name) => {
   const normalized = normalize(name).replace(/\s+/g, " ");
@@ -48,6 +66,35 @@ const splitName = (name) => {
     firstName,
     lastName: rest.join(" "),
   };
+};
+
+const parseScopes = (input) => {
+  if (!Array.isArray(input)) return [];
+  return Array.from(
+    new Set(
+      input
+        .map((scope) => normalize(scope, 80))
+        .filter(Boolean)
+    ),
+  ).slice(0, 100);
+};
+
+const parseScopesJson = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return parseScopes(value);
+  try {
+    const parsed = JSON.parse(String(value || "[]"));
+    return parseScopes(parsed);
+  } catch {
+    return [];
+  }
+};
+
+const hasScope = (scopes, scope) => {
+  const normalized = normalize(scope, 80);
+  if (!normalized) return true;
+  const scopeSet = new Set(parseScopes(scopes));
+  return scopeSet.has("*") || scopeSet.has(normalized);
 };
 
 const getPasswordChecks = (password) => {
@@ -104,9 +151,52 @@ const createAuthUserCompat = async ({ users, email, password, fullName }) => {
       password,
       name: fullName,
     });
-  } catch (error) {
+  } catch {
     // Fallback for SDK variants that still expect positional args.
     return users.create(ID.unique(), email, undefined, password, fullName);
+  }
+};
+
+const getUserCompat = async ({ users, userId }) => {
+  try {
+    return await users.get({
+      userId,
+    });
+  } catch {
+    return users.get(userId);
+  }
+};
+
+const updateAuthPrefsCompat = async ({ users, userId, prefs }) => {
+  try {
+    return await users.updatePrefs({
+      userId,
+      prefs,
+    });
+  } catch {
+    return users.updatePrefs(userId, prefs);
+  }
+};
+
+const getStorageFileCompat = async ({ storage, bucketId, fileId }) => {
+  try {
+    return await storage.getFile({
+      bucketId,
+      fileId,
+    });
+  } catch {
+    return storage.getFile(bucketId, fileId);
+  }
+};
+
+const deleteStorageFileCompat = async ({ storage, bucketId, fileId }) => {
+  try {
+    return await storage.deleteFile({
+      bucketId,
+      fileId,
+    });
+  } catch {
+    return storage.deleteFile(bucketId, fileId);
   }
 };
 
@@ -158,28 +248,133 @@ const ensurePreferences = async ({ db, config, userId }) => {
   );
 };
 
+const isProtectedRole = (role) => ["root", "owner"].includes(normalize(role, 40).toLowerCase());
+
+const isQueryCompatibilityError = (error) => {
+  const code = Number(error?.code);
+  if (code === 400) return true;
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("invalid query") ||
+    message.includes("attribute") ||
+    message.includes("index")
+  );
+};
+
+const getStaffProfile = async ({ db, config, targetUserId }) => {
+  const target = await db.getDocument(
+    config.databaseId,
+    config.usersCollectionId,
+    targetUserId,
+  );
+  const targetRole = normalize(target.role, 40).toLowerCase();
+  if (isProtectedRole(targetRole)) {
+    const err = new Error("Root/owner management is blocked");
+    err.code = 403;
+    throw err;
+  }
+  if (!ALLOWED_STAFF_ROLES.has(targetRole)) {
+    const err = new Error("Target user is not a staff account");
+    err.code = 422;
+    throw err;
+  }
+  return target;
+};
+
+const listStaff = async ({ db, users, config }) => {
+  const listQueriesStrict = [
+    Query.equal("role", STAFF_ROLE_LIST),
+    Query.equal("isHidden", false),
+    Query.orderDesc("$createdAt"),
+    Query.limit(200),
+  ];
+  const listQueriesRoleOnly = [
+    Query.equal("role", STAFF_ROLE_LIST),
+    Query.orderDesc("$createdAt"),
+    Query.limit(200),
+  ];
+  const listQueriesFallback = [Query.orderDesc("$createdAt"), Query.limit(200)];
+
+  let response;
+  try {
+    response = await db.listDocuments(
+      config.databaseId,
+      config.usersCollectionId,
+      listQueriesStrict,
+    );
+  } catch (strictError) {
+    if (!isQueryCompatibilityError(strictError)) throw strictError;
+    try {
+      response = await db.listDocuments(
+        config.databaseId,
+        config.usersCollectionId,
+        listQueriesRoleOnly,
+      );
+    } catch (roleOnlyError) {
+      if (!isQueryCompatibilityError(roleOnlyError)) throw roleOnlyError;
+      response = await db.listDocuments(
+        config.databaseId,
+        config.usersCollectionId,
+        listQueriesFallback,
+      );
+    }
+  }
+
+  const visibleStaff = (response.documents || []).filter((doc) => {
+    const role = normalize(doc?.role, 40).toLowerCase();
+    return ALLOWED_STAFF_ROLES.has(role) && doc?.isHidden !== true;
+  });
+
+  return Promise.all(
+    visibleStaff.map(async (doc) => {
+      const authUser = await getUserCompat({ users, userId: doc.$id }).catch(() => null);
+      return {
+        $id: doc.$id,
+        email: doc.email || authUser?.email || "",
+        firstName: doc.firstName,
+        lastName: doc.lastName,
+        role: doc.role,
+        scopesJson: doc.scopesJson || "[]",
+        enabled: doc.enabled !== false,
+        avatarFileId: normalizeFileId(authUser?.prefs?.avatarFileId),
+        avatarUpdatedAt: normalize(authUser?.prefs?.avatarUpdatedAt, 48),
+        $createdAt: doc.$createdAt,
+      };
+    }),
+  );
+};
+
 const createStaff = async ({
   body,
   actorUserId,
   actorRole,
   users,
+  storage,
   db,
   config,
   log,
 }) => {
-  const fullName = normalize(body.fullName || body.name, 160).replace(/\s+/g, " ");
+  const requestedFirstName = normalize(body.firstName, 80).replace(/\s+/g, " ");
+  const requestedLastName = normalize(body.lastName, 80).replace(/\s+/g, " ");
+  const legacyFullName = normalize(body.fullName || body.name, 160).replace(/\s+/g, " ");
+  const legacyNameParts = splitName(legacyFullName);
+  const firstName = requestedFirstName || legacyNameParts.firstName;
+  const lastName = requestedLastName || legacyNameParts.lastName;
+  const fullName = normalize(`${firstName} ${lastName}`, 160).replace(/\s+/g, " ");
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
-  const role = normalize(body.role, 40);
+  const role = normalize(body.role, 40).toLowerCase();
+  const scopes = parseScopes(body.scopes);
+  const avatarFileId = normalizeFileId(body.avatarFileId);
 
-  if (!fullName || !email || !password || !role) {
+  if (!firstName || !lastName || !email || !password || !role) {
     return {
       status: 400,
       body: {
         ok: false,
         success: false,
         code: "VALIDATION_ERROR",
-        message: "fullName, email, password and role are required",
+        message: "firstName, lastName, email, password and role are required",
       },
     };
   }
@@ -203,7 +398,7 @@ const createStaff = async ({
         ok: false,
         success: false,
         code: "VALIDATION_ERROR",
-        message: `role must be one of: ${Array.from(ALLOWED_STAFF_ROLES).join(", ")}`,
+        message: `role must be one of: ${STAFF_ROLE_LIST.join(", ")}`,
       },
     };
   }
@@ -221,12 +416,39 @@ const createStaff = async ({
     };
   }
 
-  const { firstName, lastName } = splitName(fullName);
-  const scopesJson =
-    Array.isArray(body.scopes) && body.scopes.length > 0
-      ? safeJsonString(body.scopes, 4000)
-      : "[]";
+  if (avatarFileId) {
+    if (!config.avatarsBucketId) {
+      return {
+        status: 422,
+        body: {
+          ok: false,
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "avatars bucket is not configured",
+        },
+      };
+    }
 
+    try {
+      await getStorageFileCompat({
+        storage,
+        bucketId: config.avatarsBucketId,
+        fileId: avatarFileId,
+      });
+    } catch {
+      return {
+        status: 422,
+        body: {
+          ok: false,
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "Invalid avatar file id",
+        },
+      };
+    }
+  }
+
+  const scopesJson = safeJsonString(scopes, 4000);
   let createdUserId = "";
   let profileTouched = false;
 
@@ -253,68 +475,43 @@ const createStaff = async ({
       const notFound = Number(profileWaitError?.code) === 404;
       if (!notFound) throw profileWaitError;
 
-      const baseProfileData = {
-        email,
-        firstName: firstName || "Staff",
-        lastName: lastName || "",
-        phone: "",
-        role,
-        scopesJson,
-        isHidden: false,
-        enabled: true,
-      };
-
-      const profilePermissions = [
-        Permission.read(Role.user(createdUserId)),
-        Permission.update(Role.user(createdUserId)),
-        Permission.delete(Role.user(createdUserId)),
-        Permission.read(Role.user(actorUserId)),
-      ];
-
-      try {
-        await db.createDocument(
-          config.databaseId,
-          config.usersCollectionId,
-          createdUserId,
-          baseProfileData,
-          profilePermissions,
-        );
-      } catch (createProfileErr) {
-        const authRequired = String(createProfileErr?.message || "")
-          .toLowerCase()
-          .includes("authid");
-        if (!authRequired) throw createProfileErr;
-
-        await db.createDocument(
-          config.databaseId,
-          config.usersCollectionId,
-          createdUserId,
-          {
-            ...baseProfileData,
-            authId: createdUserId,
-          },
-          profilePermissions,
-        );
-      }
-
+      await db.createDocument(
+        config.databaseId,
+        config.usersCollectionId,
+        createdUserId,
+        {
+          email,
+          firstName: firstName || "Staff",
+          lastName: lastName || "",
+          phone: "",
+          role,
+          scopesJson,
+          isHidden: false,
+          enabled: true,
+        },
+        [
+          Permission.read(Role.user(createdUserId)),
+          Permission.update(Role.user(createdUserId)),
+          Permission.delete(Role.user(createdUserId)),
+          Permission.read(Role.user(actorUserId)),
+        ],
+      );
       profileTouched = true;
     }
-
-    const profilePatch = {
-      email,
-      firstName: firstName || "Staff",
-      lastName: lastName || "",
-      role,
-      scopesJson,
-      enabled: true,
-      isHidden: false,
-    };
 
     await db.updateDocument(
       config.databaseId,
       config.usersCollectionId,
       createdUserId,
-      profilePatch,
+      {
+        email,
+        firstName: firstName || "Staff",
+        lastName: lastName || "",
+        role,
+        scopesJson,
+        enabled: true,
+        isHidden: false,
+      },
       [
         Permission.read(Role.user(createdUserId)),
         Permission.update(Role.user(createdUserId)),
@@ -325,6 +522,19 @@ const createStaff = async ({
     profileTouched = true;
 
     await ensurePreferences({ db, config, userId: createdUserId });
+    if (avatarFileId) {
+      const authUser = await getUserCompat({ users, userId: createdUserId });
+      const nextPrefs = {
+        ...(authUser?.prefs || {}),
+        avatarFileId,
+        avatarUpdatedAt: new Date().toISOString(),
+      };
+      await updateAuthPrefsCompat({
+        users,
+        userId: createdUserId,
+        prefs: nextPrefs,
+      });
+    }
 
     await safeActivityLog({
       db,
@@ -339,7 +549,8 @@ const createStaff = async ({
         afterData: safeJsonString({
           email,
           role,
-          scopesJson,
+          scopes,
+          avatarFileId,
           enabled: true,
         }),
         severity: "info",
@@ -357,13 +568,16 @@ const createStaff = async ({
           userId: createdUserId,
           email,
           role,
+          scopes,
+          avatarFileId,
+          enabled: true,
         },
       },
     };
-  } catch (error) {
+  } catch (createErr) {
     const alreadyExists =
-      Number(error?.code) === 409 ||
-      String(error?.message || "").toLowerCase().includes("already exists");
+      Number(createErr?.code) === 409 ||
+      String(createErr?.message || "").toLowerCase().includes("already exists");
     if (alreadyExists) {
       return {
         status: 409,
@@ -385,8 +599,251 @@ const createStaff = async ({
       }
     }
 
-    throw error;
+    throw createErr;
   }
+};
+
+const updateStaff = async ({
+  body,
+  actorUserId,
+  actorRole,
+  users,
+  storage,
+  db,
+  config,
+  log,
+}) => {
+  const targetUserId = normalize(body.targetUserId || body.userId, 64);
+  const role = normalize(body.role, 40).toLowerCase();
+  const scopes = parseScopes(body.scopes);
+  const hasAvatarPatch = Object.prototype.hasOwnProperty.call(body || {}, "avatarFileId");
+  const avatarFileId = normalizeFileId(body.avatarFileId);
+
+  if (!targetUserId || !role) {
+    return {
+      status: 422,
+      body: {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "targetUserId and role are required",
+      },
+    };
+  }
+
+  if (!ALLOWED_STAFF_ROLES.has(role)) {
+    return {
+      status: 422,
+      body: {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: `role must be one of: ${STAFF_ROLE_LIST.join(", ")}`,
+      },
+    };
+  }
+
+  if (hasAvatarPatch && avatarFileId) {
+    if (!config.avatarsBucketId) {
+      return {
+        status: 422,
+        body: {
+          ok: false,
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "avatars bucket is not configured",
+        },
+      };
+    }
+
+    try {
+      await getStorageFileCompat({
+        storage,
+        bucketId: config.avatarsBucketId,
+        fileId: avatarFileId,
+      });
+    } catch {
+      return {
+        status: 422,
+        body: {
+          ok: false,
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "Invalid avatar file id",
+        },
+      };
+    }
+  }
+
+  const target = await getStaffProfile({ db, config, targetUserId });
+  const authUser = await getUserCompat({ users, userId: targetUserId }).catch(() => null);
+  const currentAvatarFileId = normalizeFileId(authUser?.prefs?.avatarFileId);
+  const before = {
+    role: target.role,
+    scopesJson: target.scopesJson || "[]",
+    enabled: target.enabled !== false,
+    avatarFileId: currentAvatarFileId,
+  };
+
+  const patch = {
+    role,
+    scopesJson: safeJsonString(scopes, 4000),
+  };
+
+  const updated = await db.updateDocument(
+    config.databaseId,
+    config.usersCollectionId,
+    targetUserId,
+    patch,
+  );
+
+  let nextAvatarFileId = currentAvatarFileId;
+  if (hasAvatarPatch) {
+    nextAvatarFileId = avatarFileId;
+    const nextPrefs = {
+      ...(authUser?.prefs || {}),
+      avatarFileId,
+      avatarUpdatedAt: avatarFileId ? new Date().toISOString() : "",
+    };
+    await updateAuthPrefsCompat({
+      users,
+      userId: targetUserId,
+      prefs: nextPrefs,
+    });
+
+    const shouldDeletePrevious =
+      currentAvatarFileId &&
+      currentAvatarFileId !== avatarFileId &&
+      config.avatarsBucketId;
+    if (shouldDeletePrevious) {
+      await deleteStorageFileCompat({
+        storage,
+        bucketId: config.avatarsBucketId,
+        fileId: currentAvatarFileId,
+      }).catch(() => {});
+    }
+  }
+
+  await safeActivityLog({
+    db,
+    config,
+    logger: log,
+    data: {
+      actorUserId,
+      actorRole,
+      action: "staff.update_permissions",
+      entityType: "users",
+      entityId: targetUserId,
+      beforeData: safeJsonString(before),
+      afterData: safeJsonString({
+        role: updated.role,
+        scopesJson: updated.scopesJson || "[]",
+        enabled: updated.enabled !== false,
+        avatarFileId: nextAvatarFileId,
+      }),
+      changedFields: hasAvatarPatch
+        ? ["role", "scopesJson", "avatarFileId"]
+        : ["role", "scopesJson"],
+      severity: "info",
+    },
+  });
+
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      success: true,
+      code: "STAFF_UPDATED",
+      message: "Staff role/scopes updated",
+      data: {
+        userId: updated.$id,
+        role: updated.role,
+        scopesJson: updated.scopesJson || "[]",
+        enabled: updated.enabled !== false,
+        avatarFileId: nextAvatarFileId,
+      },
+    },
+  };
+};
+
+const setStaffEnabled = async ({
+  body,
+  actorUserId,
+  actorRole,
+  db,
+  config,
+  log,
+}) => {
+  const targetUserId = normalize(body.targetUserId || body.userId, 64);
+  if (!targetUserId) {
+    return {
+      status: 422,
+      body: {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "targetUserId is required",
+      },
+    };
+  }
+
+  if (targetUserId === actorUserId) {
+    return {
+      status: 422,
+      body: {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "You cannot change your own enabled state",
+      },
+    };
+  }
+
+  const enabled = normalizeBool(body.enabled);
+  const target = await getStaffProfile({ db, config, targetUserId });
+  const before = {
+    enabled: target.enabled !== false,
+  };
+
+  const updated = await db.updateDocument(
+    config.databaseId,
+    config.usersCollectionId,
+    targetUserId,
+    {
+      enabled,
+    },
+  );
+
+  await safeActivityLog({
+    db,
+    config,
+    logger: log,
+    data: {
+      actorUserId,
+      actorRole,
+      action: enabled ? "staff.enable" : "staff.disable",
+      entityType: "users",
+      entityId: targetUserId,
+      beforeData: safeJsonString(before),
+      afterData: safeJsonString({ enabled: updated.enabled !== false }),
+      changedFields: ["enabled"],
+      severity: enabled ? "info" : "warning",
+    },
+  });
+
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      success: true,
+      code: "STAFF_STATUS_UPDATED",
+      message: "Staff enabled state updated",
+      data: {
+        userId: updated.$id,
+        enabled: updated.enabled !== false,
+      },
+    },
+  };
 };
 
 export default async ({ req, res, log, error }) => {
@@ -436,6 +893,7 @@ export default async ({ req, res, log, error }) => {
     .setKey(config.apiKey);
   const db = new Databases(client);
   const users = new Users(client);
+  const storage = new Storage(client);
 
   try {
     const actorProfile = await db.getDocument(
@@ -444,16 +902,19 @@ export default async ({ req, res, log, error }) => {
       actorUserId,
     );
 
-    const actorRole = normalize(actorProfile.role, 40);
+    const actorRole = normalize(actorProfile.role, 40).toLowerCase();
+    const actorScopes = parseScopesJson(actorProfile.scopesJson);
     const actorEnabled = actorProfile.enabled !== false;
-    const isAllowedActor = actorEnabled && (actorRole === "owner" || actorRole === "root");
+    const isAllowedActor =
+      actorEnabled &&
+      (actorRole === "owner" || actorRole === "root" || hasScope(actorScopes, "staff.manage"));
 
     if (!isAllowedActor) {
       return json(res, 403, {
         ok: false,
         success: false,
         code: "FORBIDDEN",
-        message: "Only owner or root can manage staff users",
+        message: "Only owner, root, or staff with staff.manage can manage team users",
       });
     }
 
@@ -463,6 +924,46 @@ export default async ({ req, res, log, error }) => {
         actorUserId,
         actorRole,
         users,
+        storage,
+        db,
+        config,
+        log,
+      });
+      return json(res, result.status, result.body);
+    }
+
+    if (action === "list_staff") {
+      const staff = await listStaff({ db, users, config });
+      return json(res, 200, {
+        ok: true,
+        success: true,
+        code: "STAFF_LIST",
+        data: {
+          documents: staff,
+          total: staff.length,
+        },
+      });
+    }
+
+    if (action === "update_staff") {
+      const result = await updateStaff({
+        body,
+        actorUserId,
+        actorRole,
+        users,
+        storage,
+        db,
+        config,
+        log,
+      });
+      return json(res, result.status, result.body);
+    }
+
+    if (action === "set_staff_enabled") {
+      const result = await setStaffEnabled({
+        body,
+        actorUserId,
+        actorRole,
         db,
         config,
         log,
@@ -478,12 +979,21 @@ export default async ({ req, res, log, error }) => {
     });
   } catch (err) {
     const requestId = getRequestId(req);
-    error(`staff-user-management requestId=${requestId} failed: ${err.message}`);
-    log(err.stack || "");
-    return json(res, 500, {
+    const responseCode = Number(err?.code);
+    const normalizedCode =
+      responseCode === 403 || responseCode === 422 || responseCode === 404
+        ? responseCode
+        : 500;
+
+    if (normalizedCode === 500) {
+      error(`staff-user-management requestId=${requestId} failed: ${err.message}`);
+      log(err.stack || "");
+    }
+
+    return json(res, normalizedCode, {
       ok: false,
       success: false,
-      code: "INTERNAL_ERROR",
+      code: normalizedCode === 500 ? "INTERNAL_ERROR" : "VALIDATION_ERROR",
       message: err.message,
     });
   }

@@ -3,25 +3,9 @@ import {
   databases,
   ensureAppwriteConfigured,
   ID,
-  Permission,
   Query,
-  Role,
   storage,
 } from "../api/appwriteClient";
-
-const buildPropertyPermissions = (ownerId, status) => {
-  const permissions = [
-    Permission.read(Role.user(ownerId)),
-    Permission.update(Role.user(ownerId)),
-    Permission.delete(Role.user(ownerId)),
-  ];
-
-  if (status === "published") {
-    permissions.push(Permission.read(Role.any()));
-  }
-
-  return permissions;
-};
 
 const normalizePropertyInput = (input = {}) => {
   return {
@@ -131,16 +115,22 @@ export const propertiesService = {
     });
   },
 
-  async listMine(userId) {
+  async listMine(_userId, { ownerUserId = "", status = "" } = {}) {
     ensureAppwriteConfigured();
+    const queries = [
+      Query.equal("enabled", true),
+      Query.orderDesc("$createdAt"),
+      Query.limit(200),
+    ];
+
+    // Optional owner filter for explicit per-user analysis screens.
+    if (ownerUserId) queries.push(Query.equal("ownerUserId", ownerUserId));
+    if (status) queries.push(Query.equal("status", status));
+
     return databases.listDocuments({
       databaseId: env.appwrite.databaseId,
       collectionId: env.appwrite.collections.properties,
-      queries: [
-        Query.equal("ownerUserId", userId),
-        Query.orderDesc("$createdAt"),
-        Query.limit(200),
-      ],
+      queries,
     });
   },
 
@@ -160,22 +150,18 @@ export const propertiesService = {
       collectionId: env.appwrite.collections.properties,
       documentId: ID.unique(),
       data,
-      permissions: buildPropertyPermissions(userId, normalized.status),
     });
   },
 
-  async update(propertyId, userId, payload) {
+  async update(propertyId, _userId, payload) {
     ensureAppwriteConfigured();
     const normalized = normalizePropertyInput(payload);
-    const current = await this.getById(propertyId);
-    const nextStatus = normalized.status || current.status;
 
     return databases.updateDocument({
       databaseId: env.appwrite.databaseId,
       collectionId: env.appwrite.collections.properties,
       documentId: propertyId,
       data: normalized,
-      permissions: buildPropertyPermissions(userId, nextStatus),
     });
   },
 

@@ -78,6 +78,9 @@ export default defineConfig(({ mode }) => {
   );
 
   return {
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
     plugins: [
       react(),
       tailwindcss(),

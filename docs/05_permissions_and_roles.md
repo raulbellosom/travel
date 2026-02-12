@@ -25,6 +25,7 @@ incluyendo:
 2. **Least privilege**: staff con acceso minimo.
 3. **Backend first**: frontend solo mejora UX, no seguridad.
 4. **Audit by default**: acciones criticas siempre en `activity_logs`.
+5. **Catalogo compartido por instancia**: en modulos internos, la visibilidad se define por rol/scope, no por `ownerUserId/propertyOwnerId`.
 
 ---
 
@@ -107,12 +108,14 @@ Regla:
 
 - Publico puede leer solo contenido publicado.
 - Owner y staff autorizado pueden crear/editar/eliminar.
+- `ownerUserId` identifica responsable operativo del registro, no frontera de acceso interno por usuario.
 - Toda publicacion/despublicacion se audita.
 
 ## 5.3 leads
 
 - Creacion publica via Function (`create-lead-public`).
 - Lectura y gestion: owner + staff con scope de leads.
+- `propertyOwnerId` se conserva para trazabilidad/analitica y no debe usarse como filtro obligatorio de visibilidad interna.
 - Nunca publico.
 
 ## 5.4 reservations
@@ -120,6 +123,7 @@ Regla:
 - Creacion autenticada via Function (`create-reservation-public`).
 - Requiere `client` con email verificado.
 - Lectura/gestion: owner + staff autorizado.
+- `propertyOwnerId` se conserva para trazabilidad/analitica y no debe usarse como filtro obligatorio de visibilidad interna.
 - Cliente solo puede consultar su propia reserva.
 - Cambios de estado se registran en `activity_logs`.
 

@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { reviewsService } from "../services/reviewsService";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
+import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 
 const formatDate = (value, locale) => {
   if (!value) return "-";
@@ -64,7 +65,7 @@ const MyReviews = () => {
         setPropertyNames(Object.fromEntries(entries));
       } catch (err) {
         if (!mounted) return;
-        setError(getErrorMessage(err, t("myReviewsPage.errors.load")));
+        setError(getErrorMessage(err, i18n.t("myReviewsPage.errors.load")));
       } finally {
         if (mounted) {
           setLoading(false);
@@ -76,7 +77,7 @@ const MyReviews = () => {
     return () => {
       mounted = false;
     };
-  }, [t, user?.$id]);
+  }, [i18n, user?.$id]);
 
   const averageRating = useMemo(() => {
     if (reviews.length === 0) return 0;
@@ -121,9 +122,11 @@ const MyReviews = () => {
       ) : null}
 
       {!loading && !error && reviews.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          {t("myReviewsPage.empty")}
-        </div>
+        <EmptyStatePanel
+          icon={MessageSquareText}
+          title={t("myReviewsPage.empty")}
+          description={t("myReviewsPage.subtitle")}
+        />
       ) : null}
 
       {!loading && !error && reviews.length > 0 ? (

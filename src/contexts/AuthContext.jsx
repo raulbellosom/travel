@@ -113,6 +113,9 @@ export function AuthProvider({ children }) {
       email,
       password,
     });
+    const isCreateProfileFlowConfigured = Boolean(
+      env.appwrite.functions.userCreateProfile && env.appwrite.functions.emailVerification
+    );
 
     let setupSessionCreated = false;
     try {
@@ -150,10 +153,14 @@ export function AuthProvider({ children }) {
         }
       }
 
-      await authService.sendVerificationEmail({
-        userId: nextUser.$id,
-        email: nextUser.email,
-      });
+      // user-create-profile (trigger users.*.create) already dispatches email-verification.
+      // Avoid duplicate verification emails when both functions are configured.
+      if (!isCreateProfileFlowConfigured) {
+        await authService.sendVerificationEmail({
+          userId: nextUser.$id,
+          email: nextUser.email,
+        });
+      }
     } catch (error) {
       const code = Number(error?.code);
       // Evita romper el registro si el backend ya envio el correo por trigger.

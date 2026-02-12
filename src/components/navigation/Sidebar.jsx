@@ -1,125 +1,258 @@
-﻿import { Link, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Home, List, User, Settings, Inbox, Users, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  Home,
+  Inbox,
+  List,
+  MessageSquareText,
+  Settings,
+  ShieldAlert,
+  Sparkles,
+  Users,
+  X,
+} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import BrandLogo from "../common/BrandLogo";
-import {
-  INTERNAL_ROUTES,
-} from "../../utils/internalRoutes";
+import { INTERNAL_ROUTES } from "../../utils/internalRoutes";
+import { hasScope } from "../../utils/roles";
 
-const Sidebar = ({ isOpen, onClose }) => {
+const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
+  const MotionAside = motion.aside;
+  const MotionButton = motion.button;
+  const MotionSpan = motion.span;
   const { t } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
+  const sidebarRef = useRef(null);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth >= 1024;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const handleResize = () => {
+      setIsDesktopViewport(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  const isDesktopCollapsed = Boolean(isCollapsed);
 
   const navigation = [
     { name: t("sidebar.overview"), href: INTERNAL_ROUTES.dashboard, icon: Home },
-    { name: t("sidebar.listings"), href: INTERNAL_ROUTES.myProperties, icon: List },
-    { name: t("sidebar.leads"), href: INTERNAL_ROUTES.leads, icon: Inbox },
-    ...(user?.role === "owner"
-      ? [{ name: t("sidebar.clients", { defaultValue: "Clientes" }), href: INTERNAL_ROUTES.clients, icon: Users }]
+    ...(hasScope(user, "properties.read")
+      ? [{ name: t("sidebar.listings"), href: INTERNAL_ROUTES.myProperties, icon: List }]
+      : []),
+    ...(hasScope(user, "leads.read")
+      ? [{ name: t("sidebar.leads"), href: INTERNAL_ROUTES.leads, icon: Inbox }]
+      : []),
+    ...(hasScope(user, "reservations.read")
+      ? [{ name: t("sidebar.reservations"), href: INTERNAL_ROUTES.reservations, icon: CalendarDays }]
+      : []),
+    ...(hasScope(user, "payments.read")
+      ? [{ name: t("sidebar.payments"), href: INTERNAL_ROUTES.payments, icon: CreditCard }]
+      : []),
+    ...(hasScope(user, "reviews.moderate")
+      ? [{ name: t("sidebar.reviews"), href: INTERNAL_ROUTES.reviews, icon: MessageSquareText }]
       : []),
     ...(user?.role === "owner"
-      ? [{ name: t("sidebar.team", { defaultValue: "Equipo" }), href: INTERNAL_ROUTES.team, icon: Users }]
+      ? [{ name: t("sidebar.clients"), href: INTERNAL_ROUTES.clients, icon: Users }]
       : []),
-    { name: t("sidebar.profile"), href: "/perfil", icon: User },
-    {
-      name: t("sidebar.settings"),
-      href: INTERNAL_ROUTES.settings,
-      icon: Settings,
-    },
+    ...(hasScope(user, "staff.manage")
+      ? [{ name: t("sidebar.team"), href: INTERNAL_ROUTES.team, icon: Users }]
+      : []),
+    ...(user?.role === "root"
+      ? [
+          {
+            name: t("sidebar.rootActivity"),
+            href: INTERNAL_ROUTES.rootActivity,
+            icon: ShieldAlert,
+          },
+          {
+            name: t("sidebar.rootAmenities"),
+            href: INTERNAL_ROUTES.rootAmenities,
+            icon: Sparkles,
+          },
+        ]
+      : []),
+    { name: t("sidebar.settings"), href: INTERNAL_ROUTES.settings, icon: Settings },
   ];
 
   const isActive = (href) => {
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
+  const handleItemMouseEnter = (event, name) => {
+    if (!isDesktopCollapsed) return;
+    const itemRect = event.currentTarget.getBoundingClientRect();
+    const sidebarRect = sidebarRef.current?.getBoundingClientRect();
+    const sidebarTop = sidebarRect?.top ?? 0;
+    const top = itemRect.top - sidebarTop + itemRect.height / 2;
+    setHoveredItem({ name, top });
+  };
+
+  const handleItemMouseLeave = () => {
+    setHoveredItem(null);
+  };
+
+  const desktopWidthClass = isDesktopCollapsed ? "lg:w-24" : "lg:w-72";
+  const textCollapseClass = isDesktopCollapsed
+    ? "lg:max-w-0 lg:opacity-0"
+    : "lg:max-w-[220px] lg:opacity-100";
+
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-75 lg:hidden z-40"
-          onClick={onClose}
-        />
-      )}
+      <AnimatePresence>
+        {isOpen ? (
+          <MotionButton
+            type="button"
+            aria-label={t("common.close")}
+            className="fixed inset-0 z-[75] bg-slate-950/60 backdrop-blur-[1px] lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+          />
+        ) : null}
+      </AnimatePresence>
 
-      <div
-        className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
-        transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-      `}
+      <MotionAside
+        ref={sidebarRef}
+        initial={false}
+        animate={{ x: isDesktopViewport || isOpen ? 0 : "-100%" }}
+        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        className={`fixed inset-y-0 left-0 z-[80] flex h-dvh w-72 flex-col overflow-visible border-r border-slate-200 bg-white/95 shadow-2xl backdrop-blur transition-[width] duration-300 dark:border-slate-800/80 dark:bg-[radial-gradient(circle_at_0%_0%,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_100%_0%,rgba(16,185,129,0.12),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(59,130,246,0.08),transparent_38%),linear-gradient(135deg,rgba(2,6,23,0.99)_0%,rgba(7,18,46,0.97)_45%,rgba(2,6,23,0.99)_100%)] lg:z-40 ${desktopWidthClass}`}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2">
+        <div className="flex h-[4.5rem] items-center border-b border-slate-200 bg-gradient-to-r from-slate-50 via-cyan-50/70 to-sky-50/80 px-4 dark:border-slate-800/80 dark:bg-none dark:from-transparent dark:via-transparent dark:to-transparent">
+          <Link
+            to={INTERNAL_ROUTES.dashboard}
+            onClick={onClose}
+            className="grid min-w-0 flex-1 grid-cols-[2rem_minmax(0,1fr)] items-center gap-2"
+          >
             <BrandLogo size="sm" mode="adaptive" alt={t("navbar.brand")} className="rounded-lg" />
-            <div className="leading-tight">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("navbar.brand")}</p>
-              <p className="text-xs text-indigo-600 dark:text-indigo-400">{t("sidebar.dashboardTitle")}</p>
+            <div className="overflow-hidden">
+              <div
+                className={`max-w-[220px] overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ${textCollapseClass}`}
+              >
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {t("navbar.brand")}
+                </p>
+                <p className="truncate text-xs text-cyan-600 dark:text-cyan-400">
+                  {t("sidebar.dashboardTitle")}
+                </p>
+              </div>
             </div>
-          </div>
+          </Link>
+
           <button
             onClick={onClose}
-            className="lg:hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="ml-2 text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 lg:hidden"
             aria-label={t("common.close")}
           >
-            <X size={24} />
+            <X size={22} />
           </button>
         </div>
 
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {user?.name || t("sidebar.defaultUser")}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {user?.email}
-              </p>
-            </div>
+        <nav className="mt-3 flex-1 overflow-y-auto px-2 pb-4">
+          <div className="px-2 pb-2">
+            <p
+              className={`max-w-[220px] overflow-hidden whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-slate-500 transition-[max-width,opacity] duration-300 dark:text-slate-400 ${textCollapseClass}`}
+            >
+              {t("sidebar.navigation")}
+            </p>
           </div>
-        </div>
 
-        <nav className="mt-6 px-3">
           <div className="space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.href);
+
               return (
                 <Link
-                  key={item.name}
+                  key={item.href}
                   to={item.href}
-                  onClick={() => onClose()}
-                  className={`
-                    group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
-                    ${
-                      isActive(item.href)
-                        ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
-                    }
-                  `}
+                  onClick={onClose}
+                  onMouseEnter={(event) => handleItemMouseEnter(event, item.name)}
+                  onMouseLeave={handleItemMouseLeave}
+                  onFocus={(event) => handleItemMouseEnter(event, item.name)}
+                  onBlur={handleItemMouseLeave}
+                  className={`group relative grid min-h-11 grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 rounded-xl px-3 transition-all duration-200 ${
+                    active
+                      ? "bg-cyan-50 text-cyan-700 shadow-sm dark:bg-cyan-900/25 dark:text-cyan-200"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  }`}
                 >
                   <Icon
-                    className={`
-                      mr-3 flex-shrink-0 h-5 w-5
-                      ${
-                        isActive(item.href)
-                          ? "text-indigo-600 dark:text-indigo-400"
-                          : "text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300"
-                      }
-                    `}
+                    className={`h-5 w-5 ${
+                      active
+                        ? "text-cyan-600 dark:text-cyan-300"
+                        : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200"
+                    }`}
                   />
-                  {item.name}
+
+                  <span
+                    className={`max-w-[200px] overflow-hidden whitespace-nowrap text-sm font-medium transition-[max-width,opacity] duration-300 ${textCollapseClass}`}
+                  >
+                    {item.name}
+                  </span>
+
+                  {active ? (
+                    <MotionSpan
+                      layoutId="sidebar-active-indicator"
+                      className="absolute right-2 hidden h-1.5 w-1.5 rounded-full bg-cyan-500 lg:block"
+                    />
+                  ) : null}
                 </Link>
               );
             })}
           </div>
         </nav>
-      </div>
+
+        <button
+          onClick={onToggleCollapse}
+          className="hidden h-14 w-full grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 border-t border-slate-200 bg-gradient-to-r from-cyan-50 via-sky-50 to-cyan-100 px-5 text-sm font-semibold text-slate-700 transition hover:from-cyan-100 hover:via-sky-100 hover:to-cyan-200 dark:border-slate-800/80 dark:bg-[radial-gradient(circle_at_0%_100%,rgba(34,211,238,0.12),transparent_34%),radial-gradient(circle_at_100%_0%,rgba(16,185,129,0.1),transparent_36%),linear-gradient(135deg,rgba(10,23,53,0.92)_0%,rgba(15,30,63,0.9)_45%,rgba(10,23,53,0.92)_100%)] dark:text-slate-200 dark:hover:bg-[radial-gradient(circle_at_0%_100%,rgba(34,211,238,0.16),transparent_34%),radial-gradient(circle_at_100%_0%,rgba(16,185,129,0.14),transparent_36%),linear-gradient(135deg,rgba(13,28,62,0.95)_0%,rgba(21,39,78,0.93)_45%,rgba(13,28,62,0.95)_100%)] lg:grid"
+          aria-label={isDesktopCollapsed ? t("sidebar.expand") : t("sidebar.collapse")}
+        >
+          {isDesktopCollapsed ? (
+            <ChevronRight size={18} className="text-slate-600 dark:text-slate-300" />
+          ) : (
+            <ChevronLeft size={18} className="text-slate-600 dark:text-slate-300" />
+          )}
+          <span
+            className={`max-w-[160px] overflow-hidden whitespace-nowrap text-left transition-[max-width,opacity] duration-300 ${textCollapseClass}`}
+          >
+            {isDesktopCollapsed ? t("sidebar.expand") : t("sidebar.collapse")}
+          </span>
+        </button>
+
+        <AnimatePresence>
+          {isDesktopCollapsed && hoveredItem ? (
+            <MotionSpan
+              initial={{ opacity: 0, x: 6, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 6, scale: 0.98 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="pointer-events-none absolute left-[calc(100%+8px)] z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 lg:block"
+              style={{ top: hoveredItem.top }}
+            >
+              {hoveredItem.name}
+            </MotionSpan>
+          ) : null}
+        </AnimatePresence>
+      </MotionAside>
     </>
   );
 };

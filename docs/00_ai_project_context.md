@@ -127,7 +127,7 @@ Debe existir `activity_logs` con minimo:
 - before/after
 - requestId
 
-Debe existir panel oculto root (`/__root/activity`) para consulta.
+Debe existir panel root interno (`/app/activity`) para consulta.
 
 ---
 
