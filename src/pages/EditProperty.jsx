@@ -95,6 +95,8 @@ const EditProperty = () => {
       ) : null}
 
       <PropertyForm
+        mode="edit"
+        propertyId={id}
         initialValues={initialValues}
         loading={saving}
         amenitiesOptions={amenities}

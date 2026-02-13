@@ -6,38 +6,58 @@ import {
   Query,
   storage,
 } from "../api/appwriteClient";
+import { normalizeSlug } from "../utils/slug";
 
-const normalizePropertyInput = (input = {}) => {
-  return {
-    slug: input.slug,
-    title: input.title?.trim(),
-    description: input.description?.trim(),
-    propertyType: input.propertyType,
-    operationType: input.operationType,
-    price: Number(input.price || 0),
-    currency: input.currency || "MXN",
-    bedrooms:
-      input.bedrooms === "" || input.bedrooms === null
-        ? 0
-        : Number(input.bedrooms),
-    bathrooms:
-      input.bathrooms === "" || input.bathrooms === null
-        ? 0
-        : Number(input.bathrooms),
-    maxGuests:
-      input.maxGuests === "" || input.maxGuests === null
-        ? 1
-        : Number(input.maxGuests),
-    city: input.city?.trim() || "",
-    state: input.state?.trim() || "",
-    country: (input.country || "MX").toUpperCase(),
-    galleryImageIds: Array.isArray(input.galleryImageIds)
-      ? input.galleryImageIds
-      : [],
-    status: input.status || "draft",
-    featured: Boolean(input.featured),
-    enabled: input.enabled ?? true,
+const hasOwn = (input, key) =>
+  Object.prototype.hasOwnProperty.call(input || {}, key);
+
+const toNumber = (value, fallback = 0) => {
+  if (value === "" || value === null || value === undefined) return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeOperationType = (value = "") => {
+  if (value === "vacationRental") return "vacation_rental";
+  return value;
+};
+
+const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
+  const source = input || {};
+  const data = {};
+  const assign = (key, value) => {
+    if (!forUpdate || hasOwn(source, key)) {
+      data[key] = value;
+    }
   };
+
+  assign("slug", normalizeSlug(source.slug));
+  assign("title", String(source.title || "").trim());
+  assign("description", String(source.description || "").trim());
+  assign("propertyType", String(source.propertyType || "house").trim());
+  assign(
+    "operationType",
+    normalizeOperationType(String(source.operationType || "sale").trim())
+  );
+  assign("price", toNumber(source.price, 0));
+  assign("currency", String(source.currency || "MXN").trim().toUpperCase());
+  assign("bedrooms", toNumber(source.bedrooms, 0));
+  assign("bathrooms", toNumber(source.bathrooms, 0));
+  assign("maxGuests", toNumber(source.maxGuests, 1));
+  assign("city", String(source.city || "").trim());
+  assign("state", String(source.state || "").trim());
+  assign("country", String(source.country || "MX").trim().toUpperCase());
+  assign("status", String(source.status || "draft").trim());
+  assign("featured", Boolean(source.featured));
+  assign("enabled", source.enabled ?? true);
+
+  if (!forUpdate || hasOwn(source, "galleryImageIds")) {
+    data.galleryImageIds = Array.isArray(source.galleryImageIds)
+      ? source.galleryImageIds.filter(Boolean)
+      : [];
+  }
+
+  return data;
 };
 
 const toPreviewUrl = (fileId) => {
@@ -50,6 +70,34 @@ const toPreviewUrl = (fileId) => {
 };
 
 export const propertiesService = {
+  async checkSlugAvailability(slug, { excludePropertyId = "" } = {}) {
+    ensureAppwriteConfigured();
+    const normalizedSlug = normalizeSlug(slug);
+    if (!normalizedSlug) {
+      return {
+        slug: "",
+        available: false,
+        conflictId: "",
+      };
+    }
+
+    const response = await databases.listDocuments({
+      databaseId: env.appwrite.databaseId,
+      collectionId: env.appwrite.collections.properties,
+      queries: [Query.equal("slug", normalizedSlug), Query.limit(5)],
+    });
+
+    const conflicts = (response.documents || []).filter(
+      (document) => document.$id !== excludePropertyId
+    );
+
+    return {
+      slug: normalizedSlug,
+      available: conflicts.length === 0,
+      conflictId: conflicts[0]?.$id || "",
+    };
+  },
+
   async listPublic({ page = 1, limit = 20, filters = {} } = {}) {
     ensureAppwriteConfigured();
 
@@ -136,7 +184,7 @@ export const propertiesService = {
 
   async create(userId, payload) {
     ensureAppwriteConfigured();
-    const normalized = normalizePropertyInput(payload);
+    const normalized = normalizePropertyInput(payload, { forUpdate: false });
     const data = {
       ...normalized,
       ownerUserId: userId,
@@ -155,7 +203,7 @@ export const propertiesService = {
 
   async update(propertyId, _userId, payload) {
     ensureAppwriteConfigured();
-    const normalized = normalizePropertyInput(payload);
+    const normalized = normalizePropertyInput(payload, { forUpdate: true });
 
     return databases.updateDocument({
       databaseId: env.appwrite.databaseId,

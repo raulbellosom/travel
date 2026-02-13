@@ -768,7 +768,8 @@
   "propertyStatus": {
     "draft": "Borrador",
     "published": "Publicada",
-    "inactive": "Inactiva"
+    "inactive": "Inactiva",
+    "archived": "Archivada"
   },
   "leadStatus": {
     "new": "Nuevo",
@@ -930,6 +931,18 @@
       "features": "Caracteristicas",
       "amenities": "Amenidades"
     },
+    "mode": {
+      "create": "Wizard de creacion",
+      "edit": "Edicion por secciones"
+    },
+    "wizard": {
+      "progress": "Paso {{current}} de {{total}}",
+      "hint": "Completa cada paso para crear una propiedad con validaciones en tiempo real."
+    },
+    "tabs": {
+      "helper": "Puedes saltar entre secciones y guardar cuando termines.",
+      "hint": "En edicion puedes actualizar solo la seccion necesaria y guardar al final."
+    },
     "fields": {
       "slug": "Slug",
       "title": "Titulo",
@@ -950,6 +963,7 @@
       "postalCode": "Codigo postal",
       "bedrooms": "Recamaras",
       "bathrooms": "Banos",
+      "maxGuests": "Huespedes maximos",
       "parkingSpaces": "Estacionamientos",
       "totalArea": "Area total",
       "builtArea": "Area construida",
@@ -958,16 +972,57 @@
       "latitude": "Latitud",
       "longitude": "Longitud"
     },
+    "helper": {
+      "description": "Minimo 20 caracteres. Explica valor diferencial, ubicacion y beneficios."
+    },
     "actions": {
       "saving": "Guardando...",
-      "saveProperty": "Guardar propiedad"
+      "saveProperty": "Guardar propiedad",
+      "regenerateSlug": "Regenerar",
+      "previous": "Anterior",
+      "next": "Siguiente"
     },
     "amenities": {
       "loading": "Cargando amenidades...",
       "empty": "No hay amenidades activas disponibles.",
       "selected": "{{count}} seleccionadas",
       "selectedLabel": "Activa",
-      "selectLabel": "Elegir"
+      "selectLabel": "Elegir",
+      "searchLabel": "Buscar y agregar amenidad",
+      "searchPlaceholder": "Escribe para buscar amenidades...",
+      "searchEmpty": "Sin resultados para esa amenidad",
+      "noneSelected": "Aun no has agregado amenidades."
+    },
+    "slugStatus": {
+      "idle": "El slug se usa para la URL publica de la propiedad.",
+      "checking": "Validando disponibilidad del slug...",
+      "available": "Slug disponible.",
+      "unchanged": "Slug sin cambios.",
+      "taken": "Este slug ya esta en uso.",
+      "invalid": "Slug invalido. Usa letras, numeros y guiones.",
+      "error": "No se pudo validar el slug en este momento."
+    },
+    "validation": {
+      "slugRequired": "El slug es obligatorio.",
+      "slugInvalid": "El slug debe tener formato valido y maximo 150 caracteres.",
+      "slugTaken": "Este slug ya existe. Elige uno diferente.",
+      "titleRequired": "El titulo es obligatorio.",
+      "titleMin": "El titulo debe tener al menos 3 caracteres.",
+      "descriptionRequired": "La descripcion es obligatoria.",
+      "descriptionMin": "La descripcion debe tener al menos 20 caracteres.",
+      "propertyTypeRequired": "Selecciona un tipo de propiedad.",
+      "operationTypeRequired": "Selecciona un tipo de operacion.",
+      "priceRequired": "Ingresa un precio valido.",
+      "priceMin": "El precio no puede ser negativo.",
+      "countryRequired": "Selecciona un pais valido.",
+      "stateRequired": "Selecciona un estado valido.",
+      "cityRequired": "Selecciona una ciudad valida.",
+      "bedroomsMin": "Las recamaras no pueden ser negativas.",
+      "bathroomsMin": "Los banos no pueden ser negativos.",
+      "maxGuestsRequired": "Ingresa el maximo de huespedes.",
+      "maxGuestsRange": "El maximo de huespedes debe estar entre 1 y 500.",
+      "errorSummary": "{{count}} campos requieren atencion.",
+      "ready": "Formulario listo para guardar."
     },
     "locationCombobox": {
       "countryPlaceholder": "Escribe para buscar pais...",
@@ -999,7 +1054,8 @@
       "status": {
         "draft": "Borrador",
         "published": "Publicada",
-        "inactive": "Inactiva"
+        "inactive": "Inactiva",
+        "archived": "Archivada"
       },
       "pricePer": {
         "total": "Total",

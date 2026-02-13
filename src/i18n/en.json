@@ -768,7 +768,8 @@
   "propertyStatus": {
     "draft": "Draft",
     "published": "Published",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "archived": "Archived"
   },
   "leadStatus": {
     "new": "New",
@@ -930,6 +931,18 @@
       "features": "Features",
       "amenities": "Amenities"
     },
+    "mode": {
+      "create": "Creation wizard",
+      "edit": "Section editing"
+    },
+    "wizard": {
+      "progress": "Step {{current}} of {{total}}",
+      "hint": "Complete each step to create a property with real-time validation."
+    },
+    "tabs": {
+      "helper": "You can switch between sections and save when finished.",
+      "hint": "In edit mode you can update only the needed section and save at the end."
+    },
     "fields": {
       "slug": "Slug",
       "title": "Title",
@@ -950,6 +963,7 @@
       "postalCode": "Postal code",
       "bedrooms": "Bedrooms",
       "bathrooms": "Bathrooms",
+      "maxGuests": "Max guests",
       "parkingSpaces": "Parking spaces",
       "totalArea": "Total area",
       "builtArea": "Built area",
@@ -958,16 +972,57 @@
       "latitude": "Latitude",
       "longitude": "Longitude"
     },
+    "helper": {
+      "description": "At least 20 characters. Explain value, location, and key highlights."
+    },
     "actions": {
       "saving": "Saving...",
-      "saveProperty": "Save property"
+      "saveProperty": "Save property",
+      "regenerateSlug": "Regenerate",
+      "previous": "Previous",
+      "next": "Next"
     },
     "amenities": {
       "loading": "Loading amenities...",
       "empty": "There are no active amenities available.",
       "selected": "{{count}} selected",
       "selectedLabel": "Selected",
-      "selectLabel": "Select"
+      "selectLabel": "Select",
+      "searchLabel": "Search and add amenity",
+      "searchPlaceholder": "Type to search amenities...",
+      "searchEmpty": "No amenities found",
+      "noneSelected": "No amenities selected yet."
+    },
+    "slugStatus": {
+      "idle": "Slug is used for the public property URL.",
+      "checking": "Checking slug availability...",
+      "available": "Slug available.",
+      "unchanged": "Slug unchanged.",
+      "taken": "This slug is already in use.",
+      "invalid": "Invalid slug. Use letters, numbers, and dashes.",
+      "error": "Could not validate slug right now."
+    },
+    "validation": {
+      "slugRequired": "Slug is required.",
+      "slugInvalid": "Slug must be valid and up to 150 characters.",
+      "slugTaken": "This slug already exists. Choose a different one.",
+      "titleRequired": "Title is required.",
+      "titleMin": "Title must be at least 3 characters.",
+      "descriptionRequired": "Description is required.",
+      "descriptionMin": "Description must be at least 20 characters.",
+      "propertyTypeRequired": "Select a property type.",
+      "operationTypeRequired": "Select an operation type.",
+      "priceRequired": "Enter a valid price.",
+      "priceMin": "Price cannot be negative.",
+      "countryRequired": "Select a valid country.",
+      "stateRequired": "Select a valid state.",
+      "cityRequired": "Select a valid city.",
+      "bedroomsMin": "Bedrooms cannot be negative.",
+      "bathroomsMin": "Bathrooms cannot be negative.",
+      "maxGuestsRequired": "Enter maximum guests.",
+      "maxGuestsRange": "Maximum guests must be between 1 and 500.",
+      "errorSummary": "{{count}} fields need attention.",
+      "ready": "Form is ready to save."
     },
     "locationCombobox": {
       "countryPlaceholder": "Type to search country...",
@@ -999,7 +1054,8 @@
       "status": {
         "draft": "Draft",
         "published": "Published",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "archived": "Archived"
       },
       "pricePer": {
         "total": "Total",
@@ -1308,7 +1364,8 @@
     "metrics": {
       "total": "Total members",
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "archived": "Archived"
     },
     "actions": {
       "create": "Create member",

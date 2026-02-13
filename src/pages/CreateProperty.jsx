@@ -75,6 +75,7 @@ const CreateProperty = () => {
       ) : null}
 
       <PropertyForm
+        mode="create"
         loading={loading}
         amenitiesOptions={amenities}
         amenitiesLoading={amenitiesLoading}
