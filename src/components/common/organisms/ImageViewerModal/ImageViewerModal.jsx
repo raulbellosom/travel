@@ -434,7 +434,7 @@ export function ImageViewerModal({
                 <ChevronRight size={24} className="sm:w-8 sm:h-8" />
               </button>
             </div>
-          )}          
+          )}
 
           {/* Toolbar */}
           <div className="flex flex-col items-center gap-3 pointer-events-auto">
@@ -487,15 +487,17 @@ export function ImageViewerModal({
                 onClick={() => rotateMv.set(rotateMv.get() + 90)}
                 label="Rotar 90°"
               />
-              <ToolButton 
-                icon={RotateCcw} 
-                onClick={resetView} 
-                label="Restablecer Vista" 
+              <ToolButton
+                icon={RotateCcw}
+                onClick={resetView}
+                label="Restablecer Vista"
               />
               <ToolButton
                 icon={isFullscreen ? Minimize2 : Maximize2}
                 onClick={toggleFullscreen}
-                label={isFullscreen ? "Salir Pantalla Completa" : "Pantalla Completa"}
+                label={
+                  isFullscreen ? "Salir Pantalla Completa" : "Pantalla Completa"
+                }
               />
               {showDownload && (
                 <>
