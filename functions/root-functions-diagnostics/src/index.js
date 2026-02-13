@@ -463,6 +463,17 @@ const listVariableKeys = (variablesResponse) => {
   ).sort();
 };
 
+const getRuntimeEnvKeys = () =>
+  Array.from(
+    new Set(
+      Object.keys(process.env || {})
+        .map((key) => normalize(key, 120))
+        .filter(Boolean)
+        .map((key) => key.toUpperCase())
+        .filter((key) => hasValue(process.env[key])),
+    ),
+  ).sort();
+
 const buildResultSummary = (results) => {
   const summary = {
     total: results.length,
@@ -504,6 +515,7 @@ const buildFunctionDiagnostics = async ({
   descriptor,
   includeSmoke,
   selfFunctionId,
+  runtimeEnvKeys,
 }) => {
   const baseResult = {
     key: descriptor.key,
@@ -569,16 +581,28 @@ const buildFunctionDiagnostics = async ({
       functionsService,
       descriptor.functionId,
     );
-    const variableKeys = listVariableKeys(variablesResponse);
-    const envCheck = checkEnv(variableKeys, descriptor);
+    const functionVariableKeys = listVariableKeys(variablesResponse);
+    const mergedVariableKeys = Array.from(
+      new Set([...(runtimeEnvKeys || []), ...functionVariableKeys]),
+    ).sort();
+    const envCheck = checkEnv(mergedVariableKeys, descriptor);
     baseResult.env = {
       status: envCheck.status,
-      availableKeys: variableKeys,
+      availableKeys: mergedVariableKeys,
       missingAuthGroups: envCheck.missingAuthGroups,
       missingRequired: envCheck.missingRequired,
       missingRecommended: envCheck.missingRecommended,
     };
   } catch (err) {
+    const fallbackKeys = Array.isArray(runtimeEnvKeys) ? runtimeEnvKeys : [];
+    const envCheck = checkEnv(fallbackKeys, descriptor);
+    baseResult.env = {
+      status: envCheck.status,
+      availableKeys: fallbackKeys,
+      missingAuthGroups: envCheck.missingAuthGroups,
+      missingRequired: envCheck.missingRequired,
+      missingRecommended: envCheck.missingRecommended,
+    };
     baseResult.errors.push(summarizeError(err));
   }
 
@@ -710,6 +734,7 @@ export default async ({ req, res, error }) => {
     : [];
 
   const catalogWithIds = withFunctionIds();
+  const runtimeEnvKeys = getRuntimeEnvKeys();
   const selectedCatalog =
     requestedKeys.length > 0
       ? catalogWithIds.filter((item) => requestedKeys.includes(item.key))
@@ -724,6 +749,7 @@ export default async ({ req, res, error }) => {
         descriptor,
         includeSmoke,
         selfFunctionId: config.selfFunctionId,
+        runtimeEnvKeys,
       });
       results.push(item);
     }
@@ -738,6 +764,7 @@ export default async ({ req, res, error }) => {
         generatedAt: new Date().toISOString(),
         includeSmoke,
         actorUserId,
+        runtimeEnvKeysCount: runtimeEnvKeys.length,
         summary,
         results,
       },

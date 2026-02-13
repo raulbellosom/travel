@@ -25,3 +25,10 @@ Root-only diagnostics for Appwrite Functions.
 ```
 
 `includeSmoke: true` runs non-destructive smoke executions.
+
+## Env Validation Source
+
+The diagnostics engine validates env keys using the union of:
+
+- Function-level variables (`Functions.listVariables`).
+- Runtime globals visible in `process.env` (project/global env injected by Appwrite).
