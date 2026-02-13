@@ -1,14 +1,22 @@
 # reservation-created-notification
 
-Trigger function executed when a reservation is created.
+Function triggered after a reservation document is created.
 
-## Type
+## Execution Contract
 
-- Event trigger (`reservations.create`)
+- Type: Event Trigger Function.
+- Appwrite trigger: `databases.*.collections.reservations.documents.*.create`.
+- Method: no aplica (evento de Appwrite).
+- `execute` permission: `[]`.
+- Actor scope/role: no aplica.
+
+## Minimum API key scopes
+
+- `databases.read`
+- `databases.write`
 
 ## Behavior
 
 - Reads reservation document.
-- Emits structured log for notification dispatch.
-- Writes optional activity audit entry.
-- Placeholder for SMTP provider integration.
+- Emits structured notification log.
+- Writes optional audit entry in `activity_logs`.

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { Users } from "lucide-react";
 import { Select, TablePagination } from "../components/common";
 import { clientsService } from "../services/clientsService";
@@ -8,6 +9,7 @@ import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 
 const Clients = () => {
   const { t, i18n } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,12 +21,13 @@ const Clients = () => {
     truncated: false,
   });
   const [filters, setFilters] = useState({
-    search: "",
+    search: String(searchParams.get("search") || "").trim(),
     enabled: "all",
     createdFrom: "",
     createdTo: "",
     page: 1,
   });
+  const focusId = String(searchParams.get("focus") || "").trim();
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
 
@@ -57,6 +60,17 @@ const Clients = () => {
   useEffect(() => {
     loadClients();
   }, [loadClients]);
+
+  useEffect(() => {
+    const nextSearch = String(searchParams.get("search") || "").trim();
+    setFilters((prev) => (prev.search === nextSearch ? prev : { ...prev, search: nextSearch, page: 1 }));
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (loading || !focusId) return;
+    const row = document.getElementById(`client-${focusId}`);
+    row?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusId, items.length, loading]);
 
   const summary = useMemo(() => {
     return t("clientsPage.summary", {
@@ -171,9 +185,9 @@ const Clients = () => {
       ) : null}
 
       {!loading && items.length > 0 ? (
-        <div className="space-y-3">
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-            <table className="min-w-full text-left text-sm">
+        <div className="min-w-0 space-y-3">
+          <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3">{t("clientsPage.table.client", { defaultValue: "Cliente" })}</th>
@@ -186,8 +200,15 @@ const Clients = () => {
               <tbody>
                 {items.map((client) => {
                   const fullName = `${client.firstName || ""} ${client.lastName || ""}`.trim();
+                  const isFocused = Boolean(focusId) && client.$id === focusId;
                   return (
-                    <tr key={client.$id} className="border-t border-slate-200 dark:border-slate-700">
+                    <tr
+                      key={client.$id}
+                      id={`client-${client.$id}`}
+                      className={`border-t border-slate-200 dark:border-slate-700 ${
+                        isFocused ? "bg-cyan-50/70 dark:bg-cyan-900/20" : ""
+                      }`}
+                    >
                       <td className="px-4 py-3">
                         <p className="font-medium text-slate-900 dark:text-slate-100">
                           {fullName || t("clientsPage.table.noName", { defaultValue: "Sin nombre" })}

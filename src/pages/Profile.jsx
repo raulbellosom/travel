@@ -18,10 +18,9 @@ import { Select } from "../components/common";
 import { getErrorMessage } from "../utils/errors";
 import {
   formatPhoneForDisplay,
+  getOptionalPhonePairValidationCode,
   getCountryDialCodeOptions,
-  isValidPhoneCombination,
-  isValidPhoneDialCode,
-  isValidPhoneLocalNumber,
+  PHONE_VALIDATION_CODES,
   normalizePhoneDialCode,
   sanitizePhoneLocalNumber,
   splitE164Phone,
@@ -40,7 +39,15 @@ const PROFILE_EDIT_KEYS = [
   "whatsappNumber",
 ];
 
-const PREFERENCE_KEYS = ["theme", "locale"];
+const BASE_PREFERENCE_KEYS = ["theme", "locale"];
+const ROOT_BRAND_PREFERENCE_KEYS = [
+  "brandPrimaryColor",
+  "brandSecondaryColor",
+  "brandFontHeading",
+  "brandFontBody",
+];
+const BRAND_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
+const BRAND_FONT_MAX_LENGTH = 80;
 
 const MAX_AVATAR_SIZE_MB = 5;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
@@ -102,6 +109,10 @@ const buildProfileFormFromSources = ({ profile, user }) => {
 const buildPreferencesForm = (preferences) => ({
   theme: preferences?.theme || "system",
   locale: preferences?.locale || "es",
+  brandPrimaryColor: preferences?.brandPrimaryColor || "#0F172A",
+  brandSecondaryColor: preferences?.brandSecondaryColor || "#16A34A",
+  brandFontHeading: preferences?.brandFontHeading || "Poppins",
+  brandFontBody: preferences?.brandFontBody || "Inter",
 });
 
 const hasChanged = (current, initial, keys) =>
@@ -147,6 +158,14 @@ const Profile = ({ mode = "client" }) => {
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const isRootUser = String(user?.role || "").trim().toLowerCase() === "root";
+  const activePreferenceKeys = useMemo(
+    () =>
+      isRootUser
+        ? [...BASE_PREFERENCE_KEYS, ...ROOT_BRAND_PREFERENCE_KEYS]
+        : BASE_PREFERENCE_KEYS,
+    [isRootUser]
+  );
 
   const countryDialCodeOptions = useMemo(
     () => getCountryDialCodeOptions(i18n.language),
@@ -187,9 +206,72 @@ const Profile = ({ mode = "client" }) => {
     [profileForm, initialProfileForm]
   );
   const hasPreferencesChanges = useMemo(
-    () => hasChanged(preferencesForm, initialPreferencesForm, PREFERENCE_KEYS),
-    [preferencesForm, initialPreferencesForm]
+    () => hasChanged(preferencesForm, initialPreferencesForm, activePreferenceKeys),
+    [activePreferenceKeys, initialPreferencesForm, preferencesForm]
   );
+  const preferencesValidationMessage = useMemo(() => {
+    if (!isRootUser) return "";
+
+    const primaryColor = String(preferencesForm.brandPrimaryColor || "").trim();
+    const secondaryColor = String(preferencesForm.brandSecondaryColor || "").trim();
+    const headingFont = String(preferencesForm.brandFontHeading || "").trim();
+    const bodyFont = String(preferencesForm.brandFontBody || "").trim();
+
+    if (!BRAND_COLOR_REGEX.test(primaryColor)) {
+      return t("profilePage.errors.brandPrimaryColorInvalid");
+    }
+    if (!BRAND_COLOR_REGEX.test(secondaryColor)) {
+      return t("profilePage.errors.brandSecondaryColorInvalid");
+    }
+    if (!headingFont || headingFont.length > BRAND_FONT_MAX_LENGTH) {
+      return t("profilePage.errors.brandFontHeadingInvalid");
+    }
+    if (!bodyFont || bodyFont.length > BRAND_FONT_MAX_LENGTH) {
+      return t("profilePage.errors.brandFontBodyInvalid");
+    }
+
+    return "";
+  }, [
+    isRootUser,
+    preferencesForm.brandFontBody,
+    preferencesForm.brandFontHeading,
+    preferencesForm.brandPrimaryColor,
+    preferencesForm.brandSecondaryColor,
+    t,
+  ]);
+  const phoneValidationCode = useMemo(
+    () =>
+      getOptionalPhonePairValidationCode({
+        dialCode: profileForm.phoneCountryCode,
+        localNumber: profileForm.phone,
+      }),
+    [profileForm.phone, profileForm.phoneCountryCode]
+  );
+  const whatsappValidationCode = useMemo(
+    () =>
+      getOptionalPhonePairValidationCode({
+        dialCode: profileForm.whatsappCountryCode,
+        localNumber: profileForm.whatsappNumber,
+      }),
+    [profileForm.whatsappCountryCode, profileForm.whatsappNumber]
+  );
+  const phoneValidationMessage = useMemo(() => {
+    if (phoneValidationCode === PHONE_VALIDATION_CODES.NONE) return "";
+    if (phoneValidationCode === PHONE_VALIDATION_CODES.DIAL_CODE_REQUIRED) {
+      return t("profilePage.errors.phoneCountryCodeRequired");
+    }
+    return t("profilePage.errors.invalidPhone");
+  }, [phoneValidationCode, t]);
+  const whatsappValidationMessage = useMemo(() => {
+    if (whatsappValidationCode === PHONE_VALIDATION_CODES.NONE) return "";
+    if (whatsappValidationCode === PHONE_VALIDATION_CODES.DIAL_CODE_REQUIRED) {
+      return t("profilePage.errors.whatsappCountryCodeRequired");
+    }
+    return t("profilePage.errors.invalidWhatsapp");
+  }, [t, whatsappValidationCode]);
+  const hasProfileContactErrors =
+    phoneValidationCode !== PHONE_VALIDATION_CODES.NONE ||
+    whatsappValidationCode !== PHONE_VALIDATION_CODES.NONE;
 
   const onSaveProfile = async (event) => {
     event.preventDefault();
@@ -200,29 +282,14 @@ const Profile = ({ mode = "client" }) => {
     const whatsappNumber = sanitizePhoneLocalNumber(profileForm.whatsappNumber);
     const whatsappCountryCode = normalizePhoneDialCode(profileForm.whatsappCountryCode);
 
-    if (phone) {
-      if (
-        !isValidPhoneLocalNumber(phone) ||
-        !isValidPhoneDialCode(phoneCountryCode) ||
-        !isValidPhoneCombination({ dialCode: phoneCountryCode, localNumber: phone })
-      ) {
-        setError(t("profilePage.errors.invalidPhone"));
-        return;
-      }
+    if (phoneValidationCode !== PHONE_VALIDATION_CODES.NONE) {
+      setError(phoneValidationMessage || t("profilePage.errors.invalidPhone"));
+      return;
     }
 
-    if (whatsappNumber) {
-      if (
-        !isValidPhoneLocalNumber(whatsappNumber) ||
-        !isValidPhoneDialCode(whatsappCountryCode) ||
-        !isValidPhoneCombination({
-          dialCode: whatsappCountryCode,
-          localNumber: whatsappNumber,
-        })
-      ) {
-        setError(t("profilePage.errors.invalidWhatsapp"));
-        return;
-      }
+    if (whatsappValidationCode !== PHONE_VALIDATION_CODES.NONE) {
+      setError(whatsappValidationMessage || t("profilePage.errors.invalidWhatsapp"));
+      return;
     }
 
     const nextProfile = {
@@ -261,14 +328,32 @@ const Profile = ({ mode = "client" }) => {
   const onSavePreferences = async (event) => {
     event.preventDefault();
     if (!hasPreferencesChanges) return;
+    if (preferencesValidationMessage) {
+      setError(preferencesValidationMessage);
+      return;
+    }
+
+    const nextPreferencesPatch = {
+      theme: preferencesForm.theme,
+      locale: preferencesForm.locale,
+      ...(isRootUser
+        ? {
+            brandPrimaryColor: String(preferencesForm.brandPrimaryColor || "").trim(),
+            brandSecondaryColor: String(preferencesForm.brandSecondaryColor || "").trim(),
+            brandFontHeading: String(preferencesForm.brandFontHeading || "").trim(),
+            brandFontBody: String(preferencesForm.brandFontBody || "").trim(),
+          }
+        : {}),
+    };
 
     setSavingPreferences(true);
     setError("");
     setMessage("");
 
     try {
-      await updatePreferences(preferencesForm);
-      setInitialPreferencesForm(preferencesForm);
+      await updatePreferences(nextPreferencesPatch);
+      setPreferencesForm((prev) => ({ ...prev, ...nextPreferencesPatch }));
+      setInitialPreferencesForm((prev) => ({ ...prev, ...nextPreferencesPatch }));
       setMessage(t("profilePage.messages.preferencesSaved"));
     } catch (err) {
       setError(getErrorMessage(err, t("profilePage.errors.preferences")));
@@ -459,29 +544,34 @@ const Profile = ({ mode = "client" }) => {
         <div className="grid gap-1 text-sm">
           <span>{t("profilePage.fields.phone")}</span>
           {isEditingProfile ? (
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
-              <Combobox
-                options={countryDialCodeOptions}
-                value={profileForm.phoneCountryCode}
-                onChange={(value) =>
-                  setProfileForm((prev) => ({ ...prev, phoneCountryCode: value || "" }))
-                }
-                placeholder={t("profilePage.placeholders.phoneCountryCode")}
-                noResultsText={t("profilePage.placeholders.noCountryCodeResults")}
-                inputClassName={inputClass}
-              />
-              <input
-                value={profileForm.phone}
-                onChange={(event) =>
-                  setProfileForm((prev) => ({
-                    ...prev,
-                    phone: sanitizePhoneLocalNumber(event.target.value),
-                  }))
-                }
-                placeholder={t("profilePage.placeholders.phoneNumber")}
-                className={inputClass}
-              />
-            </div>
+            <>
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
+                <Combobox
+                  options={countryDialCodeOptions}
+                  value={profileForm.phoneCountryCode}
+                  onChange={(value) =>
+                    setProfileForm((prev) => ({ ...prev, phoneCountryCode: value || "" }))
+                  }
+                  placeholder={t("profilePage.placeholders.phoneCountryCode")}
+                  noResultsText={t("profilePage.placeholders.noCountryCodeResults")}
+                  inputClassName={inputClass}
+                />
+                <input
+                  value={profileForm.phone}
+                  onChange={(event) =>
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      phone: sanitizePhoneLocalNumber(event.target.value),
+                    }))
+                  }
+                  placeholder={t("profilePage.placeholders.phoneNumber")}
+                  className={inputClass}
+                />
+              </div>
+              {phoneValidationMessage ? (
+                <p className="text-xs text-red-600 dark:text-red-300">{phoneValidationMessage}</p>
+              ) : null}
+            </>
           ) : (
             <span className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
               {phoneDisplay || t("profilePage.view.empty")}
@@ -492,29 +582,36 @@ const Profile = ({ mode = "client" }) => {
         <div className="grid gap-1 text-sm">
           <span>{t("profilePage.fields.whatsappNumber")}</span>
           {isEditingProfile ? (
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
-              <Combobox
-                options={countryDialCodeOptions}
-                value={profileForm.whatsappCountryCode}
-                onChange={(value) =>
-                  setProfileForm((prev) => ({ ...prev, whatsappCountryCode: value || "" }))
-                }
-                placeholder={t("profilePage.placeholders.phoneCountryCode")}
-                noResultsText={t("profilePage.placeholders.noCountryCodeResults")}
-                inputClassName={inputClass}
-              />
-              <input
-                value={profileForm.whatsappNumber}
-                onChange={(event) =>
-                  setProfileForm((prev) => ({
-                    ...prev,
-                    whatsappNumber: sanitizePhoneLocalNumber(event.target.value),
-                  }))
-                }
-                placeholder={t("profilePage.placeholders.whatsappNumber")}
-                className={inputClass}
-              />
-            </div>
+            <>
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
+                <Combobox
+                  options={countryDialCodeOptions}
+                  value={profileForm.whatsappCountryCode}
+                  onChange={(value) =>
+                    setProfileForm((prev) => ({ ...prev, whatsappCountryCode: value || "" }))
+                  }
+                  placeholder={t("profilePage.placeholders.phoneCountryCode")}
+                  noResultsText={t("profilePage.placeholders.noCountryCodeResults")}
+                  inputClassName={inputClass}
+                />
+                <input
+                  value={profileForm.whatsappNumber}
+                  onChange={(event) =>
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      whatsappNumber: sanitizePhoneLocalNumber(event.target.value),
+                    }))
+                  }
+                  placeholder={t("profilePage.placeholders.whatsappNumber")}
+                  className={inputClass}
+                />
+              </div>
+              {whatsappValidationMessage ? (
+                <p className="text-xs text-red-600 dark:text-red-300">
+                  {whatsappValidationMessage}
+                </p>
+              ) : null}
+            </>
           ) : (
             <span className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
               {whatsappDisplay || t("profilePage.view.empty")}
@@ -534,7 +631,12 @@ const Profile = ({ mode = "client" }) => {
 
           <button
             type="submit"
-            disabled={!isEditingProfile || !hasProfileChanges || savingProfile}
+            disabled={
+              !isEditingProfile ||
+              !hasProfileChanges ||
+              savingProfile ||
+              hasProfileContactErrors
+            }
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {savingProfile ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
@@ -572,9 +674,89 @@ const Profile = ({ mode = "client" }) => {
           />
         </label>
 
+        {isRootUser ? (
+          <>
+            <div className="md:col-span-2">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                {t("profilePage.preferences.branding")}
+              </p>
+            </div>
+
+            <label className="grid gap-1 text-sm">
+              <span>{t("profilePage.preferences.brandPrimaryColor")}</span>
+              <input
+                value={preferencesForm.brandPrimaryColor}
+                onChange={(event) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    brandPrimaryColor: event.target.value,
+                  }))
+                }
+                placeholder="#0F172A"
+                maxLength={7}
+                className={inputClass}
+              />
+            </label>
+
+            <label className="grid gap-1 text-sm">
+              <span>{t("profilePage.preferences.brandSecondaryColor")}</span>
+              <input
+                value={preferencesForm.brandSecondaryColor}
+                onChange={(event) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    brandSecondaryColor: event.target.value,
+                  }))
+                }
+                placeholder="#16A34A"
+                maxLength={7}
+                className={inputClass}
+              />
+            </label>
+
+            <label className="grid gap-1 text-sm">
+              <span>{t("profilePage.preferences.brandFontHeading")}</span>
+              <input
+                value={preferencesForm.brandFontHeading}
+                onChange={(event) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    brandFontHeading: event.target.value,
+                  }))
+                }
+                placeholder="Poppins"
+                maxLength={BRAND_FONT_MAX_LENGTH}
+                className={inputClass}
+              />
+            </label>
+
+            <label className="grid gap-1 text-sm">
+              <span>{t("profilePage.preferences.brandFontBody")}</span>
+              <input
+                value={preferencesForm.brandFontBody}
+                onChange={(event) =>
+                  setPreferencesForm((prev) => ({
+                    ...prev,
+                    brandFontBody: event.target.value,
+                  }))
+                }
+                placeholder="Inter"
+                maxLength={BRAND_FONT_MAX_LENGTH}
+                className={inputClass}
+              />
+            </label>
+          </>
+        ) : null}
+
+        {preferencesValidationMessage ? (
+          <p className="text-xs text-red-600 dark:text-red-300 md:col-span-2">
+            {preferencesValidationMessage}
+          </p>
+        ) : null}
+
         <button
           type="submit"
-          disabled={!hasPreferencesChanges || savingPreferences}
+          disabled={!hasPreferencesChanges || savingPreferences || Boolean(preferencesValidationMessage)}
           className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
         >
           {savingPreferences ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}

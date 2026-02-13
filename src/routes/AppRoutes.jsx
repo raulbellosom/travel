@@ -47,6 +47,7 @@ import ServiceUnavailable from "../pages/ServiceUnavailable";
 import ErrorsDemo from "../pages/ErrorsDemo";
 import RootAmenitiesPanel from "../pages/RootAmenitiesPanel";
 import RootActivityLog from "../pages/RootActivityLog";
+import RootFunctionsDiagnostics from "../pages/RootFunctionsDiagnostics";
 import {
   INTERNAL_BASE_PATH,
   INTERNAL_ROUTES,
@@ -219,6 +220,14 @@ const AppRoutes = () => {
                 element={
                   <RootRoute>
                     <RootAmenitiesPanel />
+                  </RootRoute>
+                }
+              />
+              <Route
+                path="functions-health"
+                element={
+                  <RootRoute>
+                    <RootFunctionsDiagnostics />
                   </RootRoute>
                 }
               />

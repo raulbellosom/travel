@@ -1,23 +1,27 @@
 # email-verification
 
-Function HTTP para enviar, reenviar y confirmar verificación de correo.
+HTTP function to send, resend and verify email tokens.
 
-## Runtime
+## Execution Contract
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Type: HTTP Function.
+- Appwrite trigger: direct execution of `email-verification`.
+- Method: `POST`.
+- `execute` permission: `any`.
+- Actor scope/role:
+  - `send` / `resend`: no role/scope gate in code; validation is by user resolution + cooldown.
+  - `verify`: valid non-expired token is required.
 
-## Eventos / ejecución
+## Minimum API key scopes
 
-- Tipo: HTTP endpoint
-- Acción en body:
-  - `send`
-  - `resend`
-  - `verify`
+- `users.read`
+- `users.write`
+- `databases.read`
+- `databases.write`
 
 ## Payloads
 
-Enviar / reenviar:
+Send / resend:
 
 ```json
 {
@@ -27,9 +31,7 @@ Enviar / reenviar:
 }
 ```
 
-Tambien acepta `userAuthId` por compatibilidad.
-
-Verificar token:
+Verify token:
 
 ```json
 {
@@ -37,14 +39,3 @@ Verificar token:
   "token": "TOKEN"
 }
 ```
-
-## Variables de entorno
-
-Ver `.env.example`.
-
-## Scopes API Key mínimos
-
-- `users.read`
-- `users.write`
-- `databases.read`
-- `databases.write`

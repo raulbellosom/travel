@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -39,6 +40,12 @@ const TABS = {
   list: "list",
   manage: "manage",
 };
+
+const parseSearchText = (value) => String(value || "").trim();
+const parseTabValue = (value) => (value === TABS.manage ? TABS.manage : TABS.list);
+const parseStatusValue = (value) =>
+  value === "enabled" || value === "disabled" ? value : "all";
+const parseRoleValue = (value) => (STAFF_ROLES.includes(String(value || "")) ? value : "all");
 
 const SCOPE_OPTIONS = [
   "staff.manage",
@@ -94,15 +101,16 @@ const getFullName = (item, fallback = "") => {
 
 const Team = () => {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState(TABS.list);
+  const [activeTab, setActiveTab] = useState(() => parseTabValue(searchParams.get("tab")));
   const [form, setForm] = useState(EMPTY_FORM);
   const [staff, setStaff] = useState([]);
-  const [filters, setFilters] = useState({
-    search: "",
-    role: "all",
-    status: "all",
-  });
+  const [filters, setFilters] = useState(() => ({
+    search: parseSearchText(searchParams.get("search")),
+    role: parseRoleValue(searchParams.get("role")),
+    status: parseStatusValue(searchParams.get("status")),
+  }));
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [permissionsEditor, setPermissionsEditor] = useState(null);
@@ -115,6 +123,31 @@ const Team = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const focusId = String(searchParams.get("focus") || "").trim();
+
+  useEffect(() => {
+    const nextTab = parseTabValue(searchParams.get("tab"));
+    const nextSearch = parseSearchText(searchParams.get("search"));
+    const nextRole = parseRoleValue(searchParams.get("role"));
+    const nextStatus = parseStatusValue(searchParams.get("status"));
+
+    setActiveTab((prev) => (prev === nextTab ? prev : nextTab));
+    setFilters((prev) => {
+      if (
+        prev.search === nextSearch &&
+        prev.role === nextRole &&
+        prev.status === nextStatus
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        search: nextSearch,
+        role: nextRole,
+        status: nextStatus,
+      };
+    });
+  }, [searchParams]);
 
   const passwordChecks = useMemo(
     () => getPasswordChecks(form.password),
@@ -236,9 +269,14 @@ const Team = () => {
     setPage(1);
   }, [filters.role, filters.search, filters.status]);
 
+  const effectivePageSize = useMemo(() => {
+    if (pageSize === "all") return Math.max(1, filteredStaff.length);
+    return Math.max(1, Number(pageSize) || 5);
+  }, [filteredStaff.length, pageSize]);
+
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(filteredStaff.length / pageSize)),
-    [filteredStaff.length, pageSize]
+    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredStaff.length / effectivePageSize))),
+    [effectivePageSize, filteredStaff.length, pageSize]
   );
 
   useEffect(() => {
@@ -246,9 +284,23 @@ const Team = () => {
   }, [totalPages]);
 
   const paginatedStaff = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredStaff.slice(start, start + pageSize);
-  }, [filteredStaff, page, pageSize]);
+    if (pageSize === "all") return filteredStaff;
+    const start = (page - 1) * effectivePageSize;
+    return filteredStaff.slice(start, start + effectivePageSize);
+  }, [effectivePageSize, filteredStaff, page, pageSize]);
+
+  useEffect(() => {
+    if (!focusId || filteredStaff.length === 0) return;
+    const targetIndex = filteredStaff.findIndex((item) => item.$id === focusId);
+    if (targetIndex < 0) return;
+    setPage(Math.floor(targetIndex / effectivePageSize) + 1);
+  }, [effectivePageSize, filteredStaff, focusId]);
+
+  useEffect(() => {
+    if (loadingList || !focusId) return;
+    const row = document.getElementById(`team-${focusId}`);
+    row?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusId, loadingList, page, paginatedStaff.length]);
 
   const resetForm = () => {
     if (form.avatarPreviewUrl) {
@@ -650,9 +702,9 @@ const Team = () => {
           ) : null}
 
           {!loadingList && filteredStaff.length > 0 ? (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-700">
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+            <div className="min-w-0 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="w-full max-w-full overflow-x-auto">
+                <table className="w-full min-w-[980px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                     <tr>
                       <th className="px-4 py-3">{t("teamPage.table.member")}</th>
@@ -665,9 +717,16 @@ const Team = () => {
                   <tbody>
                     {paginatedStaff.map((item) => {
                       const itemScopes = parseScopesJson(item.scopesJson);
+                      const isFocused = Boolean(focusId) && item.$id === focusId;
 
                       return (
-                        <tr key={item.$id} className="border-t border-slate-200 dark:border-slate-700">
+                        <tr
+                          key={item.$id}
+                          id={`team-${item.$id}`}
+                          className={`border-t border-slate-200 dark:border-slate-700 ${
+                            isFocused ? "bg-cyan-50/70 dark:bg-cyan-900/20" : ""
+                          }`}
+                        >
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               {renderMemberAvatar(item)}

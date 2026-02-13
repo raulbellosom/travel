@@ -43,6 +43,7 @@
     "reviews": "Reviews",
     "rootActivity": "Root: Audit",
     "rootAmenities": "Root: Amenities",
+    "rootFunctionsDiagnostics": "Root: Functions",
     "navigation": "Navigation",
     "collapse": "Collapse menu",
     "expand": "Expand menu"
@@ -141,7 +142,14 @@
   "theme": {
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "descriptions": {
+      "light": "Light theme",
+      "dark": "Dark theme",
+      "system": "Follow system theme"
+    },
+    "currentThemeAria": "Current theme: {{theme}}",
+    "currentEffective": "Currently {{mode}}"
   },
   "language": {
     "spanish": "Español",
@@ -245,12 +253,13 @@
     "expandSidebar": "Expand sidebar",
     "shellHint": "Panel optimized for mobile and desktop",
     "toggleTheme": "Toggle theme",
+    "toggleThemeTo": "Switch theme to {{theme}}",
     "toggleLanguage": "Switch language",
     "lightMode": "Light mode",
     "darkMode": "Dark mode"
   },
   "globalSearch": {
-    "placeholder": "Search CRM: client, message, reservation, payment, or action...",
+    "placeholder": "Search CRM: client, message, reservation, payment, command, or module...",
     "aria": {
       "desktopInput": "Dashboard global search",
       "mobileInput": "Dashboard global search modal",
@@ -261,12 +270,39 @@
       "properties": "Properties",
       "leads": "Messages and clients",
       "reservations": "Reservations",
-      "payments": "Payments"
+      "payments": "Payments",
+      "team": "Team"
     },
     "states": {
-      "loading": "Loading searchable data...",
-      "empty": "No results for this query."
+      "loading": "Searching database records...",
+      "empty": "No results for this query.",
+      "commandHelp": "Try commands: create user, crear propiedad, open reservations."
     },
+    "hints": {
+      "keyboard": "Use ArrowUp and ArrowDown to navigate, then Enter to open."
+    },
+    "badges": {
+      "command": "Command"
+    },
+    "commandVerbs": {
+      "create": "Create",
+      "open": "Open",
+      "manage": "Manage"
+    },
+    "commandEntities": {
+      "section": "section",
+      "dashboard": "dashboard",
+      "profile": "profile",
+      "properties": "listings",
+      "leads": "leads",
+      "reservations": "reservations",
+      "payments": "payments",
+      "team": "team",
+      "clients": "clients",
+      "settings": "settings"
+    },
+    "commandApplyFilter": "Apply filter: {{query}}",
+    "commandDirectNavigation": "Direct navigation to module",
     "quickActions": {
       "dashboard": {
         "title": "Open dashboard",
@@ -296,9 +332,17 @@
         "title": "New property",
         "subtitle": "Create a new listing"
       },
+      "newUser": {
+        "title": "New internal user",
+        "subtitle": "Open form to create a team member"
+      },
       "team": {
         "title": "Manage team",
         "subtitle": "Internal user administration"
+      },
+      "clients": {
+        "title": "Open clients",
+        "subtitle": "Registered client database"
       },
       "settings": {
         "title": "Open settings",
@@ -313,7 +357,8 @@
     },
     "fallbacks": {
       "property": "Property",
-      "client": "Client"
+      "client": "Client",
+      "member": "Team member"
     }
   },
   "loadingScreen": {
@@ -389,6 +434,7 @@
       "create": "We could not create your account.",
       "invalidEmail": "Enter a valid email address.",
       "passwordWeak": "The password does not meet the minimum security level.",
+      "phoneCountryCodeRequired": "Select a valid country code when entering a phone number.",
       "invalidPhone": "Enter a valid phone with country code and number."
     }
   },
@@ -514,7 +560,12 @@
     "subtitle": "Manage your listings and their status.",
     "loading": "Loading...",
     "empty": "You have not created properties yet.",
+    "emptyFiltered": "No results for \"{{query}}\".",
     "confirmDeactivate": "Are you sure you want to deactivate this property?",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Title, slug, city, or state"
+    },
     "table": {
       "title": "Title",
       "location": "Location",
@@ -549,7 +600,9 @@
     "noPhone": "-",
     "filters": {
       "status": "Filter by status",
-      "all": "All"
+      "all": "All",
+      "search": "Search",
+      "searchPlaceholder": "Name, email, property, or message"
     },
     "table": {
       "date": "Date",
@@ -588,6 +641,11 @@
     "preferences": {
       "theme": "Theme",
       "language": "Language",
+      "branding": "Branding (root only)",
+      "brandPrimaryColor": "Brand primary color",
+      "brandSecondaryColor": "Brand secondary color",
+      "brandFontHeading": "Brand heading font",
+      "brandFontBody": "Brand body font",
       "currency": "Currency",
       "measurement": "Measurement system",
       "metric": "Metric",
@@ -617,8 +675,14 @@
       "avatarUpload": "Could not upload profile image.",
       "avatarRemove": "Could not remove profile image.",
       "avatarSize": "Image exceeds the {{max}} MB limit.",
+      "phoneCountryCodeRequired": "Country code is required when phone is provided.",
+      "whatsappCountryCodeRequired": "Country code is required when WhatsApp number is provided.",
       "invalidPhone": "Enter a valid phone number.",
-      "invalidWhatsapp": "Enter a valid WhatsApp number."
+      "invalidWhatsapp": "Enter a valid WhatsApp number.",
+      "brandPrimaryColorInvalid": "Primary color is invalid. Use #RRGGBB format.",
+      "brandSecondaryColorInvalid": "Secondary color is invalid. Use #RRGGBB format.",
+      "brandFontHeadingInvalid": "Heading font is required and must be 80 characters or less.",
+      "brandFontBodyInvalid": "Body font is required and must be 80 characters or less."
     },
     "placeholders": {
       "phoneCountryCode": "Select country code",
@@ -953,7 +1017,7 @@
     "searchPlaceholder": "Search by slug, name or category...",
     "allCategories": "All categories",
     "seedInfo": "Seed available with {{count}} preconfigured amenities and icons.",
-    "seedResult": "Seed completed. Created: {{created}}. Skipped: {{skipped}}. Errors: {{errors}}.",
+    "seedResult": "Seed completed. Created: {{created}}. Updated: {{updated}}. Unchanged: {{unchanged}}. Errors: {{errors}}.",
     "fields": {
       "slug": "Slug",
       "nameEs": "Name (ES)",
@@ -982,6 +1046,8 @@
     "actions": {
       "seed": "Run seed",
       "seeding": "Seeding catalog...",
+      "confirmSeed": "Apply seed",
+      "noSeedChanges": "No changes to apply",
       "saving": "Saving...",
       "create": "Create amenity",
       "edit": "Edit",
@@ -989,6 +1055,25 @@
       "cancel": "Cancel",
       "enable": "Enable",
       "disable": "Disable"
+    },
+    "seedModal": {
+      "title": "Seed preview",
+      "subtitle": "Review the changes before running the amenities seed.",
+      "loading": "Analyzing seed amenities...",
+      "noSlug": "No slug",
+      "currentSlug": "Current slug",
+      "nextSlug": "New slug",
+      "emptyCreate": "There are no new amenities to create.",
+      "emptyUpdate": "There are no existing amenities to update.",
+      "tabs": {
+        "create": "To create ({{count}})",
+        "update": "To update ({{count}})"
+      },
+      "summary": {
+        "create": "Create: {{count}}",
+        "update": "Update: {{count}}",
+        "unchanged": "Unchanged: {{count}}"
+      }
     },
     "errors": {
       "load": "Could not load amenities.",
@@ -1359,7 +1444,9 @@
     "filters": {
       "status": "Reservation status",
       "paymentStatus": "Payment status",
-      "all": "All"
+      "all": "All",
+      "search": "Search",
+      "searchPlaceholder": "Guest, property, status, or ID"
     },
     "actions": {
       "markConfirmed": "Mark confirmed",
@@ -1379,7 +1466,9 @@
     "filters": {
       "provider": "Provider",
       "status": "Status",
-      "all": "All"
+      "all": "All",
+      "search": "Search",
+      "searchPlaceholder": "Provider, status, reference, or ID"
     },
     "table": {
       "date": "Date",
@@ -1427,6 +1516,56 @@
     },
     "errors": {
       "load": "Could not load root audit logs."
+    }
+  },
+  "rootFunctionsDiagnosticsPage": {
+    "title": "Root panel: Functions diagnostics",
+    "subtitle": "Validate function existence, runtime variables, and execution health.",
+    "loading": "Loading diagnostics...",
+    "empty": "No functions available for diagnostics.",
+    "generatedAt": "Last run: {{value}}",
+    "actions": {
+      "includeSmoke": "Include fake tests (smoke)",
+      "running": "Running diagnostics...",
+      "run": "Run diagnostics"
+    },
+    "smoke": {
+      "enabled": "Smoke mode enabled: non-destructive fake tests are executed.",
+      "disabled": "Smoke mode disabled: configuration checks only.",
+      "notRun": "Not run",
+      "passed": "Passed",
+      "failed": "Failed"
+    },
+    "status": {
+      "ok": "OK",
+      "warning": "Warning",
+      "error": "Error"
+    },
+    "summary": {
+      "ok": "Healthy",
+      "warning": "With warning",
+      "error": "With error",
+      "total": "Total",
+      "smokePassed": "Smoke OK",
+      "smokeFailed": "Smoke fail",
+      "smokeSkipped": "Smoke skipped"
+    },
+    "cards": {
+      "env": "Runtime variables",
+      "smoke": "Fake test",
+      "latestExecution": "Latest execution"
+    },
+    "labels": {
+      "missingAuth": "Missing base credentials:",
+      "missingRequired": "Missing required variables:",
+      "missingRecommended": "Missing recommended variables:",
+      "executionId": "Execution ID:",
+      "executionStatus": "Status:",
+      "responseStatus": "HTTP status:",
+      "createdAt": "Date:"
+    },
+    "errors": {
+      "load": "Could not run root diagnostics."
     }
   }
 }

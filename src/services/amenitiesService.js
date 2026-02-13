@@ -50,6 +50,16 @@ const normalizeSlug = (value = "") =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
+const normalizeComparableText = (value = "") =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim();
+
 const sanitizeCategory = (category) =>
   AMENITY_CATEGORY_VALUES.includes(category) ? category : "general";
 
@@ -66,6 +76,84 @@ const normalizeAmenityInput = (input = {}, { includeEnabled = true } = {}) => {
   }
 
   return data;
+};
+
+const appendToIndex = (index, key, value) => {
+  if (!key) return;
+  if (!index.has(key)) {
+    index.set(key, []);
+  }
+  index.get(key).push(value);
+};
+
+const findFirstAvailableByKey = (index, key, usedIds) => {
+  if (!key || !index.has(key)) return null;
+  const candidates = index.get(key) || [];
+  return candidates.find((item) => !usedIds.has(item.$id)) || null;
+};
+
+const buildDefaultCatalogSeedPlan = (existing = []) => {
+  const bySlug = new Map();
+  const byNameEs = new Map();
+  const byNameEn = new Map();
+
+  for (const item of existing) {
+    appendToIndex(bySlug, normalizeSlug(item.slug || ""), item);
+    appendToIndex(byNameEs, normalizeComparableText(item.name_es || ""), item);
+    appendToIndex(byNameEn, normalizeComparableText(item.name_en || ""), item);
+  }
+
+  const usedExistingIds = new Set();
+  const toCreate = [];
+  const toUpdate = [];
+  let unchanged = 0;
+
+  for (const candidate of DEFAULT_AMENITIES_CATALOG) {
+    const normalized = normalizeAmenityInput(candidate);
+    if (!normalized.slug || !normalized.name_es || !normalized.name_en) {
+      continue;
+    }
+
+    const nameEsKey = normalizeComparableText(normalized.name_es);
+    const nameEnKey = normalizeComparableText(normalized.name_en);
+
+    let target = findFirstAvailableByKey(bySlug, normalized.slug, usedExistingIds);
+    if (!target) {
+      target = findFirstAvailableByKey(byNameEs, nameEsKey, usedExistingIds);
+    }
+    if (!target) {
+      target = findFirstAvailableByKey(byNameEn, nameEnKey, usedExistingIds);
+    }
+
+    if (!target) {
+      toCreate.push(normalized);
+      continue;
+    }
+
+    usedExistingIds.add(target.$id);
+    const currentSlug = normalizeSlug(target.slug || "");
+
+    if (currentSlug !== normalized.slug) {
+      toUpdate.push({
+        amenityId: target.$id,
+        currentSlug: target.slug || "",
+        nextSlug: normalized.slug,
+        name_es: normalized.name_es,
+        name_en: normalized.name_en,
+        category: normalized.category,
+      });
+      continue;
+    }
+
+    unchanged += 1;
+  }
+
+  return {
+    total: DEFAULT_AMENITIES_CATALOG.length,
+    toCreate,
+    toUpdate,
+    unchanged,
+  };
 };
 
 export const amenitiesService = {
@@ -160,30 +248,32 @@ export const amenitiesService = {
     });
   },
 
-  async seedDefaultCatalog() {
+  async seedDefaultCatalog(planInput = null) {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
       "APPWRITE_COLLECTION_AMENITIES_ID"
     );
 
-    const existing = await this.listAll();
-    const existingSlugs = new Set(existing.map((item) => item.slug));
+    const plan =
+      planInput &&
+      Array.isArray(planInput.toCreate) &&
+      Array.isArray(planInput.toUpdate)
+        ? planInput
+        : await this.previewDefaultCatalogSeed();
 
     let created = 0;
-    let skipped = 0;
+    let updated = 0;
     const errors = [];
 
-    for (const candidate of DEFAULT_AMENITIES_CATALOG) {
+    for (const candidate of plan.toCreate) {
       const normalized = normalizeAmenityInput(candidate);
-      if (!normalized.slug || existingSlugs.has(normalized.slug)) {
-        skipped += 1;
+      if (!normalized.slug || !normalized.name_es || !normalized.name_en) {
         continue;
       }
 
       try {
         await this.create(normalized);
-        existingSlugs.add(normalized.slug);
         created += 1;
       } catch (error) {
         errors.push({
@@ -193,12 +283,49 @@ export const amenitiesService = {
       }
     }
 
+    for (const candidate of plan.toUpdate) {
+      const amenityId = String(candidate.amenityId || "").trim();
+      const nextSlug = normalizeSlug(candidate.nextSlug || "");
+
+      if (!amenityId || !nextSlug) continue;
+
+      try {
+        await databases.updateDocument({
+          databaseId: env.appwrite.databaseId,
+          collectionId: AMENITIES_COLLECTION_ID,
+          documentId: amenityId,
+          data: { slug: nextSlug },
+        });
+        updated += 1;
+      } catch (error) {
+        errors.push({
+          slug: nextSlug,
+          message: error?.message || "No se pudo actualizar la amenity.",
+        });
+      }
+    }
+
+    const unchanged = Math.max(0, Number(plan.unchanged) || 0);
+
     return {
-      total: DEFAULT_AMENITIES_CATALOG.length,
+      total: plan.total,
       created,
-      skipped,
+      updated,
+      unchanged,
+      skipped: unchanged,
       errors,
     };
+  },
+
+  async previewDefaultCatalogSeed() {
+    ensureAppwriteConfigured();
+    ensureCollectionId(
+      AMENITIES_COLLECTION_ID,
+      "APPWRITE_COLLECTION_AMENITIES_ID"
+    );
+
+    const existing = await this.listAll();
+    return buildDefaultCatalogSeedPlan(existing);
   },
 
   async listPropertyAmenityIds(propertyId) {

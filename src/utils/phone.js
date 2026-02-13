@@ -6,6 +6,13 @@ import {
 
 export const PHONE_DIAL_CODE_REGEX = /^\+[1-9][0-9]{0,3}$/;
 export const PHONE_LOCAL_NUMBER_REGEX = /^[0-9]{6,15}$/;
+export const PHONE_VALIDATION_CODES = {
+  NONE: "",
+  DIAL_CODE_REQUIRED: "dialCodeRequired",
+  INVALID_DIAL_CODE: "invalidDialCode",
+  INVALID_LOCAL_NUMBER: "invalidLocalNumber",
+  INVALID_COMBINATION: "invalidCombination",
+};
 
 const buildDisplayNames = (locale) => {
   if (typeof Intl === "undefined" || typeof Intl.DisplayNames !== "function") {
@@ -37,6 +44,38 @@ export const isValidPhoneDialCode = (value) =>
 
 export const isValidPhoneLocalNumber = (value) =>
   PHONE_LOCAL_NUMBER_REGEX.test(String(value || "").trim());
+
+export const getOptionalPhonePairValidationCode = ({ dialCode, localNumber }) => {
+  const normalizedDialCode = normalizePhoneDialCode(dialCode);
+  const normalizedLocalNumber = sanitizePhoneLocalNumber(localNumber);
+
+  if (!normalizedLocalNumber) {
+    return PHONE_VALIDATION_CODES.NONE;
+  }
+
+  if (!normalizedDialCode) {
+    return PHONE_VALIDATION_CODES.DIAL_CODE_REQUIRED;
+  }
+
+  if (!isValidPhoneLocalNumber(normalizedLocalNumber)) {
+    return PHONE_VALIDATION_CODES.INVALID_LOCAL_NUMBER;
+  }
+
+  if (!isValidPhoneDialCode(normalizedDialCode)) {
+    return PHONE_VALIDATION_CODES.INVALID_DIAL_CODE;
+  }
+
+  if (
+    !isValidPhoneCombination({
+      dialCode: normalizedDialCode,
+      localNumber: normalizedLocalNumber,
+    })
+  ) {
+    return PHONE_VALIDATION_CODES.INVALID_COMBINATION;
+  }
+
+  return PHONE_VALIDATION_CODES.NONE;
+};
 
 export const buildE164Phone = ({ dialCode, localNumber }) => {
   const normalizedDialCode = normalizePhoneDialCode(dialCode);
@@ -99,4 +138,3 @@ export const getCountryDialCodeOptions = (locale = "en") => {
     })
     .sort((a, b) => a.label.localeCompare(b.label));
 };
-

@@ -1,15 +1,20 @@
-﻿# create-review-public
+# create-review-public
 
-HTTP function that receives a review for an eligible reservation.
+Receives a review for an eligible reservation.
 
-## Runtime
+## Execution Contract
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Type: HTTP Function.
+- Appwrite trigger: direct execution of `create-review-public`.
+- Method: `POST`.
+- `execute` permission: `users`.
+- Actor scope/role: authenticated user with verified email; must match reservation guest identity.
 
-## Type
+## Minimum API key scopes
 
-- HTTP endpoint (POST, authenticated user required)
+- `users.read`
+- `databases.read`
+- `databases.write`
 
 ## Payload
 
@@ -22,16 +27,3 @@ HTTP function that receives a review for an eligible reservation.
   "comment": "Very clean and comfortable"
 }
 ```
-
-## Validation
-
-- User must be authenticated and email-verified.
-- Reservation must belong to `propertyId`.
-- Reservation must be completed/confirmed and paid.
-- Authenticated user must match reservation guest (`guestUserId` or legacy email fallback).
-- One review per reservation.
-- Review stores `authorUserId` from auth context.
-
-## Environment
-
-See `.env.example`.

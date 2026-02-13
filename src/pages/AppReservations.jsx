@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CalendarDays, CreditCard, Filter, User } from "lucide-react";
+import { CalendarDays, CreditCard, Filter, Search, User } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Select } from "../components/common";
@@ -23,8 +23,16 @@ const AppReservations = () => {
     status: "",
     paymentStatus: "",
   });
+  const [queryFilter, setQueryFilter] = useState(() =>
+    String(searchParams.get("search") || "").trim()
+  );
   const locale = i18n.language === "en" ? "en-US" : "es-MX";
   const focusId = searchParams.get("focus") || "";
+
+  useEffect(() => {
+    const nextSearch = String(searchParams.get("search") || "").trim();
+    setQueryFilter((prev) => (prev === nextSearch ? prev : nextSearch));
+  }, [searchParams]);
 
   const load = useCallback(async () => {
     if (!user?.$id) return;
@@ -44,23 +52,43 @@ const AppReservations = () => {
     load();
   }, [load]);
 
+  const normalizedFilter = String(queryFilter || "").trim().toLowerCase();
+  const filteredReservations = useMemo(() => {
+    if (!normalizedFilter) return reservations;
+
+    return reservations.filter((item) => {
+      const text = [
+        item.$id,
+        item.propertyId,
+        item.guestName,
+        item.guestEmail,
+        item.guestPhone,
+        item.status,
+        item.paymentStatus,
+      ]
+        .map((value) => String(value || "").toLowerCase())
+        .join(" ");
+      return text.includes(normalizedFilter);
+    });
+  }, [normalizedFilter, reservations]);
+
   useEffect(() => {
     if (loading || !focusId) return;
     const card = document.getElementById(`reservation-${focusId}`);
     card?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [focusId, loading, reservations.length]);
+  }, [filteredReservations.length, focusId, loading]);
 
   const stats = useMemo(() => {
-    const pending = reservations.filter((item) => item.status === "pending").length;
-    const confirmed = reservations.filter((item) => item.status === "confirmed").length;
-    const paid = reservations.filter((item) => item.paymentStatus === "paid").length;
+    const pending = filteredReservations.filter((item) => item.status === "pending").length;
+    const confirmed = filteredReservations.filter((item) => item.status === "confirmed").length;
+    const paid = filteredReservations.filter((item) => item.paymentStatus === "paid").length;
     return {
-      total: reservations.length,
+      total: filteredReservations.length,
       pending,
       confirmed,
       paid,
     };
-  }, [reservations]);
+  }, [filteredReservations]);
 
   const reservationStatusOptions = useMemo(
     () => [
@@ -135,7 +163,22 @@ const AppReservations = () => {
         </article>
       </div>
 
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2 dark:border-slate-700 dark:bg-slate-900">
+      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-3 dark:border-slate-700 dark:bg-slate-900">
+        <label className="grid gap-1 text-sm">
+          <span className="inline-flex items-center gap-2">
+            <Search size={14} />
+            {t("appReservationsPage.filters.search", { defaultValue: "Buscar" })}
+          </span>
+          <input
+            value={queryFilter}
+            onChange={(event) => setQueryFilter(event.target.value)}
+            placeholder={t("appReservationsPage.filters.searchPlaceholder", {
+              defaultValue: "Huesped, propiedad, estado o ID",
+            })}
+            className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+          />
+        </label>
+
         <label className="grid gap-1 text-sm">
           <span className="inline-flex items-center gap-2">
             <Filter size={14} />
@@ -172,7 +215,7 @@ const AppReservations = () => {
         </p>
       ) : null}
 
-      {!loading && !error && reservations.length === 0 ? (
+      {!loading && !error && filteredReservations.length === 0 ? (
         <EmptyStatePanel
           icon={CalendarDays}
           title={t("appReservationsPage.empty")}
@@ -181,9 +224,9 @@ const AppReservations = () => {
         />
       ) : null}
 
-      {!loading && reservations.length > 0 ? (
+      {!loading && filteredReservations.length > 0 ? (
         <div className="grid gap-4">
-          {reservations.map((reservation) => {
+          {filteredReservations.map((reservation) => {
             const isFocused = Boolean(focusId) && reservation.$id === focusId;
 
             return (

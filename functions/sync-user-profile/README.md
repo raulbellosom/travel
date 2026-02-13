@@ -1,34 +1,29 @@
 # sync-user-profile
 
-Sincroniza cambios de perfil entre:
+Synchronizes profile data between Auth user and `users` collection.
 
-- `users` collection (database)
-- usuario de Appwrite Auth
-- campos sincronizados: `firstName`, `lastName`, `email`, `phone`, `phoneCountryCode`
+## Execution Contract
 
-## Runtime
+- Type: HTTP Function.
+- Appwrite trigger: direct execution of `sync-user-profile`.
+- Method: `POST`.
+- `execute` permission: `users`.
+- Actor scope/role: authenticated user can update only its own profile.
 
-- Node.js >= 18
-- node-appwrite >= 17
-
-## Tipo
-
-- HTTP endpoint (invocada por frontend autenticado)
-
-## Seguridad
-
-- Solo actualiza el perfil del usuario autenticado.
-- No acepta `userId` desde body.
-- Usa identidad confiable del runtime/header de Appwrite.
-- Valida metodo/identidad/payload con util local `src/_request.js` (aislado por function).
-
-## Variables de entorno
-
-Ver `.env.example`.
-
-## Scopes API Key mínimos
+## Minimum API key scopes
 
 - `users.read`
 - `users.write`
 - `databases.read`
 - `databases.write`
+- `functions.write` (required only if `APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID` is configured)
+
+## Fields synchronized
+
+- `firstName`
+- `lastName`
+- `email`
+- `phone`
+- `phoneCountryCode`
+- `whatsappNumber`
+- `whatsappCountryCode`

@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Inbox, Sparkles, Users } from "lucide-react";
+import { CheckCircle2, Inbox, Search, Sparkles, Users } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Select, TablePagination } from "../components/common";
@@ -29,9 +29,17 @@ const Leads = () => {
   const [busyId, setBusyId] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [queryFilter, setQueryFilter] = useState(() =>
+    String(searchParams.get("search") || "").trim()
+  );
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const focusId = searchParams.get("focus") || "";
+
+  useEffect(() => {
+    const nextSearch = String(searchParams.get("search") || "").trim();
+    setQueryFilter((prev) => (prev === nextSearch ? prev : nextSearch));
+  }, [searchParams]);
 
   const loadData = useCallback(async () => {
     if (!user?.$id) return;
@@ -61,11 +69,37 @@ const Leads = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter]);
+  }, [queryFilter, statusFilter]);
+
+  const normalizedFilter = String(queryFilter || "").trim().toLowerCase();
+  const filteredLeads = useMemo(() => {
+    if (!normalizedFilter) return items;
+
+    return items.filter((item) => {
+      const text = [
+        item.$id,
+        item.name,
+        item.email,
+        item.phone,
+        item.message,
+        item.status,
+        propertyMap[item.propertyId]?.title,
+        item.propertyId,
+      ]
+        .map((value) => String(value || "").toLowerCase())
+        .join(" ");
+      return text.includes(normalizedFilter);
+    });
+  }, [items, normalizedFilter, propertyMap]);
+
+  const effectivePageSize = useMemo(() => {
+    if (pageSize === "all") return Math.max(1, filteredLeads.length);
+    return Math.max(1, Number(pageSize) || 5);
+  }, [filteredLeads.length, pageSize]);
 
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(items.length / pageSize)),
-    [items.length, pageSize]
+    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredLeads.length / effectivePageSize))),
+    [effectivePageSize, filteredLeads.length, pageSize]
   );
 
   useEffect(() => {
@@ -73,16 +107,17 @@ const Leads = () => {
   }, [totalPages]);
 
   useEffect(() => {
-    if (!focusId || items.length === 0) return;
-    const targetIndex = items.findIndex((lead) => lead.$id === focusId);
+    if (!focusId || filteredLeads.length === 0) return;
+    const targetIndex = filteredLeads.findIndex((lead) => lead.$id === focusId);
     if (targetIndex < 0) return;
-    setPage(Math.floor(targetIndex / pageSize) + 1);
-  }, [focusId, items, pageSize]);
+    setPage(Math.floor(targetIndex / effectivePageSize) + 1);
+  }, [effectivePageSize, filteredLeads, focusId]);
 
   const paginatedLeads = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }, [items, page, pageSize]);
+    if (pageSize === "all") return filteredLeads;
+    const start = (page - 1) * effectivePageSize;
+    return filteredLeads.slice(start, start + effectivePageSize);
+  }, [effectivePageSize, filteredLeads, page, pageSize]);
 
   useEffect(() => {
     if (loading || !focusId) return;
@@ -91,7 +126,7 @@ const Leads = () => {
   }, [focusId, loading, page, paginatedLeads.length]);
 
   const counts = useMemo(() => {
-    return items.reduce(
+    return filteredLeads.reduce(
       (acc, item) => {
         acc.total += 1;
         if (item.status === "new") acc.new += 1;
@@ -100,7 +135,7 @@ const Leads = () => {
       },
       { total: 0, new: 0, won: 0 }
     );
-  }, [items]);
+  }, [filteredLeads]);
 
   const summaryCards = useMemo(
     () => [
@@ -170,7 +205,22 @@ const Leads = () => {
 
       <StatsCardsRow items={summaryCards} />
 
-      <div className="max-w-xs">
+      <div className="grid gap-3 sm:max-w-3xl sm:grid-cols-2">
+        <label className="grid gap-1 text-sm">
+          <span className="inline-flex items-center gap-2">
+            <Search size={14} />
+            {t("leadsPage.filters.search", { defaultValue: "Buscar" })}
+          </span>
+          <input
+            value={queryFilter}
+            onChange={(event) => setQueryFilter(event.target.value)}
+            placeholder={t("leadsPage.filters.searchPlaceholder", {
+              defaultValue: "Nombre, email, propiedad o mensaje",
+            })}
+            className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+          />
+        </label>
+
         <label className="grid gap-1 text-sm">
           <span>{t("leadsPage.filters.status")}</span>
           <Select
@@ -190,7 +240,7 @@ const Leads = () => {
         </div>
       ) : null}
 
-      {!loading && items.length === 0 ? (
+      {!loading && filteredLeads.length === 0 ? (
         <EmptyStatePanel
           icon={Inbox}
           title={t("leadsPage.empty")}
@@ -199,10 +249,10 @@ const Leads = () => {
         />
       ) : null}
 
-      {!loading && items.length > 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+      {!loading && filteredLeads.length > 0 ? (
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+          <div className="w-full max-w-full overflow-x-auto">
+            <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3">{t("leadsPage.table.date")}</th>
@@ -262,7 +312,7 @@ const Leads = () => {
           <TablePagination
             page={page}
             totalPages={totalPages}
-            totalItems={items.length}
+            totalItems={filteredLeads.length}
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={(value) => {

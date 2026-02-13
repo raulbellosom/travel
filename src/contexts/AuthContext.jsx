@@ -16,6 +16,32 @@ import {
 import env from "../env";
 
 const AuthContext = createContext(null);
+const BASE_PREFERENCE_FIELDS = new Set(["theme", "locale"]);
+const ROOT_ONLY_PREFERENCE_FIELDS = new Set([
+  "brandPrimaryColor",
+  "brandSecondaryColor",
+  "brandFontHeading",
+  "brandFontBody",
+]);
+
+const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+
+const sanitizePreferencesPatch = (patch, role) => {
+  const source = patch && typeof patch === "object" ? patch : {};
+  const isRoot = normalizeRole(role) === "root";
+  const allowedFields = isRoot
+    ? new Set([...BASE_PREFERENCE_FIELDS, ...ROOT_ONLY_PREFERENCE_FIELDS])
+    : BASE_PREFERENCE_FIELDS;
+  const safePatch = {};
+
+  Object.keys(source).forEach((key) => {
+    if (!allowedFields.has(key)) return;
+    const nextValue = source[key];
+    safePatch[key] = typeof nextValue === "string" ? nextValue.trim() : nextValue;
+  });
+
+  return safePatch;
+};
 
 export { AuthContext };
 
@@ -252,30 +278,9 @@ export function AuthProvider({ children }) {
       if (!authUser?.$id) throw new Error("No hay sesion activa.");
 
       const hasSyncFunction = Boolean(env.appwrite.functions.syncUserProfile);
-      const syncAllowedFields = new Set([
-        "firstName",
-        "lastName",
-        "email",
-        "phone",
-        "phoneCountryCode",
-      ]);
-      const syncPatch = {};
-      const profilePatch = {};
-
-      Object.entries(patch || {}).forEach(([key, value]) => {
-        if (syncAllowedFields.has(key)) {
-          syncPatch[key] = value;
-        } else {
-          profilePatch[key] = value;
-        }
-      });
-
       if (hasSyncFunction) {
-        if (Object.keys(syncPatch).length > 0) {
-          await profileService.syncUserProfile(syncPatch);
-        }
-        if (Object.keys(profilePatch).length > 0) {
-          await profileService.updateProfile(authUser.$id, profilePatch);
+        if (Object.keys(patch || {}).length > 0) {
+          await profileService.syncUserProfile(patch);
         }
         await refreshSession();
         return;
@@ -290,10 +295,15 @@ export function AuthProvider({ children }) {
   const updatePreferences = useCallback(
     async (patch) => {
       if (!authUser?.$id) throw new Error("No hay sesion activa.");
-      const nextPreferences = await profileService.upsertPreferences(authUser.$id, patch);
+      const safePatch = sanitizePreferencesPatch(patch, authUser?.role);
+      if (Object.keys(safePatch).length === 0) {
+        return null;
+      }
+      const nextPreferences = await profileService.upsertPreferences(authUser.$id, safePatch);
       setPreferences(nextPreferences);
+      return nextPreferences;
     },
-    [authUser?.$id]
+    [authUser?.$id, authUser?.role]
   );
 
   const user = useMemo(() => {

@@ -1,15 +1,20 @@
-﻿# create-payment-session
+# create-payment-session
 
-HTTP function that creates a payment session/preference for a reservation.
+Creates a payment session/preference for an existing reservation.
 
-## Runtime
+## Execution Contract
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Type: HTTP Function.
+- Appwrite trigger: direct execution of `create-payment-session`.
+- Method: `POST`.
+- `execute` permission: `users`.
+- Actor scope/role: authenticated user with verified email; must match reservation guest identity.
 
-## Type
+## Minimum API key scopes
 
-- HTTP endpoint (POST, authenticated user required)
+- `users.read`
+- `databases.read`
+- `databases.write`
 
 ## Payload
 
@@ -21,16 +26,3 @@ HTTP function that creates a payment session/preference for a reservation.
 ```
 
 `guestEmail` is optional and, if provided, must match the authenticated account email.
-
-## Behavior
-
-- Validates authenticated and email-verified user.
-- Validates reservation ownership for that guest (`guestUserId` or legacy email fallback).
-- Creates or updates `reservation_payments` with `status=pending`.
-- Syncs reservation `paymentStatus=pending`.
-- Uses Stripe/Mercado Pago credentials when available.
-- Returns `mock` checkout URL when provider credentials are not configured.
-
-## Environment
-
-See `.env.example`.

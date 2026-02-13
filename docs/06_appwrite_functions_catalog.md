@@ -51,9 +51,8 @@ functions/
 
 - Tipo: Event Trigger (`users.*.create`).
 - Crea `users` y `user_preferences`.
-- Default role: `client`.
-- Bootstrap de `owner` via allowlist (`APPWRITE_OWNER_AUTH_IDS` / `APPWRITE_OWNER_EMAILS`).
-- Staff via invitacion.
+- Default role: `client` para todos los nuevos usuarios.
+- Role upgrades (owner, staff) se gestionan mediante BD por usuarios root.
 
 ## 4.2 `create-lead-public`
 
@@ -64,7 +63,7 @@ functions/
 
 ## 4.3 `send-lead-notification`
 
-- Tipo: Event Trigger (`leads.create`).
+- Tipo: Event Trigger (`databases.*.collections.leads.documents.*.create`).
 - Envia email al owner/staff responsable.
 
 ## 4.3.1 `property-view-counter`
@@ -84,7 +83,7 @@ functions/
 
 ## 4.4.1 `reservation-created-notification`
 
-- Tipo: Event Trigger (`reservations.create`).
+- Tipo: Event Trigger (`databases.*.collections.reservations.documents.*.create`).
 - Notifica al owner/staff sobre nueva reservacion pendiente.
 - Registra evento de notificacion en auditoria.
 
@@ -112,7 +111,7 @@ functions/
 
 ## 4.8 `issue-reservation-voucher`
 
-- Tipo: Event Trigger o HTTP interno.
+- Tipo: HTTP interno (invocado por webhooks de pago via `Functions.createExecution`).
 - Precondicion: reservacion `confirmed` y pago `approved`.
 - Genera `voucherCode` unico + `reservation_vouchers`.
 - Envia email con voucher al cliente.
@@ -147,7 +146,7 @@ functions/
 ## 4.13 `sync-user-profile`
 
 - Tipo: HTTP autenticado.
-- Sincroniza `users` con Auth (`name/email/phone`).
+- Sincroniza `users` con Auth (`name/email/phone`) y campos de perfil en `users` (`phoneCountryCode`, `whatsappCountryCode`, `whatsappNumber`).
 
 ## 4.14 `activity-log-query` (root-only)
 
@@ -159,9 +158,40 @@ functions/
 
 ## 4.15 `dashboard-metrics-aggregator`
 
-- Tipo: Cron Job (diario) o endpoint interno.
+- Tipo: Cron Job diario (`55 23 * * *`, UTC).
 - Calcula KPIs diarios y escribe en `analytics_daily`.
 - Alimenta visualizaciones del dashboard (leads, reservas, ingresos).
+
+## 4.16 `root-functions-diagnostics` (root-only)
+
+- Tipo: HTTP autenticado.
+- Requiere usuario autenticado con `role === root`.
+- Revisa salud operativa de functions (existencia, variables runtime, ultima ejecucion).
+- Permite smoke tests no destructivos para validar ejecucion en ambiente real.
+- Disenada para usarse desde tab interna root del panel administrativo.
+
+## 4.17 Permiso Execute y Scope de Actor (Definitivo)
+
+| Function                           | Execute Appwrite | Scope de actor                                                         |
+| ---------------------------------- | ---------------- | ---------------------------------------------------------------------- |
+| `user-create-profile`              | `[]`             | No aplica (evento)                                                     |
+| `create-lead-public`               | `any`            | No requiere auth                                                       |
+| `send-lead-notification`           | `[]`             | No aplica (evento)                                                     |
+| `property-view-counter`            | `any`            | No requiere auth                                                       |
+| `create-reservation-public`        | `users`          | Usuario autenticado con email verificado                               |
+| `reservation-created-notification` | `[]`             | No aplica (evento)                                                     |
+| `create-payment-session`           | `users`          | Usuario autenticado con email verificado y reserva propia              |
+| `payment-webhook-stripe`           | `any`            | No usa rol/scope; valida firma Stripe                                  |
+| `payment-webhook-mercadopago`      | `any`            | No usa rol/scope; valida firma/HMAC                                    |
+| `issue-reservation-voucher`        | `[]`             | No usa rol/scope; invocacion interna                                   |
+| `create-review-public`             | `users`          | Usuario autenticado con email verificado y reserva elegible propia     |
+| `moderate-review`                  | `users`          | `owner`/`root` o scope `reviews.moderate`                              |
+| `staff-user-management`            | `users`          | `owner`/`root` o scope `staff.manage`                                  |
+| `email-verification`               | `any`            | `verify` por token; `send/resend` segun validacion de payload/cooldown |
+| `sync-user-profile`                | `users`          | Usuario autenticado solo sobre su propio perfil                        |
+| `activity-log-query`               | `users`          | Solo `role=root`                                                       |
+| `dashboard-metrics-aggregator`     | `[]`             | No aplica (cron)                                                       |
+| `root-functions-diagnostics`       | `users`          | Solo `role=root`                                                       |
 
 ---
 

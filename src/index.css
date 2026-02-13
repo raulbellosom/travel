@@ -17,6 +17,21 @@ body {
     color 200ms ease-in-out;
 }
 
+input,
+textarea,
+select {
+  max-width: 100%;
+}
+
+/* Prevent automatic zoom on iOS/Android when focusing small text inputs. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Remove default outline on click/tap */
 *:focus {
   outline: none;

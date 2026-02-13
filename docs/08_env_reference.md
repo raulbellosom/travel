@@ -25,12 +25,6 @@ APP_NAME="Real Estate SaaS"
 APP_ENV=development
 APP_BASE_URL=http://localhost:5173
 APP_VERSION=1.0.0
-INSTANCE_MODE=demo
-INSTANCE_SLUG=demo
-INSTANCE_OWNER_NAME=
-APPWRITE_DEFAULT_AUTH_ROLE=client
-APPWRITE_OWNER_AUTH_IDS=
-APPWRITE_OWNER_EMAILS=
 ```
 
 ---
@@ -84,6 +78,7 @@ APPWRITE_FUNCTION_MODERATE_REVIEW_ID=moderate-review
 APPWRITE_FUNCTION_DASHBOARD_METRICS_ID=dashboard-metrics-aggregator
 APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID=staff-user-management
 APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID=activity-log-query
+APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID=root-functions-diagnostics
 ```
 
 ---
@@ -162,6 +157,7 @@ const required = [
   "APPWRITE_COLLECTION_PROPERTIES_ID",
   "APPWRITE_COLLECTION_LEADS_ID",
   "APPWRITE_COLLECTION_RESERVATIONS_ID",
+  "APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID",
   "APPWRITE_COLLECTION_REVIEWS_ID",
 ];
 ```
@@ -213,8 +209,9 @@ Buenas practicas:
 
 - Definitivo para nomenclatura unificada de variables.
 - Alineado con el catalogo de functions y esquema Appwrite actual.
+- Eliminadas variables obsoletas de instance/owner (se gestionan vía BD).
 
 ---
 
-Ultima actualizacion: 2026-02-11
-Version: 2.1.0
+Ultima actualizacion: 2026-02-12
+Version: 2.2.0

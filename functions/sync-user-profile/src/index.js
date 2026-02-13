@@ -47,7 +47,14 @@ const ALLOWED_FIELDS = new Set([
   "email",
   "phone",
   "phoneCountryCode",
+  "whatsappNumber",
+  "whatsappCountryCode",
 ]);
+const OPTIONAL_COMPAT_FIELDS = [
+  "phoneCountryCode",
+  "whatsappCountryCode",
+  "whatsappNumber",
+];
 
 const isValidEmail = (value) => EMAIL_REGEX.test(String(value || ""));
 const isValidPhoneLocal = (value) => PHONE_LOCAL_REGEX.test(String(value || ""));
@@ -71,6 +78,42 @@ const fullName = (firstName, lastName) =>
 
 const getUnknownFields = (body) =>
   Object.keys(body || {}).filter((key) => !ALLOWED_FIELDS.has(key));
+
+const updateProfileCompat = async ({
+  db,
+  databaseId,
+  usersCollectionId,
+  userId,
+  patch,
+}) => {
+  let nextPatch = { ...(patch || {}) };
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= OPTIONAL_COMPAT_FIELDS.length; attempt += 1) {
+    try {
+      await db.updateDocument(
+        databaseId,
+        usersCollectionId,
+        userId,
+        nextPatch,
+      );
+      return Object.keys(nextPatch);
+    } catch (dbErr) {
+      lastError = dbErr;
+      const unknownField = OPTIONAL_COMPAT_FIELDS.find(
+        (fieldName) =>
+          Object.prototype.hasOwnProperty.call(nextPatch, fieldName) &&
+          isUnknownAttributeError(dbErr, fieldName),
+      );
+      if (!unknownField) {
+        throw dbErr;
+      }
+      delete nextPatch[unknownField];
+    }
+  }
+
+  throw lastError || new Error("Unable to update profile");
+};
 
 export default async ({ req, res, log, error }) => {
   if (!isMethodAllowed(req, ["POST"])) {
@@ -146,6 +189,13 @@ export default async ({ req, res, log, error }) => {
     const nextPhoneCountryCode = normalizeDialCode(
       body.phoneCountryCode ?? currentProfile.phoneCountryCode,
     );
+    const nextWhatsappNumber = normalizeDigits(
+      body.whatsappNumber ?? currentProfile.whatsappNumber,
+      15,
+    );
+    const nextWhatsappCountryCode = normalizeDialCode(
+      body.whatsappCountryCode ?? currentProfile.whatsappCountryCode,
+    );
 
     if (!nextFirstName || !nextLastName) {
       return json(res, 422, {
@@ -206,11 +256,59 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
+    if (hasValue(nextWhatsappNumber) && !isValidPhoneLocal(nextWhatsappNumber)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "Invalid whatsappNumber format",
+      });
+    }
+
+    if (hasValue(nextWhatsappNumber) && !hasValue(nextWhatsappCountryCode)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "whatsappCountryCode is required when whatsappNumber is present",
+      });
+    }
+
+    if (
+      hasValue(nextWhatsappCountryCode) &&
+      !isValidDialCode(nextWhatsappCountryCode)
+    ) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "Invalid whatsappCountryCode format",
+      });
+    }
+
+    const nextWhatsappE164 = buildE164Phone({
+      dialCode: nextWhatsappCountryCode,
+      localNumber: nextWhatsappNumber,
+    });
+
+    if (hasValue(nextWhatsappNumber) && !nextWhatsappE164) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "Invalid whatsappNumber format",
+      });
+    }
+
     const patch = {
       firstName: nextFirstName,
       lastName: nextLastName,
       phone: nextPhone,
       phoneCountryCode: hasValue(nextPhone) ? nextPhoneCountryCode : "",
+      whatsappNumber: nextWhatsappNumber,
+      whatsappCountryCode: hasValue(nextWhatsappNumber)
+        ? nextWhatsappCountryCode
+        : "",
     };
 
     const emailChanged =
@@ -219,27 +317,13 @@ export default async ({ req, res, log, error }) => {
       patch.email = nextEmail;
     }
 
-    try {
-      await db.updateDocument(
-        config.databaseId,
-        config.usersCollectionId,
-        userId,
-        patch,
-      );
-    } catch (dbErr) {
-      if (!isUnknownAttributeError(dbErr, "phoneCountryCode")) {
-        throw dbErr;
-      }
-
-      const fallbackPatch = { ...patch };
-      delete fallbackPatch.phoneCountryCode;
-      await db.updateDocument(
-        config.databaseId,
-        config.usersCollectionId,
-        userId,
-        fallbackPatch,
-      );
-    }
+    const updatedFields = await updateProfileCompat({
+      db,
+      databaseId: config.databaseId,
+      usersCollectionId: config.usersCollectionId,
+      userId,
+      patch,
+    });
 
     const authUpdates = [];
     const nextName = fullName(nextFirstName, nextLastName);
@@ -282,7 +366,7 @@ export default async ({ req, res, log, error }) => {
       success: true,
       code: "PROFILE_SYNCED",
       userId,
-      updated: Object.keys(patch),
+      updated: updatedFields,
       syncedAuth: authUpdates,
     });
   } catch (err) {

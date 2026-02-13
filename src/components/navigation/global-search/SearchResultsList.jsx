@@ -2,6 +2,7 @@ import { GLOBAL_SEARCH_DEFAULT_ICON, GLOBAL_SEARCH_ICON_MAP } from "./icons";
 
 const SearchResultsList = ({
   t,
+  query = "",
   groupedResults,
   flatResults,
   activeIndex,
@@ -13,9 +14,13 @@ const SearchResultsList = ({
   const containerClass = fullHeight
     ? "h-full overflow-y-auto px-2 py-2"
     : "max-h-[58vh] overflow-y-auto px-2 py-2";
+  const hasTypedQuery = String(query || "").trim().length >= 2;
+  const emptyLabel = hasTypedQuery
+    ? t("globalSearch.states.empty")
+    : t("globalSearch.states.commandHelp");
 
   return (
-    <div className={containerClass}>
+    <div className={`${containerClass} bg-transparent`}>
       {loading ? (
         <p className="px-2 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
           {t("globalSearch.states.loading")}
@@ -24,7 +29,7 @@ const SearchResultsList = ({
 
       {!loading && flatResults.length === 0 ? (
         <p className="px-2 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-          {t("globalSearch.states.empty")}
+          {emptyLabel}
         </p>
       ) : null}
 
@@ -52,7 +57,14 @@ const SearchResultsList = ({
                     >
                       <Icon size={compact ? 16 : 15} className="mt-0.5 text-cyan-600 dark:text-cyan-300" />
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium">{item.title}</span>
+                        <span className="flex items-center gap-2">
+                          <span className="block truncate text-sm font-medium">{item.title}</span>
+                          {item.badge ? (
+                            <span className="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-200">
+                              {item.badge}
+                            </span>
+                          ) : null}
+                        </span>
                         {item.subtitle ? (
                           <span className="block truncate text-xs text-slate-500 dark:text-slate-300">
                             {item.subtitle}
@@ -66,6 +78,12 @@ const SearchResultsList = ({
             </section>
           ))
         : null}
+
+      {!loading && flatResults.length > 0 ? (
+        <p className="border-t border-cyan-100/70 px-3 py-2 text-[11px] text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          {t("globalSearch.hints.keyboard")}
+        </p>
+      ) : null}
     </div>
   );
 };

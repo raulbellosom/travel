@@ -40,6 +40,16 @@ const byDateRange = (items, fromDate, toDate) => {
 };
 
 const paginate = (items, page, limit) => {
+  if (limit === "all") {
+    return {
+      documents: items,
+      page: 1,
+      limit: "all",
+      total: items.length,
+      totalPages: 1,
+    };
+  }
+
   const safePage = Math.max(1, Number(page) || 1);
   const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
   const offset = (safePage - 1) * safeLimit;

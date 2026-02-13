@@ -5,7 +5,6 @@ import {
   FileText,
   KeyRound,
   Menu,
-  PlusCircle,
   Search,
   ShieldCheck,
   Star,
@@ -17,9 +16,7 @@ import { useTranslation } from "react-i18next";
 import ThemeToggle from "./ThemeToggle";
 import LanguageSwitcher from "./LanguageSwitcher";
 import BrandLogo from "../../BrandLogo";
-import { canPublishProperty, isInternalRole } from "../../../../utils/roles";
 import UserDropdown from "./UserDropdown";
-import { INTERNAL_ROUTES } from "../../../../utils/internalRoutes";
 
 const navItemClass =
   "inline-flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-medium transition";
@@ -30,8 +27,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isInternalUser = isInternalRole(user?.role);
-  const allowPublishProperty = canPublishProperty(user?.role);
   const accountLinks = [
     { to: "/perfil", icon: UserCircle2, label: t("navbar.userMenu.profile") },
     {
@@ -113,22 +108,6 @@ const Navbar = () => {
 
           {user ? (
             <>
-              {isInternalUser ? (
-                <Link
-                  to={INTERNAL_ROUTES.dashboard}
-                  className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  {t("nav.dashboard")}
-                </Link>
-              ) : null}
-              {allowPublishProperty ? (
-                <Link
-                  to={INTERNAL_ROUTES.createProperty}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
-                >
-                  <PlusCircle size={16} /> {t("navbar.publish")}
-                </Link>
-              ) : null}
               <UserDropdown user={user} onLogout={onLogout} />
             </>
           ) : (
@@ -206,25 +185,6 @@ const Navbar = () => {
                   })}
                 </div>
 
-                {isInternalUser ? (
-                  <Link
-                    to={INTERNAL_ROUTES.dashboard}
-                    onClick={() => setMobileOpen(false)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200"
-                  >
-                    {t("nav.dashboard")}
-                  </Link>
-                ) : null}
-
-                {allowPublishProperty ? (
-                  <Link
-                    to={INTERNAL_ROUTES.createProperty}
-                    onClick={() => setMobileOpen(false)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white"
-                  >
-                    {t("navbar.publish")}
-                  </Link>
-                ) : null}
                 <button
                   type="button"
                   onClick={onLogout}

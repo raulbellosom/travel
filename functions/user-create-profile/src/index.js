@@ -1,7 +1,15 @@
-import { Client, Databases, Functions, ID, Permission, Role } from "node-appwrite";
+import {
+  Client,
+  Databases,
+  Functions,
+  ID,
+  Permission,
+  Role,
+} from "node-appwrite";
 
 const cfg = () => ({
-  endpoint: process.env.APPWRITE_FUNCTION_ENDPOINT || process.env.APPWRITE_ENDPOINT,
+  endpoint:
+    process.env.APPWRITE_FUNCTION_ENDPOINT || process.env.APPWRITE_ENDPOINT,
   projectId:
     process.env.APPWRITE_FUNCTION_PROJECT_ID || process.env.APPWRITE_PROJECT_ID,
   apiKey: process.env.APPWRITE_FUNCTION_API_KEY || process.env.APPWRITE_API_KEY,
@@ -9,10 +17,8 @@ const cfg = () => ({
   usersCollectionId: process.env.APPWRITE_COLLECTION_USERS_ID || "users",
   preferencesCollectionId:
     process.env.APPWRITE_COLLECTION_USER_PREFERENCES_ID || "user_preferences",
-  emailVerificationFunctionId: process.env.APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID || "",
-  defaultUserRole: process.env.APPWRITE_DEFAULT_AUTH_ROLE || "client",
-  ownerBootstrapUserIds: process.env.APPWRITE_OWNER_AUTH_IDS || "",
-  ownerBootstrapEmails: process.env.APPWRITE_OWNER_EMAILS || "",
+  emailVerificationFunctionId:
+    process.env.APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID || "",
 });
 
 const parsePayload = (req) => {
@@ -25,7 +31,9 @@ const parsePayload = (req) => {
 };
 
 const splitName = (name) => {
-  const normalized = String(name || "").trim().replace(/\s+/g, " ");
+  const normalized = String(name || "")
+    .trim()
+    .replace(/\s+/g, " ");
   if (!normalized) return { firstName: "Usuario", lastName: "" };
   const [firstName, ...rest] = normalized.split(" ");
   return {
@@ -34,7 +42,10 @@ const splitName = (name) => {
   };
 };
 
-const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
+const normalizeEmail = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 const normalizePhoneLocal = (value) =>
   String(value || "")
     .replace(/\D/g, "")
@@ -52,13 +63,14 @@ const parseCsv = (value) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-const ALLOWED_DEFAULT_ROLES = new Set(["client", "owner"]);
-
 const getErrorText = (error) => String(error?.message || "").toLowerCase();
 
 const isAuthIdRequiredError = (error) => {
   const message = getErrorText(error);
-  return message.includes("authid") && (message.includes("required") || message.includes("missing"));
+  return (
+    message.includes("authid") &&
+    (message.includes("required") || message.includes("missing"))
+  );
 };
 
 const isUnknownAttributeError = (error, fieldName) => {
@@ -71,7 +83,8 @@ const DIAL_CODE_REGEX = /^\+[1-9][0-9]{0,3}$/;
 const PHONE_LOCAL_REGEX = /^[0-9]{6,15}$/;
 
 const isValidDialCode = (value) => DIAL_CODE_REGEX.test(String(value || ""));
-const isValidPhoneLocal = (value) => PHONE_LOCAL_REGEX.test(String(value || ""));
+const isValidPhoneLocal = (value) =>
+  PHONE_LOCAL_REGEX.test(String(value || ""));
 
 const splitE164Phone = (value) => {
   const digits = String(value || "").replace(/\D/g, "");
@@ -108,48 +121,36 @@ const resolvePhoneFields = (payload) => {
   };
 };
 
-const resolveInitialRole = ({ userId, email, config }) => {
-  const normalizedEmail = normalizeEmail(email);
-  const ownerUserIds = new Set(parseCsv(config.ownerBootstrapUserIds));
-  const ownerEmails = new Set(parseCsv(config.ownerBootstrapEmails).map(normalizeEmail));
-
-  if (ownerUserIds.has(String(userId || ""))) {
-    return "owner";
-  }
-
-  if (normalizedEmail && ownerEmails.has(normalizedEmail)) {
-    return "owner";
-  }
-
-  const defaultRole = String(config.defaultUserRole || "client").trim().toLowerCase();
-  return ALLOWED_DEFAULT_ROLES.has(defaultRole) ? defaultRole : "client";
+const resolveInitialRole = () => {
+  // All new users start as 'client' by default
+  // Role upgrades (owner, staff, etc.) are managed through the database by root users
+  return "client";
 };
 
-const buildProfilePermissions = ({ userId, config }) => {
+const buildProfilePermissions = ({ userId }) => {
   const permissions = [
     Permission.read(Role.user(userId)),
     Permission.update(Role.user(userId)),
     Permission.delete(Role.user(userId)),
   ];
 
-  const ownerReaderIds = parseCsv(config.ownerBootstrapUserIds);
-  for (const ownerId of ownerReaderIds) {
-    if (ownerId && ownerId !== userId) {
-      permissions.push(Permission.read(Role.user(ownerId)));
-    }
-  }
-
   return permissions;
 };
 
-const createUsersProfileCompat = async ({ db, config, userId, profileData, permissions }) => {
+const createUsersProfileCompat = async ({
+  db,
+  config,
+  userId,
+  profileData,
+  permissions,
+}) => {
   try {
     return await db.createDocument(
       config.databaseId,
       config.usersCollectionId,
       userId,
       profileData,
-      permissions
+      permissions,
     );
   } catch (error) {
     let nextProfileData = { ...profileData };
@@ -167,7 +168,7 @@ const createUsersProfileCompat = async ({ db, config, userId, profileData, permi
         config.usersCollectionId,
         userId,
         nextProfileData,
-        permissions
+        permissions,
       );
     }
 
@@ -179,19 +180,25 @@ const createUsersProfileCompat = async ({ db, config, userId, profileData, permi
         ...nextProfileData,
         authId: userId,
       },
-      permissions
+      permissions,
     );
   }
 };
 
-const updateUsersProfileCompat = async ({ db, config, userId, patch, permissions }) => {
+const updateUsersProfileCompat = async ({
+  db,
+  config,
+  userId,
+  patch,
+  permissions,
+}) => {
   try {
     return await db.updateDocument(
       config.databaseId,
       config.usersCollectionId,
       userId,
       patch,
-      permissions
+      permissions,
     );
   } catch (error) {
     let nextPatch = { ...patch };
@@ -209,7 +216,7 @@ const updateUsersProfileCompat = async ({ db, config, userId, patch, permissions
         config.usersCollectionId,
         userId,
         nextPatch,
-        permissions
+        permissions,
       );
     }
 
@@ -221,7 +228,7 @@ const updateUsersProfileCompat = async ({ db, config, userId, patch, permissions
         ...nextPatch,
         authId: userId,
       },
-      permissions
+      permissions,
     );
   }
 };
@@ -230,10 +237,12 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
   const userId = payload.$id || payload.userId || payload.id;
   const email = normalizeEmail(payload.email || "");
   const { phone, phoneCountryCode } = resolvePhoneFields(payload);
-  const { firstName, lastName } = splitName(payload.name || payload.fullName || "");
-  const role = resolveInitialRole({ userId, email, config });
+  const { firstName, lastName } = splitName(
+    payload.name || payload.fullName || "",
+  );
+  const role = resolveInitialRole();
 
-  const permissions = buildProfilePermissions({ userId, config });
+  const permissions = buildProfilePermissions({ userId });
 
   const profileData = {
     email,
@@ -259,7 +268,9 @@ const safeCreateUsersProfile = async (db, config, payload, log) => {
   } catch (error) {
     const alreadyExists =
       Number(error?.code) === 409 ||
-      String(error?.message || "").toLowerCase().includes("already exists");
+      String(error?.message || "")
+        .toLowerCase()
+        .includes("already exists");
     if (!alreadyExists) throw error;
 
     log(`users/${userId} ya existe, se actualiza estado basico.`);
@@ -296,7 +307,10 @@ const safeCreatePreferences = async (db, config, userId) => {
         brandFontBody: "Inter",
         enabled: true,
       },
-      [Permission.read(Role.user(userId)), Permission.update(Role.user(userId))]
+      [
+        Permission.read(Role.user(userId)),
+        Permission.update(Role.user(userId)),
+      ],
     );
   } catch (error) {
     const alreadyExists = Number(error?.code) === 409;
@@ -304,18 +318,31 @@ const safeCreatePreferences = async (db, config, userId) => {
   }
 };
 
-const triggerEmailVerification = async (fn, functionId, userId, email, log, error) => {
+const triggerEmailVerification = async (
+  fn,
+  functionId,
+  userId,
+  email,
+  log,
+  error,
+) => {
   if (!functionId) {
-    log("APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID no configurado. Se omite envío.");
+    log(
+      "APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID no configurado. Se omite envío.",
+    );
     return;
   }
 
   try {
-    await fn.createExecution(functionId, JSON.stringify({
-      action: "send",
-      userId,
-      email,
-    }), true);
+    await fn.createExecution(
+      functionId,
+      JSON.stringify({
+        action: "send",
+        userId,
+        email,
+      }),
+      true,
+    );
   } catch (err) {
     error(`No se pudo disparar email-verification: ${err.message}`);
   }
@@ -324,7 +351,10 @@ const triggerEmailVerification = async (fn, functionId, userId, email, log, erro
 export default async ({ req, res, log, error }) => {
   const config = cfg();
   if (!config.endpoint || !config.projectId || !config.apiKey) {
-    return res.json({ ok: false, message: "Missing Appwrite credentials" }, 500);
+    return res.json(
+      { ok: false, message: "Missing Appwrite credentials" },
+      500,
+    );
   }
 
   const payload = parsePayload(req);
@@ -350,7 +380,7 @@ export default async ({ req, res, log, error }) => {
       userId,
       payload.email,
       log,
-      error
+      error,
     );
 
     return res.json({ ok: true, action, userId });

@@ -1,12 +1,21 @@
 # activity-log-query
 
-Root-only HTTP endpoint for querying `activity_logs`.
+Root-only endpoint to query `activity_logs`.
 
-## Type
+## Contrato de ejecucion
 
-- HTTP endpoint (`POST`, authenticated)
+- Tipo: HTTP Function.
+- Trigger Appwrite: invocacion directa de la function `activity-log-query`.
+- Metodo: `POST`.
+- Permiso `execute`: `users`.
+- Scope/rol de actor: requiere usuario autenticado con `users.role = root` y `enabled = true`.
 
-## Payload (optional filters)
+## Scopes minimos de API key
+
+- `databases.read`
+- `databases.write`
+
+## Payload (filtros opcionales)
 
 ```json
 {
@@ -20,10 +29,3 @@ Root-only HTTP endpoint for querying `activity_logs`.
   "offset": 0
 }
 ```
-
-## Rules
-
-- Requires authenticated user with `role === root`.
-- Supports date range filter (`fromDate` / `toDate`) in `YYYY-MM-DD`.
-- Returns paginated records ordered by `$createdAt desc`.
-- Logs denied access attempts as `root_panel.access_denied` in `activity_logs`.

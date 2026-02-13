@@ -84,7 +84,7 @@ const DashboardLayout = () => {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(14,165,233,0.16),transparent_28%),radial-gradient(circle_at_90%_10%,rgba(16,185,129,0.16),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.64),transparent_35%)] dark:bg-[radial-gradient(circle_at_10%_0%,rgba(14,165,233,0.22),transparent_30%),radial-gradient(circle_at_90%_10%,rgba(16,185,129,0.2),transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.72),transparent_40%)]"
       />
 
-      <div className="relative flex min-h-dvh">
+      <div className="relative flex min-h-dvh min-w-0">
         <Sidebar
           isOpen={sidebarOpen}
           isCollapsed={sidebarCollapsed}
@@ -92,25 +92,25 @@ const DashboardLayout = () => {
           onToggleCollapse={handleToggleDesktopSidebar}
         />
 
-        <div className={`flex min-h-dvh flex-1 flex-col transition-[padding-left] duration-300 ${shellPadding}`}>
+        <div className={`flex min-h-dvh min-w-0 flex-1 flex-col transition-[padding-left] duration-300 ${shellPadding}`}>
           <DashboardNavbar
             onMenuClick={() => setSidebarOpen(true)}
             desktopOffsetClass={navbarDesktopOffset}
           />
 
-          <main className="flex-1 px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[5.25rem] sm:px-5 lg:px-8 lg:pb-6">
+          <main className="min-w-0 flex-1 px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[5.25rem] sm:px-5 lg:px-8 lg:pb-6">
             <MotionDiv
               key={location.pathname}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="mx-auto w-full max-w-[1520px] rounded-3xl border border-slate-200/80 bg-white/[0.82] p-4 shadow-sm backdrop-blur-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900/75"
+              className="mx-auto w-full min-w-0 max-w-[1520px] rounded-3xl border border-slate-200/80 bg-white/[0.82] p-4 shadow-sm backdrop-blur-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900/75"
             >
               <Outlet />
             </MotionDiv>
           </main>
 
-          <div className="relative z-[65] mb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:mb-0">
+          <div className="relative z-[65] mb-[calc(5.5rem+env(safe-area-inset-bottom))] min-w-0 lg:mb-0">
             <Footer variant="app" />
           </div>
 

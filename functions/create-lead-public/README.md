@@ -1,21 +1,33 @@
 # create-lead-public
 
-Recibe leads desde formulario público y crea documento en la colección `leads`.
+Recibe leads desde formulario publico y crea documento en `leads`.
 
-## Runtime
+## Contrato de ejecucion
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Tipo: HTTP Function publica.
+- Trigger Appwrite: invocacion directa de la function `create-lead-public`.
+- Metodo: `POST`.
+- Permiso `execute`: `any`.
+- Scope/rol de actor: no requiere usuario autenticado.
 
-## Tipo
+## Scopes minimos de API key
 
-- HTTP endpoint (POST)
+- `databases.read`
+- `databases.write`
 
-## Validaciones
+## Payload
 
-- `propertyId`, `name`, `email`, `message` obligatorios
-- Propiedad debe existir, estar `published` y `enabled=true`
+```json
+{
+  "propertyId": "PROPERTY_ID",
+  "name": "Juan Perez",
+  "email": "juan@example.com",
+  "phone": "+5215512345678",
+  "message": "Estoy interesado en esta propiedad"
+}
+```
 
-## Variables de entorno
+## Reglas clave
 
-Ver `.env.example`.
+- `propertyId`, `name`, `email`, `message` son obligatorios.
+- La propiedad debe estar `status=published` y `enabled=true`.

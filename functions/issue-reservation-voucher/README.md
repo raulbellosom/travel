@@ -1,10 +1,19 @@
 # issue-reservation-voucher
 
-Issue reservation voucher when reservation is eligible.
+Issues reservation voucher when a reservation is eligible.
 
-## Type
+## Execution Contract
 
-- HTTP endpoint (`POST`)
+- Type: HTTP Function interna.
+- Appwrite trigger: invocacion interna por `Functions.createExecution` desde webhooks de pago.
+- Method: `POST`.
+- `execute` permission: `[]`.
+- Actor scope/role: no depende de usuario autenticado.
+
+## Minimum API key scopes
+
+- `databases.read`
+- `databases.write`
 
 ## Payload
 
@@ -19,4 +28,4 @@ Issue reservation voucher when reservation is eligible.
 - Reservation must be enabled.
 - Reservation status must be `confirmed` or `completed`.
 - Payment status must be `paid`.
-- Prevents duplicates: returns existing voucher when already created.
+- Prevents duplicates by returning an existing voucher.

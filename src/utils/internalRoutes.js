@@ -14,6 +14,7 @@ export const INTERNAL_ROUTES = Object.freeze({
   team: withInternalBase("team"),
   rootActivity: withInternalBase("activity"),
   rootAmenities: withInternalBase("amenities"),
+  rootFunctionsDiagnostics: withInternalBase("functions-health"),
   profile: withInternalBase("profile"),
   settings: withInternalBase("settings"),
 });

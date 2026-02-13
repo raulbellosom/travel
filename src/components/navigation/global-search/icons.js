@@ -10,6 +10,7 @@ import {
   Settings,
   Sparkles,
   User,
+  UserPlus,
   Users,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ export const GLOBAL_SEARCH_ICON_MAP = Object.freeze({
   calendar: CalendarDays,
   "credit-card": CreditCard,
   user: User,
+  "user-plus": UserPlus,
   "plus-square": PlusSquare,
   users: Users,
   settings: Settings,
@@ -28,4 +30,3 @@ export const GLOBAL_SEARCH_ICON_MAP = Object.freeze({
   "message-square": MessageSquareText,
   mail: Mail,
 });
-

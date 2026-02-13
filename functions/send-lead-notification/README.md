@@ -1,16 +1,15 @@
 # send-lead-notification
 
-Envía email al propietario de la propiedad cuando se crea un lead.
+Sends email notification to the property owner when a lead is created.
 
-## Runtime
+## Execution Contract
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Type: Event Trigger Function.
+- Appwrite trigger: `databases.*.collections.leads.documents.*.create`.
+- Method: no aplica (evento de Appwrite).
+- `execute` permission: `[]`.
+- Actor scope/role: no aplica.
 
-## Trigger recomendado
+## Minimum API key scopes
 
-- `databases.*.collections.leads.documents.*.create`
-
-## Variables de entorno
-
-Ver `.env.example`.
+- `databases.read`

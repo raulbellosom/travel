@@ -1,88 +1,35 @@
-import { startTransition, useEffect, useRef, useState } from "react";
-import { Menu, Moon, Sun } from "lucide-react";
+import { Menu, Monitor, Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { ThemeAnimationType, useModeAnimation } from "react-theme-switch-animation";
 import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import GlobalSearch from "./GlobalSearch";
 import DashboardUserDropdown from "./DashboardUserDropdown";
 
-const UI_THEME_STORAGE_KEY = "ui.theme.mode";
-const LEGACY_THEME_STORAGE_KEY = "theme";
-const THEME_TRANSITION_DURATION_MS = 950;
-
 const DashboardNavbar = ({ onMenuClick, desktopOffsetClass = "lg:left-72" }) => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { effectiveTheme, changeTheme, changeLanguage } = useUI();
+  const { theme, changeTheme, changeLanguage } = useUI();
   const language = i18n.resolvedLanguage || i18n.language || "es";
-  const isDark = effectiveTheme === "dark";
-  const nextLanguage = language === "es" ? "en" : "es";
-  const [animatedIsDark, setAnimatedIsDark] = useState(isDark);
-  const syncThemeTimeoutRef = useRef(null);
-
-  useEffect(() => {
-    setAnimatedIsDark(isDark);
-  }, [isDark]);
-
-  useEffect(() => {
-    return () => {
-      if (syncThemeTimeoutRef.current) {
-        window.clearTimeout(syncThemeTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const { ref: themeButtonRef, toggleSwitchTheme } = useModeAnimation({
-    animationType: ThemeAnimationType.CIRCLE,
-    duration: THEME_TRANSITION_DURATION_MS,
-    easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-    isDarkMode: animatedIsDark,
-    globalClassName: "dark",
-    onDarkModeChange: (nextIsDark) => {
-      const nextTheme = nextIsDark ? "dark" : "light";
-      const root = document.documentElement;
-
-      setAnimatedIsDark(nextIsDark);
-      root.classList.toggle("dark", nextIsDark);
-      root.style.colorScheme = nextTheme;
-      localStorage.setItem(UI_THEME_STORAGE_KEY, nextTheme);
-      localStorage.setItem(LEGACY_THEME_STORAGE_KEY, nextTheme);
-
-      if (syncThemeTimeoutRef.current) {
-        window.clearTimeout(syncThemeTimeoutRef.current);
-      }
-
-      if (typeof window !== "undefined" && typeof window.setTimeout === "function") {
-        syncThemeTimeoutRef.current = window.setTimeout(() => {
-          startTransition(() => {
-            changeTheme(nextTheme);
-          });
-          syncThemeTimeoutRef.current = null;
-        }, THEME_TRANSITION_DURATION_MS + 32);
-        return;
-      }
-
-      if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-        window.requestAnimationFrame(() => {
-          changeTheme(nextTheme);
-        });
-        return;
-      }
-
-      changeTheme(nextTheme);
-    },
+  const currentTheme =
+    theme === "light" || theme === "dark" || theme === "system" ? theme : "system";
+  const nextTheme =
+    currentTheme === "system" ? "light" : currentTheme === "light" ? "dark" : "system";
+  const ThemeIcon =
+    currentTheme === "light" ? Sun : currentTheme === "dark" ? Moon : Monitor;
+  const themeToggleLabel = t("dashboardNavbar.toggleThemeTo", {
+    theme: t(`theme.${nextTheme}`),
   });
+  const nextLanguage = language === "es" ? "en" : "es";
 
   const onToggleLanguage = () => {
     changeLanguage(nextLanguage);
   };
 
   const onToggleTheme = () => {
-    void toggleSwitchTheme();
+    changeTheme(nextTheme);
   };
 
   const onLogout = async () => {
@@ -134,13 +81,12 @@ const DashboardNavbar = ({ onMenuClick, desktopOffsetClass = "lg:left-72" }) => 
           </button>
 
           <button
-            ref={themeButtonRef}
             onClick={onToggleTheme}
             className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            aria-label={t("dashboardNavbar.toggleTheme")}
-            title={t("dashboardNavbar.toggleTheme")}
+            aria-label={themeToggleLabel}
+            title={themeToggleLabel}
           >
-            {animatedIsDark ? <Sun size={15} /> : <Moon size={15} />}
+            <ThemeIcon size={15} />
           </button>
 
           <DashboardUserDropdown user={user} onLogout={onLogout} showIdentity={Boolean(user)} />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Search } from "lucide-react";
@@ -15,6 +15,12 @@ const EMPTY_DATASET = Object.freeze({
   leads: [],
   reservations: [],
   payments: [],
+  reviews: [],
+  team: [],
+  clients: [],
+  profile: null,
+  preferences: null,
+  activityLogs: [],
 });
 
 const groupByLabel = (items) => {
@@ -35,7 +41,7 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const navigate = useNavigate();
   const desktopContainerRef = useRef(null);
   const mobileInputRef = useRef(null);
-  const hasLoadedRef = useRef(false);
+  const searchRequestRef = useRef(0);
   const [query, setQuery] = useState("");
   const [isDesktopOpen, setIsDesktopOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -48,41 +54,75 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const canReadLeads = hasScope(user, "leads.read");
   const canReadReservations = hasScope(user, "reservations.read");
   const canReadPayments = hasScope(user, "payments.read");
+  const canReadReviews = hasScope(user, "reviews.moderate");
   const canManageTeam = hasScope(user, "staff.manage");
   const canSeeSettings = hasRoleAtLeast(user?.role, "owner");
+  const canReadClients = hasRoleAtLeast(user?.role, "owner");
+  const canReadProfile = Boolean(user?.$id);
+  const hasOpenOverlay = isDesktopOpen || isMobileOpen;
+  const normalizedQuery = String(query || "").trim();
 
   useEffect(() => {
+    searchRequestRef.current += 1;
     setDataset(EMPTY_DATASET);
-    hasLoadedRef.current = false;
     setQuery("");
+    setLoading(false);
   }, [user?.$id, user?.role]);
 
-  const loadDataset = useCallback(async () => {
-    if (!user?.$id || loading || hasLoadedRef.current) return;
-
-    setLoading(true);
-    try {
-      const nextDataset = await globalSearchService.getDataset({
-        ownerUserId: user.$id,
-        role: user.role,
-        canReadProperties,
-        canReadLeads,
-        canReadReservations,
-        canReadPayments,
-      });
-      setDataset(nextDataset);
-      hasLoadedRef.current = true;
-    } finally {
+  useEffect(() => {
+    if (!user?.$id || !hasOpenOverlay) return;
+    if (normalizedQuery.length < 2) {
+      searchRequestRef.current += 1;
+      setDataset(EMPTY_DATASET);
       setLoading(false);
+      return;
     }
+
+    const requestId = searchRequestRef.current + 1;
+    searchRequestRef.current = requestId;
+
+    const timeoutId = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const nextDataset = await globalSearchService.search({
+          query: normalizedQuery,
+          actorUserId: user.$id,
+          canReadProperties,
+          canReadLeads,
+          canReadReservations,
+          canReadPayments,
+          canReadReviews,
+          canManageTeam,
+          canReadClients,
+          canReadProfile,
+        });
+
+        if (searchRequestRef.current !== requestId) return;
+        setDataset(nextDataset);
+      } catch {
+        if (searchRequestRef.current !== requestId) return;
+        setDataset(EMPTY_DATASET);
+      } finally {
+        if (searchRequestRef.current === requestId) {
+          setLoading(false);
+        }
+      }
+    }, 220);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [
+    canManageTeam,
     canReadLeads,
     canReadPayments,
+    canReadProfile,
+    canReadReviews,
     canReadProperties,
     canReadReservations,
-    loading,
+    hasOpenOverlay,
+    normalizedQuery,
     user?.$id,
-    user?.role,
   ]);
 
   const { results } = useMemo(
@@ -95,14 +135,20 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
         canReadLeads,
         canReadReservations,
         canReadPayments,
+        canReadReviews,
         canWriteProperties,
         canManageTeam,
         canSeeSettings,
+        canReadClients,
+        canReadProfile,
       }),
     [
       canManageTeam,
+      canReadClients,
       canReadLeads,
       canReadPayments,
+      canReadProfile,
+      canReadReviews,
       canReadProperties,
       canReadReservations,
       canSeeSettings,
@@ -117,9 +163,9 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const flatResults = useMemo(() => groupedResults.flatMap((group) => group.results), [groupedResults]);
 
   useEffect(() => {
-    if (!isDesktopOpen && !isMobileOpen) return;
+    if (!hasOpenOverlay) return;
     setActiveIndex(0);
-  }, [isDesktopOpen, isMobileOpen, results.length]);
+  }, [hasOpenOverlay, results.length]);
 
   useEffect(() => {
     if (!isDesktopOpen) return;
@@ -141,6 +187,7 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
     setIsMobileOpen(false);
     setQuery("");
     setActiveIndex(0);
+    setDataset(EMPTY_DATASET);
   };
 
   const executeAction = (item) => {
@@ -185,13 +232,11 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
 
   const openDesktopSearch = () => {
     setIsDesktopOpen(true);
-    loadDataset();
   };
 
   const openMobileSearch = () => {
     setIsDesktopOpen(false);
     setIsMobileOpen(true);
-    loadDataset();
     setTimeout(() => {
       mobileInputRef.current?.focus();
     }, 0);
@@ -211,32 +256,29 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="mx-auto flex h-full w-full max-w-[34rem] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white/97 shadow-2xl dark:border-slate-700 dark:bg-slate-950/95"
+            className="mx-auto flex h-full w-full max-w-[34rem] flex-col overflow-hidden rounded-3xl border border-cyan-100 bg-[linear-gradient(155deg,rgba(255,255,255,0.98),rgba(240,249,255,0.95))] shadow-2xl dark:border-slate-700 dark:bg-none dark:bg-slate-950/95"
           >
-            <header className="flex items-center gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-700">
+            <header className="flex items-center gap-2 border-b border-cyan-100/90 px-3 py-3 dark:border-slate-700">
               <label className="relative block flex-1">
                 <Search
                   size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-cyan-700/80 dark:text-cyan-300"
                 />
                 <input
                   ref={mobileInputRef}
                   type="text"
                   value={query}
-                  onChange={(event) => {
-                    setQuery(event.target.value);
-                    loadDataset();
-                  }}
+                  onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={onInputKeyDown}
                   placeholder={t("globalSearch.placeholder")}
-                  className="h-11 w-full rounded-2xl border border-slate-300/90 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  className="h-11 w-full rounded-2xl border border-cyan-200/90 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/25 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   aria-label={t("globalSearch.aria.mobileInput")}
                 />
               </label>
               <button
                 type="button"
                 onClick={closeAll}
-                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-cyan-200/90 text-cyan-700 dark:border-slate-700 dark:text-slate-200"
                 aria-label={t("common.close")}
               >
                 <ArrowLeft size={16} />
@@ -246,6 +288,7 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
             <div className="flex-1 min-h-0">
               <SearchResultsList
                 t={t}
+                query={query}
                 groupedResults={groupedResults}
                 flatResults={flatResults}
                 activeIndex={activeIndex}
@@ -268,7 +311,7 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
           <label className="relative block">
             <Search
               size={15}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-cyan-700/80 dark:text-cyan-300"
             />
             <input
               type="text"
@@ -277,11 +320,10 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
               onChange={(event) => {
                 setQuery(event.target.value);
                 setIsDesktopOpen(true);
-                loadDataset();
               }}
               onKeyDown={onInputKeyDown}
               placeholder={t("globalSearch.placeholder")}
-              className="h-10 w-full rounded-2xl border border-slate-300/90 bg-white/85 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100"
+              className="h-11 w-full rounded-2xl border border-cyan-200/90 bg-[linear-gradient(120deg,rgba(255,255,255,0.96),rgba(240,249,255,0.9))] pl-9 pr-3 text-sm text-slate-800 shadow-[0_8px_30px_-20px_rgba(6,182,212,0.9)] outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/25 dark:border-slate-700 dark:bg-none dark:bg-slate-900/85 dark:text-slate-100"
               aria-label={t("globalSearch.aria.desktopInput")}
             />
           </label>
@@ -293,10 +335,11 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
                 transition={{ duration: 0.16, ease: "easeOut" }}
-                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[85] overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-2xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
+                className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[85] overflow-hidden rounded-2xl border border-cyan-100 bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(240,249,255,0.96))] shadow-2xl backdrop-blur dark:border-slate-700 dark:bg-none dark:bg-slate-900/95"
               >
                 <SearchResultsList
                   t={t}
+                  query={query}
                   groupedResults={groupedResults}
                   flatResults={flatResults}
                   activeIndex={activeIndex}
@@ -313,7 +356,7 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
         <button
           type="button"
           onClick={openMobileSearch}
-          className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:hidden"
+          className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-cyan-200 text-cyan-700 transition hover:bg-cyan-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:hidden"
           aria-label={t("globalSearch.aria.openMobile")}
         >
           <Search size={16} />

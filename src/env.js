@@ -21,7 +21,9 @@ const getLegacyValue = (key) => {
 };
 
 const get = (key, fallback = "") => {
-  const rawValue = hasValue(runtimeEnv[key]) ? runtimeEnv[key] : getLegacyValue(key);
+  const rawValue = hasValue(runtimeEnv[key])
+    ? runtimeEnv[key]
+    : getLegacyValue(key);
   return hasValue(rawValue) ? rawValue : fallback;
 };
 
@@ -65,21 +67,23 @@ const env = {
       propertyViewCounter: get("APPWRITE_FUNCTION_PROPERTY_VIEW_COUNTER_ID"),
       createReservation: get("APPWRITE_FUNCTION_CREATE_RESERVATION_ID"),
       reservationCreatedNotification: get(
-        "APPWRITE_FUNCTION_RESERVATION_CREATED_NOTIFICATION_ID"
+        "APPWRITE_FUNCTION_RESERVATION_CREATED_NOTIFICATION_ID",
       ),
       createPaymentSession: get("APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID"),
       paymentWebhookStripe: get("APPWRITE_FUNCTION_PAYMENT_WEBHOOK_STRIPE_ID"),
       paymentWebhookMercadoPago: get(
-        "APPWRITE_FUNCTION_PAYMENT_WEBHOOK_MERCADOPAGO_ID"
+        "APPWRITE_FUNCTION_PAYMENT_WEBHOOK_MERCADOPAGO_ID",
       ),
       issueReservationVoucher: get(
-        "APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID"
+        "APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID",
       ),
       createReview: get("APPWRITE_FUNCTION_CREATE_REVIEW_ID"),
       moderateReview: get("APPWRITE_FUNCTION_MODERATE_REVIEW_ID"),
       dashboardMetrics: get("APPWRITE_FUNCTION_DASHBOARD_METRICS_ID"),
       staffUserManagement: get("APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID"),
       activityLogQuery: get("APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID"),
+      rootDiagnostics: get("APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID"),
+      deepSearchQuery: get("APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID"),
     },
   },
   app: {
@@ -87,6 +91,17 @@ const env = {
     env: get("APP_ENV", "development"),
     url: get("APP_BASE_URL", "http://localhost:5173"),
     version: get("APP_VERSION", "1.0.0"),
+  },
+  payments: {
+    defaultProvider: get("PAYMENT_DEFAULT_PROVIDER", "stripe"),
+    successUrl: get("PAYMENT_SUCCESS_URL"),
+    cancelUrl: get("PAYMENT_CANCEL_URL"),
+    stripe: {
+      publishableKey: get("STRIPE_PUBLISHABLE_KEY"),
+    },
+    mercadopago: {
+      publicKey: get("MERCADOPAGO_PUBLIC_KEY"),
+    },
   },
   features: {
     geolocation: toBool(get("FEATURE_GEOLOCATION"), true),

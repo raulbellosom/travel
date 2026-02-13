@@ -1,41 +1,23 @@
-﻿# user-create-profile
+# user-create-profile
 
-Crea automaticamente perfil extendido (`users`) y preferencias (`user_preferences`)
-cuando se registra un usuario en Appwrite Auth.
+Creates `users` and `user_preferences` after user signup in Appwrite Auth.
 
-## Runtime
+## Execution Contract
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Type: Event Trigger Function.
+- Appwrite trigger: `users.*.create`.
+- Method: no aplica (evento de Appwrite).
+- `execute` permission: `[]`.
+- Actor scope/role: no aplica.
 
-## Trigger recomendado
-
-- `users.*.create`
-
-## Flujo
-
-1. Lee payload del evento de Auth.
-2. Crea documento `users` con `documentId = authUserId` (`$id` de Auth).
-3. Crea documento `user_preferences`.
-4. Ejecuta function `email-verification` (si se configuro ID) para enviar correo de validacion.
-
-## Roles de alta
-
-- Rol por defecto: `client`.
-- Bootstrap owner: si `userId` de Auth o email coincide con listas de bootstrap, el rol inicial sera `owner`.
-
-Variables:
-
-- `APPWRITE_DEFAULT_AUTH_ROLE=client` (`client` u `owner`)
-- `APPWRITE_OWNER_AUTH_IDS=id1,id2`
-- `APPWRITE_OWNER_EMAILS=admin@cliente.com`
-
-## Variables de entorno
-
-Ver `.env.example`.
-
-## Scopes API Key minimos
+## Minimum API key scopes
 
 - `databases.read`
 - `databases.write`
-- `functions.write` (si se ejecuta email-verification)
+- `functions.write` (required only if `APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID` is configured)
+
+## Role Assignment
+
+- All new users are created with the `client` role by default.
+- Role upgrades (to `owner`, `staff`, etc.) must be managed through the database by users with `root` privileges.
+- This ensures proper access control and auditability.

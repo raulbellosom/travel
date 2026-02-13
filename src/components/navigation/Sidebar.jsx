@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Sparkles,
   Users,
+  Wrench,
   X,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
@@ -84,6 +85,11 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
             name: t("sidebar.rootAmenities"),
             href: INTERNAL_ROUTES.rootAmenities,
             icon: Sparkles,
+          },
+          {
+            name: t("sidebar.rootFunctionsDiagnostics"),
+            href: INTERNAL_ROUTES.rootFunctionsDiagnostics,
+            icon: Wrench,
           },
         ]
       : []),

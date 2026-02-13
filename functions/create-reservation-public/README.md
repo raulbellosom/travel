@@ -1,15 +1,20 @@
-﻿# create-reservation-public
+# create-reservation-public
 
-HTTP function that creates a reservation from the web booking flow.
+Creates a reservation from the web booking flow.
 
-## Runtime
+## Execution Contract
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Type: HTTP Function.
+- Appwrite trigger: direct execution of `create-reservation-public`.
+- Method: `POST`.
+- `execute` permission: `users`.
+- Actor scope/role: authenticated user with verified email.
 
-## Type
+## Minimum API key scopes
 
-- HTTP endpoint (POST, authenticated user required)
+- `users.read`
+- `databases.read`
+- `databases.write`
 
 ## Payload
 
@@ -28,16 +33,3 @@ HTTP function that creates a reservation from the web booking flow.
 ```
 
 `guestEmail` is optional and, if provided, must match the authenticated account email.
-
-## Validation
-
-- User must be authenticated and email-verified.
-- Property must exist, be `published`, and `enabled=true`.
-- Date range must be valid and available.
-- `guestCount` must be between 1 and 500.
-- Reservation is created as `status=pending`, `paymentStatus=unpaid`.
-- Reservation stores `guestUserId` from auth context.
-
-## Environment
-
-See `.env.example`.

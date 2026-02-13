@@ -1,40 +1,24 @@
-﻿# dashboard-metrics-aggregator
+# dashboard-metrics-aggregator
 
-Cron/internal function that materializes daily KPIs into `analytics_daily`.
+Materializes daily KPIs in `analytics_daily`.
 
-## Runtime
+## Contrato de ejecucion
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Tipo: Cron Job.
+- Trigger Appwrite: `schedule = 55 23 * * *` (UTC, diario).
+- Metodo HTTP: no aplica para operacion normal.
+- Permiso `execute`: `[]`.
+- Scope/rol de actor: no requiere usuario autenticado.
 
-## Type
+## Scopes minimos de API key
 
-- Cron job or internal HTTP endpoint
+- `databases.read`
+- `databases.write`
 
-## Security
-
-- Request parsing/method checks are handled by local util `src/_request.js`.
-- No global shared middleware across function folders.
-- `actorUserId` for audit is taken from runtime request headers when available.
-
-## Payload (optional)
-
-```json
-{
-  "metricDate": "2026-02-11"
-}
-```
-
-If omitted, it aggregates the current UTC day.
-
-## KPIs
+## KPI calculados
 
 - `propertiesPublished`
 - `leadsCreated`
 - `reservationsCreated`
 - `paymentsApproved`
 - `grossRevenue`
-
-## Environment
-
-See `.env.example`.

@@ -78,10 +78,10 @@ Uso obligatorio de `src/env.js`.
 
 Variables clave:
 
-- `VITE_INSTANCE_MODE`
-- `VITE_INSTANCE_SLUG`
 - IDs de colecciones Appwrite
 - IDs de functions de lead/reserva/pago/review
+- Configuración de pagos (Stripe/MercadoPago public keys)
+- Feature flags
 
 ---
 

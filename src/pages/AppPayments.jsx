@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CreditCard, Filter } from "lucide-react";
+import { CreditCard, Filter, Search } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Select, TablePagination } from "../components/common";
@@ -24,9 +24,17 @@ const AppPayments = () => {
   });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [queryFilter, setQueryFilter] = useState(() =>
+    String(searchParams.get("search") || "").trim()
+  );
 
   const locale = i18n.language === "en" ? "en-US" : "es-MX";
   const focusId = searchParams.get("focus") || "";
+
+  useEffect(() => {
+    const nextSearch = String(searchParams.get("search") || "").trim();
+    setQueryFilter((prev) => (prev === nextSearch ? prev : nextSearch));
+  }, [searchParams]);
 
   const load = useCallback(async () => {
     if (!user?.$id) return;
@@ -48,11 +56,34 @@ const AppPayments = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [filters.provider, filters.status]);
+  }, [filters.provider, filters.status, queryFilter]);
+
+  const normalizedFilter = String(queryFilter || "").trim().toLowerCase();
+  const filteredPayments = useMemo(() => {
+    if (!normalizedFilter) return payments;
+
+    return payments.filter((payment) => {
+      const text = [
+        payment.$id,
+        payment.provider,
+        payment.status,
+        payment.reservationId,
+        payment.providerPaymentId,
+      ]
+        .map((value) => String(value || "").toLowerCase())
+        .join(" ");
+      return text.includes(normalizedFilter);
+    });
+  }, [normalizedFilter, payments]);
+
+  const effectivePageSize = useMemo(() => {
+    if (pageSize === "all") return Math.max(1, filteredPayments.length);
+    return Math.max(1, Number(pageSize) || 5);
+  }, [filteredPayments.length, pageSize]);
 
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(payments.length / pageSize)),
-    [pageSize, payments.length]
+    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredPayments.length / effectivePageSize))),
+    [effectivePageSize, filteredPayments.length, pageSize]
   );
 
   useEffect(() => {
@@ -60,16 +91,17 @@ const AppPayments = () => {
   }, [totalPages]);
 
   useEffect(() => {
-    if (!focusId || payments.length === 0) return;
-    const targetIndex = payments.findIndex((payment) => payment.$id === focusId);
+    if (!focusId || filteredPayments.length === 0) return;
+    const targetIndex = filteredPayments.findIndex((payment) => payment.$id === focusId);
     if (targetIndex < 0) return;
-    setPage(Math.floor(targetIndex / pageSize) + 1);
-  }, [focusId, pageSize, payments]);
+    setPage(Math.floor(targetIndex / effectivePageSize) + 1);
+  }, [effectivePageSize, filteredPayments, focusId]);
 
   const paginatedPayments = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return payments.slice(start, start + pageSize);
-  }, [page, pageSize, payments]);
+    if (pageSize === "all") return filteredPayments;
+    const start = (page - 1) * effectivePageSize;
+    return filteredPayments.slice(start, start + effectivePageSize);
+  }, [effectivePageSize, filteredPayments, page, pageSize]);
 
   useEffect(() => {
     if (loading || !focusId) return;
@@ -104,7 +136,22 @@ const AppPayments = () => {
         </p>
       </header>
 
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2 dark:border-slate-700 dark:bg-slate-900">
+      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-3 dark:border-slate-700 dark:bg-slate-900">
+        <label className="grid gap-1 text-sm">
+          <span className="inline-flex items-center gap-2">
+            <Search size={14} />
+            {t("appPaymentsPage.filters.search", { defaultValue: "Buscar" })}
+          </span>
+          <input
+            value={queryFilter}
+            onChange={(event) => setQueryFilter(event.target.value)}
+            placeholder={t("appPaymentsPage.filters.searchPlaceholder", {
+              defaultValue: "Proveedor, estado, referencia o ID",
+            })}
+            className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+          />
+        </label>
+
         <label className="grid gap-1 text-sm">
           <span className="inline-flex items-center gap-2">
             <Filter size={14} />
@@ -138,7 +185,7 @@ const AppPayments = () => {
         </p>
       ) : null}
 
-      {!loading && !error && payments.length === 0 ? (
+      {!loading && !error && filteredPayments.length === 0 ? (
         <EmptyStatePanel
           icon={CreditCard}
           title={t("appPaymentsPage.empty")}
@@ -147,10 +194,10 @@ const AppPayments = () => {
         />
       ) : null}
 
-      {!loading && payments.length > 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+      {!loading && filteredPayments.length > 0 ? (
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+          <div className="w-full max-w-full overflow-x-auto">
+            <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3">{t("appPaymentsPage.table.date")}</th>
@@ -203,7 +250,7 @@ const AppPayments = () => {
           <TablePagination
             page={page}
             totalPages={totalPages}
-            totalItems={payments.length}
+            totalItems={filteredPayments.length}
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={(value) => {

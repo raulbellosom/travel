@@ -21,9 +21,8 @@ import {
 } from "../utils/validation";
 import {
   getCountryDialCodeOptions,
-  isValidPhoneCombination,
-  isValidPhoneDialCode,
-  isValidPhoneLocalNumber,
+  getOptionalPhonePairValidationCode,
+  PHONE_VALIDATION_CODES,
   normalizePhoneDialCode,
   sanitizePhoneLocalNumber,
 } from "../utils/phone";
@@ -63,8 +62,26 @@ const Register = () => {
     () => getCountryDialCodeOptions(i18n.language),
     [i18n.language]
   );
+  const phoneValidationCode = useMemo(
+    () =>
+      getOptionalPhonePairValidationCode({
+        dialCode: form.phoneCountryCode,
+        localNumber: form.phone,
+      }),
+    [form.phone, form.phoneCountryCode]
+  );
+  const phoneValidationMessage = useMemo(() => {
+    if (phoneValidationCode === PHONE_VALIDATION_CODES.NONE) return "";
+    if (phoneValidationCode === PHONE_VALIDATION_CODES.DIAL_CODE_REQUIRED) {
+      return t("registerPage.errors.phoneCountryCodeRequired");
+    }
+    return t("registerPage.errors.invalidPhone");
+  }, [phoneValidationCode, t]);
 
   const onChange = (field, value) => {
+    if (error) {
+      setError("");
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -104,26 +121,9 @@ const Register = () => {
 
     const normalizedPhone = sanitizePhoneLocalNumber(form.phone);
     const normalizedPhoneDialCode = normalizePhoneDialCode(form.phoneCountryCode);
-    if (normalizedPhone) {
-      if (!isValidPhoneLocalNumber(normalizedPhone)) {
-        setError(t("registerPage.errors.invalidPhone"));
-        return;
-      }
-
-      if (!isValidPhoneDialCode(normalizedPhoneDialCode)) {
-        setError(t("registerPage.errors.invalidPhone"));
-        return;
-      }
-
-      if (
-        !isValidPhoneCombination({
-          dialCode: normalizedPhoneDialCode,
-          localNumber: normalizedPhone,
-        })
-      ) {
-        setError(t("registerPage.errors.invalidPhone"));
-        return;
-      }
+    if (phoneValidationCode !== PHONE_VALIDATION_CODES.NONE) {
+      setError(phoneValidationMessage || t("registerPage.errors.invalidPhone"));
+      return;
     }
 
     setLoading(true);
@@ -225,6 +225,9 @@ const Register = () => {
               />
             </label>
           </div>
+          {phoneValidationMessage ? (
+            <p className="text-xs text-red-600 dark:text-red-300">{phoneValidationMessage}</p>
+          ) : null}
         </div>
 
         <label className="grid gap-1 text-sm">
@@ -322,7 +325,7 @@ const Register = () => {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Boolean(phoneValidationMessage)}
           className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? t("registerPage.actions.creating") : t("registerPage.actions.submit")}

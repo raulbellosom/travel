@@ -1,15 +1,19 @@
-﻿# property-view-counter
+# property-view-counter
 
-HTTP function that increments `properties.views` for a public property detail view.
+Increments `properties.views` for a public property detail view.
 
-## Runtime
+## Execution Contract
 
-- Node.js >= 18
-- node-appwrite >= 17
+- Type: HTTP Function publica.
+- Appwrite trigger: invocacion directa de la function `property-view-counter`.
+- Method: `POST`.
+- `execute` permission: `any`.
+- Scope/rol de actor: no requiere usuario autenticado.
 
-## Type
+## Scopes minimos de API key
 
-- HTTP endpoint (POST)
+- `databases.read`
+- `databases.write`
 
 ## Payload
 
@@ -18,12 +22,3 @@ HTTP function that increments `properties.views` for a public property detail vi
   "propertyId": "PROPERTY_DOCUMENT_ID"
 }
 ```
-
-## Validation
-
-- `propertyId` is required
-- Property must exist, be `enabled=true`, and `status=published`
-
-## Environment
-
-See `.env.example`.
