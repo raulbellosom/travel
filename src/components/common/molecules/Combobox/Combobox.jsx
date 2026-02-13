@@ -85,22 +85,24 @@ const Combobox = ({
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     const safeOffset = 12;
-    const estimatedMenuHeight = Math.max(140, Math.min(filteredOptions.length, 8) * 36 + 16);
+    const preferredMenuHeight =
+      filteredOptions.length > 0
+        ? Math.min(320, Math.max(44, Math.min(filteredOptions.length, 8) * 36 + 8))
+        : 52;
     const spaceBelow = viewportHeight - triggerRect.bottom - safeOffset;
     const spaceAbove = triggerRect.top - safeOffset;
-    const openUp = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow;
-    const nextMaxHeight = Math.min(
-      320,
-      Math.max(120, (openUp ? spaceAbove : spaceBelow) - 8)
-    );
+    const openUp = spaceBelow < preferredMenuHeight && spaceAbove > spaceBelow;
+    const availableHeight = Math.max(80, (openUp ? spaceAbove : spaceBelow) - 8);
+    const nextMaxHeight = Math.min(320, availableHeight);
+    const renderedHeight = Math.min(nextMaxHeight, preferredMenuHeight);
     const width = Math.max(160, triggerRect.width);
     const left = Math.max(
       safeOffset,
       Math.min(triggerRect.left, viewportWidth - width - safeOffset)
     );
     const top = openUp
-      ? Math.max(safeOffset, triggerRect.top - nextMaxHeight - 6)
-      : Math.min(triggerRect.bottom + 6, viewportHeight - nextMaxHeight - safeOffset);
+      ? Math.max(safeOffset, triggerRect.top - renderedHeight - 6)
+      : Math.min(triggerRect.bottom + 6, viewportHeight - renderedHeight - safeOffset);
 
     setDropdownLayout({
       left,

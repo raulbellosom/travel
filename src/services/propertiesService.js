@@ -69,6 +69,20 @@ const toPreviewUrl = (fileId) => {
   });
 };
 
+const normalizeGalleryImageIds = (ids = []) =>
+  Array.from(
+    new Set(
+      (Array.isArray(ids) ? ids : [])
+        .map((id) => String(id || "").trim())
+        .filter(Boolean)
+    )
+  ).slice(0, 50);
+
+const areStringArraysEqual = (left = [], right = []) => {
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+};
+
 export const propertiesService = {
   async checkSlugAvailability(slug, { excludePropertyId = "" } = {}) {
     ensureAppwriteConfigured();
@@ -243,6 +257,107 @@ export const propertiesService = {
       ...doc,
       url: toPreviewUrl(doc.fileId),
     }));
+  },
+
+  async uploadPropertyImages(
+    propertyId,
+    files,
+    { title = "", startingSortOrder = 0, existingFileIds = [] } = {}
+  ) {
+    ensureAppwriteConfigured();
+    if (!env.appwrite.buckets.propertyImages) {
+      throw new Error("No esta configurada APPWRITE_BUCKET_PROPERTY_IMAGES_ID.");
+    }
+    if (!env.appwrite.collections.propertyImages) {
+      throw new Error("No esta configurada APPWRITE_COLLECTION_PROPERTY_IMAGES_ID.");
+    }
+
+    const normalizedPropertyId = String(propertyId || "").trim();
+    if (!normalizedPropertyId) {
+      throw new Error("Property ID invalido para subir imagenes.");
+    }
+
+    const filesToUpload = Array.from(files || []).filter(Boolean);
+    if (filesToUpload.length === 0) {
+      return {
+        uploadedImages: [],
+        galleryImageIds: normalizeGalleryImageIds(existingFileIds),
+      };
+    }
+
+    const baseGalleryImageIds = normalizeGalleryImageIds(existingFileIds);
+    const baseSortOrder = Math.max(0, Number(startingSortOrder || 0));
+    const normalizedAltText = String(title || "").trim();
+    const uploadedImages = [];
+
+    for (let index = 0; index < filesToUpload.length; index += 1) {
+      const file = filesToUpload[index];
+      const uploadedFile = await storage.createFile({
+        bucketId: env.appwrite.buckets.propertyImages,
+        fileId: ID.unique(),
+        file,
+      });
+
+      try {
+        const imageData = {
+          propertyId: normalizedPropertyId,
+          fileId: uploadedFile.$id,
+          sortOrder: baseSortOrder + index,
+          isMain: baseGalleryImageIds.length === 0 && index === 0,
+          enabled: true,
+        };
+
+        if (normalizedAltText.length >= 3) {
+          imageData.altText = normalizedAltText;
+        }
+
+        const resolvedFileSize = Number(uploadedFile.sizeOriginal || file.size || 0);
+        if (Number.isFinite(resolvedFileSize) && resolvedFileSize > 0) {
+          imageData.fileSize = resolvedFileSize;
+        }
+
+        const imageDoc = await databases.createDocument({
+          databaseId: env.appwrite.databaseId,
+          collectionId: env.appwrite.collections.propertyImages,
+          documentId: ID.unique(),
+          data: imageData,
+        });
+
+        uploadedImages.push({
+          ...imageDoc,
+          url: toPreviewUrl(uploadedFile.$id),
+        });
+      } catch (error) {
+        await storage
+          .deleteFile({
+            bucketId: env.appwrite.buckets.propertyImages,
+            fileId: uploadedFile.$id,
+          })
+          .catch(() => {});
+        throw error;
+      }
+    }
+
+    const nextGalleryImageIds = normalizeGalleryImageIds([
+      ...baseGalleryImageIds,
+      ...uploadedImages.map((image) => image.fileId),
+    ]);
+
+    if (!areStringArraysEqual(baseGalleryImageIds, nextGalleryImageIds)) {
+      await databases.updateDocument({
+        databaseId: env.appwrite.databaseId,
+        collectionId: env.appwrite.collections.properties,
+        documentId: normalizedPropertyId,
+        data: {
+          galleryImageIds: nextGalleryImageIds,
+        },
+      });
+    }
+
+    return {
+      uploadedImages,
+      galleryImageIds: nextGalleryImageIds,
+    };
   },
 
   async getOwnerProfile(ownerId) {

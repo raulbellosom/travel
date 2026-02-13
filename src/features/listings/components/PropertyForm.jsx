@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -6,10 +6,12 @@ import {
   ArrowLeft,
   ArrowRight,
   BedDouble,
+  Camera,
   Check,
   DollarSign,
   FileText,
   Home,
+  ImagePlus,
   Loader2,
   MapPin,
   RefreshCw,
@@ -96,6 +98,12 @@ const FORM_SECTIONS = [
     icon: Sparkles,
     fields: ["amenityIds"],
   },
+  {
+    id: "images",
+    titleKey: "propertyForm.sections.images",
+    icon: ImagePlus,
+    fields: ["imageFiles"],
+  },
 ];
 
 const inputClassName =
@@ -105,6 +113,10 @@ const inputErrorClassName =
   "border-red-400 focus:border-red-500 focus:ring-red-500/20 dark:border-red-700 dark:focus:border-red-500";
 
 const comboboxInputClassName = `${inputClassName} pr-9`;
+const MAX_PROPERTY_IMAGES = 50;
+const MAX_PROPERTY_IMAGE_SIZE_MB = 10;
+const MAX_PROPERTY_IMAGE_SIZE_BYTES = MAX_PROPERTY_IMAGE_SIZE_MB * 1024 * 1024;
+const PROPERTY_IMAGE_ACCEPT = "image/png,image/jpeg,image/webp";
 
 const toInputString = (value, fallback = "") => {
   if (value === null || value === undefined || value === "") return fallback;
@@ -121,6 +133,31 @@ const clampToRange = (value, min, max) => {
   if (value < min) return min;
   if (value > max) return max;
   return value;
+};
+
+const toFileSignature = (file) =>
+  `${String(file?.name || "").trim()}-${Number(file?.size || 0)}-${Number(file?.lastModified || 0)}`;
+
+const isValidPropertyImage = (file) => {
+  const mime = String(file?.type || "").trim().toLowerCase();
+  if (["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(mime)) {
+    return true;
+  }
+
+  const filename = String(file?.name || "").trim().toLowerCase();
+  return /\.(png|jpe?g|webp)$/.test(filename);
+};
+
+const revokeBlobUrl = (url) => {
+  if (typeof url !== "string" || !url.startsWith("blob:")) return;
+  URL.revokeObjectURL(url);
+};
+
+const formatFileSize = (bytes) => {
+  const value = Number(bytes || 0);
+  if (!Number.isFinite(value) || value <= 0) return "0 KB";
+  if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 const sectionTransition = {
@@ -167,6 +204,7 @@ const PropertyForm = ({
   loading = false,
   amenitiesOptions = [],
   amenitiesLoading = false,
+  existingImages = [],
   onSubmit,
 }) => {
   const { t, i18n } = useTranslation();
@@ -187,8 +225,15 @@ const PropertyForm = ({
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(mode === "edit");
   const [slugStatus, setSlugStatus] = useState({ state: "idle", checkedSlug: "" });
   const [amenityPickerValue, setAmenityPickerValue] = useState("");
+  const [amenityPickerKey, setAmenityPickerKey] = useState(0);
+  const [pendingImageItems, setPendingImageItems] = useState([]);
+  const [imageUploadError, setImageUploadError] = useState("");
+  const [isDraggingImages, setIsDraggingImages] = useState(false);
 
   const slugCheckRequestRef = useRef(0);
+  const galleryInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const pendingImageItemsRef = useRef([]);
 
   const isWizard = mode === "create";
   const currentSection = FORM_SECTIONS[activeSectionIndex];
@@ -198,14 +243,36 @@ const PropertyForm = ({
 
   const initialSlug = useMemo(() => normalizeSlug(mergedInitialValues.slug), [mergedInitialValues.slug]);
 
+  const clearPendingImages = useCallback(() => {
+    setPendingImageItems((previous) => {
+      previous.forEach((item) => revokeBlobUrl(item.previewUrl));
+      return [];
+    });
+  }, []);
+
+  useEffect(() => {
+    pendingImageItemsRef.current = pendingImageItems;
+  }, [pendingImageItems]);
+
+  useEffect(
+    () => () => {
+      pendingImageItemsRef.current.forEach((item) => revokeBlobUrl(item.previewUrl));
+    },
+    []
+  );
+
   useEffect(() => {
     setForm(mergedInitialValues);
     setErrors({});
     setActiveSectionIndex(0);
     setAmenityPickerValue("");
+    setAmenityPickerKey(0);
     setSlugStatus({ state: "idle", checkedSlug: "" });
     setSlugManuallyEdited(mode === "edit");
-  }, [mergedInitialValues, mode]);
+    setImageUploadError("");
+    setIsDraggingImages(false);
+    clearPendingImages();
+  }, [clearPendingImages, mergedInitialValues, mode]);
 
   const clearError = (field) => {
     setErrors((previous) => {
@@ -289,6 +356,14 @@ const PropertyForm = ({
       .map((amenityId) => byId.get(amenityId))
       .filter(Boolean);
   }, [amenitiesOptions, form.amenityIds]);
+
+  const normalizedExistingImages = useMemo(
+    () =>
+      Array.isArray(existingImages)
+        ? [...existingImages].sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0))
+        : [],
+    [existingImages]
+  );
 
   const amenityPickerOptions = useMemo(() => {
     const selectedIds = new Set(form.amenityIds || []);
@@ -530,6 +605,7 @@ const PropertyForm = ({
       status: form.status || "draft",
       featured: Boolean(form.featured),
       amenityIds: Array.from(new Set(form.amenityIds || [])),
+      imageFiles: pendingImageItems.map((item) => item.file).filter(Boolean),
     };
   };
 
@@ -659,10 +735,15 @@ const PropertyForm = ({
     setField("city", String(cityName || "").trim());
   };
 
+  const resetAmenityPicker = () => {
+    setAmenityPickerValue("");
+    setAmenityPickerKey((previous) => previous + 1);
+  };
+
   const handleAmenitySelect = (amenityId) => {
     const nextAmenityId = String(amenityId || "").trim();
     if (!nextAmenityId) {
-      setAmenityPickerValue("");
+      resetAmenityPicker();
       return;
     }
 
@@ -675,7 +756,7 @@ const PropertyForm = ({
       };
     });
 
-    setAmenityPickerValue("");
+    resetAmenityPicker();
   };
 
   const removeAmenity = (amenityId) => {
@@ -683,6 +764,140 @@ const PropertyForm = ({
       ...previous,
       amenityIds: (previous.amenityIds || []).filter((id) => id !== amenityId),
     }));
+  };
+
+  const addImageFiles = (fileList) => {
+    const files = Array.from(fileList || []).filter(Boolean);
+    if (files.length === 0) return;
+
+    setPendingImageItems((previous) => {
+      const existingSignatures = new Set(previous.map((item) => item.signature));
+      const availableSlots = Math.max(0, MAX_PROPERTY_IMAGES - previous.length);
+
+      if (availableSlots === 0) {
+        setImageUploadError(
+          t("propertyForm.images.errors.maxFiles", {
+            maxFiles: MAX_PROPERTY_IMAGES,
+          })
+        );
+        return previous;
+      }
+
+      const acceptedFiles = [];
+      let invalidTypeCount = 0;
+      let oversizeCount = 0;
+      let duplicateCount = 0;
+
+      for (const file of files) {
+        const signature = toFileSignature(file);
+        if (!isValidPropertyImage(file)) {
+          invalidTypeCount += 1;
+          continue;
+        }
+        if (Number(file.size || 0) > MAX_PROPERTY_IMAGE_SIZE_BYTES) {
+          oversizeCount += 1;
+          continue;
+        }
+        if (existingSignatures.has(signature)) {
+          duplicateCount += 1;
+          continue;
+        }
+
+        existingSignatures.add(signature);
+        acceptedFiles.push(file);
+      }
+
+      const filesToAppend = acceptedFiles.slice(0, availableSlots);
+      const skippedByLimitCount = Math.max(0, acceptedFiles.length - filesToAppend.length);
+      const nextErrorParts = [];
+
+      if (invalidTypeCount > 0) {
+        nextErrorParts.push(
+          t("propertyForm.images.errors.invalidType", {
+            count: invalidTypeCount,
+          })
+        );
+      }
+      if (oversizeCount > 0) {
+        nextErrorParts.push(
+          t("propertyForm.images.errors.sizeExceeded", {
+            count: oversizeCount,
+            maxSize: MAX_PROPERTY_IMAGE_SIZE_MB,
+          })
+        );
+      }
+      if (duplicateCount > 0) {
+        nextErrorParts.push(
+          t("propertyForm.images.errors.duplicates", {
+            count: duplicateCount,
+          })
+        );
+      }
+      if (skippedByLimitCount > 0) {
+        nextErrorParts.push(
+          t("propertyForm.images.errors.maxFiles", {
+            maxFiles: MAX_PROPERTY_IMAGES,
+          })
+        );
+      }
+
+      setImageUploadError(nextErrorParts.join(" "));
+
+      if (filesToAppend.length === 0) {
+        return previous;
+      }
+
+      const newItems = filesToAppend.map((file) => ({
+        id: `${toFileSignature(file)}-${Date.now()}-${Math.round(Math.random() * 1000000)}`,
+        file,
+        signature: toFileSignature(file),
+        previewUrl: URL.createObjectURL(file),
+      }));
+
+      return [...previous, ...newItems];
+    });
+  };
+
+  const removePendingImage = (itemId) => {
+    const normalizedId = String(itemId || "").trim();
+    if (!normalizedId) return;
+    setImageUploadError("");
+
+    setPendingImageItems((previous) => {
+      const target = previous.find((item) => item.id === normalizedId);
+      if (target) revokeBlobUrl(target.previewUrl);
+      return previous.filter((item) => item.id !== normalizedId);
+    });
+  };
+
+  const handleGalleryInputChange = (event) => {
+    addImageFiles(event.target.files);
+    event.target.value = "";
+  };
+
+  const handleCameraInputChange = (event) => {
+    addImageFiles(event.target.files);
+    event.target.value = "";
+  };
+
+  const handleImageDragOver = (event) => {
+    event.preventDefault();
+    if (!isDraggingImages) {
+      setIsDraggingImages(true);
+    }
+  };
+
+  const handleImageDragLeave = (event) => {
+    event.preventDefault();
+    const relatedTarget = event.relatedTarget;
+    if (relatedTarget && event.currentTarget.contains(relatedTarget)) return;
+    setIsDraggingImages(false);
+  };
+
+  const handleImageDrop = (event) => {
+    event.preventDefault();
+    setIsDraggingImages(false);
+    addImageFiles(event.dataTransfer?.files);
   };
 
   const slugStatusView = useMemo(() => {
@@ -1037,6 +1252,7 @@ const PropertyForm = ({
                   {t("propertyForm.amenities.searchLabel")}
                 </span>
                 <Combobox
+                  key={amenityPickerKey}
                   value={amenityPickerValue}
                   options={amenityPickerOptions}
                   disabled={amenityPickerOptions.length === 0}
@@ -1074,6 +1290,173 @@ const PropertyForm = ({
                     </button>
                   );
                 })
+              )}
+            </div>
+          </div>
+        );
+
+      case "images":
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {t("propertyForm.images.hint", {
+                maxSize: MAX_PROPERTY_IMAGE_SIZE_MB,
+                maxFiles: MAX_PROPERTY_IMAGES,
+              })}
+            </p>
+
+            <div
+              className={`rounded-2xl border-2 border-dashed p-4 transition sm:p-5 ${
+                isDraggingImages
+                  ? "border-cyan-500 bg-cyan-50 dark:border-cyan-400 dark:bg-cyan-950/30"
+                  : "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/30"
+              }`}
+              onDragOver={handleImageDragOver}
+              onDragEnter={handleImageDragOver}
+              onDragLeave={handleImageDragLeave}
+              onDrop={handleImageDrop}
+            >
+              <div className="flex flex-col items-start gap-3">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {t("propertyForm.images.dropzoneTitle")}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">
+                  {t("propertyForm.images.dropzoneSubtitle", {
+                    maxSize: MAX_PROPERTY_IMAGE_SIZE_MB,
+                    maxFiles: MAX_PROPERTY_IMAGES,
+                  })}
+                </p>
+                <div className="flex w-full flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
+                  >
+                    <ImagePlus size={14} />
+                    {t("propertyForm.images.actions.selectFiles")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-cyan-400 dark:hover:text-cyan-200"
+                  >
+                    <Camera size={14} />
+                    {t("propertyForm.images.actions.useCamera")}
+                  </button>
+                </div>
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept={PROPERTY_IMAGE_ACCEPT}
+                  multiple
+                  className="hidden"
+                  onChange={handleGalleryInputChange}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleCameraInputChange}
+                />
+              </div>
+            </div>
+
+            {imageUploadError ? (
+              <p className="inline-flex items-start gap-1 text-xs text-red-600 dark:text-red-300">
+                <AlertCircle size={12} className="mt-0.5" />
+                <span>{imageUploadError}</span>
+              </p>
+            ) : null}
+
+            {normalizedExistingImages.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {t("propertyForm.images.existingTitle", {
+                    count: normalizedExistingImages.length,
+                  })}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {normalizedExistingImages.map((image) => (
+                    <article
+                      key={image.$id || image.fileId}
+                      className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+                    >
+                      <div className="relative aspect-video bg-slate-100 dark:bg-slate-800">
+                        {image.url ? (
+                          <img
+                            src={image.url}
+                            alt={image.altText || t("propertyForm.images.fallbackAlt")}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="grid h-full w-full place-items-center text-xs text-slate-500 dark:text-slate-300">
+                            {t("propertyForm.images.emptyPreview")}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1 p-2">
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                          {t("propertyForm.images.badges.existing")}
+                        </span>
+                        {image.isMain ? (
+                          <span className="rounded-full bg-cyan-100 px-2 py-1 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-200">
+                            {t("propertyForm.images.badges.main")}
+                          </span>
+                        ) : null}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                {t("propertyForm.images.pendingTitle", {
+                  count: pendingImageItems.length,
+                })}
+              </p>
+              {pendingImageItems.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  {t("propertyForm.images.empty")}
+                </p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {pendingImageItems.map((item) => (
+                    <article
+                      key={item.id}
+                      className="overflow-hidden rounded-xl border border-cyan-200 bg-cyan-50/60 dark:border-cyan-900/50 dark:bg-cyan-950/20"
+                    >
+                      <div className="relative aspect-video bg-slate-100 dark:bg-slate-800">
+                        <img
+                          src={item.previewUrl}
+                          alt={item.file?.name || t("propertyForm.images.fallbackAlt")}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePendingImage(item.id)}
+                          className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/60 bg-slate-900/70 text-white transition hover:bg-slate-950"
+                          aria-label={t("propertyForm.images.actions.removePending")}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                      <div className="space-y-1 p-2">
+                        <div className="line-clamp-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          {item.file?.name || t("propertyForm.images.fallbackAlt")}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-300">
+                          {formatFileSize(item.file?.size || 0)}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
               )}
             </div>
           </div>

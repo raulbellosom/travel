@@ -578,7 +578,9 @@
       "edit": "Editar",
       "toDraft": "Pasar a borrador",
       "publish": "Publicar",
-      "delete": "Eliminar"
+      "delete": "Eliminar",
+      "openMenu": "Abrir menu de acciones",
+      "menuLabel": "Acciones de la propiedad"
     },
     "errors": {
       "load": "No se pudieron cargar tus propiedades.",
@@ -929,7 +931,8 @@
       "pricing": "Precios y publicacion",
       "location": "Ubicacion",
       "features": "Caracteristicas",
-      "amenities": "Amenidades"
+      "amenities": "Amenidades",
+      "images": "Imagenes"
     },
     "mode": {
       "create": "Wizard de creacion",
@@ -992,6 +995,31 @@
       "searchPlaceholder": "Escribe para buscar amenidades...",
       "searchEmpty": "Sin resultados para esa amenidad",
       "noneSelected": "Aun no has agregado amenidades."
+    },
+    "images": {
+      "hint": "Agrega imagenes desde archivos o camara para completar la galeria de la propiedad.",
+      "dropzoneTitle": "Arrastra y suelta imagenes aqui",
+      "dropzoneSubtitle": "Formatos permitidos: JPG, PNG y WEBP. Maximo {{maxSize}} MB por archivo, hasta {{maxFiles}} imagenes.",
+      "existingTitle": "Imagenes actuales ({{count}})",
+      "pendingTitle": "Imagenes por subir ({{count}})",
+      "empty": "Aun no agregas imagenes nuevas.",
+      "emptyPreview": "Sin previsualizacion",
+      "fallbackAlt": "Imagen de propiedad",
+      "badges": {
+        "existing": "Actual",
+        "main": "Principal"
+      },
+      "actions": {
+        "selectFiles": "Elegir imagenes",
+        "useCamera": "Usar camara",
+        "removePending": "Quitar imagen"
+      },
+      "errors": {
+        "maxFiles": "Solo puedes agregar hasta {{maxFiles}} imagenes.",
+        "invalidType": "{{count}} archivo(s) fueron omitidos por formato no valido.",
+        "sizeExceeded": "{{count}} archivo(s) superan {{maxSize}} MB.",
+        "duplicates": "{{count}} archivo(s) repetidos fueron omitidos."
+      }
     },
     "slugStatus": {
       "idle": "El slug se usa para la URL publica de la propiedad.",

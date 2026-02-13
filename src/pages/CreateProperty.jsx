@@ -46,9 +46,16 @@ const CreateProperty = () => {
     setLoading(true);
     setError("");
     try {
-      const { amenityIds = [], ...propertyData } = values;
+      const { amenityIds = [], imageFiles = [], ...propertyData } = values;
       const created = await propertiesService.create(user.$id, propertyData);
       await amenitiesService.syncPropertyAmenities(created.$id, amenityIds);
+      if (Array.isArray(imageFiles) && imageFiles.length > 0) {
+        await propertiesService.uploadPropertyImages(created.$id, imageFiles, {
+          title: propertyData.title,
+          startingSortOrder: 0,
+          existingFileIds: created.galleryImageIds || [],
+        });
+      }
       navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, t("createPropertyPage.errors.create")));

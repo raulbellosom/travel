@@ -578,7 +578,9 @@
       "edit": "Edit",
       "toDraft": "Move to draft",
       "publish": "Publish",
-      "delete": "Delete"
+      "delete": "Delete",
+      "openMenu": "Open actions menu",
+      "menuLabel": "Property actions"
     },
     "errors": {
       "load": "Could not load your properties.",
@@ -929,7 +931,8 @@
       "pricing": "Pricing and publishing",
       "location": "Location",
       "features": "Features",
-      "amenities": "Amenities"
+      "amenities": "Amenities",
+      "images": "Images"
     },
     "mode": {
       "create": "Creation wizard",
@@ -992,6 +995,31 @@
       "searchPlaceholder": "Type to search amenities...",
       "searchEmpty": "No amenities found",
       "noneSelected": "No amenities selected yet."
+    },
+    "images": {
+      "hint": "Add images from files or camera to complete the property gallery.",
+      "dropzoneTitle": "Drag and drop images here",
+      "dropzoneSubtitle": "Allowed formats: JPG, PNG, and WEBP. Up to {{maxSize}} MB per file, maximum {{maxFiles}} images.",
+      "existingTitle": "Current images ({{count}})",
+      "pendingTitle": "Images to upload ({{count}})",
+      "empty": "No new images selected yet.",
+      "emptyPreview": "No preview available",
+      "fallbackAlt": "Property image",
+      "badges": {
+        "existing": "Current",
+        "main": "Main"
+      },
+      "actions": {
+        "selectFiles": "Select images",
+        "useCamera": "Use camera",
+        "removePending": "Remove image"
+      },
+      "errors": {
+        "maxFiles": "You can only add up to {{maxFiles}} images.",
+        "invalidType": "{{count}} file(s) were skipped due to invalid format.",
+        "sizeExceeded": "{{count}} file(s) exceed {{maxSize}} MB.",
+        "duplicates": "{{count}} duplicate file(s) were skipped."
+      }
     },
     "slugStatus": {
       "idle": "Slug is used for the public property URL.",

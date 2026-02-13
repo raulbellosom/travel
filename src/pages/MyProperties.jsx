@@ -1,7 +1,17 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Building2, Search } from "lucide-react";
+import {
+  Building2,
+  CheckCircle2,
+  EllipsisVertical,
+  FileText,
+  Loader2,
+  Pencil,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
@@ -25,7 +35,10 @@ const MyProperties = () => {
   const [searchText, setSearchText] = useState(() =>
     String(searchParams.get("search") || "").trim()
   );
+  const [rowActionMenu, setRowActionMenu] = useState(null);
   const focusId = String(searchParams.get("focus") || "").trim();
+  const rowActionMenuRef = useRef(null);
+  const rowActionTriggerRefs = useRef({});
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
 
@@ -53,6 +66,7 @@ const MyProperties = () => {
   }, [loadData]);
 
   const handleStatusToggle = async (item) => {
+    closeRowActionMenu();
     setBusyId(item.$id);
     try {
       await propertiesService.update(item.$id, user.$id, {
@@ -68,6 +82,7 @@ const MyProperties = () => {
   };
 
   const handleDelete = async (itemId) => {
+    closeRowActionMenu();
     if (!window.confirm(t("myPropertiesPage.confirmDeactivate"))) return;
     setBusyId(itemId);
     try {
@@ -126,6 +141,92 @@ const MyProperties = () => {
     return filteredItems.slice(start, start + effectivePageSize);
   }, [effectivePageSize, filteredItems, page, pageSize]);
 
+  const rowActionItem = useMemo(
+    () => paginatedItems.find((item) => item.$id === rowActionMenu?.propertyId) || null,
+    [paginatedItems, rowActionMenu?.propertyId]
+  );
+
+  const closeRowActionMenu = useCallback(() => {
+    setRowActionMenu(null);
+  }, []);
+
+  useEffect(() => {
+    if (rowActionMenu && !rowActionItem) {
+      closeRowActionMenu();
+    }
+  }, [closeRowActionMenu, rowActionItem, rowActionMenu]);
+
+  const openRowActionMenu = (event, propertyId, triggerId = propertyId) => {
+    if (typeof window === "undefined") return;
+
+    const triggerRect = event.currentTarget.getBoundingClientRect();
+    const horizontalPadding = 8;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const menuWidth = Math.min(240, viewportWidth - horizontalPadding * 2);
+    const estimatedMenuHeight = 144;
+    const gap = 6;
+    const canOpenDown =
+      triggerRect.bottom + gap + estimatedMenuHeight <= viewportHeight - horizontalPadding;
+    const top = canOpenDown
+      ? triggerRect.bottom + gap
+      : Math.max(horizontalPadding, triggerRect.top - estimatedMenuHeight - gap);
+    const left = Math.max(
+      horizontalPadding,
+      Math.min(
+        triggerRect.right - menuWidth,
+        viewportWidth - menuWidth - horizontalPadding
+      )
+    );
+
+    setRowActionMenu((previous) =>
+      previous?.propertyId === propertyId && previous?.triggerId === triggerId
+        ? null
+        : {
+            propertyId,
+            triggerId,
+            top,
+            left,
+            width: menuWidth,
+          }
+    );
+  };
+
+  useEffect(() => {
+    if (!rowActionMenu) return;
+
+    const closeOnOutsideClick = (event) => {
+      const menuElement = rowActionMenuRef.current;
+      const triggerElement = rowActionTriggerRefs.current[rowActionMenu.triggerId];
+      if (menuElement?.contains(event.target) || triggerElement?.contains(event.target)) {
+        return;
+      }
+      closeRowActionMenu();
+    };
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        closeRowActionMenu();
+      }
+    };
+
+    const closeOnViewportChange = () => closeRowActionMenu();
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("touchstart", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", closeOnViewportChange);
+    window.addEventListener("scroll", closeOnViewportChange, true);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("touchstart", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", closeOnViewportChange);
+      window.removeEventListener("scroll", closeOnViewportChange, true);
+    };
+  }, [closeRowActionMenu, rowActionMenu]);
+
   useEffect(() => {
     if (!focusId || filteredItems.length === 0) return;
     const targetIndex = filteredItems.findIndex((item) => item.$id === focusId);
@@ -138,6 +239,29 @@ const MyProperties = () => {
     const row = document.getElementById(`property-${focusId}`);
     row?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [focusId, loading, page, paginatedItems.length]);
+
+  const renderRowActionTrigger = (item, triggerId) => (
+    <button
+      ref={(element) => {
+        if (element) {
+          rowActionTriggerRefs.current[triggerId] = element;
+          return;
+        }
+        delete rowActionTriggerRefs.current[triggerId];
+      }}
+      type="button"
+      onClick={(event) => openRowActionMenu(event, item.$id, triggerId)}
+      disabled={busyId === item.$id}
+      aria-label={t("myPropertiesPage.actions.openMenu", {
+        defaultValue: "Abrir menu de acciones",
+      })}
+      aria-haspopup="menu"
+      aria-expanded={rowActionMenu?.propertyId === item.$id}
+      className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+    >
+      <EllipsisVertical size={16} />
+    </button>
+  );
 
   return (
     <section className="space-y-5">
@@ -241,32 +365,7 @@ const MyProperties = () => {
                         }).format(item.price || 0)}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          <Link
-                            to={getInternalEditPropertyRoute(item.$id)}
-                            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium dark:border-slate-600"
-                          >
-                            {t("myPropertiesPage.actions.edit")}
-                          </Link>
-                          <button
-                            type="button"
-                            disabled={busyId === item.$id}
-                            onClick={() => handleStatusToggle(item)}
-                            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium disabled:opacity-60 dark:border-slate-600"
-                          >
-                            {item.status === "published"
-                              ? t("myPropertiesPage.actions.toDraft")
-                              : t("myPropertiesPage.actions.publish")}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busyId === item.$id}
-                            onClick={() => handleDelete(item.$id)}
-                            className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 disabled:opacity-60 dark:border-red-800 dark:text-red-300"
-                          >
-                            {t("myPropertiesPage.actions.delete")}
-                          </button>
-                        </div>
+                        {renderRowActionTrigger(item, `table-${item.$id}`)}
                       </td>
                     </tr>
                   );
@@ -287,9 +386,72 @@ const MyProperties = () => {
           />
         </div>
       ) : null}
+
+      {rowActionMenu && rowActionItem && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={rowActionMenuRef}
+              role="menu"
+              aria-label={t("myPropertiesPage.actions.menuLabel", {
+                defaultValue: "Acciones de la propiedad",
+              })}
+              className="fixed z-[130] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+              style={{
+                top: `${rowActionMenu.top}px`,
+                left: `${rowActionMenu.left}px`,
+                width: `${rowActionMenu.width}px`,
+              }}
+            >
+              <div className="p-1.5">
+                <Link
+                  role="menuitem"
+                  to={getInternalEditPropertyRoute(rowActionItem.$id)}
+                  onClick={closeRowActionMenu}
+                  className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
+                >
+                  <Pencil size={15} />
+                  {t("myPropertiesPage.actions.edit")}
+                </Link>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleStatusToggle(rowActionItem)}
+                  disabled={busyId === rowActionItem.$id}
+                  className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:text-slate-100 dark:hover:bg-slate-800"
+                >
+                  {busyId === rowActionItem.$id ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : rowActionItem.status === "published" ? (
+                    <FileText size={15} />
+                  ) : (
+                    <CheckCircle2 size={15} />
+                  )}
+                  {rowActionItem.status === "published"
+                    ? t("myPropertiesPage.actions.toDraft")
+                    : t("myPropertiesPage.actions.publish")}
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleDelete(rowActionItem.$id)}
+                  disabled={busyId === rowActionItem.$id}
+                  className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-300 dark:hover:bg-red-950/40"
+                >
+                  <Trash2 size={15} />
+                  {t("myPropertiesPage.actions.delete")}
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </section>
   );
 };
 
 export default MyProperties;
+
+
 

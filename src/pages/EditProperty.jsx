@@ -15,6 +15,7 @@ const EditProperty = () => {
   const navigate = useNavigate();
   const [initialValues, setInitialValues] = useState(null);
   const [amenities, setAmenities] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -29,10 +30,12 @@ const EditProperty = () => {
       propertiesService.getById(id),
       amenitiesService.listActive().catch(() => []),
       amenitiesService.listPropertyAmenityIds(id).catch(() => []),
+      propertiesService.listImages(id).catch(() => []),
     ])
-      .then(([doc, amenityOptions, selectedAmenityIds]) => {
+      .then(([doc, amenityOptions, selectedAmenityIds, imageDocs]) => {
         if (!mounted) return;
         setAmenities(amenityOptions || []);
+        setExistingImages(Array.isArray(imageDocs) ? imageDocs : []);
         setInitialValues({
           ...doc,
           amenityIds: Array.isArray(selectedAmenityIds) ? selectedAmenityIds : [],
@@ -57,9 +60,28 @@ const EditProperty = () => {
     setSaving(true);
     setError("");
     try {
-      const { amenityIds = [], ...propertyData } = values;
+      const { amenityIds = [], imageFiles = [], ...propertyData } = values;
       await propertiesService.update(id, user.$id, propertyData);
       await amenitiesService.syncPropertyAmenities(id, amenityIds);
+      if (Array.isArray(imageFiles) && imageFiles.length > 0) {
+        const nextSortOrder =
+          existingImages.reduce(
+            (maxOrder, image) => Math.max(maxOrder, Number(image?.sortOrder || 0)),
+            -1
+          ) + 1;
+        await propertiesService.uploadPropertyImages(id, imageFiles, {
+          title: propertyData.title || initialValues?.title || "",
+          startingSortOrder: nextSortOrder,
+          existingFileIds: Array.from(
+            new Set([
+              ...(Array.isArray(initialValues?.galleryImageIds)
+                ? initialValues.galleryImageIds
+                : []),
+              ...existingImages.map((image) => image.fileId),
+            ])
+          ),
+        });
+      }
       navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, t("editPropertyPage.errors.save")));
@@ -101,6 +123,7 @@ const EditProperty = () => {
         loading={saving}
         amenitiesOptions={amenities}
         amenitiesLoading={false}
+        existingImages={existingImages}
         submitLabel={t("editPropertyPage.submit")}
         onSubmit={handleSubmit}
       />

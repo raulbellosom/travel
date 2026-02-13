@@ -145,23 +145,24 @@ const Select = React.forwardRef(
       }
 
       const visibleOptions = Math.max(1, Math.min(options.length, 7));
-      const estimatedMenuHeight = visibleOptions * 40 + 16;
+      const preferredMenuHeight = visibleOptions * 40 + 16;
       const viewportHeight = window.innerHeight;
       const viewportWidth = window.innerWidth;
       const safeOffset = 12;
       const spaceBelow = viewportHeight - triggerRect.bottom - safeOffset;
       const spaceAbove = triggerRect.top - safeOffset;
       const nextDirection =
-        spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow
+        spaceBelow < preferredMenuHeight && spaceAbove > spaceBelow
           ? "up"
           : "down";
 
       const availableHeight =
         nextDirection === "up"
-          ? Math.max(120, spaceAbove - 8)
-          : Math.max(120, spaceBelow - 8);
+          ? Math.max(80, spaceAbove - 8)
+          : Math.max(80, spaceBelow - 8);
 
-      const nextMaxHeight = Math.min(320, Math.max(120, availableHeight));
+      const nextMaxHeight = Math.min(320, availableHeight);
+      const renderedHeight = Math.min(nextMaxHeight, preferredMenuHeight);
       const width = Math.max(140, triggerRect.width);
       const left = Math.max(
         safeOffset,
@@ -169,10 +170,10 @@ const Select = React.forwardRef(
       );
       const top =
         nextDirection === "up"
-          ? Math.max(safeOffset, triggerRect.top - nextMaxHeight - 6)
+          ? Math.max(safeOffset, triggerRect.top - renderedHeight - 6)
           : Math.min(
               triggerRect.bottom + 6,
-              viewportHeight - nextMaxHeight - safeOffset
+              viewportHeight - renderedHeight - safeOffset
             );
 
       setOpenDirection(nextDirection);
