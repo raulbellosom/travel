@@ -1,4 +1,4 @@
-import { Menu, Monitor, Moon, Sun } from "lucide-react";
+import { Home, Menu, Monitor, Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
@@ -7,16 +7,25 @@ import BrandLogo from "../common/BrandLogo";
 import GlobalSearch from "./GlobalSearch";
 import DashboardUserDropdown from "./DashboardUserDropdown";
 
-const DashboardNavbar = ({ onMenuClick, desktopOffsetClass = "lg:left-72" }) => {
+const DashboardNavbar = ({
+  onMenuClick,
+  desktopOffsetClass = "lg:left-72",
+}) => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { theme, changeTheme, changeLanguage } = useUI();
   const language = i18n.resolvedLanguage || i18n.language || "es";
   const currentTheme =
-    theme === "light" || theme === "dark" || theme === "system" ? theme : "system";
+    theme === "light" || theme === "dark" || theme === "system"
+      ? theme
+      : "system";
   const nextTheme =
-    currentTheme === "system" ? "light" : currentTheme === "light" ? "dark" : "system";
+    currentTheme === "system"
+      ? "light"
+      : currentTheme === "light"
+        ? "dark"
+        : "system";
   const ThemeIcon =
     currentTheme === "light" ? Sun : currentTheme === "dark" ? Moon : Monitor;
   const themeToggleLabel = t("dashboardNavbar.toggleThemeTo", {
@@ -52,9 +61,16 @@ const DashboardNavbar = ({ onMenuClick, desktopOffsetClass = "lg:left-72" }) => 
           </button>
 
           <div className="flex items-center gap-2 lg:hidden">
-            <BrandLogo size="sm" mode="adaptive" alt={t("navbar.brand")} className="rounded-xl" />
+            <BrandLogo
+              size="sm"
+              mode="adaptive"
+              alt={t("navbar.brand")}
+              className="rounded-xl"
+            />
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t("navbar.brand")}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {t("navbar.brand")}
+              </p>
               <h1 className="text-xs font-medium text-slate-600 dark:text-slate-300">
                 {t("dashboardNavbar.title")}
               </h1>
@@ -80,6 +96,17 @@ const DashboardNavbar = ({ onMenuClick, desktopOffsetClass = "lg:left-72" }) => 
             <span>{String(language || "es").toUpperCase()}</span>
           </button>
 
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            aria-label={t("nav.goToLanding")}
+            title={t("nav.goToLanding")}
+          >
+            <Home size={18} />
+          </a>
+
           <button
             onClick={onToggleTheme}
             className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -89,8 +116,11 @@ const DashboardNavbar = ({ onMenuClick, desktopOffsetClass = "lg:left-72" }) => 
             <ThemeIcon size={15} />
           </button>
 
-          <DashboardUserDropdown user={user} onLogout={onLogout} showIdentity={Boolean(user)} />
-
+          <DashboardUserDropdown
+            user={user}
+            onLogout={onLogout}
+            showIdentity={Boolean(user)}
+          />
         </div>
       </div>
     </header>

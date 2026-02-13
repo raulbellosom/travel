@@ -9,7 +9,9 @@ const Modal = ({
   isOpen = false,
   onClose,
   title,
+  description,
   children,
+  footer,
   size = "md",
   variant = "default",
   showCloseButton = true,
@@ -22,13 +24,14 @@ const Modal = ({
 
   const MotionDiv = motion.div;
 
+  // Tamaños según design system (04_design_system_mobile_first.md)
   const sizeStyles = {
-    xs: "max-w-md",
-    sm: "max-w-lg",
-    md: "max-w-2xl",
-    lg: "max-w-4xl",
-    xl: "max-w-6xl",
-    full: "max-w-[95vw]",
+    sm: "max-w-[400px]", // 400px según specs
+    md: "max-w-[600px]", // 600px según specs
+    lg: "max-w-[800px]", // 800px según specs
+    xl: "max-w-2xl", // 672px - tamaño extra
+    "2xl": "max-w-3xl", // 768px - tamaño extra
+    full: "max-w-[95vw]", // 95vw según specs
   };
 
   const variantStyles = {
@@ -42,23 +45,37 @@ const Modal = ({
     danger: "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800",
   };
 
+  // Handle Escape key
   useEffect(() => {
+    if (!closeOnEscape) return;
+
     const handleEscape = (event) => {
-      if (closeOnEscape && event.key === "Escape" && isOpen) {
+      if (event.key === "Escape" && isOpen) {
         onClose?.();
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, closeOnEscape, onClose]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Store original values
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+
+      // Lock scroll on both html and body
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+
+      return () => {
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+      };
+    }
+  }, [isOpen]);
 
   const handleBackdropClick = (event) => {
     if (closeOnBackdrop && event.target === event.currentTarget) {
@@ -75,7 +92,7 @@ const Modal = ({
     hidden: {
       opacity: 0,
       scale: 0.95,
-      y: -20,
+      y: 10,
     },
     visible: {
       opacity: 1,
@@ -90,9 +107,9 @@ const Modal = ({
     exit: {
       opacity: 0,
       scale: 0.95,
-      y: -20,
+      y: 10,
       transition: {
-        duration: 0.2,
+        duration: 0.15,
       },
     },
   };
@@ -100,8 +117,8 @@ const Modal = ({
   const safeSize = sizeStyles[size] ? size : "md";
   const safeVariant = variantStyles[variant] ? variant : "default";
   const modalStyles = [
-    "relative w-full rounded-xl shadow-xl border",
-    "max-h-[90vh] flex flex-col",
+    "relative w-full rounded-xl shadow-2xl border",
+    "max-h-[85vh] sm:max-h-[90vh] flex flex-col",
     sizeStyles[safeSize],
     variantStyles[safeVariant],
     className,
@@ -111,7 +128,7 @@ const Modal = ({
     <AnimatePresence>
       {isOpen && (
         <MotionDiv
-          className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-hidden"
           variants={backdropVariants}
           initial="hidden"
           animate="visible"
@@ -119,8 +136,10 @@ const Modal = ({
           onClick={handleBackdropClick}
           {...props}
         >
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
+          {/* Modal */}
           <MotionDiv
             className={modalStyles}
             variants={modalVariants}
@@ -130,31 +149,54 @@ const Modal = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? "modal-title" : undefined}
+            onClick={(e) => e.stopPropagation()}
           >
-            {(title || showCloseButton) && (
-              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                {title && (
-                  <h2
-                    id="modal-title"
-                    className="text-lg font-semibold text-gray-900 dark:text-gray-100"
-                  >
-                    {title}
-                  </h2>
-                )}
-                {showCloseButton && (
-                  <IconButton
-                    icon={X}
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    aria-label={t("modal.close")}
-                    className="ml-auto"
-                  />
-                )}
+            {/* Header - Fixed */}
+            {(title || description || showCloseButton) && (
+              <div className="shrink-0 px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {title && (
+                      <h2
+                        id="modal-title"
+                        className="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight"
+                      >
+                        {title}
+                      </h2>
+                    )}
+                    {description && (
+                      <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
+                        {description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Close button */}
+                  {showCloseButton && (
+                    <IconButton
+                      icon={X}
+                      variant="ghost"
+                      size="sm"
+                      onClick={onClose}
+                      aria-label={t("modal.close")}
+                      className="shrink-0"
+                    />
+                  )}
+                </div>
               </div>
             )}
 
-            <div className="flex-1 overflow-auto p-6">{children}</div>
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+              {children}
+            </div>
+
+            {/* Footer - Fixed (Optional) */}
+            {footer && (
+              <div className="shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-700 rounded-b-xl">
+                {footer}
+              </div>
+            )}
           </MotionDiv>
         </MotionDiv>
       )}
@@ -167,5 +209,21 @@ const Modal = ({
 
   return createPortal(modalContent, document.body);
 };
+
+/**
+ * Modal footer component for action buttons
+ * Layouts buttons in a responsive way:
+ * - Mobile: stacked vertically (reverse order)
+ * - Desktop: horizontal row aligned to the right
+ */
+export function ModalFooter({ children, className = "" }) {
+  return (
+    <div
+      className={`flex flex-col-reverse gap-2 sm:flex-row sm:justify-end ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default Modal;

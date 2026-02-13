@@ -65,10 +65,19 @@ const Navbar = () => {
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
       <div className="mx-auto grid h-20 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-3">
-          <BrandLogo size="lg" mode="adaptive" alt={t("navbar.brand")} className="rounded-xl shadow-md" />
+          <BrandLogo
+            size="lg"
+            mode="adaptive"
+            alt={t("navbar.brand")}
+            className="rounded-xl shadow-md"
+          />
           <div className="leading-tight">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("navbar.brand")}</p>
-            <p className="text-xs text-cyan-600 dark:text-cyan-400">{t("navbar.tagline")}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              {t("navbar.brand")}
+            </p>
+            <p className="text-xs text-cyan-600 dark:text-cyan-400">
+              {t("navbar.tagline")}
+            </p>
           </div>
         </Link>
 
@@ -83,20 +92,32 @@ const Navbar = () => {
           >
             {t("nav.home")}
           </Link>
-          <Link to="/" className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}>
+          <Link
+            to="/"
+            className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}
+          >
             {t("nav.realEstate")}
           </Link>
-          <Link to="/" className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}>
+          <Link
+            to="/"
+            className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}
+          >
             {t("nav.vacation")}
           </Link>
-          <Link to="/" className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}>
+          <Link
+            to="/"
+            className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}
+          >
             {t("nav.services")}
           </Link>
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
           <label className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={16}
+            />
             <input
               type="search"
               placeholder={t("navbar.searchPlaceholder")}
@@ -141,16 +162,32 @@ const Navbar = () => {
       {mobileOpen ? (
         <div className="border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950 lg:hidden">
           <div className="flex flex-col gap-2">
-            <Link to="/" onClick={() => setMobileOpen(false)} className={navItemClass}>
+            <Link
+              to="/"
+              onClick={() => setMobileOpen(false)}
+              className={navItemClass}
+            >
               {t("nav.home")}
             </Link>
-            <Link to="/" onClick={() => setMobileOpen(false)} className={navItemClass}>
+            <Link
+              to="/"
+              onClick={() => setMobileOpen(false)}
+              className={navItemClass}
+            >
               {t("nav.realEstate")}
             </Link>
-            <Link to="/" onClick={() => setMobileOpen(false)} className={navItemClass}>
+            <Link
+              to="/"
+              onClick={() => setMobileOpen(false)}
+              className={navItemClass}
+            >
               {t("nav.vacation")}
             </Link>
-            <Link to="/" onClick={() => setMobileOpen(false)} className={navItemClass}>
+            <Link
+              to="/"
+              onClick={() => setMobileOpen(false)}
+              className={navItemClass}
+            >
               {t("nav.services")}
             </Link>
 
@@ -165,7 +202,9 @@ const Navbar = () => {
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {user?.name || t("navbar.userMenu.defaultUser")}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-300">{user?.email}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
+                    {user?.email}
+                  </p>
                 </div>
 
                 <div className="grid gap-1">

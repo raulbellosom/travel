@@ -22,7 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { Select, TablePagination } from "../components/common";
-import Modal from "../components/common/organisms/Modal";
+import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
 import { authService } from "../services/authService";
@@ -45,7 +45,8 @@ const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
 const parseSearchText = (value) => String(value || "").trim();
 const parseStatusValue = (value) =>
   value === "enabled" || value === "disabled" ? value : "all";
-const parseRoleValue = (value) => (STAFF_ROLES.includes(String(value || "")) ? value : "all");
+const parseRoleValue = (value) =>
+  STAFF_ROLES.includes(String(value || "")) ? value : "all";
 
 const SCOPE_OPTIONS = [
   "staff.manage",
@@ -91,7 +92,7 @@ const getAvatarUrl = (item) => {
   if (!base) return "";
   if (!item.avatarUpdatedAt) return base;
   return `${base}${base.includes("?") ? "&" : "?"}v=${encodeURIComponent(
-    item.avatarUpdatedAt
+    item.avatarUpdatedAt,
   )}`;
 };
 
@@ -158,11 +159,11 @@ const Team = () => {
 
   const passwordChecks = useMemo(
     () => getPasswordChecks(form.password),
-    [form.password]
+    [form.password],
   );
   const passwordScore = useMemo(
     () => getPasswordStrengthScore(form.password),
-    [form.password]
+    [form.password],
   );
 
   const roleOptions = useMemo(
@@ -171,7 +172,7 @@ const Team = () => {
       { value: "staff_editor", label: t("teamPage.roles.staff_editor") },
       { value: "staff_support", label: t("teamPage.roles.staff_support") },
     ],
-    [t]
+    [t],
   );
 
   const filterRoleOptions = useMemo(
@@ -179,7 +180,7 @@ const Team = () => {
       { value: "all", label: t("teamPage.filters.allRoles") },
       ...roleOptions,
     ],
-    [roleOptions, t]
+    [roleOptions, t],
   );
 
   const filterStatusOptions = useMemo(
@@ -188,7 +189,7 @@ const Team = () => {
       { value: "enabled", label: t("teamPage.status.enabled") },
       { value: "disabled", label: t("teamPage.status.disabled") },
     ],
-    [t]
+    [t],
   );
 
   const loadStaff = useCallback(async () => {
@@ -250,7 +251,7 @@ const Team = () => {
         tone: "muted",
       },
     ],
-    [summaryStats.active, summaryStats.inactive, summaryStats.total, t]
+    [summaryStats.active, summaryStats.inactive, summaryStats.total, t],
   );
 
   const filteredStaff = useMemo(() => {
@@ -262,7 +263,10 @@ const Team = () => {
       const enabled = item.enabled !== false;
 
       const matchesQuery =
-        !query || fullName.includes(query) || email.includes(query) || role.includes(query);
+        !query ||
+        fullName.includes(query) ||
+        email.includes(query) ||
+        role.includes(query);
       const matchesRole = filters.role === "all" || item.role === filters.role;
       const matchesStatus =
         filters.status === "all" ||
@@ -282,8 +286,11 @@ const Team = () => {
   }, [filteredStaff.length, pageSize]);
 
   const totalPages = useMemo(
-    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredStaff.length / effectivePageSize))),
-    [effectivePageSize, filteredStaff.length, pageSize]
+    () =>
+      pageSize === "all"
+        ? 1
+        : Math.max(1, Math.ceil(filteredStaff.length / effectivePageSize)),
+    [effectivePageSize, filteredStaff.length, pageSize],
   );
 
   useEffect(() => {
@@ -316,7 +323,14 @@ const Team = () => {
 
   useEffect(() => {
     setRowActionMenu(null);
-  }, [filters.role, filters.search, filters.status, page, pageSize, loadingList]);
+  }, [
+    filters.role,
+    filters.search,
+    filters.status,
+    page,
+    pageSize,
+    loadingList,
+  ]);
 
   const resetForm = () => {
     if (isBlobUrl(form.avatarPreviewUrl)) {
@@ -377,7 +391,7 @@ const Team = () => {
       setError(
         t("teamPage.errors.avatarSize", {
           max: MAX_AVATAR_SIZE_MB,
-        })
+        }),
       );
       return;
     }
@@ -486,8 +500,8 @@ const Team = () => {
       setError(
         getErrorMessage(
           err,
-          isEditing ? t("teamPage.errors.update") : t("teamPage.errors.create")
-        )
+          isEditing ? t("teamPage.errors.update") : t("teamPage.errors.create"),
+        ),
       );
     } finally {
       setLoadingCreate(false);
@@ -506,7 +520,9 @@ const Team = () => {
       firstName: String(item.firstName || ""),
       lastName: String(item.lastName || ""),
       email: String(item.email || ""),
-      role: STAFF_ROLES.includes(String(item.role || "")) ? item.role : "staff_support",
+      role: STAFF_ROLES.includes(String(item.role || ""))
+        ? item.role
+        : "staff_support",
       scopes: parseScopesJson(item.scopesJson),
       avatarFileId: String(item.avatarFileId || ""),
       avatarPreviewUrl: getAvatarUrl(item),
@@ -531,7 +547,7 @@ const Team = () => {
       setSuccess(
         item.enabled !== false
           ? t("teamPage.messages.disabled")
-          : t("teamPage.messages.enabled")
+          : t("teamPage.messages.enabled"),
       );
       await loadStaff();
     } catch (err) {
@@ -543,7 +559,9 @@ const Team = () => {
 
   const sendPasswordRecovery = async (item) => {
     closeRowActionMenu();
-    const targetEmail = String(item?.email || "").trim().toLowerCase();
+    const targetEmail = String(item?.email || "")
+      .trim()
+      .toLowerCase();
     if (!targetEmail) {
       setError(t("teamPage.errors.invalidEmail"));
       return;
@@ -558,7 +576,7 @@ const Team = () => {
         t("teamPage.messages.passwordRecoverySent", {
           email: targetEmail,
           defaultValue: "Se envio el enlace de recuperacion a {{email}}.",
-        })
+        }),
       );
     } catch (err) {
       setError(
@@ -566,8 +584,8 @@ const Team = () => {
           err,
           t("teamPage.errors.passwordRecovery", {
             defaultValue: "No se pudo enviar el enlace de recuperacion.",
-          })
-        )
+          }),
+        ),
       );
     } finally {
       setSendingRecoveryUserId("");
@@ -636,16 +654,20 @@ const Team = () => {
     const estimatedMenuHeight = 156;
     const gap = 6;
     const canOpenDown =
-      triggerRect.bottom + gap + estimatedMenuHeight <= viewportHeight - horizontalPadding;
+      triggerRect.bottom + gap + estimatedMenuHeight <=
+      viewportHeight - horizontalPadding;
     const top = canOpenDown
       ? triggerRect.bottom + gap
-      : Math.max(horizontalPadding, triggerRect.top - estimatedMenuHeight - gap);
+      : Math.max(
+          horizontalPadding,
+          triggerRect.top - estimatedMenuHeight - gap,
+        );
     const left = Math.max(
       horizontalPadding,
       Math.min(
         triggerRect.right - menuWidth,
-        viewportWidth - menuWidth - horizontalPadding
-      )
+        viewportWidth - menuWidth - horizontalPadding,
+      ),
     );
 
     setRowActionMenu((prev) =>
@@ -657,7 +679,7 @@ const Team = () => {
             top,
             left,
             width: menuWidth,
-          }
+          },
     );
   };
 
@@ -666,8 +688,12 @@ const Team = () => {
 
     const closeOnOutsideClick = (event) => {
       const menuElement = rowActionMenuRef.current;
-      const triggerElement = rowActionTriggerRefs.current[rowActionMenu.triggerId];
-      if (menuElement?.contains(event.target) || triggerElement?.contains(event.target)) {
+      const triggerElement =
+        rowActionTriggerRefs.current[rowActionMenu.triggerId];
+      if (
+        menuElement?.contains(event.target) ||
+        triggerElement?.contains(event.target)
+      ) {
         return;
       }
       closeRowActionMenu();
@@ -755,7 +781,9 @@ const Team = () => {
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             {t("teamPage.title")}
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-300">{t("teamPage.subtitle")}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {t("teamPage.subtitle")}
+          </p>
         </div>
 
         <button
@@ -805,7 +833,9 @@ const Team = () => {
               <span>{t("teamPage.fields.role")}</span>
               <Select
                 value={filters.role}
-                onChange={(value) => setFilters((prev) => ({ ...prev, role: value }))}
+                onChange={(value) =>
+                  setFilters((prev) => ({ ...prev, role: value }))
+                }
                 options={filterRoleOptions}
                 className={inputClass}
               />
@@ -815,7 +845,9 @@ const Team = () => {
               <span>{t("teamPage.fields.status")}</span>
               <Select
                 value={filters.status}
-                onChange={(value) => setFilters((prev) => ({ ...prev, status: value }))}
+                onChange={(value) =>
+                  setFilters((prev) => ({ ...prev, status: value }))
+                }
                 options={filterStatusOptions}
                 className={inputClass}
               />
@@ -865,7 +897,8 @@ const Team = () => {
                 const itemScopes = parseScopesJson(item.scopesJson);
                 const isFocused = Boolean(focusId) && item.$id === focusId;
                 const roleLabel =
-                  roleOptions.find((option) => option.value === item.role)?.label || item.role;
+                  roleOptions.find((option) => option.value === item.role)
+                    ?.label || item.role;
 
                 return (
                   <article
@@ -928,7 +961,9 @@ const Team = () => {
                   <tr>
                     <th className="px-4 py-3">{t("teamPage.table.member")}</th>
                     <th className="px-4 py-3">{t("teamPage.table.role")}</th>
-                    <th className="px-4 py-3">{t("teamPage.table.permissions")}</th>
+                    <th className="px-4 py-3">
+                      {t("teamPage.table.permissions")}
+                    </th>
                     <th className="px-4 py-3">{t("teamPage.table.status")}</th>
                     <th className="px-4 py-3">{t("teamPage.table.actions")}</th>
                   </tr>
@@ -938,7 +973,8 @@ const Team = () => {
                     const itemScopes = parseScopesJson(item.scopesJson);
                     const isFocused = Boolean(focusId) && item.$id === focusId;
                     const roleLabel =
-                      roleOptions.find((option) => option.value === item.role)?.label || item.role;
+                      roleOptions.find((option) => option.value === item.role)
+                        ?.label || item.role;
 
                     return (
                       <tr
@@ -1094,7 +1130,7 @@ const Team = () => {
                 </button>
               </div>
             </div>,
-            document.body
+            document.body,
           )
         : null}
 
@@ -1103,6 +1139,28 @@ const Team = () => {
         onClose={() => setPermissionsEditor(null)}
         title={t("teamPage.permissionsModal.title")}
         size="md"
+        footer={
+          <ModalFooter>
+            <button
+              type="button"
+              onClick={() => setPermissionsEditor(null)}
+              className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={savePermissionsEditor}
+              disabled={savingPermissions}
+              className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-sky-600 px-3 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {savingPermissions ? (
+                <Loader2 size={15} className="mr-2 animate-spin" />
+              ) : null}
+              {t("teamPage.actions.savePermissions")}
+            </button>
+          </ModalFooter>
+        }
       >
         {permissionsEditor ? (
           <div className="space-y-4">
@@ -1110,7 +1168,9 @@ const Team = () => {
               <p className="font-semibold text-slate-900 dark:text-slate-100">
                 {permissionsEditor.displayName}
               </p>
-              <p className="text-xs text-slate-600 dark:text-slate-300">{permissionsEditor.email}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {permissionsEditor.email}
+              </p>
             </div>
 
             <label className="grid gap-1 text-sm">
@@ -1118,7 +1178,9 @@ const Team = () => {
               <Select
                 value={permissionsEditor.role}
                 onChange={(value) =>
-                  setPermissionsEditor((prev) => (prev ? { ...prev, role: value } : prev))
+                  setPermissionsEditor((prev) =>
+                    prev ? { ...prev, role: value } : prev,
+                  )
                 }
                 options={roleOptions}
                 className={inputClass}
@@ -1145,25 +1207,6 @@ const Team = () => {
                 ))}
               </div>
             </div>
-
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setPermissionsEditor(null)}
-                className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={savePermissionsEditor}
-                disabled={savingPermissions}
-                className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-sky-600 px-3 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {savingPermissions ? <Loader2 size={15} className="mr-2 animate-spin" /> : null}
-                {t("teamPage.actions.savePermissions")}
-              </button>
-            </div>
           </div>
         ) : null}
       </Modal>
@@ -1178,18 +1221,47 @@ const Team = () => {
             ? t("teamPage.editTitle", { defaultValue: "Editar miembro" })
             : t("teamPage.createTitle")
         }
+        description={t("teamPage.subtitle")}
         size="lg"
+        footer={
+          <ModalFooter>
+            <button
+              type="button"
+              onClick={closeFormModal}
+              disabled={loadingCreate}
+              className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {isEditing
+                ? t("teamPage.actions.cancelEdit", {
+                    defaultValue: "Cancelar edicion",
+                  })
+                : t("teamPage.actions.reset")}
+            </button>
+            <button
+              type="submit"
+              form="team-form"
+              disabled={loadingCreate}
+              className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {loadingCreate ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : null}
+              {loadingCreate
+                ? isEditing
+                  ? t("teamPage.actions.saving", {
+                      defaultValue: "Guardando...",
+                    })
+                  : t("teamPage.actions.creating")
+                : isEditing
+                  ? t("teamPage.actions.save", {
+                      defaultValue: "Guardar cambios",
+                    })
+                  : t("teamPage.actions.create")}
+            </button>
+          </ModalFooter>
+        }
       >
-        <form
-          onSubmit={onSubmit}
-          className="space-y-5"
-        >
-          <header className="space-y-1">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              {t("teamPage.subtitle")}
-            </p>
-          </header>
-
+        <form id="team-form" onSubmit={onSubmit} className="space-y-5">
           <div className="space-y-4">
             <article className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1256,7 +1328,9 @@ const Team = () => {
                     minLength={2}
                     value={form.firstName}
                     autoComplete="given-name"
-                    onChange={(event) => onFormChange("firstName", event.target.value)}
+                    onChange={(event) =>
+                      onFormChange("firstName", event.target.value)
+                    }
                     className={inputClass}
                   />
                 </label>
@@ -1270,7 +1344,9 @@ const Team = () => {
                     minLength={2}
                     value={form.lastName}
                     autoComplete="family-name"
-                    onChange={(event) => onFormChange("lastName", event.target.value)}
+                    onChange={(event) =>
+                      onFormChange("lastName", event.target.value)
+                    }
                     className={inputClass}
                   />
                 </label>
@@ -1284,7 +1360,9 @@ const Team = () => {
                     type="email"
                     autoComplete="email"
                     value={form.email}
-                    onChange={(event) => onFormChange("email", event.target.value)}
+                    onChange={(event) =>
+                      onFormChange("email", event.target.value)
+                    }
                     className={inputClass}
                   />
                 </label>
@@ -1317,16 +1395,26 @@ const Team = () => {
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
                           value={form.password}
-                          onChange={(event) => onFormChange("password", event.target.value)}
+                          onChange={(event) =>
+                            onFormChange("password", event.target.value)
+                          }
                           className={`${inputClass} pr-11`}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword((prev) => !prev)}
-                          aria-label={showPassword ? t("passwordField.hide") : t("passwordField.show")}
+                          aria-label={
+                            showPassword
+                              ? t("passwordField.hide")
+                              : t("passwordField.show")
+                          }
                           className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
                         >
-                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {showPassword ? (
+                            <EyeOff size={16} />
+                          ) : (
+                            <Eye size={16} />
+                          )}
                         </button>
                       </div>
                     </label>
@@ -1339,18 +1427,28 @@ const Team = () => {
                           type={showConfirmPassword ? "text" : "password"}
                           autoComplete="new-password"
                           value={form.confirmPassword}
-                          onChange={(event) => onFormChange("confirmPassword", event.target.value)}
+                          onChange={(event) =>
+                            onFormChange("confirmPassword", event.target.value)
+                          }
                           className={`${inputClass} pr-11`}
                         />
                         <button
                           type="button"
-                          onClick={() => setShowConfirmPassword((prev) => !prev)}
+                          onClick={() =>
+                            setShowConfirmPassword((prev) => !prev)
+                          }
                           aria-label={
-                            showConfirmPassword ? t("passwordField.hide") : t("passwordField.show")
+                            showConfirmPassword
+                              ? t("passwordField.hide")
+                              : t("passwordField.show")
                           }
                           className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
                         >
-                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {showConfirmPassword ? (
+                            <EyeOff size={16} />
+                          ) : (
+                            <Eye size={16} />
+                          )}
                         </button>
                       </div>
                     </label>
@@ -1376,17 +1474,22 @@ const Team = () => {
                     </p>
                     <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
                       <li>
-                        {passwordChecks.hasMinLength ? "OK" : "NO"} {t("passwordStrength.rules.minLength")}
+                        {passwordChecks.hasMinLength ? "OK" : "NO"}{" "}
+                        {t("passwordStrength.rules.minLength")}
                       </li>
                       <li>
-                        {passwordChecks.hasLower && passwordChecks.hasUpper ? "OK" : "NO"}{" "}
+                        {passwordChecks.hasLower && passwordChecks.hasUpper
+                          ? "OK"
+                          : "NO"}{" "}
                         {t("passwordStrength.rules.upperLower")}
                       </li>
                       <li>
-                        {passwordChecks.hasNumber ? "OK" : "NO"} {t("passwordStrength.rules.number")}
+                        {passwordChecks.hasNumber ? "OK" : "NO"}{" "}
+                        {t("passwordStrength.rules.number")}
                       </li>
                       <li>
-                        {passwordChecks.hasSymbol ? "OK" : "NO"} {t("passwordStrength.rules.symbol")}
+                        {passwordChecks.hasSymbol ? "OK" : "NO"}{" "}
+                        {t("passwordStrength.rules.symbol")}
                       </li>
                     </ul>
                   </div>
@@ -1417,34 +1520,6 @@ const Team = () => {
               ))}
             </div>
           </section>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={loadingCreate}
-              className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loadingCreate ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
-              {loadingCreate
-                ? isEditing
-                  ? t("teamPage.actions.saving", { defaultValue: "Guardando..." })
-                  : t("teamPage.actions.creating")
-                : isEditing
-                ? t("teamPage.actions.save", { defaultValue: "Guardar cambios" })
-                : t("teamPage.actions.create")}
-            </button>
-
-            <button
-              type="button"
-              onClick={closeFormModal}
-              disabled={loadingCreate}
-              className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              {isEditing
-                ? t("teamPage.actions.cancelEdit", { defaultValue: "Cancelar edicion" })
-                : t("teamPage.actions.reset")}
-            </button>
-          </div>
         </form>
       </Modal>
     </section>

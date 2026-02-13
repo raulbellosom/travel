@@ -21,6 +21,7 @@ import ResetPassword from "../pages/ResetPassword";
 import VerifyEmail from "../pages/VerifyEmail";
 import Dashboard from "../pages/Dashboard";
 import MyProperties from "../pages/MyProperties";
+import AppPropertyDetail from "../pages/AppPropertyDetail";
 import CreateProperty from "../pages/CreateProperty";
 import EditProperty from "../pages/EditProperty";
 import Leads from "../pages/Leads";
@@ -51,12 +52,18 @@ import RootFunctionsDiagnostics from "../pages/RootFunctionsDiagnostics";
 import {
   INTERNAL_BASE_PATH,
   INTERNAL_ROUTES,
+  getInternalPropertyDetailRoute,
   getInternalEditPropertyRoute,
 } from "../utils/internalRoutes";
 
 const LegacyEditPropertyRedirect = () => {
   const { id } = useParams();
   return <Navigate to={getInternalEditPropertyRoute(id)} replace />;
+};
+
+const LegacyPropertyDetailRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={getInternalPropertyDetailRoute(id)} replace />;
 };
 
 const AppRoutes = () => {
@@ -160,6 +167,14 @@ const AppRoutes = () => {
                 }
               />
               <Route
+                path="properties/:id"
+                element={
+                  <ScopeRoute scope="properties.read">
+                    <AppPropertyDetail />
+                  </ScopeRoute>
+                }
+              />
+              <Route
                 path="leads"
                 element={
                   <ScopeRoute scope="leads.read">
@@ -241,6 +256,7 @@ const AppRoutes = () => {
                 }
               />
               <Route path="mis-propiedades" element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />} />
+              <Route path="propiedades/:id" element={<LegacyPropertyDetailRedirect />} />
               <Route path="crear-propiedad" element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />} />
               <Route path="editar-propiedad/:id" element={<LegacyEditPropertyRedirect />} />
               <Route path="reservas" element={<Navigate to={INTERNAL_ROUTES.reservations} replace />} />
@@ -264,6 +280,7 @@ const AppRoutes = () => {
               path="/my-properties"
               element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />}
             />
+            <Route path="/properties/:id" element={<LegacyPropertyDetailRedirect />} />
             <Route
               path="/crear-propiedad"
               element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />}

@@ -22,5 +22,11 @@ export const INTERNAL_ROUTES = Object.freeze({
 export const getInternalEditPropertyRoute = (id) =>
   withInternalBase(`properties/${id}/edit`);
 
+export const getInternalPropertyDetailRoute = (id) =>
+  withInternalBase(`properties/${id}`);
+
 export const getLegacyInternalEditPropertyRoute = (id) =>
   withInternalBase(`editar-propiedad/${id}`);
+
+export const getLegacyInternalPropertyDetailRoute = (id) =>
+  withInternalBase(`propiedades/${id}`);

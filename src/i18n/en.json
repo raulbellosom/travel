@@ -15,6 +15,108 @@
     "noListings": "No listings available",
     "loading": "Loading listings..."
   },
+  "landing": {
+    "hero": {
+      "title": "Find Your Ideal Property",
+      "subtitle": "Explore the best properties for sale and rent. Your next home is waiting for you.",
+      "stats": {
+        "properties": "Properties",
+        "satisfaction": "Satisfaction",
+        "cities": "Cities"
+      },
+      "search": {
+        "title": "Search your property",
+        "location": "Location",
+        "locationPlaceholder": "City, State...",
+        "operationType": "Operation type",
+        "selectOperation": "Select...",
+        "allOperations": "All operations",
+        "propertyType": "Property type",
+        "selectType": "Select...",
+        "allTypes": "All types",
+        "searchButton": "Search Properties"
+      }
+    },
+    "features": {
+      "sectionTitle": "Why Choose Inmobo?",
+      "sectionSubtitle": "We offer a complete real estate experience with cutting-edge technology",
+      "trust": {
+        "title": "Trust and Security",
+        "description": "All our properties are verified and processes are transparent and secure."
+      },
+      "fast": {
+        "title": "Agile Process",
+        "description": "Find, schedule, and close in record time. We optimize every step of the process."
+      },
+      "experience": {
+        "title": "Premium Experience",
+        "description": "Personalized attention and support at every stage of your search."
+      },
+      "quality": {
+        "title": "Select Properties",
+        "description": "Curated catalog with the best options in prime locations."
+      },
+      "investment": {
+        "title": "Better Investment",
+        "description": "Market analysis and advice to maximize your investment value."
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Our team is available to help you whenever you need it."
+      }
+    },
+    "propertyShowcase": {
+      "sectionTitle": "Featured Properties",
+      "sectionSubtitle": "Discover the best options available",
+      "viewAll": "View All",
+      "loading": "Loading properties...",
+      "errorLoading": "Error loading properties",
+      "noProperties": "No properties available at this time"
+    },
+    "howItWorks": {
+      "sectionTitle": "How It Works?",
+      "sectionSubtitle": "A simple and transparent process from start to finish",
+      "step1": {
+        "title": "Search and Explore",
+        "description": "Browse our catalog and filter according to your needs and budget."
+      },
+      "step2": {
+        "title": "Schedule a Visit",
+        "description": "Schedule an appointment to see the properties that interest you in person."
+      },
+      "step3": {
+        "title": "Close the Deal",
+        "description": "We accompany you through the entire legal and administrative process until signing."
+      },
+      "step4": {
+        "title": "Enjoy Your New Home",
+        "description": "Receive the keys and start your new chapter with complete peace of mind."
+      },
+      "bottomText": "The entire process designed for your comfort and security"
+    },
+    "stats": {
+      "sectionTitle": "Numbers That Speak for Us",
+      "sectionSubtitle": "Thousands of satisfied customers trust our platform",
+      "properties": "Active Properties",
+      "clients": "Happy Clients",
+      "cities": "Cities Covered",
+      "satisfaction": "Satisfaction"
+    },
+    "cta": {
+      "title": "Ready to Find Your Ideal Property?",
+      "subtitle": "Join thousands of people who have already found their perfect home with us.",
+      "getStarted": "Get Started",
+      "browseProperties": "Browse Properties",
+      "noFees": "No hidden fees",
+      "support24": "24/7 Support",
+      "verified": "Verified properties",
+      "contactTitle": "Need Help?",
+      "contactSubtitle": "Our team is ready to assist you",
+      "phone": "Phone",
+      "email": "Email",
+      "availability": "Available Monday to Friday, 9:00 AM - 6:00 PM"
+    }
+  },
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -23,6 +125,7 @@
     "logout": "Logout",
     "myProperties": "My properties",
     "leads": "Leads",
+    "goToLanding": "Go to landing page",
     "profile": "Profile",
     "realEstate": "Real estate",
     "vacation": "Vacation rentals",
@@ -569,18 +672,33 @@
     "table": {
       "title": "Title",
       "location": "Location",
+      "type": "Type",
+      "operation": "Operation",
+      "rooms": "Beds/Baths",
       "status": "Status",
+      "metrics": "Metrics",
+      "views": "Views",
+      "leads": "Leads",
+      "reservations": "Reservations",
       "price": "Price",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
       "actions": "Actions"
     },
     "actions": {
       "create": "Create property",
+      "view": "View details",
       "edit": "Edit",
       "toDraft": "Move to draft",
       "publish": "Publish",
       "delete": "Delete",
       "openMenu": "Open actions menu",
       "menuLabel": "Property actions"
+    },
+    "deleteModal": {
+      "title": "Delete property",
+      "description": "Are you sure you want to delete \"{{title}}\"? This will deactivate it so it is no longer visible.",
+      "confirm": "Delete"
     },
     "errors": {
       "load": "Could not load your properties.",
@@ -766,6 +884,20 @@
     },
     "reserveHint": "Book online with instant confirmation and digital voucher.",
     "reserveCta": "Book now"
+  },
+  "appPropertyDetailPage": {
+    "loading": "Loading details...",
+    "noImage": "No image",
+    "galleryTitle": "Image gallery",
+    "descriptionTitle": "Description",
+    "noDescription": "No description available.",
+    "actions": {
+      "backToList": "Back to list"
+    },
+    "errors": {
+      "notFound": "Property not found.",
+      "load": "Could not load the property."
+    }
   },
   "propertyStatus": {
     "draft": "Draft",
@@ -1259,15 +1391,7 @@
     "close": "Close modal"
   },
   "dateRangePicker": {
-    "dayHeaders": [
-      "Su",
-      "Mo",
-      "Tu",
-      "We",
-      "Th",
-      "Fr",
-      "Sa"
-    ],
+    "dayHeaders": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
     "placeholders": {
       "single": "Select date",
       "range": "Select dates"

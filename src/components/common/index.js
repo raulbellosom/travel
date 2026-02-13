@@ -29,7 +29,7 @@ export { default as TablePagination } from "./molecules/TablePagination";
 
 // === ORGANISMS ===
 export { default as ListingCard } from "./organisms/ListingCard";
-export { default as Modal } from "./organisms/Modal";
+export { default as Modal, ModalFooter } from "./organisms/Modal";
 export { default as Navbar } from "./organisms/Navbar";
 export { default as Footer } from "./organisms/Footer";
 

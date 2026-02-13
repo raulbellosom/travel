@@ -15,6 +15,108 @@
     "noListings": "No hay anuncios disponibles",
     "loading": "Cargando anuncios..."
   },
+  "landing": {
+    "hero": {
+      "title": "Encuentra Tu Propiedad Ideal",
+      "subtitle": "Explora las mejores propiedades en venta y renta. Tu próximo hogar te está esperando.",
+      "stats": {
+        "properties": "Propiedades",
+        "satisfaction": "Satisfacción",
+        "cities": "Ciudades"
+      },
+      "search": {
+        "title": "Busca tu propiedad",
+        "location": "Ubicación",
+        "locationPlaceholder": "Ciudad, Estado...",
+        "operationType": "Tipo de operación",
+        "selectOperation": "Selecciona...",
+        "allOperations": "Todas las operaciones",
+        "propertyType": "Tipo de propiedad",
+        "selectType": "Selecciona...",
+        "allTypes": "Todos los tipos",
+        "searchButton": "Buscar Propiedades"
+      }
+    },
+    "features": {
+      "sectionTitle": "¿Por qué elegir Inmobo?",
+      "sectionSubtitle": "Ofrecemos una experiencia completa en bienes raíces con tecnología de vanguardia",
+      "trust": {
+        "title": "Confianza y Seguridad",
+        "description": "Todas nuestras propiedades son verificadas y los procesos son transparentes y seguros."
+      },
+      "fast": {
+        "title": "Proceso Ágil",
+        "description": "Encuentra, agenda y cierra en tiempo récord. Optimizamos cada paso del proceso."
+      },
+      "experience": {
+        "title": "Experiencia Premium",
+        "description": "Atención personalizada y acompañamiento en cada etapa de tu búsqueda."
+      },
+      "quality": {
+        "title": "Propiedades Selectas",
+        "description": "Catálogo curado con las mejores opciones en ubicaciones privilegiadas."
+      },
+      "investment": {
+        "title": "Mejor Inversión",
+        "description": "Análisis de mercado y asesoría para maximizar el valor de tu inversión."
+      },
+      "support": {
+        "title": "Soporte 24/7",
+        "description": "Nuestro equipo está disponible para ayudarte cuando lo necesites."
+      }
+    },
+    "propertyShowcase": {
+      "sectionTitle": "Propiedades Destacadas",
+      "sectionSubtitle": "Descubre las mejores opciones disponibles",
+      "viewAll": "Ver Todas",
+      "loading": "Cargando propiedades...",
+      "errorLoading": "Error al cargar propiedades",
+      "noProperties": "No hay propiedades disponibles en este momento"
+    },
+    "howItWorks": {
+      "sectionTitle": "¿Cómo Funciona?",
+      "sectionSubtitle": "Un proceso simple y transparente de principio a fin",
+      "step1": {
+        "title": "Busca y Explora",
+        "description": "Navega por nuestro catálogo y filtra según tus necesidades y presupuesto."
+      },
+      "step2": {
+        "title": "Agenda una Visita",
+        "description": "Programa una cita para conocer las propiedades que te interesan en persona."
+      },
+      "step3": {
+        "title": "Cierra el Trato",
+        "description": "Te acompañamos en todo el proceso legal y administrativo hasta la firma."
+      },
+      "step4": {
+        "title": "Disfruta tu Nuevo Hogar",
+        "description": "Recibe las llaves y comienza tu nueva etapa con total tranquilidad."
+      },
+      "bottomText": "Todo el proceso diseñado para tu comodidad y seguridad"
+    },
+    "stats": {
+      "sectionTitle": "Números que Hablan por Nosotros",
+      "sectionSubtitle": "Miles de clientes satisfechos confían en nuestra plataforma",
+      "properties": "Propiedades Activas",
+      "clients": "Clientes Felices",
+      "cities": "Ciudades Cubiertas",
+      "satisfaction": "Satisfacción"
+    },
+    "cta": {
+      "title": "¿Listo para Encontrar tu Propiedad Ideal?",
+      "subtitle": "Únete a miles de personas que ya encontraron su hogar perfecto con nosotros.",
+      "getStarted": "Comenzar Ahora",
+      "browseProperties": "Ver Propiedades",
+      "noFees": "Sin comisiones ocultas",
+      "support24": "Soporte 24/7",
+      "verified": "Propiedades verificadas",
+      "contactTitle": "¿Necesitas Ayuda?",
+      "contactSubtitle": "Nuestro equipo está listo para asistirte",
+      "phone": "Teléfono",
+      "email": "Correo electrónico",
+      "availability": "Disponible de Lunes a Viernes, 9:00 AM - 6:00 PM"
+    }
+  },
   "nav": {
     "home": "Inicio",
     "dashboard": "Panel",
@@ -26,7 +128,8 @@
     "profile": "Perfil",
     "realEstate": "Bienes raices",
     "vacation": "Rentas vacacionales",
-    "services": "Servicios"
+    "services": "Servicios",
+    "goToLanding": "Ir a la página de inicio"
   },
   "sidebar": {
     "overview": "Resumen",
@@ -569,18 +672,33 @@
     "table": {
       "title": "Titulo",
       "location": "Ubicacion",
+      "type": "Tipo",
+      "operation": "Operacion",
+      "rooms": "Recamaras/Banos",
       "status": "Estado",
+      "metrics": "Metricas",
+      "views": "Vistas",
+      "leads": "Leads",
+      "reservations": "Reservas",
       "price": "Precio",
+      "createdAt": "Creada",
+      "updatedAt": "Actualizada",
       "actions": "Acciones"
     },
     "actions": {
       "create": "Crear propiedad",
+      "view": "Ver detalle",
       "edit": "Editar",
       "toDraft": "Pasar a borrador",
       "publish": "Publicar",
       "delete": "Eliminar",
       "openMenu": "Abrir menu de acciones",
       "menuLabel": "Acciones de la propiedad"
+    },
+    "deleteModal": {
+      "title": "Eliminar propiedad",
+      "description": "Estas seguro de eliminar \"{{title}}\"? Esta accion la desactiva para que no sea visible.",
+      "confirm": "Eliminar"
     },
     "errors": {
       "load": "No se pudieron cargar tus propiedades.",
@@ -766,6 +884,20 @@
     },
     "reserveHint": "Reserva en linea con confirmacion y voucher digital.",
     "reserveCta": "Reservar ahora"
+  },
+  "appPropertyDetailPage": {
+    "loading": "Cargando detalle...",
+    "noImage": "Sin imagen",
+    "galleryTitle": "Galeria de imagenes",
+    "descriptionTitle": "Descripcion",
+    "noDescription": "Sin descripcion disponible.",
+    "actions": {
+      "backToList": "Volver al listado"
+    },
+    "errors": {
+      "notFound": "Propiedad no encontrada.",
+      "load": "No se pudo cargar la propiedad."
+    }
   },
   "propertyStatus": {
     "draft": "Borrador",
@@ -1259,15 +1391,7 @@
     "close": "Cerrar modal"
   },
   "dateRangePicker": {
-    "dayHeaders": [
-      "Do",
-      "Lu",
-      "Ma",
-      "Mi",
-      "Ju",
-      "Vi",
-      "Sa"
-    ],
+    "dayHeaders": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
     "placeholders": {
       "single": "Selecciona fecha",
       "range": "Selecciona fechas"

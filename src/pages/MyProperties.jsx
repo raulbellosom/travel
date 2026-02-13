@@ -1,12 +1,17 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
+  Bath,
+  BedDouble,
   Building2,
   CheckCircle2,
   EllipsisVertical,
+  Eye,
   FileText,
+  Image as ImageIcon,
+  Landmark,
   Loader2,
   Pencil,
   Search,
@@ -16,11 +21,18 @@ import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
 import { TablePagination } from "../components/common";
+import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
+import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
+import { storage } from "../api/appwriteClient";
+import env from "../env";
 import {
   INTERNAL_ROUTES,
   getInternalEditPropertyRoute,
+  getInternalPropertyDetailRoute,
 } from "../utils/internalRoutes";
+
+const PROPERTY_STATUS_OPTIONS = ["draft", "published", "inactive", "archived"];
 
 const MyProperties = () => {
   const { t, i18n } = useTranslation();
@@ -33,14 +45,33 @@ const MyProperties = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [searchText, setSearchText] = useState(() =>
-    String(searchParams.get("search") || "").trim()
+    String(searchParams.get("search") || "").trim(),
   );
   const [rowActionMenu, setRowActionMenu] = useState(null);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [imageViewer, setImageViewer] = useState({
+    isOpen: false,
+    images: [],
+    initialIndex: 0,
+  });
   const focusId = String(searchParams.get("focus") || "").trim();
   const rowActionMenuRef = useRef(null);
   const rowActionTriggerRefs = useRef({});
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
+
+  const getPropertyThumbnail = useCallback((item) => {
+    if (!item.galleryImageIds || item.galleryImageIds.length === 0) {
+      return null;
+    }
+    const firstImageId = item.galleryImageIds[0];
+    if (!firstImageId || !env.appwrite.buckets.propertyImages) return null;
+
+    return storage.getFileView({
+      bucketId: env.appwrite.buckets.propertyImages,
+      fileId: firstImageId,
+    });
+  }, []);
 
   useEffect(() => {
     const nextSearch = String(searchParams.get("search") || "").trim();
@@ -65,29 +96,85 @@ const MyProperties = () => {
     loadData();
   }, [loadData]);
 
-  const handleStatusToggle = async (item) => {
-    closeRowActionMenu();
-    setBusyId(item.$id);
+  const closeRowActionMenu = useCallback(() => {
+    setRowActionMenu(null);
+  }, []);
+
+  const openImageViewer = async (propertyId, initialIndex = 0) => {
     try {
-      await propertiesService.update(item.$id, user.$id, {
-        ...item,
-        status: item.status === "published" ? "draft" : "published",
+      const imageDocs = await propertiesService.listImages(propertyId);
+      const imageUrls = imageDocs.map((img) => img.url).filter(Boolean);
+
+      if (imageUrls.length === 0) {
+        return; // No images to show
+      }
+
+      setImageViewer({
+        isOpen: true,
+        images: imageUrls,
+        initialIndex: Math.min(initialIndex, imageUrls.length - 1),
       });
-      await loadData();
     } catch (err) {
+      console.error("Error loading property images:", err);
+    }
+  };
+
+  const closeImageViewer = useCallback(() => {
+    setImageViewer({ isOpen: false, images: [], initialIndex: 0 });
+  }, []);
+
+  const handleStatusChange = async (item, nextStatus) => {
+    const normalizedStatus = String(nextStatus || "").trim();
+    if (!normalizedStatus || normalizedStatus === item.status) return;
+
+    closeRowActionMenu();
+    setError("");
+    setBusyId(item.$id);
+
+    setItems((current) =>
+      current.map((entry) =>
+        entry.$id === item.$id ? { ...entry, status: normalizedStatus } : entry,
+      ),
+    );
+
+    try {
+      await propertiesService.update(item.$id, user?.$id, {
+        status: normalizedStatus,
+      });
+    } catch (err) {
+      setItems((current) =>
+        current.map((entry) =>
+          entry.$id === item.$id ? { ...entry, status: item.status } : entry,
+        ),
+      );
       setError(getErrorMessage(err, t("myPropertiesPage.errors.toggleStatus")));
     } finally {
       setBusyId("");
     }
   };
 
-  const handleDelete = async (itemId) => {
+  const handleStatusToggle = async (item) => {
+    await handleStatusChange(
+      item,
+      item.status === "published" ? "draft" : "published",
+    );
+  };
+
+  const openDeleteModal = (item) => {
     closeRowActionMenu();
-    if (!window.confirm(t("myPropertiesPage.confirmDeactivate"))) return;
-    setBusyId(itemId);
+    setDeleteCandidate(item);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!deleteCandidate?.$id || busyId) return;
+    setBusyId(deleteCandidate.$id);
+    setError("");
     try {
-      await propertiesService.softDelete(itemId);
-      await loadData();
+      await propertiesService.softDelete(deleteCandidate.$id);
+      setItems((current) =>
+        current.filter((entry) => entry.$id !== deleteCandidate.$id),
+      );
+      setDeleteCandidate(null);
     } catch (err) {
       setError(getErrorMessage(err, t("myPropertiesPage.errors.delete")));
     } finally {
@@ -97,9 +184,11 @@ const MyProperties = () => {
 
   const activeItems = useMemo(
     () => items.filter((item) => item.enabled !== false),
-    [items]
+    [items],
   );
-  const normalizedSearch = String(searchText || "").trim().toLowerCase();
+  const normalizedSearch = String(searchText || "")
+    .trim()
+    .toLowerCase();
   const filteredItems = useMemo(() => {
     if (!normalizedSearch) return activeItems;
 
@@ -109,7 +198,10 @@ const MyProperties = () => {
         item.slug,
         item.city,
         item.state,
+        item.country,
         item.status,
+        item.propertyType,
+        item.operationType,
       ]
         .map((value) => String(value || "").toLowerCase())
         .join(" ");
@@ -127,8 +219,11 @@ const MyProperties = () => {
   }, [filteredItems.length, pageSize]);
 
   const totalPages = useMemo(
-    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredItems.length / effectivePageSize))),
-    [effectivePageSize, filteredItems.length, pageSize]
+    () =>
+      pageSize === "all"
+        ? 1
+        : Math.max(1, Math.ceil(filteredItems.length / effectivePageSize)),
+    [effectivePageSize, filteredItems.length, pageSize],
   );
 
   useEffect(() => {
@@ -142,13 +237,11 @@ const MyProperties = () => {
   }, [effectivePageSize, filteredItems, page, pageSize]);
 
   const rowActionItem = useMemo(
-    () => paginatedItems.find((item) => item.$id === rowActionMenu?.propertyId) || null,
-    [paginatedItems, rowActionMenu?.propertyId]
+    () =>
+      paginatedItems.find((item) => item.$id === rowActionMenu?.propertyId) ||
+      null,
+    [paginatedItems, rowActionMenu?.propertyId],
   );
-
-  const closeRowActionMenu = useCallback(() => {
-    setRowActionMenu(null);
-  }, []);
 
   useEffect(() => {
     if (rowActionMenu && !rowActionItem) {
@@ -164,19 +257,23 @@ const MyProperties = () => {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const menuWidth = Math.min(240, viewportWidth - horizontalPadding * 2);
-    const estimatedMenuHeight = 144;
+    const estimatedMenuHeight = 188;
     const gap = 6;
     const canOpenDown =
-      triggerRect.bottom + gap + estimatedMenuHeight <= viewportHeight - horizontalPadding;
+      triggerRect.bottom + gap + estimatedMenuHeight <=
+      viewportHeight - horizontalPadding;
     const top = canOpenDown
       ? triggerRect.bottom + gap
-      : Math.max(horizontalPadding, triggerRect.top - estimatedMenuHeight - gap);
+      : Math.max(
+          horizontalPadding,
+          triggerRect.top - estimatedMenuHeight - gap,
+        );
     const left = Math.max(
       horizontalPadding,
       Math.min(
         triggerRect.right - menuWidth,
-        viewportWidth - menuWidth - horizontalPadding
-      )
+        viewportWidth - menuWidth - horizontalPadding,
+      ),
     );
 
     setRowActionMenu((previous) =>
@@ -188,7 +285,7 @@ const MyProperties = () => {
             top,
             left,
             width: menuWidth,
-          }
+          },
     );
   };
 
@@ -197,8 +294,12 @@ const MyProperties = () => {
 
     const closeOnOutsideClick = (event) => {
       const menuElement = rowActionMenuRef.current;
-      const triggerElement = rowActionTriggerRefs.current[rowActionMenu.triggerId];
-      if (menuElement?.contains(event.target) || triggerElement?.contains(event.target)) {
+      const triggerElement =
+        rowActionTriggerRefs.current[rowActionMenu.triggerId];
+      if (
+        menuElement?.contains(event.target) ||
+        triggerElement?.contains(event.target)
+      ) {
         return;
       }
       closeRowActionMenu();
@@ -239,6 +340,28 @@ const MyProperties = () => {
     const row = document.getElementById(`property-${focusId}`);
     row?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [focusId, loading, page, paginatedItems.length]);
+
+  const formatPrice = useCallback(
+    (item) =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: item.currency || "MXN",
+        maximumFractionDigits: 0,
+      }).format(item.price || 0),
+    [locale],
+  );
+
+  const formatDate = useCallback(
+    (value) => {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
+        date,
+      );
+    },
+    [locale],
+  );
 
   const renderRowActionTrigger = (item, triggerId) => (
     <button
@@ -299,7 +422,12 @@ const MyProperties = () => {
         </label>
       </div>
 
-      {loading ? <p className="text-sm text-slate-600 dark:text-slate-300">{t("myPropertiesPage.loading")}</p> : null}
+      {loading ? (
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("myPropertiesPage.loading")}
+        </p>
+      ) : null}
+
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
@@ -326,14 +454,52 @@ const MyProperties = () => {
       {!loading && filteredItems.length > 0 ? (
         <div className="min-w-0 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
           <div className="w-full max-w-full overflow-x-auto">
-            <table className="w-full min-w-[780px] text-left text-sm">
+            <table className="w-full min-w-[1240px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
-                  <th className="px-4 py-3">{t("myPropertiesPage.table.title")}</th>
-                  <th className="px-4 py-3">{t("myPropertiesPage.table.location")}</th>
-                  <th className="px-4 py-3">{t("myPropertiesPage.table.status")}</th>
-                  <th className="px-4 py-3">{t("myPropertiesPage.table.price")}</th>
-                  <th className="px-4 py-3">{t("myPropertiesPage.table.actions")}</th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.image", {
+                      defaultValue: "Imagen",
+                    })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.title")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.location")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.type", { defaultValue: "Tipo" })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.operation", {
+                      defaultValue: "Operacion",
+                    })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.rooms", {
+                      defaultValue: "Recamaras/Banos",
+                    })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.status")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.metrics", {
+                      defaultValue: "Metricas",
+                    })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.price")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.updatedAt", {
+                      defaultValue: "Actualizada",
+                    })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("myPropertiesPage.table.actions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -344,25 +510,131 @@ const MyProperties = () => {
                     <tr
                       key={item.$id}
                       id={`property-${item.$id}`}
-                      className={`border-t border-slate-200 dark:border-slate-700 ${
+                      className={`border-t border-slate-200 align-top dark:border-slate-700 ${
                         isFocused ? "bg-cyan-50/70 dark:bg-cyan-900/20" : ""
                       }`}
                     >
-                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                        {item.title}
+                      <td className="px-4 py-3">
+                        {getPropertyThumbnail(item) ? (
+                          <button
+                            type="button"
+                            onClick={() => openImageViewer(item.$id, 0)}
+                            className="group relative h-16 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition hover:border-cyan-500 dark:border-slate-700 dark:bg-slate-800"
+                          >
+                            <img
+                              src={getPropertyThumbnail(item)}
+                              alt={item.title}
+                              className="h-full w-full object-cover transition group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
+                              <ImageIcon
+                                size={20}
+                                className="text-white opacity-0 transition group-hover:opacity-100"
+                              />
+                            </div>
+                          </button>
+                        ) : (
+                          <div className="flex h-16 w-20 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                            <ImageIcon size={20} className="text-slate-400" />
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          to={getInternalPropertyDetailRoute(item.$id)}
+                          className="font-medium text-slate-900 transition hover:text-cyan-700 hover:underline dark:text-slate-100 dark:hover:text-cyan-300"
+                        >
+                          {item.title}
+                        </Link>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
+                          {item.slug || "-"}
+                        </p>
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {item.city}, {item.state}
+                        <p>
+                          {item.city}, {item.state}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {item.country || "-"}
+                        </p>
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {t(`propertyStatus.${item.status}`, { defaultValue: item.status })}
+                        {t(`homePage.enums.propertyType.${item.propertyType}`, {
+                          defaultValue: item.propertyType,
+                        })}
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {new Intl.NumberFormat(locale, {
-                          style: "currency",
-                          currency: item.currency || "MXN",
-                          maximumFractionDigits: 0,
-                        }).format(item.price || 0)}
+                        {t(`homePage.enums.operation.${item.operationType}`, {
+                          defaultValue: item.operationType,
+                        })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="grid gap-1 text-slate-600 dark:text-slate-300">
+                          <span className="inline-flex items-center gap-1">
+                            <BedDouble size={13} /> {Number(item.bedrooms || 0)}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Bath size={13} /> {Number(item.bathrooms || 0)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={item.status || "draft"}
+                            onChange={(event) =>
+                              handleStatusChange(item, event.target.value)
+                            }
+                            disabled={busyId === item.$id}
+                            className="min-h-10 min-w-36 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                            aria-label={t("myPropertiesPage.table.status")}
+                          >
+                            {PROPERTY_STATUS_OPTIONS.map((status) => (
+                              <option key={status} value={status}>
+                                {t(`propertyStatus.${status}`, {
+                                  defaultValue: status,
+                                })}
+                              </option>
+                            ))}
+                          </select>
+                          {busyId === item.$id ? (
+                            <Loader2
+                              size={14}
+                              className="animate-spin text-slate-400"
+                            />
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="grid gap-1 text-xs text-slate-600 dark:text-slate-300">
+                          <span>
+                            {t("myPropertiesPage.table.views", {
+                              defaultValue: "Vistas",
+                            })}
+                            : <strong>{Number(item.views || 0)}</strong>
+                          </span>
+                          <span>
+                            {t("myPropertiesPage.table.leads", {
+                              defaultValue: "Leads",
+                            })}
+                            : <strong>{Number(item.contactCount || 0)}</strong>
+                          </span>
+                          <span>
+                            {t("myPropertiesPage.table.reservations", {
+                              defaultValue: "Reservas",
+                            })}
+                            :{" "}
+                            <strong>
+                              {Number(item.reservationCount || 0)}
+                            </strong>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {formatPrice(item)}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {formatDate(item.$updatedAt || item.$createdAt)}
                       </td>
                       <td className="px-4 py-3">
                         {renderRowActionTrigger(item, `table-${item.$id}`)}
@@ -405,6 +677,18 @@ const MyProperties = () => {
               <div className="p-1.5">
                 <Link
                   role="menuitem"
+                  to={getInternalPropertyDetailRoute(rowActionItem.$id)}
+                  onClick={closeRowActionMenu}
+                  className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
+                >
+                  <Eye size={15} />
+                  {t("myPropertiesPage.actions.view", {
+                    defaultValue: "Ver detalle",
+                  })}
+                </Link>
+
+                <Link
+                  role="menuitem"
                   to={getInternalEditPropertyRoute(rowActionItem.$id)}
                   onClick={closeRowActionMenu}
                   className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
@@ -435,7 +719,7 @@ const MyProperties = () => {
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => handleDelete(rowActionItem.$id)}
+                  onClick={() => openDeleteModal(rowActionItem)}
                   disabled={busyId === rowActionItem.$id}
                   className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-300 dark:hover:bg-red-950/40"
                 >
@@ -444,14 +728,73 @@ const MyProperties = () => {
                 </button>
               </div>
             </div>,
-            document.body
+            document.body,
           )
         : null}
+
+      <Modal
+        isOpen={Boolean(deleteCandidate)}
+        onClose={() => {
+          if (!busyId) setDeleteCandidate(null);
+        }}
+        closeOnBackdrop={!busyId}
+        closeOnEscape={!busyId}
+        title={t("myPropertiesPage.deleteModal.title", {
+          defaultValue: "Eliminar propiedad",
+        })}
+        description={
+          deleteCandidate
+            ? t("myPropertiesPage.deleteModal.description", {
+                defaultValue:
+                  'Estas seguro de eliminar "{{title}}"? Esta accion la desactiva para que no sea visible.',
+                title: deleteCandidate.title,
+              })
+            : ""
+        }
+        size="sm"
+        footer={
+          <ModalFooter>
+            <button
+              type="button"
+              onClick={() => setDeleteCandidate(null)}
+              disabled={Boolean(busyId)}
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirmed}
+              disabled={Boolean(busyId)}
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-red-600 px-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {busyId === deleteCandidate?.$id ? (
+                <Loader2 size={14} className="mr-2 animate-spin" />
+              ) : null}
+              {t("myPropertiesPage.deleteModal.confirm", {
+                defaultValue: "Eliminar",
+              })}
+            </button>
+          </ModalFooter>
+        }
+      >
+        <div className="text-sm text-slate-600 dark:text-slate-400">
+          {t("myPropertiesPage.deleteModal.warning", {
+            defaultValue:
+              "Esta acción es reversible. Puedes reactivar la propiedad más tarde.",
+          })}
+        </div>
+      </Modal>
+
+      <ImageViewerModal
+        isOpen={imageViewer.isOpen}
+        onClose={closeImageViewer}
+        images={imageViewer.images}
+        initialIndex={imageViewer.initialIndex}
+        showDownload
+      />
     </section>
   );
 };
 
 export default MyProperties;
-
-
-

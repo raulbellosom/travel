@@ -6,7 +6,7 @@ import {
   getAmenityIcon,
 } from "../data/amenitiesCatalog";
 import { Select, TablePagination } from "../components/common";
-import Modal from "../components/common/organisms/Modal";
+import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
 import { Sparkles } from "lucide-react";
@@ -35,7 +35,9 @@ const RootAmenitiesPanel = () => {
   const [seedPlan, setSeedPlan] = useState(null);
   const [seedPreviewOpen, setSeedPreviewOpen] = useState(false);
   const [seedPreviewLoading, setSeedPreviewLoading] = useState(false);
-  const [seedPreviewTab, setSeedPreviewTab] = useState(SEED_PREVIEW_TABS.create);
+  const [seedPreviewTab, setSeedPreviewTab] = useState(
+    SEED_PREVIEW_TABS.create,
+  );
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState("");
   const [editForm, setEditForm] = useState(emptyForm);
@@ -67,7 +69,7 @@ const RootAmenitiesPanel = () => {
     return [...amenities]
       .sort((a, b) => {
         const catCompare = String(a.category || "").localeCompare(
-          String(b.category || "")
+          String(b.category || ""),
         );
         if (catCompare !== 0) return catCompare;
         return String(a.name_es || "").localeCompare(String(b.name_es || ""));
@@ -101,8 +103,11 @@ const RootAmenitiesPanel = () => {
   }, [filteredAmenities.length, pageSize]);
 
   const totalPages = useMemo(
-    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredAmenities.length / effectivePageSize))),
-    [effectivePageSize, filteredAmenities.length, pageSize]
+    () =>
+      pageSize === "all"
+        ? 1
+        : Math.max(1, Math.ceil(filteredAmenities.length / effectivePageSize)),
+    [effectivePageSize, filteredAmenities.length, pageSize],
   );
 
   useEffect(() => {
@@ -229,7 +234,7 @@ const RootAmenitiesPanel = () => {
         value: category,
         label: t(`rootAmenitiesPage.categories.${category}`),
       })),
-    [t]
+    [t],
   );
 
   const categoryFilterOptions = useMemo(
@@ -240,7 +245,7 @@ const RootAmenitiesPanel = () => {
         label: t(`rootAmenitiesPage.categories.${category}`),
       })),
     ],
-    [t]
+    [t],
   );
 
   const seedCreateItems = seedPlan?.toCreate || [];
@@ -298,7 +303,10 @@ const RootAmenitiesPanel = () => {
         <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
           {t("rootAmenitiesPage.createTitle")}
         </h2>
-        <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={handleCreate}>
+        <form
+          className="mt-4 grid gap-3 sm:grid-cols-2"
+          onSubmit={handleCreate}
+        >
           <label className="grid gap-1 text-sm">
             <span>{t("rootAmenitiesPage.fields.slug")}</span>
             <input
@@ -398,26 +406,43 @@ const RootAmenitiesPanel = () => {
               <table className="w-full min-w-[760px] text-left text-sm md:min-w-[900px]">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                   <tr>
-                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.icon")}</th>
-                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.slug")}</th>
-                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.name")}</th>
-                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.category")}</th>
-                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.status")}</th>
-                    <th className="px-3 py-2">{t("rootAmenitiesPage.table.actions")}</th>
+                    <th className="px-3 py-2">
+                      {t("rootAmenitiesPage.table.icon")}
+                    </th>
+                    <th className="px-3 py-2">
+                      {t("rootAmenitiesPage.table.slug")}
+                    </th>
+                    <th className="px-3 py-2">
+                      {t("rootAmenitiesPage.table.name")}
+                    </th>
+                    <th className="px-3 py-2">
+                      {t("rootAmenitiesPage.table.category")}
+                    </th>
+                    <th className="px-3 py-2">
+                      {t("rootAmenitiesPage.table.status")}
+                    </th>
+                    <th className="px-3 py-2">
+                      {t("rootAmenitiesPage.table.actions")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedAmenities.map((item) => {
                     const isEditing = editId === item.$id;
                     const translatedName =
-                      item[localeNameField] || item.name_es || item.name_en || item.slug;
+                      item[localeNameField] ||
+                      item.name_es ||
+                      item.name_en ||
+                      item.slug;
 
                     return (
                       <tr
                         key={item.$id}
                         className="border-t border-slate-200 align-top dark:border-slate-700"
                       >
-                        <td className="px-3 py-2 text-xl">{getAmenityIcon(item)}</td>
+                        <td className="px-3 py-2 text-xl">
+                          {getAmenityIcon(item)}
+                        </td>
                         <td className="break-all px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-200">
                           {isEditing ? (
                             <input
@@ -485,7 +510,9 @@ const RootAmenitiesPanel = () => {
                             />
                           ) : (
                             <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                              {t(`rootAmenitiesPage.categories.${item.category}`)}
+                              {t(
+                                `rootAmenitiesPage.categories.${item.category}`,
+                              )}
                             </span>
                           )}
                         </td>
@@ -572,13 +599,34 @@ const RootAmenitiesPanel = () => {
         isOpen={seedPreviewOpen}
         onClose={closeSeedPreview}
         title={t("rootAmenitiesPage.seedModal.title")}
+        description={t("rootAmenitiesPage.seedModal.subtitle")}
         size="lg"
+        footer={
+          <ModalFooter>
+            <button
+              type="button"
+              onClick={closeSeedPreview}
+              disabled={seeding || seedPreviewLoading}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t("rootAmenitiesPage.actions.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleSeedCatalog}
+              disabled={seeding || seedPreviewLoading || !hasSeedChanges}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+            >
+              {seeding
+                ? t("rootAmenitiesPage.actions.seeding")
+                : hasSeedChanges
+                  ? t("rootAmenitiesPage.actions.confirmSeed")
+                  : t("rootAmenitiesPage.actions.noSeedChanges")}
+            </button>
+          </ModalFooter>
+        }
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {t("rootAmenitiesPage.seedModal.subtitle")}
-          </p>
-
           {seedPreviewLoading ? (
             <p className="text-sm text-slate-600 dark:text-slate-300">
               {t("rootAmenitiesPage.seedModal.loading")}
@@ -650,13 +698,18 @@ const RootAmenitiesPanel = () => {
                           </span>
                           <div className="min-w-0 space-y-1">
                             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                              {item[localeNameField] || item.name_es || item.name_en || item.slug}
+                              {item[localeNameField] ||
+                                item.name_es ||
+                                item.name_en ||
+                                item.slug}
                             </p>
                             <p className="break-all font-mono text-xs text-slate-500 dark:text-slate-300">
                               {item.slug}
                             </p>
                             <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                              {t(`rootAmenitiesPage.categories.${item.category}`)}
+                              {t(
+                                `rootAmenitiesPage.categories.${item.category}`,
+                              )}
                             </span>
                           </div>
                         </div>
@@ -680,7 +733,10 @@ const RootAmenitiesPanel = () => {
                       >
                         <div className="space-y-2">
                           <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            {item[localeNameField] || item.name_es || item.name_en || item.nextSlug}
+                            {item[localeNameField] ||
+                              item.name_es ||
+                              item.name_en ||
+                              item.nextSlug}
                           </p>
                           <div className="grid gap-2 sm:grid-cols-2">
                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
@@ -688,7 +744,8 @@ const RootAmenitiesPanel = () => {
                                 {t("rootAmenitiesPage.seedModal.currentSlug")}
                               </p>
                               <p className="break-all font-mono text-xs text-slate-700 dark:text-slate-100">
-                                {item.currentSlug || t("rootAmenitiesPage.seedModal.noSlug")}
+                                {item.currentSlug ||
+                                  t("rootAmenitiesPage.seedModal.noSlug")}
                               </p>
                             </div>
                             <div className="rounded-md border border-cyan-200 bg-cyan-50 px-2 py-1.5 dark:border-cyan-900/50 dark:bg-cyan-950/30">
@@ -712,29 +769,6 @@ const RootAmenitiesPanel = () => {
               ) : null}
             </>
           ) : null}
-
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={closeSeedPreview}
-              disabled={seeding || seedPreviewLoading}
-              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              {t("rootAmenitiesPage.actions.cancel")}
-            </button>
-            <button
-              type="button"
-              onClick={handleSeedCatalog}
-              disabled={seeding || seedPreviewLoading || !hasSeedChanges}
-              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-            >
-              {seeding
-                ? t("rootAmenitiesPage.actions.seeding")
-                : hasSeedChanges
-                  ? t("rootAmenitiesPage.actions.confirmSeed")
-                  : t("rootAmenitiesPage.actions.noSeedChanges")}
-            </button>
-          </div>
         </div>
       </Modal>
     </section>

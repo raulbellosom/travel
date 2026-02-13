@@ -72,7 +72,7 @@ const ComponentDemo = ({
             code={code}
             language="jsx"
             title={`${title}.jsx`}
-            maxHeight="70vh"
+            maxHeight="60vh"
           />
         </Modal>
       )}

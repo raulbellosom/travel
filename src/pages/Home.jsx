@@ -1,12 +1,20 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { MapPin, BedDouble, Bath, Landmark, SearchX, SlidersHorizontal } from "lucide-react";
+import {
+  MapPin,
+  BedDouble,
+  Bath,
+  Landmark,
+  SearchX,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { Select } from "../components/common";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
+import LandingTemplate from "../components/common/templates/LandingTemplate";
 
 const STOCK_IMAGES = [
   "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
@@ -63,7 +71,8 @@ const PropertyCard = ({ property, t, locale, index }) => {
             <Bath size={14} /> {property.bathrooms || 0}
           </span>
           <span className="flex items-center gap-1">
-            <Landmark size={14} /> {property.totalArea || 0} {t("homePage.units.squareMeters")}
+            <Landmark size={14} /> {property.totalArea || 0}{" "}
+            {t("homePage.units.squareMeters")}
           </span>
         </div>
 
@@ -112,8 +121,27 @@ const Home = () => {
       bedrooms: searchParams.get("bedrooms") || "",
       sort: searchParams.get("sort") || "recent",
     }),
-    [searchParams]
+    [searchParams],
   );
+
+  // Check if any filters are active (excluding default sort)
+  const hasActiveFilters = useMemo(() => {
+    return !!(
+      filters.city ||
+      filters.propertyType ||
+      filters.operationType ||
+      filters.minPrice ||
+      filters.maxPrice ||
+      filters.bedrooms ||
+      (filters.sort && filters.sort !== "recent") ||
+      page > 1
+    );
+  }, [filters, page]);
+
+  // Show landing page if no filters are active
+  if (!hasActiveFilters) {
+    return <LandingTemplate />;
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -133,7 +161,9 @@ const Home = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(getErrorMessage(err, i18n.t("homePage.errors.loadProperties")));
+        setError(
+          getErrorMessage(err, i18n.t("homePage.errors.loadProperties")),
+        );
       })
       .finally(() => {
         if (!mounted) return;
@@ -161,11 +191,14 @@ const Home = () => {
       { value: "house", label: t("homePage.enums.propertyType.house") },
       { value: "apartment", label: t("homePage.enums.propertyType.apartment") },
       { value: "land", label: t("homePage.enums.propertyType.land") },
-      { value: "commercial", label: t("homePage.enums.propertyType.commercial") },
+      {
+        value: "commercial",
+        label: t("homePage.enums.propertyType.commercial"),
+      },
       { value: "office", label: t("homePage.enums.propertyType.office") },
       { value: "warehouse", label: t("homePage.enums.propertyType.warehouse") },
     ],
-    [t]
+    [t],
   );
 
   const operationOptions = useMemo(
@@ -178,7 +211,7 @@ const Home = () => {
         label: t("homePage.enums.operation.vacation_rental"),
       },
     ],
-    [t]
+    [t],
   );
 
   const sortOptions = useMemo(
@@ -187,7 +220,7 @@ const Home = () => {
       { value: "price-asc", label: t("homePage.sort.priceAsc") },
       { value: "price-desc", label: t("homePage.sort.priceDesc") },
     ],
-    [t]
+    [t],
   );
 
   return (
@@ -206,8 +239,12 @@ const Home = () => {
               <span className="inline-flex rounded-full bg-cyan-500/85 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
                 {t("homePage.heroBadge")}
               </span>
-              <h1 className="text-4xl font-bold leading-tight sm:text-5xl">{t("homePage.catalogTitle")}</h1>
-              <p className="text-sm text-white/90 sm:text-base">{t("homePage.catalogSubtitle")}</p>
+              <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
+                {t("homePage.catalogTitle")}
+              </h1>
+              <p className="text-sm text-white/90 sm:text-base">
+                {t("homePage.catalogSubtitle")}
+              </p>
             </div>
           </div>
         </div>
@@ -255,7 +292,9 @@ const Home = () => {
                 type="number"
                 min="0"
                 value={filters.minPrice}
-                onChange={(event) => updateFilter("minPrice", event.target.value)}
+                onChange={(event) =>
+                  updateFilter("minPrice", event.target.value)
+                }
                 className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
               />
             </label>
@@ -266,7 +305,9 @@ const Home = () => {
                 type="number"
                 min="0"
                 value={filters.maxPrice}
-                onChange={(event) => updateFilter("maxPrice", event.target.value)}
+                onChange={(event) =>
+                  updateFilter("maxPrice", event.target.value)
+                }
                 className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
               />
             </label>
@@ -290,7 +331,12 @@ const Home = () => {
             <button
               key={operationKey}
               type="button"
-              onClick={() => updateFilter("operation", filters.operationType === operationKey ? "" : operationKey)}
+              onClick={() =>
+                updateFilter(
+                  "operation",
+                  filters.operationType === operationKey ? "" : operationKey,
+                )
+              }
               className={`inline-flex min-h-9 items-center rounded-full px-3 py-1 text-xs font-semibold transition ${
                 filters.operationType === operationKey
                   ? "bg-cyan-500 text-white"
@@ -302,7 +348,11 @@ const Home = () => {
           ))}
         </div>
 
-        {loading ? <p className="text-sm text-slate-600 dark:text-slate-300">{t("homePage.loading")}</p> : null}
+        {loading ? (
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {t("homePage.loading")}
+          </p>
+        ) : null}
 
         {error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
@@ -322,7 +372,13 @@ const Home = () => {
           <>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {items.map((property, index) => (
-                <PropertyCard key={property.$id} property={property} t={t} locale={locale} index={index} />
+                <PropertyCard
+                  key={property.$id}
+                  property={property}
+                  t={t}
+                  locale={locale}
+                  index={index}
+                />
               ))}
             </div>
 

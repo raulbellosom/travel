@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, CalendarDays, CreditCard, Users } from "lucide-react";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
+import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import DateRangePicker from "../components/common/molecules/DateRangePicker";
 import { Select } from "../components/common";
 import { propertiesService } from "../services/propertiesService";
@@ -33,6 +34,10 @@ const ReserveProperty = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [imageViewer, setImageViewer] = useState({
+    isOpen: false,
+    initialIndex: 0,
+  });
   const [form, setForm] = useState({
     dateRange: { startDate: null, endDate: null },
     guestCount: 1,
@@ -46,7 +51,8 @@ const ReserveProperty = () => {
     title: property?.title
       ? `${property.title} | Reservar`
       : "Inmobo | Reservar propiedad",
-    description: "Flujo de reserva con seleccion de fechas, huespedes y pago seguro.",
+    description:
+      "Flujo de reserva con seleccion de fechas, huespedes y pago seguro.",
     robots: "index, follow",
   });
 
@@ -62,7 +68,9 @@ const ReserveProperty = () => {
           throw new Error(t("reservePropertyPage.errors.notFound"));
         }
 
-        const gallery = await propertiesService.listImages(doc.$id).catch(() => []);
+        const gallery = await propertiesService
+          .listImages(doc.$id)
+          .catch(() => []);
         if (!mounted) return;
         setProperty(doc);
         setImages(gallery || []);
@@ -83,8 +91,20 @@ const ReserveProperty = () => {
   const galleryUrls = useMemo(() => {
     const urls = (images || []).map((item) => item.url).filter(Boolean);
     if (urls.length > 0) return urls;
-    return [property?.mainImageUrl, property?.coverImageUrl, FALLBACK_IMAGE].filter(Boolean);
+    return [
+      property?.mainImageUrl,
+      property?.coverImageUrl,
+      FALLBACK_IMAGE,
+    ].filter(Boolean);
   }, [images, property]);
+
+  const openImageViewer = (imageUrl, index) => {
+    setImageViewer({ isOpen: true, initialIndex: index });
+  };
+
+  const closeImageViewer = () => {
+    setImageViewer({ isOpen: false, initialIndex: 0 });
+  };
 
   const nights = useMemo(() => {
     const start = form.dateRange.startDate;
@@ -112,7 +132,7 @@ const ReserveProperty = () => {
       { value: "stripe", label: "Stripe" },
       { value: "mercadopago", label: "Mercado Pago" },
     ],
-    []
+    [],
   );
 
   const updateForm = (patch) => {
@@ -147,15 +167,16 @@ const ReserveProperty = () => {
 
     setSubmitting(true);
     try {
-      const reservationResult = await reservationsService.createReservationPublic({
-        propertyId: property.$id,
-        checkInDate: new Date(form.dateRange.startDate).toISOString(),
-        checkOutDate: new Date(form.dateRange.endDate).toISOString(),
-        guestCount: Number(form.guestCount),
-        guestName: form.guestName || user.name || "",
-        guestEmail: user.email,
-        specialRequests: form.specialRequests || "",
-      });
+      const reservationResult =
+        await reservationsService.createReservationPublic({
+          propertyId: property.$id,
+          checkInDate: new Date(form.dateRange.startDate).toISOString(),
+          checkOutDate: new Date(form.dateRange.endDate).toISOString(),
+          guestCount: Number(form.guestCount),
+          guestName: form.guestName || user.name || "",
+          guestEmail: user.email,
+          specialRequests: form.specialRequests || "",
+        });
 
       const reservationId = reservationResult?.body?.data?.reservationId;
       if (!reservationId) {
@@ -185,7 +206,9 @@ const ReserveProperty = () => {
   if (loading) {
     return (
       <section className="mx-auto max-w-5xl px-4 py-8">
-        <p className="text-sm text-slate-600 dark:text-slate-300">{t("reservePropertyPage.loading")}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("reservePropertyPage.loading")}
+        </p>
       </section>
     );
   }
@@ -196,7 +219,10 @@ const ReserveProperty = () => {
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
         </p>
-        <Link to="/" className="text-sm font-semibold text-cyan-700 hover:underline dark:text-cyan-300">
+        <Link
+          to="/"
+          className="text-sm font-semibold text-cyan-700 hover:underline dark:text-cyan-300"
+        >
           {t("reservePropertyPage.actions.backToHome")}
         </Link>
       </section>
@@ -225,11 +251,14 @@ const ReserveProperty = () => {
             showDots
             variant="default"
             className="rounded-2xl"
+            onImageClick={openImageViewer}
           />
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
-              <p className="text-xs text-slate-500 dark:text-slate-300">{t("reservePropertyPage.labels.operation")}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">
+                {t("reservePropertyPage.labels.operation")}
+              </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
                 {t(`homePage.enums.operation.${property.operationType}`, {
                   defaultValue: property.operationType,
@@ -237,11 +266,17 @@ const ReserveProperty = () => {
               </p>
             </div>
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
-              <p className="text-xs text-slate-500 dark:text-slate-300">{t("reservePropertyPage.labels.maxGuests")}</p>
-              <p className="font-semibold text-slate-900 dark:text-slate-100">{property.maxGuests || "-"}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">
+                {t("reservePropertyPage.labels.maxGuests")}
+              </p>
+              <p className="font-semibold text-slate-900 dark:text-slate-100">
+                {property.maxGuests || "-"}
+              </p>
             </div>
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
-              <p className="text-xs text-slate-500 dark:text-slate-300">{t("reservePropertyPage.labels.nightlyRate")}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">
+                {t("reservePropertyPage.labels.nightlyRate")}
+              </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
                 {formatCurrency(property.price, property.currency, locale)}
               </p>
@@ -280,16 +315,22 @@ const ReserveProperty = () => {
               min={1}
               max={property.maxGuests || 500}
               value={form.guestCount}
-              onChange={(event) => updateForm({ guestCount: Number(event.target.value || 1) })}
+              onChange={(event) =>
+                updateForm({ guestCount: Number(event.target.value || 1) })
+              }
               className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
             />
           </label>
 
           <label className="grid gap-1 text-sm">
-            <span>{t("reservePropertyPage.form.fields.guestNameOptional")}</span>
+            <span>
+              {t("reservePropertyPage.form.fields.guestNameOptional")}
+            </span>
             <input
               value={form.guestName}
-              onChange={(event) => updateForm({ guestName: event.target.value })}
+              onChange={(event) =>
+                updateForm({ guestName: event.target.value })
+              }
               className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
             />
           </label>
@@ -305,11 +346,15 @@ const ReserveProperty = () => {
           </label>
 
           <label className="grid gap-1 text-sm">
-            <span>{t("reservePropertyPage.form.fields.specialRequestsOptional")}</span>
+            <span>
+              {t("reservePropertyPage.form.fields.specialRequestsOptional")}
+            </span>
             <textarea
               rows={3}
               value={form.specialRequests}
-              onChange={(event) => updateForm({ specialRequests: event.target.value })}
+              onChange={(event) =>
+                updateForm({ specialRequests: event.target.value })
+              }
               className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
             />
           </label>
@@ -321,11 +366,15 @@ const ReserveProperty = () => {
             </p>
             <p className="mt-1 flex items-center justify-between">
               <span>{t("reservePropertyPage.summary.baseAmount")}</span>
-              <strong>{formatCurrency(totals.baseAmount, property.currency, locale)}</strong>
+              <strong>
+                {formatCurrency(totals.baseAmount, property.currency, locale)}
+              </strong>
             </p>
             <p className="mt-1 flex items-center justify-between border-t border-slate-300 pt-2 font-semibold dark:border-slate-700">
               <span>{t("reservePropertyPage.summary.total")}</span>
-              <strong>{formatCurrency(totals.totalAmount, property.currency, locale)}</strong>
+              <strong>
+                {formatCurrency(totals.totalAmount, property.currency, locale)}
+              </strong>
             </p>
           </div>
 
@@ -354,6 +403,15 @@ const ReserveProperty = () => {
           </button>
         </form>
       </div>
+
+      <ImageViewerModal
+        isOpen={imageViewer.isOpen}
+        onClose={closeImageViewer}
+        images={galleryUrls}
+        initialIndex={imageViewer.initialIndex}
+        alt={property.title}
+        showDownload
+      />
     </section>
   );
 };
