@@ -1,4 +1,5 @@
-﻿import React, { useEffect } from "react";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -106,11 +107,11 @@ const Modal = ({
     className,
   ].join(" ");
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <MotionDiv
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4"
           variants={backdropVariants}
           initial="hidden"
           animate="visible"
@@ -159,9 +160,12 @@ const Modal = ({
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal;
-
-
-

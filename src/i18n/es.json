@@ -1266,7 +1266,9 @@
   "teamPage": {
     "title": "Equipo",
     "subtitle": "Agrega miembros al equipo y asigna permisos segun sus tareas.",
+    "quickActions": "Acciones rapidas",
     "createTitle": "Agregar miembro",
+    "editTitle": "Editar miembro",
     "listTitle": "Equipo actual",
     "loading": "Cargando equipo...",
     "empty": "Aun no hay miembros registrados.",
@@ -1311,6 +1313,14 @@
     "actions": {
       "create": "Crear miembro",
       "creating": "Creando miembro...",
+      "edit": "Editar",
+      "save": "Guardar cambios",
+      "saving": "Guardando...",
+      "cancelEdit": "Cancelar edicion",
+      "openMenu": "Abrir menu de acciones",
+      "menuLabel": "Acciones del usuario",
+      "sendRecovery": "Enviar recuperacion",
+      "sendingRecovery": "Enviando...",
       "enable": "Activar",
       "disable": "Desactivar",
       "reset": "Limpiar formulario",
@@ -1323,6 +1333,7 @@
     "messages": {
       "created": "Miembro creado correctamente.",
       "updated": "Miembro actualizado correctamente.",
+      "passwordRecoverySent": "Se envio el enlace de recuperacion a {{email}}.",
       "enabled": "Miembro activado correctamente.",
       "disabled": "Miembro desactivado correctamente.",
       "avatarUpdated": "Foto de perfil actualizada correctamente."
@@ -1335,6 +1346,7 @@
       "create": "No se pudo crear el miembro del equipo.",
       "load": "No se pudo cargar el listado del equipo.",
       "update": "No se pudo actualizar el miembro del equipo.",
+      "passwordRecovery": "No se pudo enviar el enlace de recuperacion.",
       "toggle": "No se pudo cambiar el estado del miembro del equipo.",
       "avatarUpload": "No se pudo actualizar la foto de perfil.",
       "avatarSize": "La imagen supera el maximo de {{max}} MB.",

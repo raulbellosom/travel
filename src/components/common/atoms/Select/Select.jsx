@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
 /**
@@ -32,8 +33,15 @@ const Select = React.forwardRef(
     const [activeIndex, setActiveIndex] = useState(-1);
     const [internalValue, setInternalValue] = useState(value ?? "");
     const [openDirection, setOpenDirection] = useState("down");
+    const [dropdownLayout, setDropdownLayout] = useState({
+      left: 0,
+      top: 0,
+      width: 0,
+      maxHeight: 288,
+    });
 
     const selectRef = useRef(null);
+    const dropdownRef = useRef(null);
     const listRef = useRef(null);
     const optionRefs = useRef([]);
 
@@ -128,7 +136,8 @@ const Select = React.forwardRef(
       className,
     ].join(" ");
 
-    const updateOpenDirection = useCallback(() => {
+    const updateDropdownLayout = useCallback(() => {
+      if (typeof window === "undefined") return;
       const triggerRect = selectRef.current?.getBoundingClientRect();
       if (!triggerRect) {
         setOpenDirection("down");
@@ -137,24 +146,48 @@ const Select = React.forwardRef(
 
       const visibleOptions = Math.max(1, Math.min(options.length, 7));
       const estimatedMenuHeight = visibleOptions * 40 + 16;
-      const viewportHeight =
-        typeof window !== "undefined" ? window.innerHeight : 900;
-      const safeOffset = 20;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const safeOffset = 12;
       const spaceBelow = viewportHeight - triggerRect.bottom - safeOffset;
       const spaceAbove = triggerRect.top - safeOffset;
+      const nextDirection =
+        spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow
+          ? "up"
+          : "down";
 
-      if (spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow) {
-        setOpenDirection("up");
-        return;
-      }
+      const availableHeight =
+        nextDirection === "up"
+          ? Math.max(120, spaceAbove - 8)
+          : Math.max(120, spaceBelow - 8);
 
-      setOpenDirection("down");
+      const nextMaxHeight = Math.min(320, Math.max(120, availableHeight));
+      const width = Math.max(140, triggerRect.width);
+      const left = Math.max(
+        safeOffset,
+        Math.min(triggerRect.left, viewportWidth - width - safeOffset)
+      );
+      const top =
+        nextDirection === "up"
+          ? Math.max(safeOffset, triggerRect.top - nextMaxHeight - 6)
+          : Math.min(
+              triggerRect.bottom + 6,
+              viewportHeight - nextMaxHeight - safeOffset
+            );
+
+      setOpenDirection(nextDirection);
+      setDropdownLayout({
+        left,
+        top,
+        width,
+        maxHeight: nextMaxHeight,
+      });
     }, [options.length]);
 
     const handleToggle = () => {
       if (disabled) return;
       if (!isOpen) {
-        updateOpenDirection();
+        updateDropdownLayout();
       }
       setIsOpen(!isOpen);
       setActiveIndex(-1);
@@ -179,6 +212,7 @@ const Select = React.forwardRef(
         case " ":
           e.preventDefault();
           if (!isOpen) {
+            updateDropdownLayout();
             setIsOpen(true);
           } else if (activeIndex >= 0) {
             handleOptionSelect(options[activeIndex]);
@@ -196,6 +230,7 @@ const Select = React.forwardRef(
         case "ArrowDown":
           e.preventDefault();
           if (!isOpen) {
+            updateDropdownLayout();
             setIsOpen(true);
           } else {
             setActiveIndex((prev) => (prev + 1) % options.length);
@@ -205,6 +240,7 @@ const Select = React.forwardRef(
         case "ArrowUp":
           e.preventDefault();
           if (!isOpen) {
+            updateDropdownLayout();
             setIsOpen(true);
           } else {
             setActiveIndex((prev) =>
@@ -232,10 +268,12 @@ const Select = React.forwardRef(
     // Close dropdown when clicking outside
     useEffect(() => {
       const handleClickOutside = (event) => {
-        if (selectRef.current && !selectRef.current.contains(event.target)) {
-          setIsOpen(false);
-          setActiveIndex(-1);
-        }
+        const target = event.target;
+        const isTriggerClick = selectRef.current?.contains(target);
+        const isMenuClick = dropdownRef.current?.contains(target);
+        if (isTriggerClick || isMenuClick) return;
+        setIsOpen(false);
+        setActiveIndex(-1);
       };
 
       document.addEventListener("mousedown", handleClickOutside);
@@ -250,7 +288,7 @@ const Select = React.forwardRef(
     useEffect(() => {
       if (!isOpen) return;
 
-      const recalculatePosition = () => updateOpenDirection();
+      const recalculatePosition = () => updateDropdownLayout();
       window.addEventListener("resize", recalculatePosition);
       window.addEventListener("scroll", recalculatePosition, true);
 
@@ -258,7 +296,7 @@ const Select = React.forwardRef(
         window.removeEventListener("resize", recalculatePosition);
         window.removeEventListener("scroll", recalculatePosition, true);
       };
-    }, [isOpen, updateOpenDirection]);
+    }, [isOpen, updateDropdownLayout]);
 
     const MotionSvg = motion.svg;
     const MotionDiv = motion.div;
@@ -348,86 +386,106 @@ const Select = React.forwardRef(
             </span>
           </button>
 
-          <AnimatePresence>
-            {isOpen && (
-              <MotionDiv
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className={`absolute left-0 right-0 z-[70] border border-slate-300 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800 ${
-                  openDirection === "up"
-                    ? "bottom-full mb-1 origin-bottom rounded-xl"
-                    : "top-full mt-1 origin-top rounded-xl"
-                }`}
-              >
-                <ul
-                  ref={listRef}
-                  id={listboxId}
-                  role="listbox"
-                  aria-labelledby={selectId}
-                  className="max-h-[min(18rem,calc(100dvh-7rem))] overflow-auto py-1"
-                >
-                  {options.map((option, index) => {
-                    const isActive = index === activeIndex;
-                    const isSelected =
-                      option.value ===
-                      (value !== undefined ? value : internalValue);
-
-                    return (
-                      <li
-                        key={option.value}
-                        ref={(el) => (optionRefs.current[index] = el)}
-                        role="option"
-                        aria-selected={isSelected}
-                        className={[
-                          "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors duration-150",
-                          isActive ? "bg-cyan-100/70 dark:bg-cyan-900/40" : "",
-                          isSelected
-                            ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-200"
-                            : "text-slate-800 dark:text-slate-100",
-                          "hover:bg-slate-100 dark:hover:bg-slate-700",
-                        ].join(" ")}
-                        onClick={() => handleOptionSelect(option)}
-                        onMouseEnter={() => setActiveIndex(index)}
+          {typeof document !== "undefined"
+            ? createPortal(
+                <AnimatePresence>
+                  {isOpen ? (
+                    <MotionDiv
+                      ref={dropdownRef}
+                      initial={{
+                        opacity: 0,
+                        y: openDirection === "down" ? -8 : 8,
+                        scale: 0.98,
+                      }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{
+                        opacity: 0,
+                        y: openDirection === "down" ? -8 : 8,
+                        scale: 0.98,
+                      }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="fixed z-[120] overflow-hidden rounded-xl border border-slate-300 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800"
+                      style={{
+                        left: `${dropdownLayout.left}px`,
+                        top: `${dropdownLayout.top}px`,
+                        width: `${dropdownLayout.width}px`,
+                        transformOrigin:
+                          openDirection === "down"
+                            ? "top center"
+                            : "bottom center",
+                      }}
+                    >
+                      <ul
+                        ref={listRef}
+                        id={listboxId}
+                        role="listbox"
+                        aria-labelledby={selectId}
+                        className="overflow-auto py-1"
+                        style={{ maxHeight: `${dropdownLayout.maxHeight}px` }}
                       >
-                        {option.icon && (
-                          <option.icon
-                            className="w-5 h-5 text-gray-400"
-                            aria-hidden="true"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="font-medium">{option.label}</div>
-                          {option.description && (
-                            <div className="text-xs text-slate-500 dark:text-slate-300">
-                              {option.description}
-                            </div>
-                          )}
-                        </div>
-                        {isSelected && (
-                          <svg
-                            className="h-4 w-4 text-cyan-600 dark:text-cyan-300"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </MotionDiv>
-            )}
-          </AnimatePresence>
+                        {options.map((option, index) => {
+                          const isActive = index === activeIndex;
+                          const isSelected =
+                            option.value ===
+                            (value !== undefined ? value : internalValue);
+
+                          return (
+                            <li
+                              key={option.value}
+                              ref={(el) => (optionRefs.current[index] = el)}
+                              role="option"
+                              aria-selected={isSelected}
+                              className={[
+                                "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors duration-150",
+                                isActive ? "bg-cyan-100/70 dark:bg-cyan-900/40" : "",
+                                isSelected
+                                  ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-200"
+                                  : "text-slate-800 dark:text-slate-100",
+                                "hover:bg-slate-100 dark:hover:bg-slate-700",
+                              ].join(" ")}
+                              onClick={() => handleOptionSelect(option)}
+                              onMouseEnter={() => setActiveIndex(index)}
+                            >
+                              {option.icon && (
+                                <option.icon
+                                  className="w-5 h-5 text-gray-400"
+                                  aria-hidden="true"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <div className="font-medium">{option.label}</div>
+                                {option.description && (
+                                  <div className="text-xs text-slate-500 dark:text-slate-300">
+                                    {option.description}
+                                  </div>
+                                )}
+                              </div>
+                              {isSelected && (
+                                <svg
+                                  className="h-4 w-4 text-cyan-600 dark:text-cyan-300"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </MotionDiv>
+                  ) : null}
+                </AnimatePresence>,
+                document.body
+              )
+            : null}
         </div>
 
         {/* Helper Text or Error Message */}

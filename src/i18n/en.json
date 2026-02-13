@@ -1266,7 +1266,9 @@
   "teamPage": {
     "title": "Team",
     "subtitle": "Add team members and assign permissions based on responsibilities.",
+    "quickActions": "Quick actions",
     "createTitle": "Add member",
+    "editTitle": "Edit member",
     "listTitle": "Current team",
     "loading": "Loading team...",
     "empty": "No team members found yet.",
@@ -1311,6 +1313,14 @@
     "actions": {
       "create": "Create member",
       "creating": "Creating member...",
+      "edit": "Edit",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "cancelEdit": "Cancel editing",
+      "openMenu": "Open actions menu",
+      "menuLabel": "User actions",
+      "sendRecovery": "Send recovery",
+      "sendingRecovery": "Sending...",
       "enable": "Enable",
       "disable": "Disable",
       "reset": "Reset form",
@@ -1323,6 +1333,7 @@
     "messages": {
       "created": "Team member created successfully.",
       "updated": "Team member updated successfully.",
+      "passwordRecoverySent": "Recovery link sent to {{email}}.",
       "enabled": "Team member enabled successfully.",
       "disabled": "Team member disabled successfully.",
       "avatarUpdated": "Profile photo updated successfully."
@@ -1335,6 +1346,7 @@
       "create": "Could not create the team member.",
       "load": "Could not load team members.",
       "update": "Could not update the team member.",
+      "passwordRecovery": "Could not send the recovery link.",
       "toggle": "Could not change team member status.",
       "avatarUpload": "Could not update the profile photo.",
       "avatarSize": "Image exceeds the {{max}} MB limit.",

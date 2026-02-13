@@ -178,6 +178,28 @@ const updateAuthPrefsCompat = async ({ users, userId, prefs }) => {
   }
 };
 
+const updateAuthNameCompat = async ({ users, userId, name }) => {
+  try {
+    return await users.updateName({
+      userId,
+      name,
+    });
+  } catch {
+    return users.updateName(userId, name);
+  }
+};
+
+const updateAuthEmailCompat = async ({ users, userId, email }) => {
+  try {
+    return await users.updateEmail({
+      userId,
+      email,
+    });
+  } catch {
+    return users.updateEmail(userId, email);
+  }
+};
+
 const getStorageFileCompat = async ({ storage, bucketId, fileId }) => {
   try {
     return await storage.getFile({
@@ -616,7 +638,13 @@ const updateStaff = async ({
   const targetUserId = normalize(body.targetUserId || body.userId, 64);
   const role = normalize(body.role, 40).toLowerCase();
   const scopes = parseScopes(body.scopes);
+  const hasFirstNamePatch = Object.prototype.hasOwnProperty.call(body || {}, "firstName");
+  const hasLastNamePatch = Object.prototype.hasOwnProperty.call(body || {}, "lastName");
+  const hasEmailPatch = Object.prototype.hasOwnProperty.call(body || {}, "email");
   const hasAvatarPatch = Object.prototype.hasOwnProperty.call(body || {}, "avatarFileId");
+  const firstNameInput = normalize(body.firstName, 80).replace(/\s+/g, " ");
+  const lastNameInput = normalize(body.lastName, 80).replace(/\s+/g, " ");
+  const emailInput = normalizeEmail(body.email);
   const avatarFileId = normalizeFileId(body.avatarFileId);
 
   if (!targetUserId || !role) {
@@ -639,6 +667,18 @@ const updateStaff = async ({
         success: false,
         code: "VALIDATION_ERROR",
         message: `role must be one of: ${STAFF_ROLE_LIST.join(", ")}`,
+      },
+    };
+  }
+
+  if (hasEmailPatch && !isValidEmail(emailInput)) {
+    return {
+      status: 422,
+      body: {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "Invalid email format",
       },
     };
   }
@@ -677,8 +717,84 @@ const updateStaff = async ({
 
   const target = await getStaffProfile({ db, config, targetUserId });
   const authUser = await getUserCompat({ users, userId: targetUserId }).catch(() => null);
+  const currentFirstName = normalize(target.firstName, 80).replace(/\s+/g, " ");
+  const currentLastName = normalize(target.lastName, 80).replace(/\s+/g, " ");
+  const currentEmail = normalizeEmail(target.email || authUser?.email);
+  const nextFirstName = hasFirstNamePatch ? firstNameInput : currentFirstName;
+  const nextLastName = hasLastNamePatch ? lastNameInput : currentLastName;
+  const nextEmail = hasEmailPatch ? emailInput : currentEmail;
+
+  if ((hasFirstNamePatch || hasLastNamePatch) && (!nextFirstName || !nextLastName)) {
+    return {
+      status: 422,
+      body: {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "firstName and lastName are required",
+      },
+    };
+  }
+
+  if ((hasFirstNamePatch || hasLastNamePatch) && (nextFirstName.length < 2 || nextLastName.length < 2)) {
+    return {
+      status: 422,
+      body: {
+        ok: false,
+        success: false,
+        code: "VALIDATION_ERROR",
+        message: "firstName and lastName must have at least 2 characters",
+      },
+    };
+  }
+
+  const shouldUpdateAuthEmail = hasEmailPatch && nextEmail && nextEmail !== currentEmail;
+  const nextFullName = normalize(`${nextFirstName} ${nextLastName}`, 160).replace(/\s+/g, " ");
+  const currentFullName = normalize(authUser?.name || `${currentFirstName} ${currentLastName}`, 160).replace(/\s+/g, " ");
+  const shouldUpdateAuthName =
+    (hasFirstNamePatch || hasLastNamePatch) &&
+    nextFullName &&
+    nextFullName !== currentFullName;
+
+  if (shouldUpdateAuthEmail) {
+    try {
+      await updateAuthEmailCompat({
+        users,
+        userId: targetUserId,
+        email: nextEmail,
+      });
+    } catch (updateEmailErr) {
+      const alreadyExists =
+        Number(updateEmailErr?.code) === 409 ||
+        String(updateEmailErr?.message || "").toLowerCase().includes("already exists");
+      if (alreadyExists) {
+        return {
+          status: 409,
+          body: {
+            ok: false,
+            success: false,
+            code: "STAFF_ALREADY_EXISTS",
+            message: "A user with this email already exists",
+          },
+        };
+      }
+      throw updateEmailErr;
+    }
+  }
+
+  if (shouldUpdateAuthName) {
+    await updateAuthNameCompat({
+      users,
+      userId: targetUserId,
+      name: nextFullName,
+    }).catch(() => {});
+  }
+
   const currentAvatarFileId = normalizeFileId(authUser?.prefs?.avatarFileId);
   const before = {
+    firstName: currentFirstName,
+    lastName: currentLastName,
+    email: currentEmail,
     role: target.role,
     scopesJson: target.scopesJson || "[]",
     enabled: target.enabled !== false,
@@ -689,6 +805,18 @@ const updateStaff = async ({
     role,
     scopesJson: safeJsonString(scopes, 4000),
   };
+
+  if (hasFirstNamePatch) {
+    patch.firstName = nextFirstName;
+  }
+
+  if (hasLastNamePatch) {
+    patch.lastName = nextLastName;
+  }
+
+  if (hasEmailPatch) {
+    patch.email = nextEmail;
+  }
 
   const updated = await db.updateDocument(
     config.databaseId,
@@ -736,14 +864,22 @@ const updateStaff = async ({
       entityId: targetUserId,
       beforeData: safeJsonString(before),
       afterData: safeJsonString({
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        email: updated.email,
         role: updated.role,
         scopesJson: updated.scopesJson || "[]",
         enabled: updated.enabled !== false,
         avatarFileId: nextAvatarFileId,
       }),
-      changedFields: hasAvatarPatch
-        ? ["role", "scopesJson", "avatarFileId"]
-        : ["role", "scopesJson"],
+      changedFields: [
+        ...(hasFirstNamePatch ? ["firstName"] : []),
+        ...(hasLastNamePatch ? ["lastName"] : []),
+        ...(hasEmailPatch ? ["email"] : []),
+        "role",
+        "scopesJson",
+        ...(hasAvatarPatch ? ["avatarFileId"] : []),
+      ],
       severity: "info",
     },
   });
@@ -754,9 +890,12 @@ const updateStaff = async ({
       ok: true,
       success: true,
       code: "STAFF_UPDATED",
-      message: "Staff role/scopes updated",
+      message: "Staff user updated",
       data: {
         userId: updated.$id,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        email: updated.email,
         role: updated.role,
         scopesJson: updated.scopesJson || "[]",
         enabled: updated.enabled !== false,

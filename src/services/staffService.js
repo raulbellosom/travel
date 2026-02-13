@@ -50,13 +50,33 @@ export const staffService = {
     return result?.body?.data?.documents || [];
   },
 
-  async updateStaff({ userId, role, scopes, avatarFileId }) {
+  async updateStaff({
+    userId,
+    firstName,
+    lastName,
+    email,
+    role,
+    scopes,
+    avatarFileId,
+  }) {
     const payload = {
       action: "update_staff",
       targetUserId: userId,
       role,
       scopes,
     };
+
+    if (firstName !== undefined) {
+      payload.firstName = firstName;
+    }
+
+    if (lastName !== undefined) {
+      payload.lastName = lastName;
+    }
+
+    if (email !== undefined) {
+      payload.email = email;
+    }
 
     if (avatarFileId !== undefined) {
       payload.avatarFileId = avatarFileId;

@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 const normalizeText = (value = "") =>
   String(value)
@@ -21,10 +22,17 @@ const Combobox = ({
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
   const containerRef = useRef(null);
+  const inputRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isUserTyping, setIsUserTyping] = useState(false);
+  const [dropdownLayout, setDropdownLayout] = useState({
+    left: 0,
+    top: 0,
+    width: 0,
+    maxHeight: 256,
+  });
 
   const selectedOption = useMemo(
     () => options.find((option) => option.value === value) || null,
@@ -68,6 +76,39 @@ const Combobox = ({
       return previous;
     });
   }, [filteredOptions, isOpen]);
+
+  const updateDropdownLayout = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const triggerRect = inputRef.current?.getBoundingClientRect();
+    if (!triggerRect) return;
+
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const safeOffset = 12;
+    const estimatedMenuHeight = Math.max(140, Math.min(filteredOptions.length, 8) * 36 + 16);
+    const spaceBelow = viewportHeight - triggerRect.bottom - safeOffset;
+    const spaceAbove = triggerRect.top - safeOffset;
+    const openUp = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow;
+    const nextMaxHeight = Math.min(
+      320,
+      Math.max(120, (openUp ? spaceAbove : spaceBelow) - 8)
+    );
+    const width = Math.max(160, triggerRect.width);
+    const left = Math.max(
+      safeOffset,
+      Math.min(triggerRect.left, viewportWidth - width - safeOffset)
+    );
+    const top = openUp
+      ? Math.max(safeOffset, triggerRect.top - nextMaxHeight - 6)
+      : Math.min(triggerRect.bottom + 6, viewportHeight - nextMaxHeight - safeOffset);
+
+    setDropdownLayout({
+      left,
+      top,
+      width,
+      maxHeight: nextMaxHeight,
+    });
+  }, [filteredOptions.length]);
 
   const commitValue = (option) => {
     const nextValue = option?.value || "";
@@ -116,6 +157,7 @@ const Combobox = ({
       onChange?.("");
     }
 
+    updateDropdownLayout();
     setIsOpen(true);
   };
 
@@ -135,6 +177,7 @@ const Combobox = ({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       if (!isOpen) {
+        updateDropdownLayout();
         setIsOpen(true);
         return;
       }
@@ -148,6 +191,7 @@ const Combobox = ({
     if (event.key === "ArrowUp") {
       event.preventDefault();
       if (!isOpen) {
+        updateDropdownLayout();
         setIsOpen(true);
         return;
       }
@@ -161,6 +205,7 @@ const Combobox = ({
     if (event.key === "Enter") {
       event.preventDefault();
       if (!isOpen) {
+        updateDropdownLayout();
         setIsOpen(true);
         return;
       }
@@ -184,9 +229,24 @@ const Combobox = ({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    updateDropdownLayout();
+
+    const recalculatePosition = () => updateDropdownLayout();
+    window.addEventListener("resize", recalculatePosition);
+    window.addEventListener("scroll", recalculatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", recalculatePosition);
+      window.removeEventListener("scroll", recalculatePosition, true);
+    };
+  }, [isOpen, updateDropdownLayout]);
+
   return (
     <div ref={containerRef} className="relative">
       <input
+        ref={inputRef}
         role="combobox"
         id={inputId}
         type="text"
@@ -202,51 +262,65 @@ const Combobox = ({
           isOpen && activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
         }
         onChange={handleInputChange}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => {
+          updateDropdownLayout();
+          setIsOpen(true);
+        }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
       />
 
-      {isOpen ? (
-        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
-          {filteredOptions.length > 0 ? (
-            <ul
-              id={listboxId}
-              role="listbox"
-              className="max-h-64 overflow-y-auto py-1"
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed z-[120] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
+              style={{
+                left: `${dropdownLayout.left}px`,
+                top: `${dropdownLayout.top}px`,
+                width: `${dropdownLayout.width}px`,
+              }}
             >
-              {filteredOptions.map((option, index) => {
-                const isHighlighted = index === activeIndex;
-                const isSelected = option.value === value;
+              {filteredOptions.length > 0 ? (
+                <ul
+                  id={listboxId}
+                  role="listbox"
+                  className="overflow-y-auto py-1"
+                  style={{ maxHeight: `${dropdownLayout.maxHeight}px` }}
+                >
+                  {filteredOptions.map((option, index) => {
+                    const isHighlighted = index === activeIndex;
+                    const isSelected = option.value === value;
 
-                return (
-                  <li
-                    key={`${option.value}-${index}`}
-                    id={`${listboxId}-option-${index}`}
-                    role="option"
-                    aria-selected={isSelected}
-                    className={`cursor-pointer px-3 py-2 text-sm transition ${
-                      isHighlighted
-                        ? "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-100"
-                        : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                    }`}
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      commitValue(option);
-                    }}
-                  >
-                    {option.label}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-              {noResultsText}
-            </p>
-          )}
-        </div>
-      ) : null}
+                    return (
+                      <li
+                        key={`${option.value}-${index}`}
+                        id={`${listboxId}-option-${index}`}
+                        role="option"
+                        aria-selected={isSelected}
+                        className={`cursor-pointer px-3 py-2 text-sm transition ${
+                          isHighlighted
+                            ? "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-100"
+                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                        }`}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          commitValue(option);
+                        }}
+                      >
+                        {option.label}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                  {noResultsText}
+                </p>
+              )}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 };
