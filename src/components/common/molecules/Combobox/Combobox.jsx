@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 const normalizeText = (value = "") =>
@@ -18,6 +25,7 @@ const Combobox = ({
   disabled = false,
   inputClassName = "",
   maxResults = 12,
+  keepOpenAfterSelect = false, // New prop for multi-select behavior
 }) => {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
@@ -36,13 +44,20 @@ const Combobox = ({
 
   const selectedOption = useMemo(
     () => options.find((option) => option.value === value) || null,
-    [options, value]
+    [options, value],
   );
 
   useEffect(() => {
     if (isUserTyping) return;
-    setInputValue(selectedOption?.label || "");
-  }, [isUserTyping, selectedOption]);
+    // In multi-select mode (keepOpenAfterSelect), keep input empty for searching
+    if (keepOpenAfterSelect) {
+      setInputValue("");
+      return;
+    }
+    // Show option label if found, otherwise show the raw value as fallback
+    // (e.g. city name from geocoding that isn't in the country-state-city library)
+    setInputValue(selectedOption?.label || value || "");
+  }, [isUserTyping, keepOpenAfterSelect, selectedOption, value]);
 
   const filteredOptions = useMemo(() => {
     const normalizedQuery = normalizeText(inputValue);
@@ -56,7 +71,9 @@ const Combobox = ({
     }
 
     return optionsWithFallback
-      .filter((option) => normalizeText(option.searchText).includes(normalizedQuery))
+      .filter((option) =>
+        normalizeText(option.searchText).includes(normalizedQuery),
+      )
       .slice(0, maxResults);
   }, [inputValue, maxResults, options]);
 
@@ -87,22 +104,31 @@ const Combobox = ({
     const safeOffset = 12;
     const preferredMenuHeight =
       filteredOptions.length > 0
-        ? Math.min(320, Math.max(44, Math.min(filteredOptions.length, 8) * 36 + 8))
+        ? Math.min(
+            320,
+            Math.max(44, Math.min(filteredOptions.length, 8) * 36 + 8),
+          )
         : 52;
     const spaceBelow = viewportHeight - triggerRect.bottom - safeOffset;
     const spaceAbove = triggerRect.top - safeOffset;
     const openUp = spaceBelow < preferredMenuHeight && spaceAbove > spaceBelow;
-    const availableHeight = Math.max(80, (openUp ? spaceAbove : spaceBelow) - 8);
+    const availableHeight = Math.max(
+      80,
+      (openUp ? spaceAbove : spaceBelow) - 8,
+    );
     const nextMaxHeight = Math.min(320, availableHeight);
     const renderedHeight = Math.min(nextMaxHeight, preferredMenuHeight);
     const width = Math.max(160, triggerRect.width);
     const left = Math.max(
       safeOffset,
-      Math.min(triggerRect.left, viewportWidth - width - safeOffset)
+      Math.min(triggerRect.left, viewportWidth - width - safeOffset),
     );
     const top = openUp
       ? Math.max(safeOffset, triggerRect.top - renderedHeight - 6)
-      : Math.min(triggerRect.bottom + 6, viewportHeight - renderedHeight - safeOffset);
+      : Math.min(
+          triggerRect.bottom + 6,
+          viewportHeight - renderedHeight - safeOffset,
+        );
 
     setDropdownLayout({
       left,
@@ -120,10 +146,21 @@ const Combobox = ({
       onChange?.(nextValue);
     }
 
-    setIsUserTyping(false);
-    setInputValue(nextLabel);
-    setIsOpen(false);
-    setActiveIndex(-1);
+    if (keepOpenAfterSelect) {
+      // For multi-select mode: clear input, stay open, keep focus
+      setIsUserTyping(false);
+      setInputValue("");
+      setActiveIndex(-1);
+      // Keep dropdown open and update layout
+      updateDropdownLayout();
+      inputRef.current?.focus();
+    } else {
+      // Default single-select mode: close and show selected
+      setIsUserTyping(false);
+      setInputValue(nextLabel);
+      setIsOpen(false);
+      setActiveIndex(-1);
+    }
   };
 
   const resolveExactMatch = (text) => {
@@ -131,13 +168,24 @@ const Combobox = ({
     if (!normalizedInput) return null;
 
     return (
-      options.find((option) => normalizeText(option.label) === normalizedInput) || null
+      options.find(
+        (option) => normalizeText(option.label) === normalizedInput,
+      ) || null
     );
   };
 
   const commitOrClearCurrentInput = () => {
     if (!inputValue.trim()) {
-      commitValue(null);
+      if (!keepOpenAfterSelect) {
+        commitValue(null);
+      }
+      return;
+    }
+
+    if (keepOpenAfterSelect) {
+      // In multi-select mode, just clear the input on blur
+      setInputValue("");
+      setIsUserTyping(false);
       return;
     }
 
@@ -261,7 +309,9 @@ const Combobox = ({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         aria-activedescendant={
-          isOpen && activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
+          isOpen && activeIndex >= 0
+            ? `${listboxId}-option-${activeIndex}`
+            : undefined
         }
         onChange={handleInputChange}
         onFocus={() => {
@@ -320,7 +370,7 @@ const Combobox = ({
                 </p>
               )}
             </div>,
-            document.body
+            document.body,
           )
         : null}
     </div>

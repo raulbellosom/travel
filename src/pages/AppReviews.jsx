@@ -22,7 +22,7 @@ const AppReviews = () => {
     return STATUSES.includes(raw) ? raw : "";
   });
   const [queryFilter, setQueryFilter] = useState(() =>
-    String(searchParams.get("search") || "").trim()
+    String(searchParams.get("search") || "").trim(),
   );
   const [reviews, setReviews] = useState([]);
   const focusId = String(searchParams.get("focus") || "").trim();
@@ -41,7 +41,7 @@ const AppReviews = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, i18n, user?.$id]);
+  }, [statusFilter, user?.$id]);
 
   useEffect(() => {
     load();
@@ -56,7 +56,9 @@ const AppReviews = () => {
     setStatusFilter((prev) => (prev === nextStatus ? prev : nextStatus));
   }, [searchParams]);
 
-  const normalizedFilter = String(queryFilter || "").trim().toLowerCase();
+  const normalizedFilter = String(queryFilter || "")
+    .trim()
+    .toLowerCase();
   const filteredReviews = useMemo(() => {
     if (!normalizedFilter) return reviews;
 
@@ -89,7 +91,7 @@ const AppReviews = () => {
         label: t(`reviewStatus.${status}`),
       })),
     ],
-    [t]
+    [t],
   );
 
   const moderate = async (reviewId, status) => {
@@ -145,7 +147,11 @@ const AppReviews = () => {
         </label>
       </div>
 
-      {loading ? <p className="text-sm text-slate-600 dark:text-slate-300">{t("appReviewsPage.loading")}</p> : null}
+      {loading ? (
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("appReviewsPage.loading")}
+        </p>
+      ) : null}
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
@@ -170,7 +176,9 @@ const AppReviews = () => {
                 key={review.$id}
                 id={`review-${review.$id}`}
                 className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${
-                  isFocused ? "ring-2 ring-cyan-400/70 dark:ring-cyan-500/70" : ""
+                  isFocused
+                    ? "ring-2 ring-cyan-400/70 dark:ring-cyan-500/70"
+                    : ""
                 }`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -183,7 +191,9 @@ const AppReviews = () => {
                     </h2>
                   </div>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                    {t(`reviewStatus.${review.status}`, { defaultValue: review.status })}
+                    {t(`reviewStatus.${review.status}`, {
+                      defaultValue: review.status,
+                    })}
                   </span>
                 </div>
 
@@ -192,13 +202,17 @@ const AppReviews = () => {
                     <Star
                       key={`${review.$id}-${index}`}
                       size={15}
-                      className={index < Number(review.rating || 0) ? "fill-current" : ""}
+                      className={
+                        index < Number(review.rating || 0) ? "fill-current" : ""
+                      }
                     />
                   ))}
                 </p>
 
                 {review.title ? (
-                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{review.title}</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {review.title}
+                  </p>
                 ) : null}
 
                 <p className="mt-2 inline-flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">

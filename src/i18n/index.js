@@ -67,15 +67,20 @@ i18n
       // Usar Suspense para mejor UX
       useSuspense: false,
 
-      // Bind i18n instance
+      // Bind i18n instance - solo re-render cuando cambia el idioma
       bindI18n: "languageChanged",
 
-      // Bind i18n store
+      // Bind i18n store - vacío para evitar re-renders innecesarios
       bindI18nStore: "",
 
       // Configuración para mejor performance
       transSupportBasicHtmlNodes: true,
       transKeepBasicHtmlNodesFor: ["br", "strong", "i"],
+
+      // Optimización: solo re-renderizar componentes cuando realmente cambian las traducciones
+      transEmptyNodeValue: "",
+      transSupportBasicHtmlNodes: true,
+      transKeepBasicHtmlNodesFor: ["br", "strong", "i", "b", "p"],
     },
   });
 

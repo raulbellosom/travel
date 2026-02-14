@@ -58,7 +58,7 @@ const RootAmenitiesPanel = () => {
     } finally {
       setLoading(false);
     }
-  }, [i18n]);
+  }, []);
 
   useEffect(() => {
     loadAmenities();

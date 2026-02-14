@@ -1,4 +1,11 @@
-import { createContext, useContext, useLayoutEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import i18n from "../i18n";
 
 const UIContext = createContext(null);
@@ -7,12 +14,20 @@ const LEGACY_THEME_STORAGE_KEY = "theme";
 
 const readStoredTheme = () => {
   const nextStored = localStorage.getItem(THEME_STORAGE_KEY);
-  if (nextStored === "light" || nextStored === "dark" || nextStored === "system") {
+  if (
+    nextStored === "light" ||
+    nextStored === "dark" ||
+    nextStored === "system"
+  ) {
     return nextStored;
   }
 
   const legacyStored = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
-  if (legacyStored === "light" || legacyStored === "dark" || legacyStored === "system") {
+  if (
+    legacyStored === "light" ||
+    legacyStored === "dark" ||
+    legacyStored === "system"
+  ) {
     return legacyStored;
   }
 
@@ -59,10 +74,10 @@ export function UIProvider({ children }) {
   }, [theme]);
 
   // Language management
-  const changeLanguage = (lng) => {
+  const changeLanguage = useCallback((lng) => {
     i18n.changeLanguage(lng);
     document.documentElement.lang = lng;
-  };
+  }, []);
 
   // API pública
   const value = useMemo(
@@ -74,7 +89,7 @@ export function UIProvider({ children }) {
         setTheme((t) => (getEffectiveTheme(t) === "dark" ? "light" : "dark")),
       changeLanguage,
     }),
-    [theme]
+    [theme, changeLanguage],
   );
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

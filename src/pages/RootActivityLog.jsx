@@ -43,7 +43,7 @@ const RootActivityLog = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, i18n]);
+  }, [filters]);
 
   useEffect(() => {
     load();
@@ -52,8 +52,10 @@ const RootActivityLog = () => {
   const severityClass = useMemo(
     () => ({
       info: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
-      warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
-      critical: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200",
+      warning:
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
+      critical:
+        "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200",
     }),
     [],
   );
@@ -63,7 +65,7 @@ const RootActivityLog = () => {
       { value: "", label: t("rootActivityPage.filters.all") },
       ...SEVERITIES.map((severity) => ({ value: severity, label: severity })),
     ],
-    [t]
+    [t],
   );
 
   return (
@@ -86,7 +88,9 @@ const RootActivityLog = () => {
           </span>
           <input
             value={filters.action}
-            onChange={(event) => setFilters((prev) => ({ ...prev, action: event.target.value }))}
+            onChange={(event) =>
+              setFilters((prev) => ({ ...prev, action: event.target.value }))
+            }
             className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
           />
         </label>
@@ -94,7 +98,12 @@ const RootActivityLog = () => {
           <span>{t("rootActivityPage.filters.actorUserId")}</span>
           <input
             value={filters.actorUserId}
-            onChange={(event) => setFilters((prev) => ({ ...prev, actorUserId: event.target.value }))}
+            onChange={(event) =>
+              setFilters((prev) => ({
+                ...prev,
+                actorUserId: event.target.value,
+              }))
+            }
             className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
           />
         </label>
@@ -102,7 +111,12 @@ const RootActivityLog = () => {
           <span>{t("rootActivityPage.filters.entityType")}</span>
           <input
             value={filters.entityType}
-            onChange={(event) => setFilters((prev) => ({ ...prev, entityType: event.target.value }))}
+            onChange={(event) =>
+              setFilters((prev) => ({
+                ...prev,
+                entityType: event.target.value,
+              }))
+            }
             className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
           />
         </label>
@@ -110,7 +124,9 @@ const RootActivityLog = () => {
           <span>{t("rootActivityPage.filters.severity")}</span>
           <Select
             value={filters.severity}
-            onChange={(value) => setFilters((prev) => ({ ...prev, severity: value }))}
+            onChange={(value) =>
+              setFilters((prev) => ({ ...prev, severity: value }))
+            }
             options={severityOptions}
             size="md"
           />
@@ -120,7 +136,9 @@ const RootActivityLog = () => {
           <input
             type="date"
             value={filters.fromDate}
-            onChange={(event) => setFilters((prev) => ({ ...prev, fromDate: event.target.value }))}
+            onChange={(event) =>
+              setFilters((prev) => ({ ...prev, fromDate: event.target.value }))
+            }
             className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
           />
         </label>
@@ -129,13 +147,19 @@ const RootActivityLog = () => {
           <input
             type="date"
             value={filters.toDate}
-            onChange={(event) => setFilters((prev) => ({ ...prev, toDate: event.target.value }))}
+            onChange={(event) =>
+              setFilters((prev) => ({ ...prev, toDate: event.target.value }))
+            }
             className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
           />
         </label>
       </div>
 
-      {loading ? <p className="text-sm text-slate-600 dark:text-slate-300">{t("rootActivityPage.loading")}</p> : null}
+      {loading ? (
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("rootActivityPage.loading")}
+        </p>
+      ) : null}
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
@@ -177,9 +201,15 @@ const RootActivityLog = () => {
               </header>
 
               <div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-3">
-                <p><strong>actorUserId:</strong> {log.actorUserId || "-"}</p>
-                <p><strong>actorRole:</strong> {log.actorRole || "-"}</p>
-                <p><strong>entityId:</strong> {log.entityId || "-"}</p>
+                <p>
+                  <strong>actorUserId:</strong> {log.actorUserId || "-"}
+                </p>
+                <p>
+                  <strong>actorRole:</strong> {log.actorRole || "-"}
+                </p>
+                <p>
+                  <strong>entityId:</strong> {log.entityId || "-"}
+                </p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">

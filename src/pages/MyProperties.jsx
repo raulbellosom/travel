@@ -100,7 +100,7 @@ const MyProperties = () => {
     } finally {
       setLoading(false);
     }
-  }, [i18n, user?.$id]);
+  }, [user?.$id]);
 
   useEffect(() => {
     loadData();
@@ -124,16 +124,15 @@ const MyProperties = () => {
       }
 
       const viewerImages =
-        imageUrls.length > 0
-          ? imageUrls
-          : fallbackImage
-            ? [fallbackImage]
-            : [];
+        imageUrls.length > 0 ? imageUrls : fallbackImage ? [fallbackImage] : [];
 
       setImageViewer({
         isOpen: true,
         images: viewerImages,
-        initialIndex: Math.min(initialIndex, Math.max(0, viewerImages.length - 1)),
+        initialIndex: Math.min(
+          initialIndex,
+          Math.max(0, viewerImages.length - 1),
+        ),
       });
     } catch {
       if (fallbackImage) {
@@ -269,8 +268,13 @@ const MyProperties = () => {
     const itemsToResolve = paginatedItems.filter((item) => {
       if (!item?.$id) return false;
       if (thumbnailCache[item.$id] !== undefined) return false;
-      if (item.thumbnailUrl || item.mainImageUrl || item.coverImageUrl) return false;
-      if (Array.isArray(item.galleryImageIds) && item.galleryImageIds.length > 0) return false;
+      if (item.thumbnailUrl || item.mainImageUrl || item.coverImageUrl)
+        return false;
+      if (
+        Array.isArray(item.galleryImageIds) &&
+        item.galleryImageIds.length > 0
+      )
+        return false;
       return true;
     });
 
@@ -456,8 +460,8 @@ const MyProperties = () => {
 
   return (
     <section className="space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             {t("myPropertiesPage.title")}
           </h1>
@@ -465,12 +469,14 @@ const MyProperties = () => {
             {t("myPropertiesPage.subtitle")}
           </p>
         </div>
-        <Link
-          to={INTERNAL_ROUTES.createProperty}
-          className="inline-flex min-h-11 items-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
-        >
-          {t("myPropertiesPage.actions.create")}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to={INTERNAL_ROUTES.createProperty}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+          >
+            {t("myPropertiesPage.actions.create")}
+          </Link>
+        </div>
       </header>
 
       <div className="max-w-md">

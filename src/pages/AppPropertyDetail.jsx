@@ -223,7 +223,7 @@ const AppPropertyDetail = () => {
   return (
     <section className="space-y-4">
       {/* Header */}
-      <header className="flex flex-wrap items-start justify-between gap-3">
+      <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -286,24 +286,24 @@ const AppPropertyDetail = () => {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to={INTERNAL_ROUTES.myProperties}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={16} />
             {t("appPropertyDetailPage.actions.backToList")}
           </Link>
           <Link
             to={getInternalEditPropertyRoute(property.$id)}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700"
           >
-            <Pencil size={14} />
+            <Pencil size={16} />
             {t("myPropertiesPage.actions.edit")}
           </Link>
           <button
             type="button"
             onClick={() => setIsDeleteModalOpen(true)}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
           >
-            <Trash2 size={14} />
+            <Trash2 size={16} />
             {t("myPropertiesPage.actions.delete")}
           </button>
         </div>

@@ -51,11 +51,25 @@ const Clients = () => {
         truncated: Boolean(response.truncated),
       });
     } catch (err) {
-      setError(getErrorMessage(err, i18n.t("clientsPage.errors.load", { defaultValue: "No se pudieron cargar los clientes." })));
+      setError(
+        getErrorMessage(
+          err,
+          i18n.t("clientsPage.errors.load", {
+            defaultValue: "No se pudieron cargar los clientes.",
+          }),
+        ),
+      );
     } finally {
       setLoading(false);
     }
-  }, [filters.createdFrom, filters.createdTo, filters.enabled, filters.page, filters.search, i18n, pageSize]);
+  }, [
+    filters.createdFrom,
+    filters.createdTo,
+    filters.enabled,
+    filters.page,
+    filters.search,
+    pageSize,
+  ]);
 
   useEffect(() => {
     loadClients();
@@ -63,7 +77,11 @@ const Clients = () => {
 
   useEffect(() => {
     const nextSearch = String(searchParams.get("search") || "").trim();
-    setFilters((prev) => (prev.search === nextSearch ? prev : { ...prev, search: nextSearch, page: 1 }));
+    setFilters((prev) =>
+      prev.search === nextSearch
+        ? prev
+        : { ...prev, search: nextSearch, page: 1 },
+    );
   }, [searchParams]);
 
   useEffect(() => {
@@ -81,7 +99,10 @@ const Clients = () => {
 
   const statusOptions = useMemo(
     () => [
-      { value: "all", label: t("clientsPage.filters.all", { defaultValue: "Todos" }) },
+      {
+        value: "all",
+        label: t("clientsPage.filters.all", { defaultValue: "Todos" }),
+      },
       {
         value: "enabled",
         label: t("clientsPage.filters.enabled", { defaultValue: "Activos" }),
@@ -91,7 +112,7 @@ const Clients = () => {
         label: t("clientsPage.filters.disabled", { defaultValue: "Inactivos" }),
       },
     ],
-    [t]
+    [t],
   );
 
   const onFilterChange = (field, value) => {
@@ -113,7 +134,9 @@ const Clients = () => {
 
       <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-2 xl:grid-cols-4">
         <label className="grid gap-1 text-sm">
-          <span>{t("clientsPage.filters.search", { defaultValue: "Buscar" })}</span>
+          <span>
+            {t("clientsPage.filters.search", { defaultValue: "Buscar" })}
+          </span>
           <input
             value={filters.search}
             onChange={(event) => onFilterChange("search", event.target.value)}
@@ -125,7 +148,9 @@ const Clients = () => {
         </label>
 
         <label className="grid gap-1 text-sm">
-          <span>{t("clientsPage.filters.status", { defaultValue: "Estado" })}</span>
+          <span>
+            {t("clientsPage.filters.status", { defaultValue: "Estado" })}
+          </span>
           <Select
             value={filters.enabled}
             onChange={(value) => onFilterChange("enabled", value)}
@@ -135,21 +160,29 @@ const Clients = () => {
         </label>
 
         <label className="grid gap-1 text-sm">
-          <span>{t("clientsPage.filters.createdFrom", { defaultValue: "Desde" })}</span>
+          <span>
+            {t("clientsPage.filters.createdFrom", { defaultValue: "Desde" })}
+          </span>
           <input
             type="date"
             value={filters.createdFrom}
-            onChange={(event) => onFilterChange("createdFrom", event.target.value)}
+            onChange={(event) =>
+              onFilterChange("createdFrom", event.target.value)
+            }
             className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
           />
         </label>
 
         <label className="grid gap-1 text-sm">
-          <span>{t("clientsPage.filters.createdTo", { defaultValue: "Hasta" })}</span>
+          <span>
+            {t("clientsPage.filters.createdTo", { defaultValue: "Hasta" })}
+          </span>
           <input
             type="date"
             value={filters.createdTo}
-            onChange={(event) => onFilterChange("createdTo", event.target.value)}
+            onChange={(event) =>
+              onFilterChange("createdTo", event.target.value)
+            }
             className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
           />
         </label>
@@ -170,7 +203,8 @@ const Clients = () => {
       {!loading && meta.truncated ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
           {t("clientsPage.messages.truncated", {
-            defaultValue: "Se aplico un limite de escaneo. Ajusta filtros para resultados mas precisos.",
+            defaultValue:
+              "Se aplico un limite de escaneo. Ajusta filtros para resultados mas precisos.",
           })}
         </div>
       ) : null}
@@ -178,7 +212,9 @@ const Clients = () => {
       {!loading && items.length === 0 ? (
         <EmptyStatePanel
           icon={Users}
-          title={t("clientsPage.empty", { defaultValue: "No hay clientes para mostrar." })}
+          title={t("clientsPage.empty", {
+            defaultValue: "No hay clientes para mostrar.",
+          })}
           description={summary}
           compact
         />
@@ -190,16 +226,29 @@ const Clients = () => {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
-                  <th className="px-4 py-3">{t("clientsPage.table.client", { defaultValue: "Cliente" })}</th>
-                  <th className="px-4 py-3">{t("clientsPage.table.email", { defaultValue: "Email" })}</th>
-                  <th className="px-4 py-3">{t("clientsPage.table.phone", { defaultValue: "Telefono" })}</th>
-                  <th className="px-4 py-3">{t("clientsPage.table.status", { defaultValue: "Estado" })}</th>
-                  <th className="px-4 py-3">{t("clientsPage.table.createdAt", { defaultValue: "Registro" })}</th>
+                  <th className="px-4 py-3">
+                    {t("clientsPage.table.client", { defaultValue: "Cliente" })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("clientsPage.table.email", { defaultValue: "Email" })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("clientsPage.table.phone", { defaultValue: "Telefono" })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("clientsPage.table.status", { defaultValue: "Estado" })}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("clientsPage.table.createdAt", {
+                      defaultValue: "Registro",
+                    })}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((client) => {
-                  const fullName = `${client.firstName || ""} ${client.lastName || ""}`.trim();
+                  const fullName =
+                    `${client.firstName || ""} ${client.lastName || ""}`.trim();
                   const isFocused = Boolean(focusId) && client.$id === focusId;
                   return (
                     <tr
@@ -211,12 +260,21 @@ const Clients = () => {
                     >
                       <td className="px-4 py-3">
                         <p className="font-medium text-slate-900 dark:text-slate-100">
-                          {fullName || t("clientsPage.table.noName", { defaultValue: "Sin nombre" })}
+                          {fullName ||
+                            t("clientsPage.table.noName", {
+                              defaultValue: "Sin nombre",
+                            })}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-300">{client.$id}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300">
+                          {client.$id}
+                        </p>
                       </td>
-                      <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{client.email || "-"}</td>
-                      <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{client.phone || "-"}</td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                        {client.email || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                        {client.phone || "-"}
+                      </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
@@ -226,8 +284,12 @@ const Clients = () => {
                           }`}
                         >
                           {client.enabled
-                            ? t("clientsPage.status.enabled", { defaultValue: "Activo" })
-                            : t("clientsPage.status.disabled", { defaultValue: "Inactivo" })}
+                            ? t("clientsPage.status.enabled", {
+                                defaultValue: "Activo",
+                              })
+                            : t("clientsPage.status.disabled", {
+                                defaultValue: "Inactivo",
+                              })}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-700 dark:text-slate-200">

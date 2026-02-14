@@ -10,12 +10,7 @@ import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
 
-const LEAD_STATUSES = [
-  "new",
-  "contacted",
-  "closed_won",
-  "closed_lost",
-];
+const LEAD_STATUSES = ["new", "contacted", "closed_won", "closed_lost"];
 
 const Leads = () => {
   const { t, i18n } = useTranslation();
@@ -30,7 +25,7 @@ const Leads = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [queryFilter, setQueryFilter] = useState(() =>
-    String(searchParams.get("search") || "").trim()
+    String(searchParams.get("search") || "").trim(),
   );
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
@@ -61,7 +56,7 @@ const Leads = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, i18n, user?.$id]);
+  }, [statusFilter, user?.$id]);
 
   useEffect(() => {
     loadData();
@@ -71,7 +66,9 @@ const Leads = () => {
     setPage(1);
   }, [queryFilter, statusFilter]);
 
-  const normalizedFilter = String(queryFilter || "").trim().toLowerCase();
+  const normalizedFilter = String(queryFilter || "")
+    .trim()
+    .toLowerCase();
   const filteredLeads = useMemo(() => {
     if (!normalizedFilter) return items;
 
@@ -98,8 +95,11 @@ const Leads = () => {
   }, [filteredLeads.length, pageSize]);
 
   const totalPages = useMemo(
-    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredLeads.length / effectivePageSize))),
-    [effectivePageSize, filteredLeads.length, pageSize]
+    () =>
+      pageSize === "all"
+        ? 1
+        : Math.max(1, Math.ceil(filteredLeads.length / effectivePageSize)),
+    [effectivePageSize, filteredLeads.length, pageSize],
   );
 
   useEffect(() => {
@@ -133,7 +133,7 @@ const Leads = () => {
         if (item.status === "closed_won") acc.won += 1;
         return acc;
       },
-      { total: 0, new: 0, won: 0 }
+      { total: 0, new: 0, won: 0 },
     );
   }, [filteredLeads]);
 
@@ -161,7 +161,7 @@ const Leads = () => {
         tone: "success",
       },
     ],
-    [counts.new, counts.total, counts.won, t]
+    [counts.new, counts.total, counts.won, t],
   );
 
   const statusFilterOptions = useMemo(
@@ -172,7 +172,7 @@ const Leads = () => {
         label: t(`leadStatus.${status}`),
       })),
     ],
-    [t]
+    [t],
   );
 
   const rowStatusOptions = useMemo(
@@ -181,7 +181,7 @@ const Leads = () => {
         value: status,
         label: t(`leadStatus.${status}`),
       })),
-    [t]
+    [t],
   );
 
   const onChangeStatus = async (leadId, status) => {
@@ -199,8 +199,12 @@ const Leads = () => {
   return (
     <section className="space-y-5">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{t("leadsPage.title")}</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">{t("leadsPage.subtitle")}</p>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          {t("leadsPage.title")}
+        </h1>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("leadsPage.subtitle")}
+        </p>
       </header>
 
       <StatsCardsRow items={summaryCards} />
@@ -232,7 +236,11 @@ const Leads = () => {
         </label>
       </div>
 
-      {loading ? <p className="text-sm text-slate-600 dark:text-slate-300">{t("leadsPage.loading")}</p> : null}
+      {loading ? (
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("leadsPage.loading")}
+        </p>
+      ) : null}
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
@@ -278,9 +286,15 @@ const Leads = () => {
                         {new Date(lead.$createdAt).toLocaleString(locale)}
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900 dark:text-slate-100">{lead.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-300">{lead.email}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-300">{lead.phone || t("leadsPage.noPhone")}</p>
+                        <p className="font-medium text-slate-900 dark:text-slate-100">
+                          {lead.name}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300">
+                          {lead.email}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300">
+                          {lead.phone || t("leadsPage.noPhone")}
+                        </p>
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                         {propertyMap[lead.propertyId]?.title || lead.propertyId}

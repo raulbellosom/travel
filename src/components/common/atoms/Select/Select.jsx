@@ -365,13 +365,12 @@ const Select = React.forwardRef(
                   {selectedOption ? selectedOption.label : placeholder}
                 </span>
               </span>
-              <motion.svg
-                className="w-5 h-5 text-gray-400"
+              <svg
+                className="w-5 h-5 text-gray-400 transition-transform duration-200"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                animate={{ rotate: isOpen ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
+                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                 aria-hidden="true"
               >
                 <path
@@ -380,15 +379,16 @@ const Select = React.forwardRef(
                   strokeWidth={2}
                   d="M19 9l-7 7-7-7"
                 />
-              </motion.svg>
+              </svg>
             </span>
           </button>
 
           {typeof document !== "undefined"
             ? createPortal(
-                <AnimatePresence>
+                <AnimatePresence mode="wait">
                   {isOpen ? (
                     <motion.div
+                      key="select-dropdown"
                       ref={dropdownRef}
                       initial={{
                         opacity: 0,

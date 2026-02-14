@@ -193,7 +193,7 @@ const Home = () => {
     return () => {
       mounted = false;
     };
-  }, [filters, page, i18n]);
+  }, [filters, page]);
 
   const updateFilter = (key, value) => {
     const next = new URLSearchParams(searchParams);

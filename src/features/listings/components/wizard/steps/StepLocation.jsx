@@ -3,7 +3,10 @@ import { useTranslation } from "react-i18next";
 import { MapPin } from "lucide-react";
 import Combobox from "../../../../../components/common/molecules/Combobox";
 import MapPickerModal from "../../../../../components/common/molecules/MapPickerModal";
-import { Button, TextInputWithCharCounter } from "../../../../../components/common/atoms";
+import {
+  Button,
+  TextInputWithCharCounter,
+} from "../../../../../components/common/atoms";
 import { comboboxInputClassName, inputErrorClassName } from "../wizardConfig";
 
 /**
@@ -15,8 +18,10 @@ const StepLocation = ({ formHook }) => {
 
   const {
     form,
+    setForm,
     setField,
     errors,
+    clearError,
     getFieldClassName,
     renderFieldError,
     countryOptions,
@@ -31,41 +36,63 @@ const StepLocation = ({ formHook }) => {
 
   /**
    * When the user confirms a point on the map, auto-fill all location fields.
-   * Nominatim returns country_code (ISO), state name, city name, etc.
+   * Receives a normalized location object from Mapbox geocoding service.
    */
   const handleMapConfirm = useCallback(
-    ({ lat, lng, address }) => {
-      // Coordinates
-      setField("latitude", String(lat));
-      setField("longitude", String(lng));
+    (location) => {
+      const loc = location || {};
 
-      if (!address) return;
+      // Atomic batch update: always overwrite ALL location fields
+      setForm((prev) => ({
+        ...prev,
+        latitude: String(loc.lat),
+        longitude: String(loc.lng),
+        country: loc.country ? loc.country.toUpperCase() : prev.country,
+        streetAddress: loc.streetAddress ?? "",
+        neighborhood: loc.neighborhood ?? "",
+        postalCode: loc.postalCode ?? "",
+      }));
 
-      // Country (ISO code)
-      if (address.country) {
-        handleCountryChange(address.country);
+      // Clear validation errors for every location field
+      [
+        "country",
+        "state",
+        "city",
+        "streetAddress",
+        "neighborhood",
+        "postalCode",
+        "latitude",
+        "longitude",
+      ].forEach(clearError);
+
+      // Country cascade (changes country -> clears dependent state/city)
+      if (loc.country) {
+        handleCountryChange(loc.country);
       }
 
-      // State (name) — small delay so cascade from country is applied
-      if (address.state) {
+      // State -- small delay so cascade from country is applied
+      if (loc.state) {
         setTimeout(() => {
-          handleStateChange(address.state);
+          handleStateChange(loc.state);
 
-          // City (name) — delay after state cascade
-          if (address.city) {
-            setTimeout(() => {
-              handleCityChange(address.city);
-            }, 50);
-          }
-        }, 50);
+          // City -- delay after state cascade
+          setTimeout(() => {
+            handleCityChange(loc.city || "");
+          }, 80);
+        }, 80);
+      } else if (loc.city) {
+        setTimeout(() => {
+          handleCityChange(loc.city);
+        }, 80);
       }
-
-      // Direct fields
-      if (address.streetAddress) setField("streetAddress", address.streetAddress);
-      if (address.neighborhood) setField("neighborhood", address.neighborhood);
-      if (address.postalCode) setField("postalCode", address.postalCode);
     },
-    [setField, handleCountryChange, handleStateChange, handleCityChange],
+    [
+      setForm,
+      clearError,
+      handleCountryChange,
+      handleStateChange,
+      handleCityChange,
+    ],
   );
 
   return (

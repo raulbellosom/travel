@@ -1,21 +1,36 @@
 /**
- * MapPicker — Interactive Leaflet map that lets users pick a location by clicking.
- * Uses OpenStreetMap tiles (free) + Nominatim reverse-geocoding (free).
+ * MapPicker — Interactive Leaflet map with Mapbox tiles for selecting a location.
+ * Supports click-to-place marker, draggable marker, and Mapbox reverse geocoding.
  *
  * Props:
- *   latitude    – initial lat (number|string, default 20.6597)
- *   longitude   – initial lng (number|string, default -103.3496)
- *   onSelect    – callback({ lat, lng, address }) when user confirms a location
- *   readOnly    – if true, disables click-to-move marker
- *   height      – CSS height string (default "400px")
- *   zoom        – initial zoom level (default 13)
+ *   latitude         - initial lat (number|string, default: Puerto Vallarta)
+ *   longitude        - initial lng (number|string, default: Puerto Vallarta)
+ *   onSelect         - callback(NormalizedLocation) when user picks or drags
+ *   readOnly         - if true, disables click-to-move and drag
+ *   height           - CSS height string (default "400px")
+ *   zoom             - initial zoom level (default from config)
+ *   restrictToBounds - if true, restricts panning to Mexico bounds
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  useMap,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { reverseGeocode } from "../../../../services/mapbox.service";
+import {
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  TILE_LAYERS,
+  TILE_OPTIONS,
+  MEXICO_BOUNDS,
+} from "../../../../config/map.config";
 
-/* ── Fix Leaflet default marker icon in bundlers (Vite, Webpack) ── */
+/* -- Fix Leaflet default marker icon in bundlers (Vite, Webpack) -- */
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -27,61 +42,24 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-/* ── Helper: delay for rate-limiting ── */
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-
-/* ── Nominatim reverse-geocode (free, no API key) ── */
-/* Includes retry logic for 425 "Too Early" errors and rate-limit compliance */
-const reverseGeocode = async (lat, lng, retries = 3) => {
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      // Nominatim asks for max 1 req/s; small delay on retries
-      if (attempt > 0) await delay(1200 * attempt);
-
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`,
-        { cache: "no-store" },
-      );
-
-      // 425 Too Early or 429 Too Many Requests → retry
-      if (res.status === 425 || res.status === 429) {
-        if (attempt < retries - 1) continue;
-        return null;
-      }
-
-      if (!res.ok) return null;
-      return await res.json();
-    } catch {
-      if (attempt < retries - 1) continue;
-      return null;
-    }
-  }
-  return null;
-};
+/**
+ * Detect if dark mode is active by checking the document root element.
+ */
+const isDarkMode = () =>
+  typeof document !== "undefined" &&
+  document.documentElement.classList.contains("dark");
 
 /**
- * Parse Nominatim address components into our field format.
+ * Sub-component: handles map click events.
  */
-const parseAddress = (data) => {
-  if (!data?.address) return {};
-  const a = data.address;
-  return {
-    country: a.country_code?.toUpperCase() || "",
-    state: a.state || a.region || "",
-    city: a.city || a.town || a.village || a.municipality || "",
-    streetAddress: [a.road, a.house_number].filter(Boolean).join(" ") || "",
-    neighborhood: a.suburb || a.neighbourhood || a.hamlet || "",
-    postalCode: a.postcode || "",
-  };
-};
-
-/* ── Sub-component: clickable layer ── */
 const ClickHandler = ({ onClick }) => {
   useMapEvents({ click: (e) => onClick(e.latlng) });
   return null;
 };
 
-/* ── Sub-component: fly to new position when marker changes ── */
+/**
+ * Sub-component: smoothly fly to new position when marker changes.
+ */
 const FlyToMarker = ({ position }) => {
   const map = useMap();
   useEffect(() => {
@@ -90,54 +68,153 @@ const FlyToMarker = ({ position }) => {
   return null;
 };
 
-/* ── Main component ── */
+/**
+ * Sub-component: draggable marker that reports its new position.
+ */
+const DraggableMarker = ({ position, onDragEnd }) => {
+  const markerRef = useRef(null);
+
+  const eventHandlers = useMemo(
+    () => ({
+      dragend() {
+        const marker = markerRef.current;
+        if (marker) {
+          const { lat, lng } = marker.getLatLng();
+          onDragEnd({ lat, lng });
+        }
+      },
+    }),
+    [onDragEnd],
+  );
+
+  return (
+    <Marker
+      position={position}
+      draggable
+      ref={markerRef}
+      eventHandlers={eventHandlers}
+    />
+  );
+};
+
 const MapPicker = ({
   latitude,
   longitude,
   onSelect,
   readOnly = false,
   height = "400px",
-  zoom = 13,
+  zoom = DEFAULT_ZOOM,
+  restrictToBounds = false,
 }) => {
-  // Default center: Guadalajara, MX
-  const defaultLat = 20.6597;
-  const defaultLng = -103.3496;
-
-  const initLat = parseFloat(latitude) || defaultLat;
-  const initLng = parseFloat(longitude) || defaultLng;
+  const initLat = parseFloat(latitude) || DEFAULT_CENTER.lat;
+  const initLng = parseFloat(longitude) || DEFAULT_CENTER.lng;
 
   const [position, setPosition] = useState({ lat: initLat, lng: initLng });
   const [loading, setLoading] = useState(false);
-  const lastGeocode = useRef(null);
+  const [dark, setDark] = useState(isDarkMode);
+  const abortRef = useRef(null);
 
-  // React to external prop changes (search result, geolocation, etc.)
   useEffect(() => {
     const newLat = parseFloat(latitude);
     const newLng = parseFloat(longitude);
-    if (!isNaN(newLat) && !isNaN(newLng) && (newLat !== position.lat || newLng !== position.lng)) {
+    if (
+      !isNaN(newLat) &&
+      !isNaN(newLng) &&
+      (newLat !== position.lat || newLng !== position.lng)
+    ) {
       setPosition({ lat: newLat, lng: newLng });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude]);
 
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setDark(isDarkMode());
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   const center = useMemo(() => [position.lat, position.lng], [position]);
 
-  const handleClick = useCallback(
-    async (latlng) => {
+  const tileConfig = dark ? TILE_LAYERS.dark : TILE_LAYERS.light;
+
+  const maxBounds = restrictToBounds
+    ? L.latLngBounds(
+        [MEXICO_BOUNDS[0][1], MEXICO_BOUNDS[0][0]],
+        [MEXICO_BOUNDS[1][1], MEXICO_BOUNDS[1][0]],
+      )
+    : undefined;
+
+  const handleReverseGeocode = useCallback(
+    async (lat, lng) => {
       if (readOnly) return;
-      const { lat, lng } = latlng;
+
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+
       setPosition({ lat, lng });
       setLoading(true);
 
-      const data = await reverseGeocode(lat, lng);
-      const address = parseAddress(data);
-      lastGeocode.current = address;
-      setLoading(false);
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-      onSelect?.({ lat, lng, address });
+      try {
+        const location = await reverseGeocode(lat, lng, {
+          signal: controller.signal,
+        });
+
+        if (!controller.signal.aborted && location) {
+          onSelect?.(location);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          onSelect?.({
+            lat,
+            lng,
+            formattedAddress: "",
+            city: "",
+            state: "",
+            postalCode: "",
+            country: "",
+            neighborhood: "",
+            streetAddress: "",
+          });
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
     },
     [readOnly, onSelect],
   );
+
+  const handleClick = useCallback(
+    (latlng) => {
+      handleReverseGeocode(latlng.lat, latlng.lng);
+    },
+    [handleReverseGeocode],
+  );
+
+  const handleDragEnd = useCallback(
+    ({ lat, lng }) => {
+      handleReverseGeocode(lat, lng);
+    },
+    [handleReverseGeocode],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, []);
 
   return (
     <div className="relative overflow-hidden rounded-xl" style={{ height }}>
@@ -145,25 +222,32 @@ const MapPicker = ({
         center={center}
         zoom={zoom}
         scrollWheelZoom
+        maxBounds={maxBounds}
         style={{ height: "100%", width: "100%", zIndex: 0 }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={tileConfig.attribution}
+          url={tileConfig.url}
+          tileSize={TILE_OPTIONS.tileSize}
+          zoomOffset={TILE_OPTIONS.zoomOffset}
+          maxZoom={TILE_OPTIONS.maxZoom}
         />
-        <Marker position={center} />
+        {readOnly ? (
+          <Marker position={center} />
+        ) : (
+          <DraggableMarker position={center} onDragEnd={handleDragEnd} />
+        )}
         {!readOnly && <ClickHandler onClick={handleClick} />}
         <FlyToMarker position={center} />
       </MapContainer>
 
       {loading && (
         <div className="absolute top-3 left-3 z-[1000] rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow backdrop-blur dark:bg-slate-800/90 dark:text-slate-200">
-          Obteniendo dirección…
+          Obteniendo direccion...
         </div>
       )}
     </div>
   );
 };
 
-export { reverseGeocode, parseAddress };
 export default MapPicker;

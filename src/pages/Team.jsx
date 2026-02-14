@@ -776,8 +776,8 @@ const Team = () => {
 
   return (
     <section className="space-y-5">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
+      <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             {t("teamPage.title")}
           </h1>
@@ -786,14 +786,16 @@ const Team = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 sm:w-auto"
-        >
-          <Plus size={16} />
-          {t("teamPage.actions.create")}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
+          >
+            <Plus size={16} />
+            {t("teamPage.actions.create")}
+          </button>
+        </div>
       </header>
 
       <StatsCardsRow items={summaryCards} />

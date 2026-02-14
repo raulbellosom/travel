@@ -25,7 +25,7 @@ const AppPayments = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [queryFilter, setQueryFilter] = useState(() =>
-    String(searchParams.get("search") || "").trim()
+    String(searchParams.get("search") || "").trim(),
   );
 
   const locale = i18n.language === "en" ? "en-US" : "es-MX";
@@ -48,7 +48,7 @@ const AppPayments = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, i18n, user?.$id]);
+  }, [filters, user?.$id]);
 
   useEffect(() => {
     load();
@@ -58,7 +58,9 @@ const AppPayments = () => {
     setPage(1);
   }, [filters.provider, filters.status, queryFilter]);
 
-  const normalizedFilter = String(queryFilter || "").trim().toLowerCase();
+  const normalizedFilter = String(queryFilter || "")
+    .trim()
+    .toLowerCase();
   const filteredPayments = useMemo(() => {
     if (!normalizedFilter) return payments;
 
@@ -82,8 +84,11 @@ const AppPayments = () => {
   }, [filteredPayments.length, pageSize]);
 
   const totalPages = useMemo(
-    () => (pageSize === "all" ? 1 : Math.max(1, Math.ceil(filteredPayments.length / effectivePageSize))),
-    [effectivePageSize, filteredPayments.length, pageSize]
+    () =>
+      pageSize === "all"
+        ? 1
+        : Math.max(1, Math.ceil(filteredPayments.length / effectivePageSize)),
+    [effectivePageSize, filteredPayments.length, pageSize],
   );
 
   useEffect(() => {
@@ -92,7 +97,9 @@ const AppPayments = () => {
 
   useEffect(() => {
     if (!focusId || filteredPayments.length === 0) return;
-    const targetIndex = filteredPayments.findIndex((payment) => payment.$id === focusId);
+    const targetIndex = filteredPayments.findIndex(
+      (payment) => payment.$id === focusId,
+    );
     if (targetIndex < 0) return;
     setPage(Math.floor(targetIndex / effectivePageSize) + 1);
   }, [effectivePageSize, filteredPayments, focusId]);
@@ -114,7 +121,7 @@ const AppPayments = () => {
       { value: "", label: t("appPaymentsPage.filters.all") },
       ...PROVIDERS.map((provider) => ({ value: provider, label: provider })),
     ],
-    [t]
+    [t],
   );
 
   const statusOptions = useMemo(
@@ -122,7 +129,7 @@ const AppPayments = () => {
       { value: "", label: t("appPaymentsPage.filters.all") },
       ...STATUSES.map((status) => ({ value: status, label: status })),
     ],
-    [t]
+    [t],
   );
 
   return (
@@ -159,7 +166,9 @@ const AppPayments = () => {
           </span>
           <Select
             value={filters.provider}
-            onChange={(value) => setFilters((prev) => ({ ...prev, provider: value }))}
+            onChange={(value) =>
+              setFilters((prev) => ({ ...prev, provider: value }))
+            }
             options={providerOptions}
             size="md"
           />
@@ -171,14 +180,20 @@ const AppPayments = () => {
           </span>
           <Select
             value={filters.status}
-            onChange={(value) => setFilters((prev) => ({ ...prev, status: value }))}
+            onChange={(value) =>
+              setFilters((prev) => ({ ...prev, status: value }))
+            }
             options={statusOptions}
             size="md"
           />
         </label>
       </div>
 
-      {loading ? <p className="text-sm text-slate-600 dark:text-slate-300">{t("appPaymentsPage.loading")}</p> : null}
+      {loading ? (
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("appPaymentsPage.loading")}
+        </p>
+      ) : null}
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
@@ -200,12 +215,24 @@ const AppPayments = () => {
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
-                  <th className="px-4 py-3">{t("appPaymentsPage.table.date")}</th>
-                  <th className="px-4 py-3">{t("appPaymentsPage.table.provider")}</th>
-                  <th className="px-4 py-3">{t("appPaymentsPage.table.reservationId")}</th>
-                  <th className="px-4 py-3">{t("appPaymentsPage.table.status")}</th>
-                  <th className="px-4 py-3">{t("appPaymentsPage.table.amount")}</th>
-                  <th className="px-4 py-3">{t("appPaymentsPage.table.reference")}</th>
+                  <th className="px-4 py-3">
+                    {t("appPaymentsPage.table.date")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("appPaymentsPage.table.provider")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("appPaymentsPage.table.reservationId")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("appPaymentsPage.table.status")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("appPaymentsPage.table.amount")}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t("appPaymentsPage.table.reference")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -226,7 +253,9 @@ const AppPayments = () => {
                       <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
                         {payment.provider}
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{payment.reservationId}</td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                        {payment.reservationId}
+                      </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                           {payment.status}

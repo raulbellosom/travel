@@ -51,10 +51,10 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
   assign("bedrooms", toNumber(source.bedrooms, 0));
   assign("bathrooms", toNumber(source.bathrooms, 0));
   assign("parkingSpaces", toNumber(source.parkingSpaces, 0));
-  assign("totalArea", toNumber(source.totalArea, 0));
-  assign("builtArea", toNumber(source.builtArea, 0));
+  assign("totalArea", toNumber(source.totalArea, null));
+  assign("builtArea", toNumber(source.builtArea, null));
   assign("floors", toNumber(source.floors, 1));
-  assign("yearBuilt", toNumber(source.yearBuilt, 0));
+  assign("yearBuilt", toNumber(source.yearBuilt, null));
   assign("maxGuests", toNumber(source.maxGuests, 1));
   assign("city", String(source.city || "").trim());
   assign("state", String(source.state || "").trim());
@@ -67,17 +67,33 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
   assign("streetAddress", String(source.streetAddress || "").trim());
   assign("neighborhood", String(source.neighborhood || "").trim());
   assign("postalCode", String(source.postalCode || "").trim());
-  assign("latitude", String(source.latitude || "").trim());
-  assign("longitude", String(source.longitude || "").trim());
-  assign("furnished", String(source.furnished || "").trim());
+  assign("latitude", toNumber(source.latitude, null));
+  assign("longitude", toNumber(source.longitude, null));
+
+  // Only include optional enum/string fields if they have valid non-empty values
+  const furnished = String(source.furnished || "").trim();
+  if (furnished) assign("furnished", furnished);
+
   assign("petsAllowed", Boolean(source.petsAllowed));
-  assign("rentPeriod", String(source.rentPeriod || "monthly").trim());
+
+  const rentPeriod = String(source.rentPeriod || "").trim();
+  if (rentPeriod) assign("rentPeriod", rentPeriod);
+
   assign("minStayNights", toNumber(source.minStayNights, 1));
   assign("maxStayNights", toNumber(source.maxStayNights, 365));
-  assign("checkInTime", String(source.checkInTime || "").trim());
-  assign("checkOutTime", String(source.checkOutTime || "").trim());
-  assign("videoUrl", String(source.videoUrl || "").trim());
-  assign("virtualTourUrl", String(source.virtualTourUrl || "").trim());
+
+  const checkInTime = String(source.checkInTime || "").trim();
+  if (checkInTime) assign("checkInTime", checkInTime);
+
+  const checkOutTime = String(source.checkOutTime || "").trim();
+  if (checkOutTime) assign("checkOutTime", checkOutTime);
+
+  // Only include URL fields if they have valid non-empty values
+  const videoUrl = String(source.videoUrl || "").trim();
+  const virtualTourUrl = String(source.virtualTourUrl || "").trim();
+  if (videoUrl) assign("videoUrl", videoUrl);
+  if (virtualTourUrl) assign("virtualTourUrl", virtualTourUrl);
+
   assign("status", String(source.status || "draft").trim());
   assign("featured", Boolean(source.featured));
   assign("enabled", source.enabled ?? true);

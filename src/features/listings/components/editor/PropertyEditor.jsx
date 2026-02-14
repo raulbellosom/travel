@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
@@ -8,15 +7,14 @@ import {
   Camera,
   ClipboardList,
   DollarSign,
-  Eye,
   Home,
   Loader2,
   MapPin,
   Save,
   Sparkles,
+  X,
 } from "lucide-react";
 import { useWizardForm, buildFormState } from "../wizard/useWizardForm";
-import { getInternalPropertyDetailRoute } from "../../../../utils/internalRoutes";
 import Modal, {
   ModalFooter,
 } from "../../../../components/common/organisms/Modal";
@@ -105,9 +103,9 @@ const PropertyEditor = ({
   onSubmit,
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("typeAndInfo");
-  const [isConfirmLeaveModalOpen, setIsConfirmLeaveModalOpen] = useState(false);
+  const [isConfirmDiscardModalOpen, setIsConfirmDiscardModalOpen] =
+    useState(false);
   const tabsRef = useRef(null);
 
   const formHook = useWizardForm({
@@ -155,20 +153,6 @@ const PropertyEditor = ({
       setActiveTab(activeTabs[0]?.id || "typeAndInfo");
     }
   }, [activeTabs, activeTab]);
-
-  /* ── warn before leaving with unsaved changes ─────── */
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = "";
-      return "";
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty]);
 
   /* ── submit ─────────────────────────────────────── */
   const handleSubmit = useCallback(
@@ -221,19 +205,19 @@ const PropertyEditor = ({
     [scrollTabIntoView],
   );
 
-  /* ── navigate to summary view ───────────────────── */
-  const handleNavigateToSummary = useCallback(() => {
+
+  /* ── discard changes ────────────────────────────── */
+  const handleDiscardChanges = useCallback(() => {
     if (isDirty) {
-      setIsConfirmLeaveModalOpen(true);
+      setIsConfirmDiscardModalOpen(true);
       return;
     }
-    navigate(getInternalPropertyDetailRoute(propertyId));
-  }, [isDirty, navigate, propertyId]);
+  }, [isDirty]);
 
-  const confirmLeaveWithoutSaving = useCallback(() => {
-    setIsConfirmLeaveModalOpen(false);
-    navigate(getInternalPropertyDetailRoute(propertyId));
-  }, [navigate, propertyId]);
+  const confirmDiscardChanges = useCallback(() => {
+    setIsConfirmDiscardModalOpen(false);
+    window.location.reload();
+  }, []);
 
   /* ── render tab content ─────────────────────────── */
   const renderTabContent = () => {
@@ -273,18 +257,6 @@ const PropertyEditor = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-0">
-      {/* ── Header with summary button ─────────────── */}
-      <div className="flex items-center justify-end gap-2 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
-        <button
-          type="button"
-          onClick={handleNavigateToSummary}
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
-        >
-          <Eye className="h-4 w-4" />
-          <span>{t("propertyForm.editor.viewSummary", "Ver resumen")}</span>
-        </button>
-      </div>
-
       {/* ── Tab bar ────────────────────────────────── */}
       <div
         ref={tabsRef}
@@ -338,7 +310,7 @@ const PropertyEditor = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="sticky bottom-0 z-20 flex items-center justify-between gap-4 rounded-b-2xl border-t border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-sm sm:px-6 dark:border-slate-700 dark:bg-slate-900/95"
+            className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-b-2xl border-t border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-sm sm:px-6 dark:border-slate-700 dark:bg-slate-900/95"
           >
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {t(
@@ -346,29 +318,40 @@ const PropertyEditor = ({
                 "Tienes cambios sin guardar",
               )}
             </p>
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-cyan-700 disabled:opacity-60 dark:bg-cyan-500 dark:hover:bg-cyan-600"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {t("editPropertyPage.submit", "Guardar cambios")}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDiscardChanges}
+                disabled={loading}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                <X className="h-4 w-4" />
+                {t("propertyForm.editor.discardChanges", "Descartar cambios")}
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-cyan-700 disabled:opacity-60 dark:bg-cyan-500 dark:hover:bg-cyan-600"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {t("editPropertyPage.submit", "Guardar cambios")}
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Confirm leave modal ────────────────────── */}
+      {/* ── Confirm discard modal ──────────────────── */}
       <Modal
-        isOpen={isConfirmLeaveModalOpen}
-        onClose={() => setIsConfirmLeaveModalOpen(false)}
+        isOpen={isConfirmDiscardModalOpen}
+        onClose={() => setIsConfirmDiscardModalOpen(false)}
         title={t(
-          "propertyForm.editor.confirmLeaveTitle",
-          "Cambios sin guardar",
+          "propertyForm.editor.confirmDiscardTitle",
+          "Descartar cambios",
         )}
         size="sm"
         variant="warning"
@@ -376,25 +359,25 @@ const PropertyEditor = ({
           <ModalFooter>
             <button
               type="button"
-              onClick={() => setIsConfirmLeaveModalOpen(false)}
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={() => setIsConfirmDiscardModalOpen(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               {t("common.cancel", "Cancelar")}
             </button>
             <button
               type="button"
-              onClick={confirmLeaveWithoutSaving}
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-600 px-4 text-sm font-semibold text-white transition hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+              onClick={confirmDiscardChanges}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
             >
-              {t("propertyForm.editor.confirmLeaveButton", "Salir sin guardar")}
+              {t("propertyForm.editor.confirmDiscardButton", "Descartar")}
             </button>
           </ModalFooter>
         }
       >
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {t(
-            "propertyForm.editor.confirmLeaveUnsaved",
-            "Tienes cambios sin guardar. ¿Deseas salir y descartarlos?",
+            "propertyForm.editor.confirmDiscardMessage",
+            "Se perderán todos los cambios que no hayas guardado. ¿Deseas continuar?",
           )}
         </p>
       </Modal>

@@ -44,7 +44,9 @@ const MyReviews = () => {
         if (!mounted) return;
         setReviews(docs);
 
-        const propertyIds = [...new Set(docs.map((item) => item.propertyId).filter(Boolean))];
+        const propertyIds = [
+          ...new Set(docs.map((item) => item.propertyId).filter(Boolean)),
+        ];
         if (propertyIds.length === 0) {
           setPropertyNames({});
           return;
@@ -58,7 +60,7 @@ const MyReviews = () => {
             } catch {
               return [propertyId, propertyId];
             }
-          })
+          }),
         );
 
         if (!mounted) return;
@@ -77,11 +79,14 @@ const MyReviews = () => {
     return () => {
       mounted = false;
     };
-  }, [i18n, user?.$id]);
+  }, [user?.$id]);
 
   const averageRating = useMemo(() => {
     if (reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, item) => acc + Number(item.rating || 0), 0);
+    const sum = reviews.reduce(
+      (acc, item) => acc + Number(item.rating || 0),
+      0,
+    );
     return Math.round((sum / reviews.length) * 10) / 10;
   }, [reviews]);
 
@@ -101,18 +106,24 @@ const MyReviews = () => {
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-300">
             {t("myReviewsPage.stats.total")}
           </p>
-          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">{reviews.length}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
+            {reviews.length}
+          </p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-300">
             {t("myReviewsPage.stats.average")}
           </p>
-          <p className="mt-2 text-2xl font-bold text-amber-500 dark:text-amber-300">{averageRating}</p>
+          <p className="mt-2 text-2xl font-bold text-amber-500 dark:text-amber-300">
+            {averageRating}
+          </p>
         </article>
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">{t("myReviewsPage.loading")}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          {t("myReviewsPage.loading")}
+        </p>
       ) : null}
 
       {error ? (
@@ -146,7 +157,9 @@ const MyReviews = () => {
                   </h2>
                 </div>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  {t(`reviewStatus.${review.status}`, { defaultValue: review.status })}
+                  {t(`reviewStatus.${review.status}`, {
+                    defaultValue: review.status,
+                  })}
                 </span>
               </div>
 
@@ -155,7 +168,9 @@ const MyReviews = () => {
                   <Star
                     key={`${review.$id}-${index}`}
                     size={16}
-                    className={index < Number(review.rating || 0) ? "fill-current" : ""}
+                    className={
+                      index < Number(review.rating || 0) ? "fill-current" : ""
+                    }
                   />
                 ))}
                 <span className="ml-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -164,7 +179,9 @@ const MyReviews = () => {
               </div>
 
               {review.title ? (
-                <h3 className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">{review.title}</h3>
+                <h3 className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {review.title}
+                </h3>
               ) : null}
 
               <p className="mt-2 inline-flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
@@ -173,7 +190,8 @@ const MyReviews = () => {
               </p>
 
               <p className="mt-3 text-xs text-slate-500 dark:text-slate-300">
-                {t("myReviewsPage.labels.created")}: {formatDate(review.$createdAt, locale)}
+                {t("myReviewsPage.labels.created")}:{" "}
+                {formatDate(review.$createdAt, locale)}
               </p>
             </article>
           ))}
