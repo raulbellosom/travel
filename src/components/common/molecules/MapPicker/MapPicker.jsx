@@ -27,18 +27,36 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+/* ── Helper: delay for rate-limiting ── */
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
 /* ── Nominatim reverse-geocode (free, no API key) ── */
-const reverseGeocode = async (lat, lng) => {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`,
-      { headers: { "User-Agent": "InmoboApp/1.0" } },
-    );
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
+/* Includes retry logic for 425 "Too Early" errors and rate-limit compliance */
+const reverseGeocode = async (lat, lng, retries = 3) => {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      // Nominatim asks for max 1 req/s; small delay on retries
+      if (attempt > 0) await delay(1200 * attempt);
+
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`,
+        { cache: "no-store" },
+      );
+
+      // 425 Too Early or 429 Too Many Requests → retry
+      if (res.status === 425 || res.status === 429) {
+        if (attempt < retries - 1) continue;
+        return null;
+      }
+
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      if (attempt < retries - 1) continue;
+      return null;
+    }
   }
+  return null;
 };
 
 /**
@@ -91,6 +109,16 @@ const MapPicker = ({
   const [position, setPosition] = useState({ lat: initLat, lng: initLng });
   const [loading, setLoading] = useState(false);
   const lastGeocode = useRef(null);
+
+  // React to external prop changes (search result, geolocation, etc.)
+  useEffect(() => {
+    const newLat = parseFloat(latitude);
+    const newLng = parseFloat(longitude);
+    if (!isNaN(newLat) && !isNaN(newLng) && (newLat !== position.lat || newLng !== position.lng)) {
+      setPosition({ lat: newLat, lng: newLng });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latitude, longitude]);
 
   const center = useMemo(() => [position.lat, position.lng], [position]);
 

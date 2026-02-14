@@ -25,6 +25,7 @@
     "libphonenumber-js": "^1.12.24",
     "lucide-react": "^0.540.0",
     "motion": "^12.23.12",
+    "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.71.1",

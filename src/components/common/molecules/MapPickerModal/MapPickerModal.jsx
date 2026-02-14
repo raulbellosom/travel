@@ -15,24 +15,36 @@ import { useTranslation } from "react-i18next";
 import { MapPin, Check, LocateFixed, Search, X } from "lucide-react";
 import Modal, { ModalFooter } from "../../organisms/Modal";
 import { Button } from "../../atoms";
-import MapPicker from "../MapPicker";
+import MapPicker, { reverseGeocode, parseAddress } from "../MapPicker";
 
 /**
  * Forward-geocode via Nominatim (free, no API key).
  * Returns an array of { lat, lon, display_name, address } results.
+ * Includes retry logic for 425/429 errors.
  */
-const searchAddress = async (query) => {
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const searchAddress = async (query, retries = 2) => {
   if (!query || query.length < 3) return [];
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&accept-language=es`,
-      { headers: { "User-Agent": "InmoboApp/1.0" } },
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      if (attempt > 0) await delay(1200 * attempt);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&accept-language=es`,
+        { cache: "no-store" },
+      );
+      if (res.status === 425 || res.status === 429) {
+        if (attempt < retries - 1) continue;
+        return [];
+      }
+      if (!res.ok) return [];
+      return await res.json();
+    } catch {
+      if (attempt < retries - 1) continue;
+      return [];
+    }
   }
+  return [];
 };
 
 const MapPickerModal = ({
@@ -87,13 +99,18 @@ const MapPickerModal = ({
     }, 400);
   }, []);
 
-  /** When user picks a search result, center the map there */
+  /** When user picks a search result, center the map and use address data directly */
   const handleSearchResultClick = useCallback((result) => {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
     setMapCenter({ lat, lng });
     setSearchResults([]);
     setSearchQuery(result.display_name);
+
+    // The /search endpoint already returns addressdetails — use them directly
+    // instead of making a second reverse-geocode request
+    const address = parseAddress({ address: result.address });
+    setSelected({ lat, lng, address });
   }, []);
 
   const clearSearch = useCallback(() => {
@@ -110,10 +127,15 @@ const MapPickerModal = ({
     setGeolocating(true);
     setGeoError("");
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         setMapCenter({ lat, lng });
+
+        // Auto-select: reverse geocode the user's position
+        const data = await reverseGeocode(lat, lng);
+        const address = parseAddress(data);
+        setSelected({ lat, lng, address });
         setGeolocating(false);
       },
       () => {
@@ -148,6 +170,7 @@ const MapPickerModal = ({
       title={t("mapPicker.title")}
       description={t("mapPicker.description")}
       size="2xl"
+      closeOnBackdrop={false}
       footer={footer}
     >
       <div className="space-y-3">

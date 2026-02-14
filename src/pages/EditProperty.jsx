@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useNavigate, useParams, Link } from "react-router-dom"; import { useTranslation } from "react-i18next";
+import { ArrowLeft, Eye } from "lucide-react";
 import PropertyEditor from "../features/listings/components/editor/PropertyEditor";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
-import { INTERNAL_ROUTES } from "../utils/internalRoutes";
+import { INTERNAL_ROUTES, getInternalPropertyDetailRoute } from "../utils/internalRoutes";
 
 const EditProperty = () => {
   const { t } = useTranslation();
@@ -111,10 +111,35 @@ const EditProperty = () => {
 
   return (
     <section className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          {t("editPropertyPage.title")}
-        </h1>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            {t("editPropertyPage.title")}
+          </h1>
+          {initialValues && (
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {initialValues.title}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to={INTERNAL_ROUTES.myProperties}
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <ArrowLeft size={14} />
+            {t("appPropertyDetailPage.actions.backToList", "Volver al listado")}
+          </Link>
+          {id && (
+            <Link
+              to={getInternalPropertyDetailRoute(id)}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
+            >
+              <Eye size={14} />
+              {t("propertyForm.editor.viewSummary", "Ver resumen")}
+            </Link>
+          )}
+        </div>
       </header>
 
       {error ? (

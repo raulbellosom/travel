@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { RefreshCw, Loader2, Check, AlertCircle } from "lucide-react";
-import { Select } from "../../../../../components/common";
+import { Select, TextInputWithCharCounter } from "../../../../../components/common";
 import { PROPERTY_TYPES, OPERATION_TYPES } from "../wizardConfig";
 import { useMemo } from "react";
 
@@ -91,7 +91,7 @@ const StepTypeAndInfo = ({ formHook }) => {
         <span className="font-medium text-slate-700 dark:text-slate-200">
           {t("propertyForm.fields.title")} *
         </span>
-        <input
+        <TextInputWithCharCounter
           required
           value={form.title}
           maxLength={200}
@@ -108,11 +108,12 @@ const StepTypeAndInfo = ({ formHook }) => {
           {t("propertyForm.fields.slug")} *
         </span>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <input
+          <TextInputWithCharCounter
             required
             value={form.slug}
             maxLength={150}
-            className={`${getFieldClassName("slug")} flex-1`}
+            containerClassName="flex-1"
+            className={getFieldClassName("slug")}
             onChange={(e) => handleSlugChange(e.target.value)}
           />
           <button

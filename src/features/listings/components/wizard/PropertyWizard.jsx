@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,9 +9,12 @@ import {
   ClipboardList,
   Loader2,
   Save,
+  X,
 } from "lucide-react";
 import { getActiveSteps } from "./wizardConfig";
 import { useWizardForm } from "./useWizardForm";
+import { INTERNAL_ROUTES } from "../../../../utils/internalRoutes";
+import Modal, { ModalFooter } from "../../../../components/common/organisms/Modal";
 import StepTypeAndInfo from "./steps/StepTypeAndInfo";
 import StepLocation from "./steps/StepLocation";
 import StepFeatures from "./steps/StepFeatures";
@@ -50,6 +54,8 @@ const PropertyWizard = ({
   onSubmit,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   const formHook = useWizardForm({
     mode: "create",
@@ -184,6 +190,16 @@ const PropertyWizard = ({
     [activeSteps, completedSteps, currentStepIndex, goToStep],
   );
 
+  /* ── Cancel wizard ────────────────────────────────── */
+  const handleCancel = useCallback(() => {
+    setIsCancelModalOpen(true);
+  }, []);
+
+  const confirmCancel = useCallback(() => {
+    setIsCancelModalOpen(false);
+    navigate(INTERNAL_ROUTES.myProperties);
+  }, [navigate]);
+
   /* ── Progress percentage ────────────────────────────── */
 
   const progressPercent = Math.round(
@@ -232,10 +248,11 @@ const PropertyWizard = ({
   /* ── render ────────────────────────────────────────── */
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-0 overflow-hidden lg:flex-row lg:gap-0"
-    >
+    <>
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-0 overflow-hidden lg:flex-row lg:gap-0"
+      >
       {/* ── PROGRESS SIDEBAR (desktop) / TOP BAR (mobile) ── */}
       <div className="shrink-0 lg:w-72 xl:w-80">
         {/* Mobile: horizontal progress bar */}
@@ -450,6 +467,17 @@ const PropertyWizard = ({
 
               {/* Buttons */}
               <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleCancel}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500"
+                >
+                  <X size={16} />
+                  <span className="hidden sm:inline">
+                    {t("propertyForm.actions.cancel", "Cancelar")}
+                  </span>
+                </button>
                 {!isFirstStep && (
                   <button
                     type="button"
@@ -498,7 +526,45 @@ const PropertyWizard = ({
           </div>
         </div>
       </div>
-    </form>
+      </form>
+
+      {/* ── Cancel confirmation modal ────────────────── */}
+      <Modal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        title={t(
+          "propertyForm.wizard.cancelTitle",
+          "Cancelar creación de propiedad",
+        )}
+        size="sm"
+        variant="warning"
+        footer={
+          <ModalFooter>
+            <button
+              type="button"
+              onClick={() => setIsCancelModalOpen(false)}
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              {t("common.cancel", "Cancelar")}
+            </button>
+            <button
+              type="button"
+              onClick={confirmCancel}
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-600 px-4 text-sm font-semibold text-white transition hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+            >
+              {t("propertyForm.wizard.confirmCancel", "Salir")}
+            </button>
+          </ModalFooter>
+        }
+      >
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {t(
+            "propertyForm.wizard.cancelMessage",
+            "¿Estás seguro que deseas cancelar? Se perderá toda la información ingresada.",
+          )}
+        </p>
+      </Modal>
+    </>
   );
 };
 

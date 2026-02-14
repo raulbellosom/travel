@@ -1,6 +1,7 @@
 // === ATOMS ===
 export { default as Button } from "./atoms/Button";
 export { default as TextInput } from "./atoms/TextInput";
+export { default as TextInputWithCharCounter } from "./atoms/TextInputWithCharCounter";
 export { default as NumberInput } from "./atoms/NumberInput";
 export { default as CurrencyInput } from "./atoms/CurrencyInput";
 export { default as Select } from "./atoms/Select";

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { MapPin } from "lucide-react";
 import Combobox from "../../../../../components/common/molecules/Combobox";
 import MapPickerModal from "../../../../../components/common/molecules/MapPickerModal";
-import { Button } from "../../../../../components/common/atoms";
+import { Button, TextInputWithCharCounter } from "../../../../../components/common/atoms";
 import { comboboxInputClassName, inputErrorClassName } from "../wizardConfig";
 
 /**
@@ -153,7 +153,7 @@ const StepLocation = ({ formHook }) => {
           <span className="font-medium text-slate-700 dark:text-slate-200">
             {t("propertyForm.fields.streetAddress")}
           </span>
-          <input
+          <TextInputWithCharCounter
             value={form.streetAddress}
             maxLength={200}
             placeholder={t("propertyForm.wizard.placeholders.streetAddress")}
@@ -167,7 +167,7 @@ const StepLocation = ({ formHook }) => {
           <span className="font-medium text-slate-700 dark:text-slate-200">
             {t("propertyForm.fields.neighborhood")}
           </span>
-          <input
+          <TextInputWithCharCounter
             value={form.neighborhood}
             maxLength={100}
             placeholder={t("propertyForm.wizard.placeholders.neighborhood")}
@@ -184,7 +184,7 @@ const StepLocation = ({ formHook }) => {
           <span className="font-medium text-slate-700 dark:text-slate-200">
             {t("propertyForm.fields.postalCode")}
           </span>
-          <input
+          <TextInputWithCharCounter
             value={form.postalCode}
             maxLength={10}
             placeholder="00000"
