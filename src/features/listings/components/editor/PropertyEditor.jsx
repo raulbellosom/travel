@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { useWizardForm, buildFormState } from "../wizard/useWizardForm";
 import { getInternalPropertyDetailRoute } from "../../../../utils/internalRoutes";
-import Modal, { ModalFooter } from "../../../../components/common/organisms/Modal";
+import Modal, {
+  ModalFooter,
+} from "../../../../components/common/organisms/Modal";
 import StepTypeAndInfo from "../wizard/steps/StepTypeAndInfo";
 import StepLocation from "../wizard/steps/StepLocation";
 import StepFeatures from "../wizard/steps/StepFeatures";
@@ -384,10 +386,7 @@ const PropertyEditor = ({
               onClick={confirmLeaveWithoutSaving}
               className="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-600 px-4 text-sm font-semibold text-white transition hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
             >
-              {t(
-                "propertyForm.editor.confirmLeaveButton",
-                "Salir sin guardar",
-              )}
+              {t("propertyForm.editor.confirmLeaveButton", "Salir sin guardar")}
             </button>
           </ModalFooter>
         }
