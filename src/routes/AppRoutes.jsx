@@ -1,4 +1,10 @@
-import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useParams,
+} from "react-router-dom";
 import { AuthProvider } from "../contexts/AuthContext";
 import { UIProvider } from "../contexts/UIContext";
 import InternalRoute from "./InternalRoute";
@@ -55,6 +61,7 @@ import {
   getInternalPropertyDetailRoute,
   getInternalEditPropertyRoute,
 } from "../utils/internalRoutes";
+import env from "../env";
 
 const LegacyEditPropertyRedirect = () => {
   const { id } = useParams();
@@ -66,14 +73,22 @@ const LegacyPropertyDetailRedirect = () => {
   return <Navigate to={getInternalPropertyDetailRoute(id)} replace />;
 };
 
+const MarketingEntryRoute = () => {
+  if (!env.features.marketingSite) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Home />;
+};
+
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <UIProvider>
           <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Home />} />
+            <Route path="/" element={<MarketingEntryRoute />} />
+            <Route element={<MainLayout />}>
               <Route path="propiedades/:slug" element={<PropertyDetail />} />
               <Route path="reservar/:slug" element={<ReserveProperty />} />
               <Route path="voucher/:code" element={<VoucherLookup />} />
@@ -102,7 +117,10 @@ const AppRoutes = () => {
                 }
               />
               <Route path="aviso-privacidad" element={<PrivacyNotice />} />
-              <Route path="terminos-condiciones" element={<TermsConditions />} />
+              <Route
+                path="terminos-condiciones"
+                element={<TermsConditions />}
+              />
               <Route path="ui-docs" element={<UIDocsPage />} />
               <Route path="errors-demo" element={<ErrorsDemo />} />
             </Route>
@@ -124,10 +142,7 @@ const AppRoutes = () => {
                   </PublicOnlyRoute>
                 }
               />
-              <Route
-                path="recuperar-password"
-                element={<ForgotPassword />}
-              />
+              <Route path="recuperar-password" element={<ForgotPassword />} />
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="verify-email" element={<VerifyEmail />} />
             </Route>
@@ -140,7 +155,10 @@ const AppRoutes = () => {
                 </InternalRoute>
               }
             >
-              <Route index element={<Navigate to={INTERNAL_ROUTES.dashboard} replace />} />
+              <Route
+                index
+                element={<Navigate to={INTERNAL_ROUTES.dashboard} replace />}
+              />
               <Route path="dashboard" element={<Dashboard />} />
               <Route
                 path="my-properties"
@@ -255,17 +273,52 @@ const AppRoutes = () => {
                   </RoleRoute>
                 }
               />
-              <Route path="mis-propiedades" element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />} />
-              <Route path="propiedades/:id" element={<LegacyPropertyDetailRedirect />} />
-              <Route path="crear-propiedad" element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />} />
-              <Route path="editar-propiedad/:id" element={<LegacyEditPropertyRedirect />} />
-              <Route path="reservas" element={<Navigate to={INTERNAL_ROUTES.reservations} replace />} />
-              <Route path="pagos" element={<Navigate to={INTERNAL_ROUTES.payments} replace />} />
-              <Route path="resenas" element={<Navigate to={INTERNAL_ROUTES.reviews} replace />} />
-              <Route path="clientes" element={<Navigate to={INTERNAL_ROUTES.clients} replace />} />
-              <Route path="equipo" element={<Navigate to={INTERNAL_ROUTES.team} replace />} />
-              <Route path="perfil" element={<Navigate to={INTERNAL_ROUTES.profile} replace />} />
-              <Route path="configuracion" element={<Navigate to={INTERNAL_ROUTES.settings} replace />} />
+              <Route
+                path="mis-propiedades"
+                element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />}
+              />
+              <Route
+                path="propiedades/:id"
+                element={<LegacyPropertyDetailRedirect />}
+              />
+              <Route
+                path="crear-propiedad"
+                element={
+                  <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                }
+              />
+              <Route
+                path="editar-propiedad/:id"
+                element={<LegacyEditPropertyRedirect />}
+              />
+              <Route
+                path="reservas"
+                element={<Navigate to={INTERNAL_ROUTES.reservations} replace />}
+              />
+              <Route
+                path="pagos"
+                element={<Navigate to={INTERNAL_ROUTES.payments} replace />}
+              />
+              <Route
+                path="resenas"
+                element={<Navigate to={INTERNAL_ROUTES.reviews} replace />}
+              />
+              <Route
+                path="clientes"
+                element={<Navigate to={INTERNAL_ROUTES.clients} replace />}
+              />
+              <Route
+                path="equipo"
+                element={<Navigate to={INTERNAL_ROUTES.team} replace />}
+              />
+              <Route
+                path="perfil"
+                element={<Navigate to={INTERNAL_ROUTES.profile} replace />}
+              />
+              <Route
+                path="configuracion"
+                element={<Navigate to={INTERNAL_ROUTES.settings} replace />}
+              />
             </Route>
 
             <Route
@@ -280,7 +333,10 @@ const AppRoutes = () => {
               path="/my-properties"
               element={<Navigate to={INTERNAL_ROUTES.myProperties} replace />}
             />
-            <Route path="/properties/:id" element={<LegacyPropertyDetailRedirect />} />
+            <Route
+              path="/properties/:id"
+              element={<LegacyPropertyDetailRedirect />}
+            />
             <Route
               path="/crear-propiedad"
               element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />}
@@ -289,8 +345,14 @@ const AppRoutes = () => {
               path="/properties/new"
               element={<Navigate to={INTERNAL_ROUTES.createProperty} replace />}
             />
-            <Route path="/editar-propiedad/:id" element={<LegacyEditPropertyRedirect />} />
-            <Route path="/properties/:id/edit" element={<LegacyEditPropertyRedirect />} />
+            <Route
+              path="/editar-propiedad/:id"
+              element={<LegacyEditPropertyRedirect />}
+            />
+            <Route
+              path="/properties/:id/edit"
+              element={<LegacyEditPropertyRedirect />}
+            />
             <Route
               path="/leads"
               element={<Navigate to={INTERNAL_ROUTES.leads} replace />}

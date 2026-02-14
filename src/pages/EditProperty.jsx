@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import PropertyForm from "../features/listings/components/PropertyForm";
+import PropertyEditor from "../features/listings/components/editor/PropertyEditor";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
@@ -38,7 +38,9 @@ const EditProperty = () => {
         setExistingImages(Array.isArray(imageDocs) ? imageDocs : []);
         setInitialValues({
           ...doc,
-          amenityIds: Array.isArray(selectedAmenityIds) ? selectedAmenityIds : [],
+          amenityIds: Array.isArray(selectedAmenityIds)
+            ? selectedAmenityIds
+            : [],
         });
       })
       .catch((err) => {
@@ -66,8 +68,9 @@ const EditProperty = () => {
       if (Array.isArray(imageFiles) && imageFiles.length > 0) {
         const nextSortOrder =
           existingImages.reduce(
-            (maxOrder, image) => Math.max(maxOrder, Number(image?.sortOrder || 0)),
-            -1
+            (maxOrder, image) =>
+              Math.max(maxOrder, Number(image?.sortOrder || 0)),
+            -1,
           ) + 1;
         await propertiesService.uploadPropertyImages(id, imageFiles, {
           title: propertyData.title || initialValues?.title || "",
@@ -78,7 +81,7 @@ const EditProperty = () => {
                 ? initialValues.galleryImageIds
                 : []),
               ...existingImages.map((image) => image.fileId),
-            ])
+            ]),
           ),
         });
       }
@@ -91,7 +94,11 @@ const EditProperty = () => {
   };
 
   if (loading) {
-    return <p className="text-sm text-slate-600 dark:text-slate-300">{t("editPropertyPage.loading")}</p>;
+    return (
+      <p className="text-sm text-slate-600 dark:text-slate-300">
+        {t("editPropertyPage.loading")}
+      </p>
+    );
   }
 
   if (!initialValues) {
@@ -116,15 +123,13 @@ const EditProperty = () => {
         </div>
       ) : null}
 
-      <PropertyForm
-        mode="edit"
+      <PropertyEditor
         propertyId={id}
         initialValues={initialValues}
         loading={saving}
         amenitiesOptions={amenities}
         amenitiesLoading={false}
         existingImages={existingImages}
-        submitLabel={t("editPropertyPage.submit")}
         onSubmit={handleSubmit}
       />
     </section>

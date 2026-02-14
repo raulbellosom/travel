@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import PropertyForm from "../features/listings/components/PropertyForm";
+import { PropertyWizard } from "../features/listings/components/wizard";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
@@ -81,12 +81,10 @@ const CreateProperty = () => {
         </div>
       ) : null}
 
-      <PropertyForm
-        mode="create"
+      <PropertyWizard
         loading={loading}
         amenitiesOptions={amenities}
         amenitiesLoading={amenitiesLoading}
-        submitLabel={t("createPropertyPage.submit")}
         onSubmit={handleSubmit}
       />
     </section>

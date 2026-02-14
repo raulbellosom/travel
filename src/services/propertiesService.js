@@ -37,16 +37,47 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
   assign("propertyType", String(source.propertyType || "house").trim());
   assign(
     "operationType",
-    normalizeOperationType(String(source.operationType || "sale").trim())
+    normalizeOperationType(String(source.operationType || "sale").trim()),
   );
   assign("price", toNumber(source.price, 0));
-  assign("currency", String(source.currency || "MXN").trim().toUpperCase());
+  assign(
+    "currency",
+    String(source.currency || "MXN")
+      .trim()
+      .toUpperCase(),
+  );
+  assign("pricePerUnit", String(source.pricePerUnit || "total").trim());
+  assign("priceNegotiable", Boolean(source.priceNegotiable));
   assign("bedrooms", toNumber(source.bedrooms, 0));
   assign("bathrooms", toNumber(source.bathrooms, 0));
+  assign("parkingSpaces", toNumber(source.parkingSpaces, 0));
+  assign("totalArea", toNumber(source.totalArea, 0));
+  assign("builtArea", toNumber(source.builtArea, 0));
+  assign("floors", toNumber(source.floors, 1));
+  assign("yearBuilt", toNumber(source.yearBuilt, 0));
   assign("maxGuests", toNumber(source.maxGuests, 1));
   assign("city", String(source.city || "").trim());
   assign("state", String(source.state || "").trim());
-  assign("country", String(source.country || "MX").trim().toUpperCase());
+  assign(
+    "country",
+    String(source.country || "MX")
+      .trim()
+      .toUpperCase(),
+  );
+  assign("streetAddress", String(source.streetAddress || "").trim());
+  assign("neighborhood", String(source.neighborhood || "").trim());
+  assign("postalCode", String(source.postalCode || "").trim());
+  assign("latitude", String(source.latitude || "").trim());
+  assign("longitude", String(source.longitude || "").trim());
+  assign("furnished", String(source.furnished || "").trim());
+  assign("petsAllowed", Boolean(source.petsAllowed));
+  assign("rentPeriod", String(source.rentPeriod || "monthly").trim());
+  assign("minStayNights", toNumber(source.minStayNights, 1));
+  assign("maxStayNights", toNumber(source.maxStayNights, 365));
+  assign("checkInTime", String(source.checkInTime || "").trim());
+  assign("checkOutTime", String(source.checkOutTime || "").trim());
+  assign("videoUrl", String(source.videoUrl || "").trim());
+  assign("virtualTourUrl", String(source.virtualTourUrl || "").trim());
   assign("status", String(source.status || "draft").trim());
   assign("featured", Boolean(source.featured));
   assign("enabled", source.enabled ?? true);
@@ -74,8 +105,8 @@ const normalizeGalleryImageIds = (ids = []) =>
     new Set(
       (Array.isArray(ids) ? ids : [])
         .map((id) => String(id || "").trim())
-        .filter(Boolean)
-    )
+        .filter(Boolean),
+    ),
   ).slice(0, 50);
 
 const areStringArraysEqual = (left = [], right = []) => {
@@ -102,7 +133,7 @@ export const propertiesService = {
     });
 
     const conflicts = (response.documents || []).filter(
-      (document) => document.$id !== excludePropertyId
+      (document) => document.$id !== excludePropertyId,
     );
 
     return {
@@ -128,9 +159,15 @@ export const propertiesService = {
       queries.push(Query.equal("propertyType", filters.propertyType));
     if (filters.operationType)
       queries.push(Query.equal("operationType", filters.operationType));
-    if (filters.minPrice) queries.push(Query.greaterThanEqual("price", Number(filters.minPrice)));
-    if (filters.maxPrice) queries.push(Query.lessThanEqual("price", Number(filters.maxPrice)));
-    if (filters.bedrooms) queries.push(Query.greaterThanEqual("bedrooms", Number(filters.bedrooms)));
+    if (filters.minPrice)
+      queries.push(Query.greaterThanEqual("price", Number(filters.minPrice)));
+    if (filters.maxPrice)
+      queries.push(Query.lessThanEqual("price", Number(filters.maxPrice)));
+    if (filters.bedrooms)
+      queries.push(
+        Query.greaterThanEqual("bedrooms", Number(filters.bedrooms)),
+      );
+    if (filters.featured) queries.push(Query.equal("featured", true));
 
     switch (filters.sort) {
       case "price-asc":
@@ -262,14 +299,18 @@ export const propertiesService = {
   async uploadPropertyImages(
     propertyId,
     files,
-    { title = "", startingSortOrder = 0, existingFileIds = [] } = {}
+    { title = "", startingSortOrder = 0, existingFileIds = [] } = {},
   ) {
     ensureAppwriteConfigured();
     if (!env.appwrite.buckets.propertyImages) {
-      throw new Error("No esta configurada APPWRITE_BUCKET_PROPERTY_IMAGES_ID.");
+      throw new Error(
+        "No esta configurada APPWRITE_BUCKET_PROPERTY_IMAGES_ID.",
+      );
     }
     if (!env.appwrite.collections.propertyImages) {
-      throw new Error("No esta configurada APPWRITE_COLLECTION_PROPERTY_IMAGES_ID.");
+      throw new Error(
+        "No esta configurada APPWRITE_COLLECTION_PROPERTY_IMAGES_ID.",
+      );
     }
 
     const normalizedPropertyId = String(propertyId || "").trim();
@@ -311,7 +352,9 @@ export const propertiesService = {
           imageData.altText = normalizedAltText;
         }
 
-        const resolvedFileSize = Number(uploadedFile.sizeOriginal || file.size || 0);
+        const resolvedFileSize = Number(
+          uploadedFile.sizeOriginal || file.size || 0,
+        );
         if (Number.isFinite(resolvedFileSize) && resolvedFileSize > 0) {
           imageData.fileSize = resolvedFileSize;
         }

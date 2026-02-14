@@ -49,6 +49,7 @@ const MyProperties = () => {
   );
   const [rowActionMenu, setRowActionMenu] = useState(null);
   const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [thumbnailCache, setThumbnailCache] = useState({});
   const [imageViewer, setImageViewer] = useState({
     isOpen: false,
     images: [],
@@ -60,18 +61,27 @@ const MyProperties = () => {
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
 
-  const getPropertyThumbnail = useCallback((item) => {
-    if (!item.galleryImageIds || item.galleryImageIds.length === 0) {
-      return null;
-    }
-    const firstImageId = item.galleryImageIds[0];
-    if (!firstImageId || !env.appwrite.buckets.propertyImages) return null;
+  const getPropertyThumbnail = useCallback(
+    (item) => {
+      if (!item) return null;
+      if (item.thumbnailUrl) return String(item.thumbnailUrl);
+      if (item.mainImageUrl) return String(item.mainImageUrl);
+      if (item.coverImageUrl) return String(item.coverImageUrl);
+      if (thumbnailCache[item.$id]) return thumbnailCache[item.$id];
 
-    return storage.getFileView({
-      bucketId: env.appwrite.buckets.propertyImages,
-      fileId: firstImageId,
-    });
-  }, []);
+      if (!item.galleryImageIds || item.galleryImageIds.length === 0) {
+        return null;
+      }
+      const firstImageId = item.galleryImageIds[0];
+      if (!firstImageId || !env.appwrite.buckets.propertyImages) return null;
+
+      return storage.getFileView({
+        bucketId: env.appwrite.buckets.propertyImages,
+        fileId: firstImageId,
+      });
+    },
+    [thumbnailCache],
+  );
 
   useEffect(() => {
     const nextSearch = String(searchParams.get("search") || "").trim();
@@ -100,22 +110,39 @@ const MyProperties = () => {
     setRowActionMenu(null);
   }, []);
 
-  const openImageViewer = async (propertyId, initialIndex = 0) => {
+  const openImageViewer = async (item, initialIndex = 0) => {
+    const propertyId = String(item?.$id || "").trim();
+    if (!propertyId) return;
+    const fallbackImage = getPropertyThumbnail(item);
+
     try {
       const imageDocs = await propertiesService.listImages(propertyId);
       const imageUrls = imageDocs.map((img) => img.url).filter(Boolean);
 
-      if (imageUrls.length === 0) {
-        return; // No images to show
+      if (imageUrls.length === 0 && !fallbackImage) {
+        return;
       }
+
+      const viewerImages =
+        imageUrls.length > 0
+          ? imageUrls
+          : fallbackImage
+            ? [fallbackImage]
+            : [];
 
       setImageViewer({
         isOpen: true,
-        images: imageUrls,
-        initialIndex: Math.min(initialIndex, imageUrls.length - 1),
+        images: viewerImages,
+        initialIndex: Math.min(initialIndex, Math.max(0, viewerImages.length - 1)),
       });
-    } catch (err) {
-      console.error("Error loading property images:", err);
+    } catch {
+      if (fallbackImage) {
+        setImageViewer({
+          isOpen: true,
+          images: [fallbackImage],
+          initialIndex: 0,
+        });
+      }
     }
   };
 
@@ -235,6 +262,47 @@ const MyProperties = () => {
     const start = (page - 1) * effectivePageSize;
     return filteredItems.slice(start, start + effectivePageSize);
   }, [effectivePageSize, filteredItems, page, pageSize]);
+
+  useEffect(() => {
+    if (paginatedItems.length === 0) return;
+
+    const itemsToResolve = paginatedItems.filter((item) => {
+      if (!item?.$id) return false;
+      if (thumbnailCache[item.$id] !== undefined) return false;
+      if (item.thumbnailUrl || item.mainImageUrl || item.coverImageUrl) return false;
+      if (Array.isArray(item.galleryImageIds) && item.galleryImageIds.length > 0) return false;
+      return true;
+    });
+
+    if (itemsToResolve.length === 0) return;
+    let cancelled = false;
+
+    Promise.all(
+      itemsToResolve.map(async (item) => {
+        try {
+          const images = await propertiesService.listImages(item.$id);
+          return [item.$id, images[0]?.url || null];
+        } catch {
+          return [item.$id, null];
+        }
+      }),
+    ).then((entries) => {
+      if (cancelled || entries.length === 0) return;
+      setThumbnailCache((current) => {
+        const next = { ...current };
+        entries.forEach(([propertyId, url]) => {
+          if (next[propertyId] === undefined) {
+            next[propertyId] = url;
+          }
+        });
+        return next;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [paginatedItems, thumbnailCache]);
 
   const rowActionItem = useMemo(
     () =>
@@ -518,7 +586,7 @@ const MyProperties = () => {
                         {getPropertyThumbnail(item) ? (
                           <button
                             type="button"
-                            onClick={() => openImageViewer(item.$id, 0)}
+                            onClick={() => openImageViewer(item, 0)}
                             className="group relative h-16 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition hover:border-cyan-500 dark:border-slate-700 dark:bg-slate-800"
                           >
                             <img

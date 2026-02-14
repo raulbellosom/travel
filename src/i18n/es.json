@@ -35,7 +35,9 @@
         "selectType": "Selecciona...",
         "allTypes": "Todos los tipos",
         "searchButton": "Buscar Propiedades"
-      }
+      },
+      "badge": "Más de 500 propiedades exclusivas",
+      "imageAlt": "Propiedad de lujo"
     },
     "features": {
       "sectionTitle": "¿Por qué elegir Inmobo?",
@@ -71,7 +73,8 @@
       "viewAll": "Ver Todas",
       "loading": "Cargando propiedades...",
       "errorLoading": "Error al cargar propiedades",
-      "noProperties": "No hay propiedades disponibles en este momento"
+      "noProperties": "No hay propiedades disponibles en este momento",
+      "eyebrow": "Exclusivas"
     },
     "howItWorks": {
       "sectionTitle": "¿Cómo Funciona?",
@@ -114,7 +117,14 @@
       "contactSubtitle": "Nuestro equipo está listo para asistirte",
       "phone": "Teléfono",
       "email": "Correo electrónico",
-      "availability": "Disponible de Lunes a Viernes, 9:00 AM - 6:00 PM"
+      "availability": "Disponible de Lunes a Viernes, 9:00 AM - 6:00 PM",
+      "contactButton": "Contactar agente"
+    },
+    "quickCategories": {
+      "beachfront": "Frente al mar",
+      "luxuryVillas": "Villas de lujo",
+      "apartments": "Departamentos",
+      "newDevelopments": "Nuevos desarrollos"
     }
   },
   "nav": {
@@ -203,7 +213,12 @@
     "search": "Buscar",
     "filter": "Filtrar",
     "sort": "Ordenar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "yes": "Sí",
+    "no": "No",
+    "night": "noche",
+    "nights": "noches",
+    "viewAll": "Ver todos"
   },
   "rating": {
     "reviews": "reseñas",
@@ -473,7 +488,8 @@
     "noImage": "Sin imagen",
     "fallbackTitle": "Propiedad",
     "locationUnavailable": "Ubicacion no disponible",
-    "viewDetail": "Ver detalle"
+    "viewDetail": "Ver detalle",
+    "from": "Desde"
   },
   "loginPage": {
     "title": "Iniciar sesion",
@@ -670,6 +686,7 @@
       "searchPlaceholder": "Titulo, slug, ciudad o estado"
     },
     "table": {
+      "image": "Imagen",
       "title": "Titulo",
       "location": "Ubicacion",
       "type": "Tipo",
@@ -698,7 +715,8 @@
     "deleteModal": {
       "title": "Eliminar propiedad",
       "description": "Estas seguro de eliminar \"{{title}}\"? Esta accion la desactiva para que no sea visible.",
-      "confirm": "Eliminar"
+      "confirm": "Eliminar",
+      "warning": "Esta acción desactivará la propiedad para que no sea visible públicamente."
     },
     "errors": {
       "load": "No se pudieron cargar tus propiedades.",
@@ -833,6 +851,10 @@
       "title": "Seguridad",
       "subtitle": "Para cambiar la contrasena te enviaremos un enlace seguro por correo.",
       "action": "Solicitar cambio de contrasena"
+    },
+    "internal": {
+      "title": "Perfil del equipo",
+      "subtitle": "Administra tu información dentro del panel administrativo."
     }
   },
   "propertyDetailPage": {
@@ -891,8 +913,20 @@
     "galleryTitle": "Galeria de imagenes",
     "descriptionTitle": "Descripcion",
     "noDescription": "Sin descripcion disponible.",
+    "zoomImage": "Ver imagen completa",
+    "sections": {
+      "description": "Descripción",
+      "location": "Ubicación",
+      "features": "Características",
+      "rentalTerms": "Términos de Renta",
+      "vacationRules": "Reglas de Renta Vacacional",
+      "amenities": "Amenidades",
+      "multimedia": "Multimedia",
+      "statistics": "Estadísticas"
+    },
     "actions": {
-      "backToList": "Volver al listado"
+      "backToList": "Volver al listado",
+      "viewPublic": "Ver en landing"
     },
     "errors": {
       "notFound": "Propiedad no encontrada.",
@@ -1033,7 +1067,11 @@
         "land": "Terreno",
         "commercial": "Comercial",
         "office": "Oficina",
-        "warehouse": "Bodega"
+        "warehouse": "Bodega",
+        "eventHall": "Salón de eventos",
+        "condo": "Condominio",
+        "villa": "Villa",
+        "building": "Edificio"
       },
       "operation": {
         "sale": "Venta",
@@ -1055,7 +1093,8 @@
     "errors": {
       "loadProperties": "No se pudieron cargar las propiedades."
     },
-    "heroBadge": "Selecciones premium"
+    "heroBadge": "Selecciones premium",
+    "loading": "Cargando propiedades..."
   },
   "propertyForm": {
     "sections": {
@@ -1072,11 +1111,52 @@
     },
     "wizard": {
       "progress": "Paso {{current}} de {{total}}",
-      "hint": "Completa cada paso para crear una propiedad con validaciones en tiempo real."
+      "hint": "Completa cada paso para crear una propiedad con validaciones en tiempo real.",
+      "title": "Crear propiedad",
+      "readyToSave": "¡Listo para guardar!",
+      "saveDraft": "Guardar como borrador",
+      "draftNotice": "Se guardará como borrador",
+      "draftNoticeBody": "Revisa la información antes de guardar. Podrás publicar tu propiedad después desde el panel de edición.",
+      "steps": {
+        "typeAndInfo": "Tipo e información",
+        "typeAndInfoDesc": "Define el tipo de operación, tipo de propiedad y datos básicos.",
+        "location": "Ubicación",
+        "locationDesc": "Selecciona la ubicación y dirección de la propiedad.",
+        "features": "Características",
+        "featuresDesc": "Detalla las características físicas de la propiedad.",
+        "rentalTerms": "Términos de renta",
+        "rentalTermsDesc": "Configura los términos específicos para renta.",
+        "vacationRules": "Reglas vacacionales",
+        "vacationRulesDesc": "Define las reglas para renta vacacional.",
+        "pricing": "Precio",
+        "pricingDesc": "Establece el precio y condiciones económicas.",
+        "amenities": "Amenidades",
+        "amenitiesDesc": "Selecciona las amenidades disponibles.",
+        "images": "Imágenes y medios",
+        "imagesDesc": "Agrega fotos, video y tour virtual.",
+        "summary": "Resumen",
+        "summaryDesc": "Revisa toda la información antes de guardar."
+      },
+      "stepOf": "Paso {{current}} de {{total}}",
+      "rentalTermsHint": "Configura los términos que aplican para propiedades de renta tradicional.",
+      "vacationRulesHint": "Define las reglas para huéspedes en renta vacacional.",
+      "placeholders": {
+        "title": "Ejemplo: Villa frente al mar con alberca en Puerto Vallarta",
+        "description": "Describe la ubicación, atributos principales, perfil ideal y servicios cercanos.",
+        "streetAddress": "Calle y número",
+        "neighborhood": "Colonia o zona"
+      }
     },
     "tabs": {
       "helper": "Puedes saltar entre secciones y guardar cuando termines.",
       "hint": "En edicion puedes actualizar solo la seccion necesaria y guardar al final."
+    },
+    "editor": {
+      "unsavedChanges": "Tienes cambios sin guardar",
+      "viewSummary": "Ver resumen",
+      "confirmLeaveUnsaved": "Tienes cambios sin guardar. ¿Deseas salir y descartarlos?",
+      "confirmLeaveTitle": "Cambios sin guardar",
+      "confirmLeaveButton": "Salir sin guardar"
     },
     "fields": {
       "slug": "Slug",
@@ -1105,7 +1185,19 @@
       "videoUrl": "URL de video",
       "virtualTourUrl": "URL de tour virtual",
       "latitude": "Latitud",
-      "longitude": "Longitud"
+      "longitude": "Longitud",
+      "coordinates": "Coordenadas",
+      "amenities": "Amenidades",
+      "location": "Ubicación",
+      "furnished": "Amueblado",
+      "petsAllowed": "Mascotas permitidas",
+      "rentPeriod": "Periodo de renta",
+      "minStayNights": "Mínimo de noches",
+      "maxStayNights": "Máximo de noches",
+      "checkInTime": "Hora de check-in",
+      "checkOutTime": "Hora de check-out",
+      "floors": "Pisos",
+      "yearBuilt": "Año de construcción"
     },
     "helper": {
       "description": "Minimo 20 caracteres. Explica valor diferencial, ubicacion y beneficios."
@@ -1151,7 +1243,15 @@
         "invalidType": "{{count}} archivo(s) fueron omitidos por formato no valido.",
         "sizeExceeded": "{{count}} archivo(s) superan {{maxSize}} MB.",
         "duplicates": "{{count}} archivo(s) repetidos fueron omitidos."
-      }
+      },
+      "camera": "Cámara",
+      "gallery": "Galería",
+      "count": "Imágenes",
+      "existing": "Imágenes existentes",
+      "pending": "Nuevas imágenes",
+      "remove": "Eliminar imagen",
+      "dropHint": "Arrastra imágenes aquí",
+      "dropTitle": "Arrastra imágenes aquí o haz clic"
     },
     "slugStatus": {
       "idle": "El slug se usa para la URL publica de la propiedad.",
@@ -1209,6 +1309,7 @@
         "sale": "Venta",
         "rent": "Renta",
         "vacationRental": "Renta vacacional",
+        "vacation_rental": "Renta vacacional",
         "transfer": "Traspaso"
       },
       "status": {
@@ -1221,8 +1322,49 @@
         "total": "Total",
         "sqm": "Metro cuadrado",
         "sqft": "Pie cuadrado"
+      },
+      "furnished": {
+        "unspecified": "Sin especificar",
+        "unfurnished": "Sin amueblar",
+        "semiFurnished": "Semi-amueblado",
+        "semi_furnished": "Semi-amueblado",
+        "furnished": "Amueblado"
+      },
+      "rentPeriod": {
+        "weekly": "Semanal",
+        "monthly": "Mensual",
+        "yearly": "Anual"
       }
-    }
+    },
+    "amenitiesLoading": "Cargando amenidades...",
+    "amenitiesPlaceholder": "Buscar amenidad...",
+    "noAmenities": "No se encontraron amenidades",
+    "selectedAmenities": "Amenidades seleccionadas",
+    "removeAmenity": "Quitar",
+    "noAmenitiesSelected": "Aún no has agregado amenidades",
+    "amenitiesHelp": "Usa el buscador de arriba para agregar",
+    "bedrooms": "Recamaras",
+    "bathrooms": "Banos",
+    "builtArea": "Area construida",
+    "checkInTime": "Hora de check-in",
+    "checkOutTime": "Hora de check-out",
+    "city": "Ciudad",
+    "country": "Pais",
+    "floors": "Pisos",
+    "furnished": "Amueblado",
+    "maxGuests": "Huespedes maximos",
+    "neighborhood": "Colonia",
+    "parkingSpaces": "Estacionamientos",
+    "petsAllowed": "Mascotas permitidas",
+    "postalCode": "Codigo postal",
+    "priceNegotiable": "Precio negociable",
+    "rentPeriod": "Periodo de renta",
+    "state": "Estado",
+    "streetAddress": "Calle y numero",
+    "totalArea": "Area total",
+    "videoUrl": "URL de video",
+    "virtualTourUrl": "URL de tour virtual",
+    "yearBuilt": "Año de construcción"
   },
   "rootAmenitiesPage": {
     "title": "Panel root: Amenidades",
@@ -1516,7 +1658,8 @@
     "metrics": {
       "total": "Total miembros",
       "active": "Activos",
-      "inactive": "Inactivos"
+      "inactive": "Inactivos",
+      "archived": "Archivados"
     },
     "actions": {
       "create": "Crear miembro",
@@ -1709,7 +1852,9 @@
     "empty": "No hay reseñas para moderar.",
     "filters": {
       "status": "Estado",
-      "all": "Todos"
+      "all": "Todos",
+      "search": "Buscar",
+      "searchPlaceholder": "Autor, propiedad, estado, título o comentario"
     },
     "actions": {
       "publish": "Publicar",
@@ -1787,5 +1932,70 @@
     "errors": {
       "load": "No se pudo ejecutar el diagnostico root."
     }
+  },
+  "search": {
+    "vacationRentals": "Rentas vacacionales",
+    "realEstate": "Bienes raíces",
+    "services": "Servicios",
+    "location": "Ubicación",
+    "locationPlaceholder": "¿A dónde quieres ir?",
+    "dates": "Fechas",
+    "datesPlaceholder": "Añadir fechas",
+    "guests": "Huéspedes",
+    "guestsPlaceholder": "¿Cuántos?"
+  },
+  "tablePagination": {
+    "resultsPerPage": "Resultados por página",
+    "all": "Todos",
+    "range": "{{start}}-{{end}} de {{total}}",
+    "pageOf": "Página {{page}} de {{totalPages}}"
+  },
+  "clientsPage": {
+    "title": "Clientes",
+    "summary": "Clientes registrados: {{total}}",
+    "loading": "Cargando clientes...",
+    "empty": "No hay clientes para mostrar.",
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Nombre, email o teléfono",
+      "status": "Estado",
+      "all": "Todos",
+      "enabled": "Activos",
+      "disabled": "Inactivos",
+      "createdFrom": "Desde",
+      "createdTo": "Hasta"
+    },
+    "table": {
+      "client": "Cliente",
+      "email": "Email",
+      "phone": "Teléfono",
+      "status": "Estado",
+      "createdAt": "Registro",
+      "noName": "Sin nombre"
+    },
+    "status": {
+      "enabled": "Activo",
+      "disabled": "Inactivo"
+    },
+    "messages": {
+      "truncated": "Se aplicó un límite de escaneo. Ajusta filtros para resultados más precisos."
+    },
+    "errors": {
+      "load": "No se pudieron cargar los clientes."
+    }
+  },
+  "mapPicker": {
+    "title": "Ubicar en el mapa",
+    "description": "Haz clic en el mapa para seleccionar la ubicación del inmueble. La dirección se completará automáticamente.",
+    "locateOnMap": "Ubicar en el mapa",
+    "locateHint": "Selecciona la ubicación en el mapa para completar los campos automáticamente.",
+    "confirm": "Confirmar ubicación",
+    "useMyLocation": "Usar mi ubicación",
+    "selectedLocation": "Ubicación seleccionada",
+    "coordinates": "Coordenadas",
+    "geoNotSupported": "Tu navegador no soporta geolocalización.",
+    "geoError": "No se pudo obtener tu ubicación. Verifica los permisos.",
+    "locationTitle": "Ubicación",
+    "searchPlaceholder": "Buscar dirección, ciudad o lugar..."
   }
 }

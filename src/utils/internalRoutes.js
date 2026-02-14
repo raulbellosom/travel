@@ -30,3 +30,7 @@ export const getLegacyInternalEditPropertyRoute = (id) =>
 
 export const getLegacyInternalPropertyDetailRoute = (id) =>
   withInternalBase(`propiedades/${id}`);
+
+/* ── Public routes ─────────────────────────────────── */
+
+export const getPublicPropertyRoute = (slug) => `/propiedades/${slug}`;

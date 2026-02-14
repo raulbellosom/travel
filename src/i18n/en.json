@@ -35,7 +35,9 @@
         "selectType": "Select...",
         "allTypes": "All types",
         "searchButton": "Search Properties"
-      }
+      },
+      "badge": "More than 500 exclusive properties",
+      "imageAlt": "Luxury property"
     },
     "features": {
       "sectionTitle": "Why Choose Inmobo?",
@@ -71,7 +73,8 @@
       "viewAll": "View All",
       "loading": "Loading properties...",
       "errorLoading": "Error loading properties",
-      "noProperties": "No properties available at this time"
+      "noProperties": "No properties available at this time",
+      "eyebrow": "Exclusive"
     },
     "howItWorks": {
       "sectionTitle": "How It Works?",
@@ -114,7 +117,14 @@
       "contactSubtitle": "Our team is ready to assist you",
       "phone": "Phone",
       "email": "Email",
-      "availability": "Available Monday to Friday, 9:00 AM - 6:00 PM"
+      "availability": "Available Monday to Friday, 9:00 AM - 6:00 PM",
+      "contactButton": "Contact agent"
+    },
+    "quickCategories": {
+      "beachfront": "Beachfront",
+      "luxuryVillas": "Luxury villas",
+      "apartments": "Apartments",
+      "newDevelopments": "New developments"
     }
   },
   "nav": {
@@ -203,7 +213,12 @@
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
-    "close": "Close"
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "night": "night",
+    "nights": "nights",
+    "viewAll": "View all"
   },
   "rating": {
     "reviews": "reviews",
@@ -473,7 +488,8 @@
     "noImage": "No image",
     "fallbackTitle": "Property",
     "locationUnavailable": "Location unavailable",
-    "viewDetail": "View detail"
+    "viewDetail": "View detail",
+    "from": "From"
   },
   "loginPage": {
     "title": "Sign in",
@@ -670,6 +686,7 @@
       "searchPlaceholder": "Title, slug, city, or state"
     },
     "table": {
+      "image": "Image",
       "title": "Title",
       "location": "Location",
       "type": "Type",
@@ -698,7 +715,8 @@
     "deleteModal": {
       "title": "Delete property",
       "description": "Are you sure you want to delete \"{{title}}\"? This will deactivate it so it is no longer visible.",
-      "confirm": "Delete"
+      "confirm": "Delete",
+      "warning": "This action will deactivate the property so it is no longer publicly visible."
     },
     "errors": {
       "load": "Could not load your properties.",
@@ -833,6 +851,10 @@
       "title": "Security",
       "subtitle": "To change your password we will send a secure link to your email.",
       "action": "Request password change"
+    },
+    "internal": {
+      "title": "Team profile",
+      "subtitle": "Manage your information inside the administrative panel."
     }
   },
   "propertyDetailPage": {
@@ -891,8 +913,20 @@
     "galleryTitle": "Image gallery",
     "descriptionTitle": "Description",
     "noDescription": "No description available.",
+    "zoomImage": "View full image",
+    "sections": {
+      "description": "Description",
+      "location": "Location",
+      "features": "Features",
+      "rentalTerms": "Rental Terms",
+      "vacationRules": "Vacation Rental Rules",
+      "amenities": "Amenities",
+      "multimedia": "Multimedia",
+      "statistics": "Statistics"
+    },
     "actions": {
-      "backToList": "Back to list"
+      "backToList": "Back to list",
+      "viewPublic": "View on landing"
     },
     "errors": {
       "notFound": "Property not found.",
@@ -1033,7 +1067,11 @@
         "land": "Land",
         "commercial": "Commercial",
         "office": "Office",
-        "warehouse": "Warehouse"
+        "warehouse": "Warehouse",
+        "eventHall": "Event hall",
+        "condo": "Condo",
+        "villa": "Villa",
+        "building": "Building"
       },
       "operation": {
         "sale": "Sale",
@@ -1055,7 +1093,8 @@
     "errors": {
       "loadProperties": "Could not load properties."
     },
-    "heroBadge": "Premium selections"
+    "heroBadge": "Premium selections",
+    "loading": "Loading properties..."
   },
   "propertyForm": {
     "sections": {
@@ -1072,11 +1111,52 @@
     },
     "wizard": {
       "progress": "Step {{current}} of {{total}}",
-      "hint": "Complete each step to create a property with real-time validation."
+      "hint": "Complete each step to create a property with real-time validation.",
+      "title": "Create property",
+      "readyToSave": "Ready to save!",
+      "saveDraft": "Save as draft",
+      "draftNotice": "Will be saved as draft",
+      "draftNoticeBody": "Review the information before saving. You can publish your property later from the edit panel.",
+      "steps": {
+        "typeAndInfo": "Type & Info",
+        "typeAndInfoDesc": "Set the operation type, property type and basic details.",
+        "location": "Location",
+        "locationDesc": "Select the property location and address.",
+        "features": "Features",
+        "featuresDesc": "Detail the physical characteristics of the property.",
+        "rentalTerms": "Rental Terms",
+        "rentalTermsDesc": "Configure specific rental terms.",
+        "vacationRules": "Vacation Rules",
+        "vacationRulesDesc": "Define vacation rental rules.",
+        "pricing": "Pricing",
+        "pricingDesc": "Set the price and economic conditions.",
+        "amenities": "Amenities",
+        "amenitiesDesc": "Select available amenities.",
+        "images": "Images & Media",
+        "imagesDesc": "Add photos, video and virtual tour.",
+        "summary": "Summary",
+        "summaryDesc": "Review all information before saving."
+      },
+      "stepOf": "Step {{current}} of {{total}}",
+      "rentalTermsHint": "Set the terms that apply to long-term rental listings.",
+      "vacationRulesHint": "Define rules for guests staying at this property.",
+      "placeholders": {
+        "title": "Example: Oceanfront villa with pool in Puerto Vallarta",
+        "description": "Describe location, standout features, ideal guest profile, and nearby services.",
+        "streetAddress": "Street and number",
+        "neighborhood": "Neighborhood or area"
+      }
     },
     "tabs": {
       "helper": "You can switch between sections and save when finished.",
       "hint": "In edit mode you can update only the needed section and save at the end."
+    },
+    "editor": {
+      "unsavedChanges": "You have unsaved changes",
+      "viewSummary": "View summary",
+      "confirmLeaveUnsaved": "You have unsaved changes. Do you want to leave and discard them?",
+      "confirmLeaveTitle": "Unsaved changes",
+      "confirmLeaveButton": "Leave without saving"
     },
     "fields": {
       "slug": "Slug",
@@ -1105,7 +1185,19 @@
       "videoUrl": "Video URL",
       "virtualTourUrl": "Virtual tour URL",
       "latitude": "Latitude",
-      "longitude": "Longitude"
+      "longitude": "Longitude",
+      "coordinates": "Coordinates",
+      "amenities": "Amenities",
+      "location": "Location",
+      "furnished": "Furnished",
+      "petsAllowed": "Pets allowed",
+      "rentPeriod": "Rent period",
+      "minStayNights": "Minimum nights",
+      "maxStayNights": "Maximum nights",
+      "checkInTime": "Check-in time",
+      "checkOutTime": "Check-out time",
+      "floors": "Floors",
+      "yearBuilt": "Year built"
     },
     "helper": {
       "description": "At least 20 characters. Explain value, location, and key highlights."
@@ -1151,7 +1243,15 @@
         "invalidType": "{{count}} file(s) were skipped due to invalid format.",
         "sizeExceeded": "{{count}} file(s) exceed {{maxSize}} MB.",
         "duplicates": "{{count}} duplicate file(s) were skipped."
-      }
+      },
+      "camera": "Camera",
+      "gallery": "Gallery",
+      "count": "Images",
+      "existing": "Existing images",
+      "pending": "New images",
+      "remove": "Remove image",
+      "dropHint": "Drag images here",
+      "dropTitle": "Drag images here or click"
     },
     "slugStatus": {
       "idle": "Slug is used for the public property URL.",
@@ -1209,6 +1309,7 @@
         "sale": "Sale",
         "rent": "Rent",
         "vacationRental": "Vacation rental",
+        "vacation_rental": "Vacation rental",
         "transfer": "Transfer"
       },
       "status": {
@@ -1221,8 +1322,49 @@
         "total": "Total",
         "sqm": "Square meter",
         "sqft": "Square foot"
+      },
+      "furnished": {
+        "unspecified": "Unspecified",
+        "unfurnished": "Unfurnished",
+        "semiFurnished": "Semi-furnished",
+        "semi_furnished": "Semi-furnished",
+        "furnished": "Furnished"
+      },
+      "rentPeriod": {
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "yearly": "Yearly"
       }
-    }
+    },
+    "amenitiesLoading": "Loading amenities...",
+    "amenitiesPlaceholder": "Search amenity...",
+    "noAmenities": "No amenities found",
+    "selectedAmenities": "Selected amenities",
+    "removeAmenity": "Remove",
+    "noAmenitiesSelected": "You have not added amenities yet",
+    "amenitiesHelp": "Use the search box above to add them",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "builtArea": "Built area",
+    "checkInTime": "Check-in time",
+    "checkOutTime": "Check-out time",
+    "city": "City",
+    "country": "Country",
+    "floors": "Floors",
+    "furnished": "Furnished",
+    "maxGuests": "Max guests",
+    "neighborhood": "Neighborhood",
+    "parkingSpaces": "Parking spaces",
+    "petsAllowed": "Pets allowed",
+    "postalCode": "Postal code",
+    "priceNegotiable": "Negotiable price",
+    "rentPeriod": "Rent period",
+    "state": "State",
+    "streetAddress": "Street and number",
+    "totalArea": "Total area",
+    "videoUrl": "Video URL",
+    "virtualTourUrl": "Virtual tour URL",
+    "yearBuilt": "Year built"
   },
   "rootAmenitiesPage": {
     "title": "Root panel: Amenities",
@@ -1710,7 +1852,9 @@
     "empty": "No reviews to moderate.",
     "filters": {
       "status": "Status",
-      "all": "All"
+      "all": "All",
+      "search": "Search",
+      "searchPlaceholder": "Author, property, status, title, or comment"
     },
     "actions": {
       "publish": "Publish",
@@ -1788,5 +1932,70 @@
     "errors": {
       "load": "Could not run root diagnostics."
     }
+  },
+  "search": {
+    "vacationRentals": "Vacation rentals",
+    "realEstate": "Real estate",
+    "services": "Services",
+    "location": "Location",
+    "locationPlaceholder": "Where do you want to go?",
+    "dates": "Dates",
+    "datesPlaceholder": "Add dates",
+    "guests": "Guests",
+    "guestsPlaceholder": "How many?"
+  },
+  "tablePagination": {
+    "resultsPerPage": "Results per page",
+    "all": "All",
+    "range": "{{start}}-{{end}} of {{total}}",
+    "pageOf": "Page {{page}} of {{totalPages}}"
+  },
+  "clientsPage": {
+    "title": "Clients",
+    "summary": "Registered clients: {{total}}",
+    "loading": "Loading clients...",
+    "empty": "No clients to display.",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Name, email, or phone",
+      "status": "Status",
+      "all": "All",
+      "enabled": "Active",
+      "disabled": "Inactive",
+      "createdFrom": "From",
+      "createdTo": "To"
+    },
+    "table": {
+      "client": "Client",
+      "email": "Email",
+      "phone": "Phone",
+      "status": "Status",
+      "createdAt": "Created",
+      "noName": "No name"
+    },
+    "status": {
+      "enabled": "Active",
+      "disabled": "Inactive"
+    },
+    "messages": {
+      "truncated": "A scan limit was applied. Adjust filters for more precise results."
+    },
+    "errors": {
+      "load": "Could not load clients."
+    }
+  },
+  "mapPicker": {
+    "title": "Locate on map",
+    "description": "Click on the map to select the property location. The address will be filled automatically.",
+    "locateOnMap": "Locate on map",
+    "locateHint": "Select the location on the map to auto-fill the address fields.",
+    "confirm": "Confirm location",
+    "useMyLocation": "Use my location",
+    "selectedLocation": "Selected location",
+    "coordinates": "Coordinates",
+    "geoNotSupported": "Your browser does not support geolocation.",
+    "geoError": "Could not get your location. Check permissions.",
+    "locationTitle": "Location",
+    "searchPlaceholder": "Search address, city or place..."
   }
 }

@@ -27,7 +27,7 @@ const Select = React.forwardRef(
       "aria-describedby": ariaDescribedBy,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -55,7 +55,8 @@ const Select = React.forwardRef(
     const hasError = Boolean(error);
     const hasSuccess = Boolean(success) && !hasError;
     const selectedOption = options.find(
-      (option) => option.value === (value !== undefined ? value : internalValue)
+      (option) =>
+        option.value === (value !== undefined ? value : internalValue),
     );
 
     // Base styles
@@ -102,10 +103,10 @@ const Select = React.forwardRef(
     const stateStyles = hasError
       ? "border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-400"
       : hasSuccess
-      ? "border-green-500 focus:border-green-500 focus:ring-green-500 dark:border-green-400"
-      : isOpen
-      ? "border-blue-500 ring-2 ring-blue-500 dark:border-blue-400 dark:ring-blue-400"
-      : "";
+        ? "border-green-500 focus:border-green-500 focus:ring-green-500 dark:border-green-400"
+        : isOpen
+          ? "border-blue-500 ring-2 ring-blue-500 dark:border-blue-400 dark:ring-blue-400"
+          : "";
 
     // Label styles
     const labelStyles = [
@@ -122,8 +123,8 @@ const Select = React.forwardRef(
       hasError
         ? "text-red-600 dark:text-red-400"
         : hasSuccess
-        ? "text-green-600 dark:text-green-400"
-        : "text-gray-500 dark:text-gray-400",
+          ? "text-green-600 dark:text-green-400"
+          : "text-gray-500 dark:text-gray-400",
     ].join(" ");
 
     // Combine select styles
@@ -166,14 +167,14 @@ const Select = React.forwardRef(
       const width = Math.max(140, triggerRect.width);
       const left = Math.max(
         safeOffset,
-        Math.min(triggerRect.left, viewportWidth - width - safeOffset)
+        Math.min(triggerRect.left, viewportWidth - width - safeOffset),
       );
       const top =
         nextDirection === "up"
           ? Math.max(safeOffset, triggerRect.top - renderedHeight - 6)
           : Math.min(
               triggerRect.bottom + 6,
-              viewportHeight - renderedHeight - safeOffset
+              viewportHeight - renderedHeight - safeOffset,
             );
 
       setOpenDirection(nextDirection);
@@ -245,7 +246,7 @@ const Select = React.forwardRef(
             setIsOpen(true);
           } else {
             setActiveIndex((prev) =>
-              prev <= 0 ? options.length - 1 : prev - 1
+              prev <= 0 ? options.length - 1 : prev - 1,
             );
           }
           break;
@@ -279,11 +280,10 @@ const Select = React.forwardRef(
 
       document.addEventListener("mousedown", handleClickOutside);
       document.addEventListener("touchstart", handleClickOutside);
-      return () =>
-        {
-          document.removeEventListener("mousedown", handleClickOutside);
-          document.removeEventListener("touchstart", handleClickOutside);
-        };
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside);
+      };
     }, []);
 
     useEffect(() => {
@@ -298,9 +298,6 @@ const Select = React.forwardRef(
         window.removeEventListener("scroll", recalculatePosition, true);
       };
     }, [isOpen, updateDropdownLayout]);
-
-    const MotionSvg = motion.svg;
-    const MotionDiv = motion.div;
 
     // Scroll active option into view
     useEffect(() => {
@@ -368,7 +365,7 @@ const Select = React.forwardRef(
                   {selectedOption ? selectedOption.label : placeholder}
                 </span>
               </span>
-              <MotionSvg
+              <motion.svg
                 className="w-5 h-5 text-gray-400"
                 fill="none"
                 stroke="currentColor"
@@ -383,7 +380,7 @@ const Select = React.forwardRef(
                   strokeWidth={2}
                   d="M19 9l-7 7-7-7"
                 />
-              </MotionSvg>
+              </motion.svg>
             </span>
           </button>
 
@@ -391,7 +388,7 @@ const Select = React.forwardRef(
             ? createPortal(
                 <AnimatePresence>
                   {isOpen ? (
-                    <MotionDiv
+                    <motion.div
                       ref={dropdownRef}
                       initial={{
                         opacity: 0,
@@ -438,7 +435,9 @@ const Select = React.forwardRef(
                               aria-selected={isSelected}
                               className={[
                                 "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors duration-150",
-                                isActive ? "bg-cyan-100/70 dark:bg-cyan-900/40" : "",
+                                isActive
+                                  ? "bg-cyan-100/70 dark:bg-cyan-900/40"
+                                  : "",
                                 isSelected
                                   ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-200"
                                   : "text-slate-800 dark:text-slate-100",
@@ -454,7 +453,9 @@ const Select = React.forwardRef(
                                 />
                               )}
                               <div className="flex-1">
-                                <div className="font-medium">{option.label}</div>
+                                <div className="font-medium">
+                                  {option.label}
+                                </div>
                                 {option.description && (
                                   <div className="text-xs text-slate-500 dark:text-slate-300">
                                     {option.description}
@@ -481,10 +482,10 @@ const Select = React.forwardRef(
                           );
                         })}
                       </ul>
-                    </MotionDiv>
+                    </motion.div>
                   ) : null}
                 </AnimatePresence>,
-                document.body
+                document.body,
               )
             : null}
         </div>
@@ -501,7 +502,7 @@ const Select = React.forwardRef(
         )}
       </div>
     );
-  }
+  },
 );
 
 Select.displayName = "Select";

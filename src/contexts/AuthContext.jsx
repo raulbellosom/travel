@@ -1,6 +1,7 @@
 import {
   createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
@@ -24,7 +25,10 @@ const ROOT_ONLY_PREFERENCE_FIELDS = new Set([
   "brandFontBody",
 ]);
 
-const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+const normalizeRole = (role) =>
+  String(role || "")
+    .trim()
+    .toLowerCase();
 
 const sanitizePreferencesPatch = (patch, role) => {
   const source = patch && typeof patch === "object" ? patch : {};
@@ -37,13 +41,22 @@ const sanitizePreferencesPatch = (patch, role) => {
   Object.keys(source).forEach((key) => {
     if (!allowedFields.has(key)) return;
     const nextValue = source[key];
-    safePatch[key] = typeof nextValue === "string" ? nextValue.trim() : nextValue;
+    safePatch[key] =
+      typeof nextValue === "string" ? nextValue.trim() : nextValue;
   });
 
   return safePatch;
 };
 
 export { AuthContext };
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
 
 export function AuthProvider({ children }) {
   const [authUser, setAuthUser] = useState(null);
@@ -75,7 +88,7 @@ export function AuthProvider({ children }) {
         setPreferences(null);
       }
     },
-    [clearSessionState]
+    [clearSessionState],
   );
 
   const refreshSession = useCallback(async () => {
@@ -110,97 +123,109 @@ export function AuthProvider({ children }) {
       await loadProfileData(nextUser.$id);
       return nextUser;
     },
-    [loadProfileData]
+    [loadProfileData],
   );
 
-  const register = useCallback(async ({
-    firstName,
-    lastName,
-    email,
-    password,
-    phone,
-    phoneCountryCode,
-  }) => {
-    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-    const normalizedPhone = sanitizePhoneLocalNumber(phone);
-    const normalizedPhoneCountryCode = normalizePhoneDialCode(phoneCountryCode);
-    const hasValidPhone =
-      normalizedPhone &&
-      normalizedPhoneCountryCode &&
-      isValidPhoneCombination({
-        dialCode: normalizedPhoneCountryCode,
-        localNumber: normalizedPhone,
-      });
-
-    const nextUser = await authService.register({
+  const register = useCallback(
+    async ({
       firstName,
       lastName,
-      fullName,
       email,
       password,
-    });
-    const isCreateProfileFlowConfigured = Boolean(
-      env.appwrite.functions.userCreateProfile && env.appwrite.functions.emailVerification
-    );
+      phone,
+      phoneCountryCode,
+    }) => {
+      const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+      const normalizedPhone = sanitizePhoneLocalNumber(phone);
+      const normalizedPhoneCountryCode =
+        normalizePhoneDialCode(phoneCountryCode);
+      const hasValidPhone =
+        normalizedPhone &&
+        normalizedPhoneCountryCode &&
+        isValidPhoneCombination({
+          dialCode: normalizedPhoneCountryCode,
+          localNumber: normalizedPhone,
+        });
 
-    let setupSessionCreated = false;
-    try {
-      await authService.createSetupSession(email, password);
-      setupSessionCreated = true;
-    } catch {
-      setupSessionCreated = false;
-    }
+      const nextUser = await authService.register({
+        firstName,
+        lastName,
+        fullName,
+        email,
+        password,
+      });
+      const isCreateProfileFlowConfigured = Boolean(
+        env.appwrite.functions.userCreateProfile &&
+        env.appwrite.functions.emailVerification,
+      );
 
-    try {
-      if (setupSessionCreated) {
-        const registrationPatch = {
-          firstName,
-          lastName,
-        };
+      let setupSessionCreated = false;
+      try {
+        await authService.createSetupSession(email, password);
+        setupSessionCreated = true;
+      } catch {
+        setupSessionCreated = false;
+      }
 
-        if (hasValidPhone) {
-          registrationPatch.phoneCountryCode = normalizedPhoneCountryCode;
-          registrationPatch.phone = normalizedPhone;
-        }
+      try {
+        if (setupSessionCreated) {
+          const registrationPatch = {
+            firstName,
+            lastName,
+          };
 
-        if (env.appwrite.functions.syncUserProfile) {
-          await profileService.syncUserProfile(registrationPatch).catch(() => {});
-        } else {
-          try {
-            await profileService.updateProfile(nextUser.$id, registrationPatch);
-          } catch {
-            const fallbackPatch = { ...registrationPatch };
-            delete fallbackPatch.phoneCountryCode;
-            if (hasValidPhone) {
-              fallbackPatch.phone = `${normalizedPhoneCountryCode}${normalizedPhone}`;
+          if (hasValidPhone) {
+            registrationPatch.phoneCountryCode = normalizedPhoneCountryCode;
+            registrationPatch.phone = normalizedPhone;
+          }
+
+          if (env.appwrite.functions.syncUserProfile) {
+            await profileService
+              .syncUserProfile(registrationPatch)
+              .catch(() => {});
+          } else {
+            try {
+              await profileService.updateProfile(
+                nextUser.$id,
+                registrationPatch,
+              );
+            } catch {
+              const fallbackPatch = { ...registrationPatch };
+              delete fallbackPatch.phoneCountryCode;
+              if (hasValidPhone) {
+                fallbackPatch.phone = `${normalizedPhoneCountryCode}${normalizedPhone}`;
+              }
+              await profileService
+                .updateProfile(nextUser.$id, fallbackPatch)
+                .catch(() => {});
             }
-            await profileService.updateProfile(nextUser.$id, fallbackPatch).catch(() => {});
           }
         }
+
+        // user-create-profile (trigger users.*.create) already dispatches email-verification.
+        // Avoid duplicate verification emails when both functions are configured.
+        if (!isCreateProfileFlowConfigured) {
+          await authService.sendVerificationEmail({
+            userId: nextUser.$id,
+            email: nextUser.email,
+          });
+        }
+      } catch (error) {
+        const code = Number(error?.code);
+        // Evita romper el registro si el backend ya envio el correo por trigger.
+        if (code !== 409 && code !== 429) {
+          throw error;
+        }
+      } finally {
+        if (setupSessionCreated) {
+          await authService.logout().catch(() => {});
+        }
       }
 
-      // user-create-profile (trigger users.*.create) already dispatches email-verification.
-      // Avoid duplicate verification emails when both functions are configured.
-      if (!isCreateProfileFlowConfigured) {
-        await authService.sendVerificationEmail({
-          userId: nextUser.$id,
-          email: nextUser.email,
-        });
-      }
-    } catch (error) {
-      const code = Number(error?.code);
-      // Evita romper el registro si el backend ya envio el correo por trigger.
-      if (code !== 409 && code !== 429) {
-        throw error;
-      }
-    } finally {
-      if (setupSessionCreated) {
-        await authService.logout().catch(() => {});
-      }
-    }
-
-    return nextUser;
-  }, []);
+      return nextUser;
+    },
+    [],
+  );
 
   const resendVerification = useCallback(
     async ({ email }) => {
@@ -209,7 +234,7 @@ export function AuthProvider({ children }) {
         email: email || authUser?.email,
       });
     },
-    [authUser?.$id, authUser?.email]
+    [authUser?.$id, authUser?.email],
   );
 
   const verifyEmail = useCallback(async ({ token, userId, secret }) => {
@@ -254,7 +279,7 @@ export function AuthProvider({ children }) {
       await refreshSession();
       return uploaded;
     },
-    [authUser?.$id, authUser?.prefs?.avatarFileId, refreshSession]
+    [authUser?.$id, authUser?.prefs?.avatarFileId, refreshSession],
   );
 
   const removeAvatar = useCallback(async () => {
@@ -286,10 +311,13 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      const nextProfile = await profileService.updateProfile(authUser.$id, patch);
+      const nextProfile = await profileService.updateProfile(
+        authUser.$id,
+        patch,
+      );
       setProfile(nextProfile);
     },
-    [authUser?.$id, refreshSession]
+    [authUser?.$id, refreshSession],
   );
 
   const updatePreferences = useCallback(
@@ -299,11 +327,14 @@ export function AuthProvider({ children }) {
       if (Object.keys(safePatch).length === 0) {
         return null;
       }
-      const nextPreferences = await profileService.upsertPreferences(authUser.$id, safePatch);
+      const nextPreferences = await profileService.upsertPreferences(
+        authUser.$id,
+        safePatch,
+      );
       setPreferences(nextPreferences);
       return nextPreferences;
     },
-    [authUser?.$id, authUser?.role]
+    [authUser?.$id, authUser?.role],
   );
 
   const user = useMemo(() => {
@@ -316,9 +347,10 @@ export function AuthProvider({ children }) {
     const avatarFileId = authUser?.prefs?.avatarFileId || "";
     const avatarVersion = authUser?.prefs?.avatarUpdatedAt || "";
     const baseAvatarUrl = profileService.getAvatarViewUrl(avatarFileId);
-    const avatarUrl = avatarVersion && baseAvatarUrl
-      ? `${baseAvatarUrl}${baseAvatarUrl.includes("?") ? "&" : "?"}v=${encodeURIComponent(avatarVersion)}`
-      : baseAvatarUrl;
+    const avatarUrl =
+      avatarVersion && baseAvatarUrl
+        ? `${baseAvatarUrl}${baseAvatarUrl.includes("?") ? "&" : "?"}v=${encodeURIComponent(avatarVersion)}`
+        : baseAvatarUrl;
 
     return {
       ...authUser,
@@ -369,7 +401,7 @@ export function AuthProvider({ children }) {
       updatePreferences,
       updateAvatar,
       removeAvatar,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

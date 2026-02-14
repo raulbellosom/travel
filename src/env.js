@@ -108,6 +108,7 @@ const env = {
     darkMode: toBool(get("FEATURE_DARK_MODE"), true),
     i18n: toBool(get("FEATURE_I18N"), true),
     verboseLogs: toBool(get("FEATURE_VERBOSE_LOGS"), false),
+    marketingSite: toBool(get("FEATURE_MARKETING_SITE"), true),
   },
   external: {
     googleMapsApiKey: get("GOOGLE_MAPS_API_KEY"),

@@ -138,9 +138,29 @@ const Home = () => {
     );
   }, [filters, page]);
 
+  // Fetch featured properties for Landing Page
+  const [featuredProperties, setFeaturedProperties] = useState([]);
+
+  useEffect(() => {
+    // Only fetch featured if we are on the landing view (no filters)
+    if (!hasActiveFilters) {
+      propertiesService
+        .listPublic({
+          limit: 6,
+          filters: { featured: true, sort: "recent" },
+        })
+        .then((res) => {
+          setFeaturedProperties(res.documents || []);
+        })
+        .catch(() => {
+          // Silent fail for featured - we have fallbacks in the template
+        });
+    }
+  }, [hasActiveFilters]);
+
   // Show landing page if no filters are active
   if (!hasActiveFilters) {
-    return <LandingTemplate />;
+    return <LandingTemplate featuredProperties={featuredProperties} />;
   }
 
   useEffect(() => {

@@ -359,11 +359,16 @@ export function ImageViewerModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.3 }}
       >
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-cyan-900/85 backdrop-blur-3xl"
+        {/* Fondo ultra transparente con efecto glass */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-br from-black/30 via-slate-900/40 to-cyan-950/35 backdrop-blur-2xl"
           onClick={handleClose}
+          initial={{ backdropFilter: "blur(0px)" }}
+          animate={{ backdropFilter: "blur(24px)" }}
+          exit={{ backdropFilter: "blur(0px)" }}
+          transition={{ duration: 0.4 }}
         />
 
         {/* UI Controls */}
@@ -379,100 +384,164 @@ export function ImageViewerModal({
           {/* Header */}
           <div className="flex justify-between items-center pointer-events-auto">
             {isGalleryMode && (
-              <div className="bg-white/10 backdrop-blur-xl px-4 py-2 rounded-2xl text-sm font-semibold border border-white/20 shadow-xl">
-                <span className="text-white">{currentIndex + 1}</span>
-                <span className="text-white/60 mx-1">/</span>
-                <span className="text-white/80">{imageList.length}</span>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-2xl px-5 py-2.5 rounded-3xl text-sm font-semibold border border-white/30 shadow-2xl shadow-black/20"
+                style={{
+                  boxShadow:
+                    "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
+              >
+                <span className="text-white drop-shadow-lg">{currentIndex + 1}</span>
+                <span className="text-white/50 mx-1.5">/</span>
+                <span className="text-white/90 drop-shadow-lg">{imageList.length}</span>
+              </motion.div>
             )}
             {!isGalleryMode && <div />}
 
             <div className="flex items-center gap-2">
               {scaleDisplay > 1.01 && (
-                <button
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
                   onClick={(e) => {
                     e.stopPropagation();
                     resetView();
                   }}
-                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-cyan-500/90 hover:bg-cyan-600 rounded-2xl transition-all duration-200 border border-cyan-400/30 text-xs sm:text-sm font-bold backdrop-blur-xl flex items-center gap-2 shadow-lg hover:shadow-cyan-500/50 hover:scale-105 active:scale-95"
+                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-br from-cyan-500/80 to-blue-600/70 hover:from-cyan-400/90 hover:to-blue-500/80 rounded-3xl transition-all duration-300 border border-cyan-300/40 text-xs sm:text-sm font-bold backdrop-blur-2xl flex items-center gap-2 shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-400/50 hover:scale-105 active:scale-95"
+                  style={{
+                    boxShadow:
+                      "0 8px 32px rgba(6,182,212,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
+                  }}
                 >
-                  <RotateCcw size={16} className="sm:w-[18px] sm:h-[18px]" />
-                  <span>Restablecer Vista</span>
-                </button>
+                  <RotateCcw size={16} className="sm:w-[18px] sm:h-[18px] drop-shadow" />
+                  <span className="drop-shadow">Restablecer Vista</span>
+                </motion.button>
               )}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleClose}
-                className="p-2 sm:p-3 bg-white/10 hover:bg-red-500/80 rounded-2xl transition-all duration-200 border border-white/20 hover:border-red-400/50 shadow-lg hover:scale-105 active:scale-95"
+                className="p-2 sm:p-3 bg-gradient-to-br from-white/15 to-white/5 hover:from-red-500/80 hover:to-red-600/70 rounded-3xl transition-all duration-300 border border-white/30 hover:border-red-400/60 backdrop-blur-2xl shadow-2xl shadow-black/20"
+                style={{
+                  boxShadow:
+                    "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
                 title="Cerrar (ESC)"
               >
-                <X size={20} className="sm:w-6 sm:h-6" />
-              </button>
+                <X size={20} className="sm:w-6 sm:h-6 drop-shadow" />
+              </motion.button>
             </div>
           </div>
 
           {/* Navigation */}
           {isGalleryMode && (
             <div className="flex-1 flex items-center justify-between pointer-events-none px-2 sm:px-4 md:px-8">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.1, x: -5 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="pointer-events-auto p-3 sm:p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all duration-200 border border-white/20 backdrop-blur-xl shadow-xl hover:scale-110 active:scale-95"
+                className="pointer-events-auto p-3 sm:p-4 bg-gradient-to-br from-white/20 to-white/5 hover:from-white/30 hover:to-white/10 rounded-3xl transition-all duration-300 border border-white/30 backdrop-blur-2xl shadow-2xl shadow-black/30"
+                style={{
+                  boxShadow:
+                    "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
                 title="Anterior (←)"
               >
-                <ChevronLeft size={24} className="sm:w-8 sm:h-8" />
-              </button>
-              <button
+                <ChevronLeft size={24} className="sm:w-8 sm:h-8 drop-shadow-lg" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1, x: 5 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="pointer-events-auto p-3 sm:p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all duration-200 border border-white/20 backdrop-blur-xl shadow-xl hover:scale-110 active:scale-95"
+                className="pointer-events-auto p-3 sm:p-4 bg-gradient-to-br from-white/20 to-white/5 hover:from-white/30 hover:to-white/10 rounded-3xl transition-all duration-300 border border-white/30 backdrop-blur-2xl shadow-2xl shadow-black/30"
+                style={{
+                  boxShadow:
+                    "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
                 title="Siguiente (→)"
               >
-                <ChevronRight size={24} className="sm:w-8 sm:h-8" />
-              </button>
+                <ChevronRight size={24} className="sm:w-8 sm:h-8 drop-shadow-lg" />
+              </motion.button>
             </div>
           )}
 
           {/* Toolbar */}
           <div className="flex flex-col items-center gap-3 pointer-events-auto">
             {isGalleryMode && (
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-2 sm:p-2.5 max-w-[calc(100vw-2rem)] sm:max-w-full overflow-x-auto no-scrollbar shadow-2xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-2xl border border-white/30 rounded-3xl p-2.5 sm:p-3 max-w-[calc(100vw-2rem)] sm:max-w-full overflow-x-auto no-scrollbar shadow-2xl shadow-black/30"
+                style={{
+                  boxShadow:
+                    "0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
+              >
                 {imageList.map((img, idx) => (
-                  <button
+                  <motion.button
                     key={idx}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       setCurrentIndex(idx);
                     }}
                     className={cn(
-                      "relative w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl overflow-hidden shrink-0 transition-all duration-200",
-                      "ring-2 ring-offset-2 ring-offset-transparent",
+                      "relative w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden shrink-0 transition-all duration-300",
+                      "ring-2 ring-offset-2 ring-offset-transparent backdrop-blur-sm",
                       currentIndex === idx
-                        ? "ring-cyan-400 scale-110 shadow-xl shadow-cyan-500/50"
-                        : "ring-white/20 hover:ring-white/60 opacity-70 hover:opacity-100 hover:scale-105",
+                        ? "ring-cyan-400/80 scale-110 shadow-2xl shadow-cyan-500/60"
+                        : "ring-white/30 hover:ring-white/70 opacity-60 hover:opacity-100",
                     )}
+                    style={
+                      currentIndex === idx
+                        ? {
+                            boxShadow:
+                              "0 0 30px rgba(34,211,238,0.6), inset 0 0 20px rgba(34,211,238,0.2)",
+                          }
+                        : {}
+                    }
                   >
                     <img
                       src={img}
                       alt={`Thumbnail ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
-                  </button>
+                    {currentIndex === idx && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 pointer-events-none" />
+                    )}
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             )}
 
-            <div className="flex items-center gap-1 sm:gap-1.5 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-2 sm:p-2.5 md:p-3 shadow-2xl overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-full">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-2xl border border-white/30 rounded-3xl p-2.5 sm:p-3 md:p-3.5 shadow-2xl shadow-black/30 overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-full"
+              style={{
+                boxShadow:
+                  "0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}
+            >
               <ToolButton
                 icon={ZoomOut}
                 onClick={() => updateScale(scaleMv.get() - 0.25)}
                 label="Alejar (Zoom Out)"
               />
               <div className="px-2 sm:px-3 md:px-4 min-w-[50px] sm:min-w-[60px] text-center">
-                <div className="font-mono text-xs sm:text-sm md:text-base font-bold text-white bg-cyan-500/30 px-2 py-1 rounded-xl border border-cyan-400/30">
+                <div className="font-mono text-xs sm:text-sm md:text-base font-bold text-white bg-gradient-to-br from-cyan-500/40 to-blue-600/30 px-3 py-1.5 rounded-2xl border border-cyan-400/40 backdrop-blur-xl shadow-lg">
                   {Math.round(scaleDisplay * 100)}%
                 </div>
               </div>
@@ -481,7 +550,7 @@ export function ImageViewerModal({
                 onClick={() => updateScale(scaleMv.get() + 0.25)}
                 label="Acercar (Zoom In)"
               />
-              <div className="w-px h-6 sm:h-7 md:h-8 bg-white/20 mx-1 sm:mx-2" />
+              <div className="w-px h-6 sm:h-7 md:h-8 bg-gradient-to-b from-transparent via-white/40 to-transparent mx-1 sm:mx-2" />
               <ToolButton
                 icon={RotateCw}
                 onClick={() => rotateMv.set(rotateMv.get() + 90)}
@@ -501,7 +570,7 @@ export function ImageViewerModal({
               />
               {showDownload && (
                 <>
-                  <div className="w-px h-6 sm:h-7 md:h-8 bg-white/20 mx-1 sm:mx-2" />
+                  <div className="w-px h-6 sm:h-7 md:h-8 bg-gradient-to-b from-transparent via-white/40 to-transparent mx-1 sm:mx-2" />
                   <ToolButton
                     icon={Download}
                     onClick={handleDownload}
@@ -509,7 +578,7 @@ export function ImageViewerModal({
                   />
                 </>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
 
@@ -535,29 +604,61 @@ export function ImageViewerModal({
 
           {/* Zoom Indicator */}
           {!loading && scaleDisplay > 1.01 && (
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 pointer-events-none z-20">
-              <div className="bg-cyan-500/90 backdrop-blur-xl px-4 py-2 rounded-2xl border border-cyan-400/50 shadow-xl">
-                <p className="text-white text-xs sm:text-sm font-semibold flex items-center gap-2">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-20 left-1/2 -translate-x-1/2 pointer-events-none z-20"
+            >
+              <div
+                className="bg-gradient-to-br from-cyan-500/90 to-blue-600/80 backdrop-blur-2xl px-5 py-2.5 rounded-3xl border border-cyan-300/60 shadow-2xl"
+                style={{
+                  boxShadow:
+                    "0 8px 32px rgba(6,182,212,0.5), inset 0 1px 0 rgba(255,255,255,0.3)",
+                }}
+              >
+                <p className="text-white text-xs sm:text-sm font-semibold flex items-center gap-2 drop-shadow-lg">
                   <ZoomIn size={16} />
                   Zoom activo - Arrastra para mover
                 </p>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {imageList[currentIndex] || src ? (
             <motion.img
+              key={currentIndex} // Fuerza recreación al cambiar de imagen
               ref={imageRef}
               src={imageList[currentIndex] || src}
               alt={alt}
+              initial={{
+                opacity: 0,
+                scale: 0.9,
+                filter: "blur(10px)",
+              }}
+              animate={{
+                opacity: loading ? 0 : 1,
+                scale: 1,
+                filter: "blur(0px)",
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.95,
+                filter: "blur(8px)",
+              }}
+              transition={{
+                duration: 0.4,
+                ease: [0.25, 0.1, 0.25, 1], // Cubic bezier para suavidad
+              }}
               style={{
                 scale: scaleMv,
                 rotate: rotateMv,
                 x: xMv,
                 y: yMv,
-                opacity: loading ? 0 : 1,
+                boxShadow:
+                  "0 25px 80px rgba(0,0,0,0.5), 0 10px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1)",
               }}
-              className="max-w-full max-h-full object-contain shadow-2xl rounded-sm transition-opacity duration-300"
+              className="max-w-full max-h-full object-contain rounded-2xl transition-opacity duration-300"
               draggable={false}
               onLoad={() => setLoading(false)}
               onError={() => setLoading(false)}
@@ -579,24 +680,33 @@ export function ImageViewerModal({
 
 function ToolButton({ icon: Icon, onClick, label, className }) {
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.15, y: -2 }}
+      whileTap={{ scale: 0.9 }}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
       }}
       className={cn(
-        "p-2 sm:p-2.5 md:p-3 rounded-2xl transition-all duration-200 group",
-        "text-white/80 hover:text-white hover:bg-cyan-500/50 active:bg-cyan-600/60",
-        "hover:scale-110 active:scale-95 hover:shadow-lg",
+        "p-2 sm:p-2.5 md:p-3 rounded-2xl transition-all duration-300 group relative",
+        "text-white/90 hover:text-white hover:bg-gradient-to-br hover:from-cyan-500/50 hover:to-blue-600/40",
+        "hover:shadow-xl hover:shadow-cyan-500/30",
         className,
       )}
       title={label}
     >
       <Icon
         size={18}
-        className="sm:w-5 sm:h-5 md:w-6 md:h-6 transition-transform group-hover:scale-110"
+        className="sm:w-5 sm:h-5 md:w-6 md:h-6 transition-transform group-hover:scale-110 drop-shadow-lg"
       />
-    </button>
+      {/* Efecto de brillo en hover */}
+      <motion.div
+        className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        style={{
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3)",
+        }}
+      />
+    </motion.button>
   );
 }
 

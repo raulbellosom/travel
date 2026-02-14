@@ -212,12 +212,33 @@ Purpose: catalogo de propiedades del cliente.
 | `operationType`    | enum     | -    | yes      | -       | `sale`,`rent`,`vacation_rental`                              |
 | `price`            | float    | -    | yes      | -       | min `0`, max `999999999`                                     |
 | `currency`         | enum     | -    | no       | `MXN`   | `MXN`,`USD`,`EUR`                                            |
+| `pricePerUnit`     | enum     | -    | no       | `total` | `total`,`sqm`,`sqft`                                         |
+| `priceNegotiable`  | boolean  | -    | no       | false   | -                                                            |
+| `streetAddress`    | string   | 200  | no       | -       | min 3                                                        |
+| `neighborhood`     | string   | 100  | no       | -       | min 2                                                        |
 | `city`             | string   | 100  | yes      | -       | min 2                                                        |
 | `state`            | string   | 100  | yes      | -       | min 2                                                        |
 | `country`          | string   | 2    | no       | `MX`    | ISO2                                                         |
+| `postalCode`       | string   | 10   | no       | -       | regex `^[0-9A-Za-z -]{3,10}$`                                |
+| `latitude`         | float    | -    | no       | -       | min `-90`, max `90`                                          |
+| `longitude`        | float    | -    | no       | -       | min `-180`, max `180`                                        |
 | `bedrooms`         | integer  | -    | no       | 0       | min `0`, max `50`                                            |
 | `bathrooms`        | float    | -    | no       | 0       | min `0`, max `50`                                            |
+| `parkingSpaces`    | integer  | -    | no       | 0       | min `0`, max `100`                                           |
+| `totalArea`        | float    | -    | no       | -       | min `0`, max `999999`                                        |
+| `builtArea`        | float    | -    | no       | -       | min `0`, max `999999`                                        |
+| `floors`           | integer  | -    | no       | 1       | min `1`, max `200`                                           |
+| `yearBuilt`        | integer  | -    | no       | -       | min `1800`, max `2100`                                       |
 | `maxGuests`        | integer  | -    | no       | 0       | min `1`, max `500`                                           |
+| `furnished`        | enum     | -    | no       | -       | `unfurnished`,`semi_furnished`,`furnished`                   |
+| `petsAllowed`      | boolean  | -    | no       | false   | -                                                            |
+| `rentPeriod`       | enum     | -    | no       | -       | `monthly`,`yearly`,`weekly`                                  |
+| `minStayNights`    | integer  | -    | no       | 1       | min `1`, max `365`                                           |
+| `maxStayNights`    | integer  | -    | no       | 365     | min `1`, max `365`                                           |
+| `checkInTime`      | string   | 5    | no       | `15:00` | regex `^[0-2][0-9]:[0-5][0-9]$`                              |
+| `checkOutTime`     | string   | 5    | no       | `11:00` | regex `^[0-2][0-9]:[0-5][0-9]$`                              |
+| `videoUrl`         | URL      | -    | no       | -       | URL valida                                                   |
+| `virtualTourUrl`   | URL      | -    | no       | -       | URL valida                                                   |
 | `galleryImageIds`  | string[] | 64   | no       | -       | max 50 elementos, cada elemento size 64                      |
 | `status`           | enum     | -    | no       | `draft` | `draft`,`published`,`inactive`,`archived`                    |
 | `featured`         | boolean  | -    | no       | false   | -                                                            |
@@ -231,13 +252,51 @@ Notas:
 - `ownerUserId`: Usuario interno responsable (owner/staff). No es dueno legal del inmueble
 - `slug`: URL publica
 - `price`: Precio base
+- `pricePerUnit`: Indica si el precio es total, por m² o por ft²
+- `priceNegotiable`: Indica si el precio es negociable
+- `streetAddress`: Direccion (calle y numero)
+- `neighborhood`: Colonia o barrio
+- `postalCode`: Codigo postal
+- `latitude` / `longitude`: Coordenadas GPS para mapa
 - `bathrooms`: Permite medios banos
-- `maxGuests`: Reservas
+- `parkingSpaces`: Espacios de estacionamiento
+- `totalArea`: Area total del terreno en m²
+- `builtArea`: Area construida en m²
+- `floors`: Numero de pisos/niveles
+- `yearBuilt`: Ano de construccion
+- `maxGuests`: Capacidad maxima (relevante para vacation_rental)
+- `furnished`: Estado de amueblado (relevante para rent/vacation_rental)
+- `petsAllowed`: Si se permiten mascotas (relevante para rent/vacation_rental)
+- `rentPeriod`: Periodo de renta (relevante para rent: mensual, anual, semanal)
+- `minStayNights` / `maxStayNights`: Estancia minima/maxima en noches (relevante para vacation_rental)
+- `checkInTime` / `checkOutTime`: Hora de check-in/check-out (relevante para vacation_rental)
+- `videoUrl`: URL de video (YouTube, Vimeo, etc.)
+- `virtualTourUrl`: URL de tour virtual 360
 - `galleryImageIds`: `string[]` para lista rapida de file IDs
 - `views`: Contador
 - `contactCount`: Contador
 - `reservationCount`: Contador
 - `enabled`: Soft delete
+
+### Relevancia de campos por tipo de operacion
+
+| Campo           | sale | rent | vacation_rental |
+| --------------- | ---- | ---- | --------------- |
+| `bedrooms`      | si   | si   | si              |
+| `bathrooms`     | si   | si   | si              |
+| `parkingSpaces` | si   | si   | si              |
+| `totalArea`     | si   | si   | opcional        |
+| `builtArea`     | si   | si   | opcional        |
+| `floors`        | si   | si   | no              |
+| `yearBuilt`     | si   | si   | no              |
+| `maxGuests`     | no   | no   | si              |
+| `furnished`     | no   | si   | si              |
+| `petsAllowed`   | no   | si   | si              |
+| `rentPeriod`    | no   | si   | no              |
+| `minStayNights` | no   | no   | si              |
+| `maxStayNights` | no   | no   | si              |
+| `checkInTime`   | no   | no   | si              |
+| `checkOutTime`  | no   | no   | si              |
 
 ### Indexes
 
@@ -415,7 +474,7 @@ Purpose: reservaciones por propiedad.
 | Attribute         | Type     | Size | Required | Default   | Constraint                                              |
 | ----------------- | -------- | ---- | -------- | --------- | ------------------------------------------------------- |
 | `propertyId`      | string   | 64   | yes      | -         | FK logical a `properties.$id`                           |
-| `propertyOwnerId` | string   | 64   | yes      | -         | FK logical a `users.$id` (denormalizado)               |
+| `propertyOwnerId` | string   | 64   | yes      | -         | FK logical a `users.$id` (denormalizado)                |
 | `guestUserId`     | string   | 64   | yes      | -         | FK logical a Auth/App `users.$id` del cliente           |
 | `guestName`       | string   | 120  | yes      | -         | min 2                                                   |
 | `guestEmail`      | email    | 254  | yes      | -         | email valido                                            |
@@ -475,7 +534,7 @@ Purpose: ledger de intentos y resultados de pago.
 | Attribute           | Type     | Size  | Required | Default   | Constraint                                 |
 | ------------------- | -------- | ----- | -------- | --------- | ------------------------------------------ |
 | `reservationId`     | string   | 64    | yes      | -         | FK logical a `reservations.$id`            |
-| `propertyOwnerId`   | string   | 64    | yes      | -         | FK logical a `users.$id` (denormalizado)  |
+| `propertyOwnerId`   | string   | 64    | yes      | -         | FK logical a `users.$id` (denormalizado)   |
 | `provider`          | enum     | -     | yes      | -         | `stripe`,`mercadopago`                     |
 | `providerPaymentId` | string   | 120   | no       | -         | ID de pago externo                         |
 | `providerEventId`   | string   | 120   | no       | -         | ID unico de webhook para idempotencia      |
@@ -514,16 +573,16 @@ Purpose: comprobante emitido cuando la reserva queda confirmada.
 
 ### Attributes
 
-| Attribute         | Type     | Size | Required | Default | Constraint                      |
-| ----------------- | -------- | ---- | -------- | ------- | ------------------------------- |
-| `reservationId`   | string   | 64   | yes      | -       | FK logical a `reservations.$id` |
+| Attribute         | Type     | Size | Required | Default | Constraint                               |
+| ----------------- | -------- | ---- | -------- | ------- | ---------------------------------------- |
+| `reservationId`   | string   | 64   | yes      | -       | FK logical a `reservations.$id`          |
 | `propertyOwnerId` | string   | 64   | yes      | -       | FK logical a `users.$id` (denormalizado) |
-| `voucherCode`     | string   | 40   | yes      | -       | regex `^[A-Z0-9-]{6,40}$`       |
-| `voucherUrl`      | string   | 750  | no       | -       | URL interna o publica           |
-| `qrPayload`       | string   | 2000 | no       | -       | JSON o token para QR            |
-| `issuedAt`        | datetime | -    | yes      | -       | ISO 8601 UTC                    |
-| `sentToEmail`     | email    | 254  | no       | -       | email valido                    |
-| `enabled`         | boolean  | -    | no       | true    | -                               |
+| `voucherCode`     | string   | 40   | yes      | -       | regex `^[A-Z0-9-]{6,40}$`                |
+| `voucherUrl`      | string   | 750  | no       | -       | URL interna o publica                    |
+| `qrPayload`       | string   | 2000 | no       | -       | JSON o token para QR                     |
+| `issuedAt`        | datetime | -    | yes      | -       | ISO 8601 UTC                             |
+| `sentToEmail`     | email    | 254  | no       | -       | email valido                             |
+| `enabled`         | boolean  | -    | no       | true    | -                                        |
 
 Notas:
 

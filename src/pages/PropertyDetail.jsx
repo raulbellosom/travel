@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +23,8 @@ import { getErrorMessage } from "../utils/errors";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import { usePageSeo } from "../hooks/usePageSeo";
+
+const MapDisplay = lazy(() => import("../components/common/molecules/MapDisplay"));
 
 const FALLBACK_BANNERS = [
   "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80",
@@ -313,6 +315,35 @@ const PropertyDetail = () => {
               </div>
             ) : null}
           </article>
+
+          {/* Location map */}
+          {property.latitude && property.longitude && (
+            <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                <MapPin size={18} className="text-cyan-600" />
+                {t("mapPicker.locationTitle")}
+              </h2>
+              <Suspense
+                fallback={
+                  <div className="flex h-[280px] items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-500 dark:bg-slate-800">
+                    {t("common.loading")}
+                  </div>
+                }
+              >
+                <MapDisplay
+                  latitude={property.latitude}
+                  longitude={property.longitude}
+                  label={`${property.city || ""}, ${property.state || ""}`}
+                  height="280px"
+                />
+              </Suspense>
+              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                {property.city && `${property.city}, `}
+                {property.state && `${property.state}, `}
+                {property.country || ""}
+              </p>
+            </article>
+          )}
 
           <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
             <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
