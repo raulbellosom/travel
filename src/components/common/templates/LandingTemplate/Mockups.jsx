@@ -19,19 +19,20 @@ import {
 import houseFachada from "../../../../assets/img/examples/house/fachada.webp";
 import houseSala from "../../../../assets/img/examples/house/sala.webp";
 import houseJardin from "../../../../assets/img/examples/house/jardin_alberca.webp";
+import houseHabitacion from "../../../../assets/img/examples/house/habitacion_principal.webp";
 import depaEdificio from "../../../../assets/img/examples/depa/edificio.webp";
 import depaSala from "../../../../assets/img/examples/depa/depa_sala.webp";
 import depaCocina from "../../../../assets/img/examples/depa/depa_cocina.webp";
 
 const propertyImages = [houseFachada, depaEdificio, depaSala];
 const websiteHeroImage = houseJardin;
-const websiteCardImages = [houseSala, depaCocina];
+const websiteCardImages = [houseSala, depaCocina, houseHabitacion];
 
 // 1. Listings Table Mockup
 export const ListingsMockup = ({ hideUI = false }) => {
   const { t } = useTranslation();
   return (
-    <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col font-sans text-xs sm:text-sm">
+    <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col font-sans text-xs sm:text-sm overflow-hidden">
       {/* Toolbar */}
       {!hideUI && (
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -64,7 +65,7 @@ export const ListingsMockup = ({ hideUI = false }) => {
       )}
 
       {/* Table Header */}
-      <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-500 font-medium text-xs uppercase tracking-wider">
+      <div className="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-500 font-medium text-xs uppercase tracking-wider">
         <div className="col-span-5 sm:col-span-4">
           {t("landing:showcase.listings.table.property", "Propiedad")}
         </div>
@@ -83,14 +84,14 @@ export const ListingsMockup = ({ hideUI = false }) => {
       </div>
 
       {/* Table Rows */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {[1, 2, 3].map((i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+            className="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-6 py-4 items-center border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
           >
             {/* Property Info */}
             <div className="col-span-5 sm:col-span-4 flex gap-3 items-center">
@@ -321,7 +322,7 @@ export const WebsiteMockup = ({ hideUI = false }) => {
   return (
     <div className="w-full h-full bg-white dark:bg-slate-900 flex flex-col overflow-hidden">
       {/* Hero Section */}
-      <div className="relative h-48 bg-slate-900 flex items-center justify-center text-center px-4 overflow-hidden">
+      <div className="relative h-40 sm:h-48 bg-slate-900 flex items-center justify-center text-center px-4 overflow-hidden shrink-0">
         <div
           className="absolute inset-0 opacity-50 bg-cover bg-center"
           style={{
@@ -330,71 +331,101 @@ export const WebsiteMockup = ({ hideUI = false }) => {
         />
         <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-transparent to-transparent" />
         <div className="relative z-10 w-full">
-          <h2 className="text-xl font-bold text-white mb-2">
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
             {t(
               "landing:showcase.website.hero.title",
               "Encuentra tu hogar ideal",
             )}
           </h2>
-          {!hideUI && (
-            <div className="flex items-center bg-white rounded-full p-2 pl-4 mx-auto max-w-xs shadow-lg">
-              <span className="text-slate-400 text-xs flex-1 text-left">
-                {t(
-                  "landing:showcase.website.hero.searchPlaceholder",
-                  "Buscar propiedades...",
-                )}
-              </span>
-              <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white">
-                <Search size={14} />
-              </div>
+          <div className="flex items-center bg-white rounded-full p-1.5 sm:p-2 pl-3 sm:pl-4 mx-auto max-w-xs shadow-lg">
+            <span className="text-slate-400 text-[10px] sm:text-xs flex-1 text-left">
+              {t(
+                "landing:showcase.website.hero.searchPlaceholder",
+                "Buscar propiedades...",
+              )}
+            </span>
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white shrink-0">
+              <Search size={12} />
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Table Rows */}
-      <div className="p-4 grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950 flex-1 overflow-y-auto">
-        {[1, 2].map((i) => (
+      {/* Property Cards - Horizontal Layout */}
+      <div className="p-3 sm:p-4 flex flex-col gap-3 bg-slate-50 dark:bg-slate-950 flex-1 overflow-y-auto">
+        {[
+          {
+            name: "Condominio Frente al Mar",
+            location: "Conchas Chinas",
+            price: "$380,000",
+            currency: "USD",
+            beds: 3,
+            baths: 2,
+            area: "200m²",
+            desc: "Moderno condominio con acceso directo a la playa",
+          },
+          {
+            name: "Apartamento Moderno Marina",
+            location: "Marina Vallarta",
+            price: "$280,000",
+            currency: "USD",
+            beds: 2,
+            baths: 2,
+            area: "150m²",
+            desc: "Elegante apartamento con vistas a la marina",
+          },
+        ].map((prop, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow group cursor-pointer"
+            className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-all group cursor-pointer flex"
           >
-            <div className="relative h-24 sm:h-32 overflow-hidden">
+            {/* Image Left */}
+            <div className="relative w-28 sm:w-36 md:w-44 shrink-0 overflow-hidden">
               <div
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
                 style={{
-                  backgroundImage: `url(${websiteCardImages[i - 1]})`,
+                  backgroundImage: `url(${websiteCardImages[i]})`,
                 }}
               />
-              <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+              <div className="absolute top-2 left-2 bg-cyan-500 text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded">
                 {t("landing:showcase.website.cards.sale", "Venta")}
               </div>
             </div>
-            <div className="p-2 sm:p-3">
-              <div className="flex justify-between items-start mb-1">
-                <h5 className="font-bold text-slate-800 dark:text-white text-xs sm:text-sm truncate pr-2">
-                  {i === 1 ? "Luxury Penthouse" : "Modern Villa"}
-                </h5>
-                <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">
-                  $350k
-                </span>
+
+            {/* Info Right */}
+            <div className="flex-1 p-2.5 sm:p-3 flex flex-col justify-between min-w-0">
+              <div>
+                <div className="flex justify-between items-start gap-1 mb-0.5">
+                  <h5 className="font-bold text-slate-800 dark:text-white text-[11px] sm:text-xs leading-tight truncate">
+                    {prop.name}
+                  </h5>
+                </div>
+                <div className="flex items-center gap-1 text-[9px] sm:text-[10px] text-slate-500 mb-1">
+                  <MapPin size={9} className="shrink-0" />
+                  <span className="truncate">{prop.location}</span>
+                </div>
+                <p className="text-[8px] sm:text-[9px] text-slate-400 leading-snug line-clamp-2 mb-1.5 hidden sm:block">
+                  {prop.desc}
+                </p>
               </div>
 
-              <div className="flex items-center gap-1 text-[10px] text-slate-500 mb-2 sm:mb-3">
-                <MapPin size={10} />
-                <span className="truncate">
-                  Puerto Vallarta, Zona Romántica
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center py-2 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex gap-2 sm:gap-3 text-[10px] text-slate-500 font-medium">
-                  <span className="flex items-center gap-1">
-                    <BedDouble size={10} /> 2
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs sm:text-sm font-black text-cyan-600 dark:text-cyan-400">
+                    {prop.price}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Bath size={10} /> 2
+                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-medium">
+                    {prop.currency}
                   </span>
+                </div>
+                <div className="flex items-center gap-2 sm:gap-3 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[9px] sm:text-[10px] text-slate-500 font-medium">
+                  <span className="flex items-center gap-0.5">
+                    <BedDouble size={10} /> {prop.beds}
+                  </span>
+                  <span className="flex items-center gap-0.5">
+                    <Bath size={10} /> {prop.baths}
+                  </span>
+                  <span className="text-slate-400">{prop.area}</span>
                 </div>
               </div>
             </div>
@@ -409,7 +440,7 @@ export const WebsiteMockup = ({ hideUI = false }) => {
 export const ReservationsMockup = () => {
   const { t } = useTranslation();
   return (
-    <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col font-sans text-xs sm:text-sm">
+    <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col font-sans text-xs sm:text-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="flex items-center gap-3">
@@ -496,7 +527,7 @@ export const ReservationsMockup = () => {
 export const UsersMockup = () => {
   const { t } = useTranslation();
   return (
-    <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col font-sans text-xs sm:text-sm">
+    <div className="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col font-sans text-xs sm:text-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div>
