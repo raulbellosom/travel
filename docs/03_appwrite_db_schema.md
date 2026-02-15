@@ -309,7 +309,8 @@ Notas:
 | `idx_properties_featured`    | idx  | `featured ↓`             | Destacadas primero     |
 | `idx_properties_createdat`   | idx  | `$createdAt ↓`           | Recientes              |
 | `idx_properties_status_date` | idx  | `status ↑, $createdAt ↓` | Lista publica paginada |
-| `full_properties_search`     | full | `title,description`      | Fulltext               |
+| `full_title_search`          | full | `title`                  | Fulltext titulo        |
+| `full_description_search`    | full | `description`            | Fulltext descripcion   |
 
 ### Permissions
 
@@ -846,6 +847,17 @@ Formato obligatorio:
 - Se documenta que el dueno legal externo debe modelarse como entidad de contacto separada y referenciarse desde `properties`.
 - Se aclara que el catalogo interno es compartido por instancia y que `ownerUserId/propertyOwnerId` no deben forzar segmentacion de visibilidad por usuario.
 
+## Migration: 2026-02-15-split-fulltext-indexes
+
+### Removed
+
+- Indice compuesto `full_properties_search` (fulltext en `title,description`). Appwrite 1.8.x no soporta `Query.search()` sobre atributos individuales en indices fulltext compuestos.
+
+### Added
+
+- Indice `full_title_search` (fulltext en `title`). Busqueda por titulo.
+- Indice `full_description_search` (fulltext en `description`). Busqueda por descripcion.
+
 ---
 
 ## Estado del Documento
@@ -856,6 +868,6 @@ Formato obligatorio:
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 2.2.1
-Schema Version: 2.2
+Ultima actualizacion: 2026-02-15
+Version: 2.2.2
+Schema Version: 2.3

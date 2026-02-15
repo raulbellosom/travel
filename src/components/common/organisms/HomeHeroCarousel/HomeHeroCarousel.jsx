@@ -59,7 +59,46 @@ const HomeHeroCarousel = () => {
 
   if (loading) {
     return (
-      <div className="relative h-[600px] w-full animate-pulse bg-slate-200 dark:bg-slate-800" />
+      <section className="relative h-dvh min-h-[600px] w-full overflow-hidden bg-slate-900">
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/60 to-slate-900/40 z-10" />
+
+        {/* Background skeleton */}
+        <div className="absolute inset-0 z-0 animate-pulse bg-slate-700" />
+
+        {/* Content skeleton */}
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
+          <div className="container mx-auto px-4">
+            {/* Title skeleton */}
+            <div className="mb-8 text-center space-y-4">
+              <div className="h-12 md:h-16 w-2/3 mx-auto animate-pulse rounded-lg bg-white/10 backdrop-blur-sm" />
+              <div className="h-6 md:h-8 w-1/2 mx-auto animate-pulse rounded-lg bg-white/10 backdrop-blur-sm" />
+            </div>
+
+            {/* Search form skeleton */}
+            <div className="w-full max-w-4xl mx-auto">
+              <div className="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-2xl space-y-4">
+                {/* Tabs skeleton */}
+                <div className="flex gap-2 mb-4">
+                  <div className="h-10 w-24 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-10 w-24 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-10 w-32 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                </div>
+
+                {/* Search inputs skeleton */}
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="h-12 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-12 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-12 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                </div>
+
+                {/* Search button skeleton */}
+                <div className="h-12 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     );
   }
 

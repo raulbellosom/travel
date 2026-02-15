@@ -18,14 +18,13 @@ const SearchBar = ({ className }) => {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (searchParams.location) params.append("location", searchParams.location);
-    if (searchParams.type) params.append("type", searchParams.type);
+    if (searchParams.location) params.set("q", searchParams.location);
+    if (activeTab === "vacation_rental")
+      params.set("operationType", "vacation_rental");
+    else if (activeTab === "real_estate") params.set("operationType", "sale");
+    if (searchParams.type) params.set("propertyType", searchParams.type);
 
-    let route = "/propiedades";
-    if (activeTab === "vacation_rental") params.append("type", "vacation_rental");
-    if (activeTab === "real_estate") params.append("type", "sale");
-
-    navigate(`${route}?${params.toString()}`);
+    navigate(`/buscar?${params.toString()}`);
   };
 
   return (
@@ -72,7 +71,10 @@ const SearchBar = ({ className }) => {
               className="w-full outline-none text-slate-600 font-medium placeholder:text-slate-400"
               value={searchParams.location}
               onChange={(event) =>
-                setSearchParams({ ...searchParams, location: event.target.value })
+                setSearchParams({
+                  ...searchParams,
+                  location: event.target.value,
+                })
               }
             />
           </div>

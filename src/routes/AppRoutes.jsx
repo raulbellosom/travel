@@ -19,6 +19,7 @@ import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Home from "../pages/Home";
+import SearchPage from "../pages/SearchPage";
 import PropertyDetail from "../pages/PropertyDetail";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
@@ -63,6 +64,7 @@ import {
 } from "../utils/internalRoutes";
 import env from "../env";
 import LoadingScreen from "../components/loaders/LoadingScreen";
+import ScrollToTop from "../components/routing/ScrollToTop";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 
@@ -101,6 +103,7 @@ const MarketingEntryRoute = () => {
 const AppRoutes = () => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <UIProvider>
           {env.features.marketingSite ? (
@@ -116,6 +119,7 @@ const AppRoutes = () => {
                 {!env.features.marketingSite && (
                   <Route index element={<Home />} />
                 )}
+                <Route path="buscar" element={<SearchPage />} />
                 <Route path="propiedades/:slug" element={<PropertyDetail />} />
                 <Route path="reservar/:slug" element={<ReserveProperty />} />
                 <Route path="voucher/:code" element={<VoucherLookup />} />

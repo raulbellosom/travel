@@ -170,32 +170,71 @@ export const propertiesService = {
       Query.offset(offset),
     ];
 
+    // ── General text search ──
+    // Uses individual fulltext indexes: `full_title_search` on [title] and
+    // `full_description_search` on [description]. Appwrite 1.8.x does NOT
+    // support Query.search() on composite fulltext indexes, so each attribute
+    // needs its own fulltext index. We search by title here; the description
+    // index is available for future use or a server-side deep-search function.
+    // NOTE: Properties store content in a single language per field, so search
+    // will only match the language the content was written in.
+    if (filters.search) {
+      queries.push(Query.search("title", filters.search));
+    }
+
+    // ── Location filters (exact match) ──
     if (filters.city) queries.push(Query.equal("city", filters.city));
+    if (filters.state) queries.push(Query.equal("state", filters.state));
+
+    // ── Property classification ──
     if (filters.propertyType)
       queries.push(Query.equal("propertyType", filters.propertyType));
     if (filters.operationType)
       queries.push(Query.equal("operationType", filters.operationType));
+
+    // ── Price range ──
     if (filters.minPrice)
       queries.push(Query.greaterThanEqual("price", Number(filters.minPrice)));
     if (filters.maxPrice)
       queries.push(Query.lessThanEqual("price", Number(filters.maxPrice)));
+
+    // ── Property features ──
     if (filters.bedrooms)
       queries.push(
         Query.greaterThanEqual("bedrooms", Number(filters.bedrooms)),
       );
+    if (filters.bathrooms)
+      queries.push(
+        Query.greaterThanEqual("bathrooms", Number(filters.bathrooms)),
+      );
+    if (filters.parkingSpaces)
+      queries.push(
+        Query.greaterThanEqual("parkingSpaces", Number(filters.parkingSpaces)),
+      );
+    if (filters.furnished)
+      queries.push(Query.equal("furnished", filters.furnished));
+    if (filters.petsAllowed) queries.push(Query.equal("petsAllowed", true));
+
+    // ── Featured ──
     if (filters.featured) queries.push(Query.equal("featured", true));
 
-    switch (filters.sort) {
-      case "price-asc":
-        queries.push(Query.orderAsc("price"));
-        break;
-      case "price-desc":
-        queries.push(Query.orderDesc("price"));
-        break;
-      case "recent":
-      default:
-        queries.push(Query.orderDesc("$createdAt"));
-        break;
+    // ── Sorting ──
+    // Appwrite does NOT allow combining Query.search() with orderAsc/orderDesc.
+    // When fulltext search is active, skip explicit sorting — results are
+    // returned ordered by relevance automatically.
+    if (!filters.search) {
+      switch (filters.sort) {
+        case "price-asc":
+          queries.push(Query.orderAsc("price"));
+          break;
+        case "price-desc":
+          queries.push(Query.orderDesc("price"));
+          break;
+        case "recent":
+        default:
+          queries.push(Query.orderDesc("$createdAt"));
+          break;
+      }
     }
 
     return databases.listDocuments({

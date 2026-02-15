@@ -260,23 +260,102 @@ const PropertyDetail = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 pt-24 pb-12 sm:px-6 lg:px-8">
-        {/* Skeleton hero */}
-        <div className="mb-8 grid gap-2 md:grid-cols-[2fr_1fr] md:grid-rows-2">
-          <div className="row-span-2 h-80 animate-pulse rounded-2xl bg-slate-200 md:h-105 dark:bg-slate-800" />
-          <div className="hidden h-52 animate-pulse rounded-2xl bg-slate-200 md:block dark:bg-slate-800" />
-          <div className="hidden h-52 animate-pulse rounded-2xl bg-slate-200 md:block dark:bg-slate-800" />
-        </div>
-        {/* Skeleton content */}
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-          <div className="space-y-4">
-            <div className="h-8 w-3/4 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-            <div className="h-5 w-1/2 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-            <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+      <div className="pb-12 md:pt-20">
+        {/* Mobile Hero Skeleton */}
+        <div className="relative aspect-[4/3] w-full animate-pulse bg-slate-200 md:hidden dark:bg-slate-800" />
+
+        {/* Breadcrumb Skeleton */}
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 md:py-4 lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-12 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="h-4 w-1 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="h-4 w-20 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="h-4 w-1 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="h-4 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
           </div>
-          <div className="hidden space-y-4 lg:block">
-            <div className="h-52 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-            <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        </div>
+
+        {/* Desktop Gallery Skeleton */}
+        <div className="mx-auto hidden max-w-7xl px-4 sm:px-6 md:block lg:px-8">
+          <div className="grid gap-2 md:grid-cols-4 md:grid-rows-2">
+            <div className="col-span-2 row-span-2 aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+          </div>
+        </div>
+
+        {/* Main Content Skeleton */}
+        <div className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:mt-8 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Desktop Title Area */}
+              <div className="hidden space-y-3 md:block">
+                <div className="flex gap-3">
+                  <div className="h-6 w-20 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-6 w-32 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+                </div>
+                <div className="h-10 w-3/4 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                <div className="flex gap-4">
+                  <div className="h-5 w-40 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-5 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                </div>
+              </div>
+
+              {/* Mobile Verified Badge */}
+              <div className="md:hidden">
+                <div className="h-7 w-32 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+              </div>
+
+              {/* Mobile Price Card Skeleton */}
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 lg:hidden dark:border-slate-800 dark:bg-slate-900">
+                <div className="space-y-2">
+                  <div className="h-4 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-10 w-48 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-4 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                </div>
+                <div className="h-12 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+              </div>
+
+              {/* Stats Grid Skeleton */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+                  >
+                    <div className="h-6 w-6 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-4 w-16 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-6 w-12 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Description Skeleton */}
+              <div className="space-y-3">
+                <div className="h-6 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                <div className="space-y-2">
+                  <div className="h-4 w-full animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-4 w-full animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Sidebar Skeleton (Desktop) */}
+            <div className="hidden space-y-6 lg:block">
+              <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                <div className="space-y-2">
+                  <div className="h-4 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-10 w-48 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-4 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                </div>
+                <div className="h-12 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+              </div>
+              <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            </div>
           </div>
         </div>
       </div>
@@ -740,24 +819,32 @@ const PropertyDetail = () => {
                   {t("client:propertyDetail.amenitiesTitle")}
                 </SectionHeading>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                  {amenities.map((amenity) => (
-                    <div
-                      key={amenity.$id}
-                      className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm transition hover:border-cyan-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-cyan-700"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700"
+                  {amenities.map((amenity) => {
+                    const AmenityIconComp = getAmenityIcon(amenity);
+                    return (
+                      <div
+                        key={amenity.$id}
+                        className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm transition hover:border-cyan-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-cyan-700"
                       >
-                        {getAmenityIcon(amenity)}
-                      </span>
-                      <span className="line-clamp-2 text-slate-700 dark:text-slate-200">
-                        {i18n.language === "es"
-                          ? amenity.name_es || amenity.name_en || amenity.slug
-                          : amenity.name_en || amenity.name_es || amenity.slug}
-                      </span>
-                    </div>
-                  ))}
+                        <span
+                          aria-hidden="true"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700"
+                        >
+                          <AmenityIconComp
+                            size={16}
+                            className="text-cyan-500 dark:text-cyan-400"
+                          />
+                        </span>
+                        <span className="line-clamp-2 text-slate-700 dark:text-slate-200">
+                          {i18n.language === "es"
+                            ? amenity.name_es || amenity.name_en || amenity.slug
+                            : amenity.name_en ||
+                              amenity.name_es ||
+                              amenity.slug}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}

@@ -19,7 +19,7 @@ const CategoriesSection = () => {
       label: t("client:common.enums.propertyType.house", "Casas"),
       icon: Home,
       color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-      link: "/?type=house",
+      link: "/buscar?propertyType=house",
     },
     {
       id: "apartment",
@@ -27,7 +27,7 @@ const CategoriesSection = () => {
       icon: Building,
       color:
         "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-      link: "/?type=apartment",
+      link: "/buscar?propertyType=apartment",
     },
     {
       id: "land",
@@ -35,7 +35,7 @@ const CategoriesSection = () => {
       icon: MapPin, // Using MapPin as placeholder for Land/Location
       color:
         "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-      link: "/?type=land",
+      link: "/buscar?propertyType=land",
     },
     {
       id: "commercial",
@@ -43,7 +43,7 @@ const CategoriesSection = () => {
       icon: Briefcase,
       color:
         "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-      link: "/?type=commercial",
+      link: "/buscar?propertyType=commercial",
     },
   ];
 

@@ -71,8 +71,13 @@ const AdvancedSearch = ({ className = "" }) => {
       icon: Store,
     },
     {
-      value: "industrial",
-      label: t("client:common.enums.propertyType.industrial", "Industrial"),
+      value: "office",
+      label: t("client:common.enums.propertyType.office", "Oficina"),
+      icon: Building2,
+    },
+    {
+      value: "warehouse",
+      label: t("client:common.enums.propertyType.warehouse", "Bodega"),
       icon: Warehouse,
     },
   ];
@@ -95,13 +100,13 @@ const AdvancedSearch = ({ className = "" }) => {
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (activeTab) params.set("operationType", activeTab);
-    if (filters.location) params.set("location", filters.location);
+    if (filters.location) params.set("q", filters.location);
     if (filters.type) params.set("propertyType", filters.type);
     if (filters.minPrice) params.set("minPrice", filters.minPrice);
     if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
     if (filters.bedrooms) params.set("bedrooms", filters.bedrooms);
 
-    navigate(`/?${params.toString()}`);
+    navigate(`/buscar?${params.toString()}`);
   };
 
   return (

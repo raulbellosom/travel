@@ -19,8 +19,14 @@
   "publicSearch": {
     "placeholder": "Buscar propiedades, ciudades, características…",
     "searchFor": "Buscar",
+    "searchForQuery": "Buscar propiedades con",
     "open": "Buscar",
     "quickFilters": "Búsquedas populares",
+    "propertiesWith": "Propiedades con",
+    "matchingAmenities": "Características",
+    "properties": "Propiedades",
+    "searching": "Buscando...",
+    "noResults": "No hay propiedades que coincidan",
     "suggestions": {
       "vacationRentals": "Rentas Vacacionales",
       "houses": "Casas en venta",

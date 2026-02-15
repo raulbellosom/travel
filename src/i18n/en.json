@@ -157,8 +157,14 @@
   "publicSearch": {
     "placeholder": "Search properties, cities, features...",
     "searchFor": "Search",
+    "searchForQuery": "Search properties with",
     "open": "Search",
     "quickFilters": "Popular searches",
+    "propertiesWith": "Properties with",
+    "matchingAmenities": "Amenities",
+    "properties": "Properties",
+    "searching": "Searching...",
+    "noResults": "No properties matching your search",
     "suggestions": {
       "vacationRentals": "Vacation Rentals",
       "houses": "Houses for sale",

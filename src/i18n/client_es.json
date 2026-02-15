@@ -38,13 +38,48 @@
     "locationPlaceholder": "Ciudad, Zona o Código Postal",
     "type": "Tipo de Propiedad",
     "allTypes": "Todos los tipos",
+    "allOperations": "Todas",
     "price": "Precio Máx",
     "button": "Buscar",
     "minPrice": "Precio Mínimo",
+    "minPricePlaceholder": "Mín",
+    "maxPricePlaceholder": "Máx",
     "bedrooms": "Habitaciones",
     "bathrooms": "Baños",
+    "parking": "Estacionamiento",
     "anyOption": "Cualquiera",
-    "unknownLocation": "Ubicación desconocida"
+    "unknownLocation": "Ubicación desconocida",
+    "operationType": "Operación",
+    "propertyType": "Tipo de propiedad",
+    "priceRange": "Rango de precio",
+    "any": "Cualquiera",
+    "furnished": "Amueblado",
+    "semiFurnished": "Semi amueblado",
+    "unfurnished": "Sin muebles",
+    "sortRecent": "Más recientes",
+    "sortPriceAsc": "Precio: menor a mayor",
+    "sortPriceDesc": "Precio: mayor a menor",
+    "petsAllowed": "Acepta mascotas",
+    "featured": "Solo destacadas",
+    "filters": "Filtros",
+    "moreFilters": "Filtros",
+    "clearAll": "Limpiar todos los filtros",
+    "showResults": "Ver resultados",
+    "searching": "Buscando…",
+    "resultsCount": "propiedades encontradas",
+    "loadingResults": "Cargando propiedades…",
+    "heroTitle": "Encuentra tu propiedad ideal",
+    "heroSubtitle": "Busca por nombre, descripción, ubicación o características",
+    "inputPlaceholder": "Ej: casa con alberca en Puerto Vallarta…",
+    "seo": {
+      "title": "Buscar Propiedades | Inmobo",
+      "description": "Explora nuestro catálogo de propiedades con filtros avanzados."
+    },
+    "empty": {
+      "title": "No encontramos propiedades",
+      "descFiltered": "Intenta ampliar tu búsqueda o reducir los filtros.",
+      "descDefault": "Aún no hay propiedades publicadas. Vuelve pronto."
+    }
   },
   "home": {
     "seo": {
@@ -87,7 +122,9 @@
         "apartment": "Departamento",
         "land": "Terreno",
         "commercial": "Comercial",
-        "industrial": "Industrial"
+        "industrial": "Industrial",
+        "office": "Oficina",
+        "warehouse": "Bodega"
       }
     }
   },
