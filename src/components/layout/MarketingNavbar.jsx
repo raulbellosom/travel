@@ -1,23 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  Menu,
-  X,
-  ChevronDown,
-  ChevronRight,
-  LogIn,
-  Monitor,
-  Moon,
-  Sun,
-  Home as HomeIcon,
-  Building2,
-  Landmark,
-  Warehouse,
-  Hotel,
-  Castle,
-  Palmtree,
-  BadgeDollarSign,
-} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, LogIn, Monitor, Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -29,11 +12,16 @@ import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
-import PublicSearch from "../navigation/PublicSearch";
 
-const PublicNavbar = () => {
+const SECTIONS = [
+  { id: "que-es", label: "¿Qué es?" },
+  { id: "caracteristicas", label: "Características" },
+  { id: "plataforma", label: "Plataforma" },
+  { id: "como-funciona", label: "Cómo funciona" },
+];
+
+const MarketingNavbar = () => {
   const { t, i18n } = useTranslation();
-  const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, effectiveTheme, changeTheme, changeLanguage } = useUI();
@@ -54,7 +42,6 @@ const PublicNavbar = () => {
   const ThemeIcon =
     currentTheme === "light" ? Sun : currentTheme === "dark" ? Moon : Monitor;
 
-  // react-theme-switch-animation for circle animation
   const {
     ref: animRef,
     toggleSwitchTheme,
@@ -64,7 +51,6 @@ const PublicNavbar = () => {
     duration: 750,
   });
 
-  // Sync the library's isDarkMode back to UIContext
   const prevIsDark = useRef(isDarkMode);
   useEffect(() => {
     if (prevIsDark.current !== isDarkMode) {
@@ -101,21 +87,23 @@ const PublicNavbar = () => {
     { value: "system", name: t("theme.system"), icon: Monitor },
   ];
 
-  // Handle scroll effect for glassmorphism
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
-  // Close theme dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -129,80 +117,13 @@ const PublicNavbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const navLinks = [
-    {
-      name: t("nav.realEstate", "Bienes Raíces"),
-      path: "/?operation=sale",
-      items: [
-        {
-          icon: HomeIcon,
-          label: t("nav.dropdown.houses", "Casas"),
-          desc: t(
-            "nav.dropdown.housesDesc",
-            "Casas en venta en las mejores zonas",
-          ),
-          to: "/?operation=sale&type=house",
-        },
-        {
-          icon: Building2,
-          label: t("nav.dropdown.apartments", "Departamentos"),
-          desc: t("nav.dropdown.apartmentsDesc", "Departamentos y condominios"),
-          to: "/?operation=sale&type=apartment",
-        },
-        {
-          icon: Landmark,
-          label: t("nav.dropdown.land", "Terrenos"),
-          desc: t("nav.dropdown.landDesc", "Terrenos listos para construir"),
-          to: "/?operation=sale&type=land",
-        },
-        {
-          icon: Warehouse,
-          label: t("nav.dropdown.commercial", "Comercial"),
-          desc: t(
-            "nav.dropdown.commercialDesc",
-            "Locales y oficinas comerciales",
-          ),
-          to: "/?operation=sale&type=commercial",
-        },
-      ],
-    },
-    {
-      name: t("nav.vacation", "Rentas Vacacionales"),
-      path: "/?operation=vacation_rental",
-      items: [
-        {
-          icon: Hotel,
-          label: t("nav.dropdown.hotels", "Hoteles"),
-          desc: t(
-            "nav.dropdown.hotelsDesc",
-            "Alojamiento en hoteles de la zona",
-          ),
-          to: "/?operation=vacation_rental&type=hotel",
-        },
-        {
-          icon: Castle,
-          label: t("nav.dropdown.condos", "Condominios"),
-          desc: t(
-            "nav.dropdown.condosDesc",
-            "Condominios para estancias cortas",
-          ),
-          to: "/?operation=vacation_rental&type=apartment",
-        },
-        {
-          icon: Palmtree,
-          label: t("nav.dropdown.villas", "Villas"),
-          desc: t("nav.dropdown.villasDesc", "Villas de lujo para vacaciones"),
-          to: "/?operation=vacation_rental&type=villa",
-        },
-        {
-          icon: BadgeDollarSign,
-          label: t("nav.dropdown.budget", "Económicas"),
-          desc: t("nav.dropdown.budgetDesc", "Opciones accesibles para todos"),
-          to: "/?operation=vacation_rental&sort=price_asc",
-        },
-      ],
-    },
-  ];
+  const scrollToSection = (id) => {
+    setIsMobileMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   const onLogout = async () => {
     await logout();
@@ -210,11 +131,8 @@ const PublicNavbar = () => {
     navigate("/");
   };
 
-  const onToggleLanguage = () => {
-    changeLanguage(nextLanguage);
-  };
+  const onToggleLanguage = () => changeLanguage(nextLanguage);
 
-  // Shared circle button classes
   const circleBase =
     "inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border transition-colors";
   const circleScrolled =
@@ -227,9 +145,9 @@ const PublicNavbar = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-[100] transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
-          ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm py-3"
+          ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg py-3"
           : "bg-transparent py-5",
       )}
     >
@@ -240,81 +158,27 @@ const PublicNavbar = () => {
             <BrandLogo className="h-10 w-auto" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {navLinks.map((link) => (
-              <div key={link.name} className="relative group px-3 py-2">
-                <Link
-                  to={link.path}
-                  className={cn(
-                    "flex items-center gap-1 text-sm font-semibold transition-colors",
-                    isScrolled
-                      ? "text-slate-700 hover:text-cyan-600 dark:text-slate-200 dark:hover:text-cyan-400"
-                      : "text-white/90 hover:text-white",
-                  )}
-                >
-                  {link.name}
-                  <ChevronDown
-                    size={14}
-                    className="opacity-70 group-hover:rotate-180 transition-transform duration-200"
-                  />
-                </Link>
-
-                {/* Rich Dropdown */}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0">
-                  <div className="w-[26rem] rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-slate-700 overflow-hidden">
-                    <div className="grid grid-cols-2 gap-1 p-3">
-                      {link.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.to}
-                            to={item.to}
-                            className="flex items-start gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-cyan-50 dark:hover:bg-slate-700 group/item"
-                          >
-                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 dark:bg-cyan-900/40 dark:text-cyan-400 transition-colors group-hover/item:bg-cyan-200 dark:group-hover/item:bg-cyan-800/40">
-                              <Icon size={18} />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                                {item.label}
-                              </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">
-                                {item.desc}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-
-                    <div className="border-t border-slate-100 dark:border-slate-700 px-4 py-2.5">
-                      <Link
-                        to={link.path}
-                        className="flex items-center justify-between text-sm font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
-                      >
-                        {t("common.viewAll", "Ver todos")}
-                        <ChevronRight size={14} />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* Desktop Section Links */}
+          <div className="hidden lg:flex items-center gap-1">
+            {SECTIONS.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => scrollToSection(s.id)}
+                className={cn(
+                  "px-4 py-2 text-sm font-semibold rounded-full transition-colors",
+                  isScrolled
+                    ? "text-slate-700 hover:text-cyan-600 hover:bg-cyan-50 dark:text-slate-200 dark:hover:text-cyan-400 dark:hover:bg-slate-800"
+                    : "text-white/80 hover:text-white hover:bg-white/10",
+                )}
+              >
+                {s.label}
+              </button>
             ))}
-          </div>
-
-          {/* Desktop Search */}
-          <div className="hidden lg:flex flex-1 justify-center max-w-md px-2">
-            <PublicSearch
-              showDesktopInput={true}
-              showMobileTrigger={false}
-              variant={isScrolled ? "default" : "transparent"}
-            />
           </div>
 
           {/* Right Actions — Desktop */}
           <div className="hidden lg:flex items-center gap-2">
-            {/* Language Circle */}
+            {/* Language */}
             <button
               onClick={onToggleLanguage}
               className={cn(
@@ -329,7 +193,7 @@ const PublicNavbar = () => {
               </span>
             </button>
 
-            {/* Theme Circle with Dropdown */}
+            {/* Theme */}
             <div className="relative" ref={themeDropdownRef}>
               <button
                 ref={animRef}
@@ -357,7 +221,6 @@ const PublicNavbar = () => {
                     {themes.map((themeOption) => {
                       const Icon = themeOption.icon;
                       const isSelected = theme === themeOption.value;
-
                       return (
                         <button
                           key={themeOption.value}
@@ -427,11 +290,8 @@ const PublicNavbar = () => {
             )}
           </div>
 
-          {/* Mobile Actions (search icon + hamburger) */}
+          {/* Mobile hamburger */}
           <div className="flex items-center gap-2 lg:hidden relative z-50">
-            {!isMobileMenuOpen && (
-              <PublicSearch showDesktopInput={false} showMobileTrigger={true} />
-            )}
             <button
               className={cn(
                 "p-2 rounded-lg transition-colors",
@@ -447,51 +307,31 @@ const PublicNavbar = () => {
         </nav>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-[90] bg-white dark:bg-slate-900 pt-24 px-6 overflow-y-auto lg:hidden"
+            className="fixed inset-0 z-40 bg-white dark:bg-slate-900 pt-24 px-6 overflow-y-auto lg:hidden"
           >
             <div className="flex flex-col gap-6">
-              {navLinks.map((link) => (
-                <div
-                  key={link.name}
-                  className="border-b border-slate-100 dark:border-slate-800 pb-4"
-                >
-                  <Link
-                    to={link.path}
-                    className="text-xl font-bold text-slate-900 dark:text-white mb-3 block"
+              {/* Section links */}
+              <div className="space-y-1">
+                {SECTIONS.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => scrollToSection(s.id)}
+                    className="w-full text-left px-4 py-3 rounded-xl text-lg font-bold text-slate-900 dark:text-white hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors"
                   >
-                    {link.name}
-                  </Link>
-                  <div className="grid grid-cols-2 gap-2">
-                    {link.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.to}
-                          to={item.to}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors"
-                        >
-                          <Icon
-                            size={15}
-                            className="text-cyan-600 dark:text-cyan-400 shrink-0"
-                          />
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+                    {s.label}
+                  </button>
+                ))}
+              </div>
 
-              {/* Language & Theme — dashboard-style circles */}
-              <div className="flex items-center gap-3 py-2">
+              {/* Language & Theme */}
+              <div className="flex items-center gap-3 py-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                 <button
                   onClick={onToggleLanguage}
                   className={cn(circleBase, circleMobile)}
@@ -502,7 +342,6 @@ const PublicNavbar = () => {
                   </span>
                 </button>
 
-                {/* Mobile theme — cycle through modes like dashboard navbar */}
                 {themes.map((themeOption) => {
                   const Icon = themeOption.icon;
                   const isSelected = theme === themeOption.value;
@@ -525,7 +364,8 @@ const PublicNavbar = () => {
                 })}
               </div>
 
-              <div className="flex flex-col gap-4 mt-4">
+              {/* Auth buttons */}
+              <div className="flex flex-col gap-4 mt-2">
                 {user ? (
                   <>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
@@ -537,13 +377,6 @@ const PublicNavbar = () => {
                         {user?.email}
                       </p>
                     </div>
-                    <Link
-                      to="/perfil"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="w-full py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white font-bold text-center"
-                    >
-                      {t("navbar.userMenu.profile", "Editar Perfil")}
-                    </Link>
                     <Link
                       to="/dashboard"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -583,4 +416,4 @@ const PublicNavbar = () => {
   );
 };
 
-export default PublicNavbar;
+export default MarketingNavbar;

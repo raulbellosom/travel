@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "motion/react";
 
 /**
  * Select component with dropdown functionality, keyboard navigation, and accessibility.
  * Supports icons, descriptions, and segmented variants.
+ *
+ * NOTE: AnimatePresence was removed intentionally — motion/react v12's PopChild
+ * passes `ref` as a regular prop which triggers a React 18.3 deprecation warning.
+ * CSS transitions provide the same enter/exit animation without the warning.
  */
 const Select = React.forwardRef(
   (
@@ -30,6 +33,7 @@ const Select = React.forwardRef(
     ref,
   ) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [shouldRender, setShouldRender] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
     const [internalValue, setInternalValue] = useState(value ?? "");
     const [openDirection, setOpenDirection] = useState("down");
@@ -190,6 +194,7 @@ const Select = React.forwardRef(
       if (disabled) return;
       if (!isOpen) {
         updateDropdownLayout();
+        setShouldRender(true);
       }
       setIsOpen(!isOpen);
       setActiveIndex(-1);
@@ -215,6 +220,7 @@ const Select = React.forwardRef(
           e.preventDefault();
           if (!isOpen) {
             updateDropdownLayout();
+            setShouldRender(true);
             setIsOpen(true);
           } else if (activeIndex >= 0) {
             handleOptionSelect(options[activeIndex]);
@@ -233,6 +239,7 @@ const Select = React.forwardRef(
           e.preventDefault();
           if (!isOpen) {
             updateDropdownLayout();
+            setShouldRender(true);
             setIsOpen(true);
           } else {
             setActiveIndex((prev) => (prev + 1) % options.length);
@@ -243,6 +250,7 @@ const Select = React.forwardRef(
           e.preventDefault();
           if (!isOpen) {
             updateDropdownLayout();
+            setShouldRender(true);
             setIsOpen(true);
           } else {
             setActiveIndex((prev) =>
@@ -309,6 +317,16 @@ const Select = React.forwardRef(
       }
     }, [activeIndex, isOpen]);
 
+    // Unmount dropdown after exit transition ends
+    const handleTransitionEnd = useCallback(() => {
+      if (!isOpen) setShouldRender(false);
+    }, [isOpen]);
+
+    // Ensure shouldRender is true when isOpen becomes true
+    useEffect(() => {
+      if (isOpen) setShouldRender(true);
+    }, [isOpen]);
+
     return (
       <div className="w-full">
         {label && (
@@ -370,7 +388,9 @@ const Select = React.forwardRef(
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                style={{
+                  transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                }}
                 aria-hidden="true"
               >
                 <path
@@ -383,108 +403,95 @@ const Select = React.forwardRef(
             </span>
           </button>
 
-          {typeof document !== "undefined"
+          {typeof document !== "undefined" && shouldRender
             ? createPortal(
-                <AnimatePresence mode="wait">
-                  {isOpen ? (
-                    <motion.div
-                      key="select-dropdown"
-                      ref={dropdownRef}
-                      initial={{
-                        opacity: 0,
-                        y: openDirection === "down" ? -8 : 8,
-                        scale: 0.98,
-                      }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{
-                        opacity: 0,
-                        y: openDirection === "down" ? -8 : 8,
-                        scale: 0.98,
-                      }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
-                      className="fixed z-[120] overflow-hidden rounded-xl border border-slate-300 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800"
-                      style={{
-                        left: `${dropdownLayout.left}px`,
-                        top: `${dropdownLayout.top}px`,
-                        width: `${dropdownLayout.width}px`,
-                        transformOrigin:
-                          openDirection === "down"
-                            ? "top center"
-                            : "bottom center",
-                      }}
-                    >
-                      <ul
-                        ref={listRef}
-                        id={listboxId}
-                        role="listbox"
-                        aria-labelledby={selectId}
-                        className="overflow-auto py-1"
-                        style={{ maxHeight: `${dropdownLayout.maxHeight}px` }}
-                      >
-                        {options.map((option, index) => {
-                          const isActive = index === activeIndex;
-                          const isSelected =
-                            option.value ===
-                            (value !== undefined ? value : internalValue);
+                <div
+                  ref={dropdownRef}
+                  onTransitionEnd={handleTransitionEnd}
+                  className="fixed z-120 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800"
+                  style={{
+                    left: `${dropdownLayout.left}px`,
+                    top: `${dropdownLayout.top}px`,
+                    width: `${dropdownLayout.width}px`,
+                    transformOrigin:
+                      openDirection === "down" ? "top center" : "bottom center",
+                    opacity: isOpen ? 1 : 0,
+                    transform: isOpen
+                      ? "translateY(0) scale(1)"
+                      : `translateY(${openDirection === "down" ? "-8px" : "8px"}) scale(0.98)`,
+                    transition:
+                      "opacity 0.18s ease-out, transform 0.18s ease-out",
+                    pointerEvents: isOpen ? "auto" : "none",
+                  }}
+                >
+                  <ul
+                    ref={listRef}
+                    id={listboxId}
+                    role="listbox"
+                    aria-labelledby={selectId}
+                    className="overflow-auto py-1"
+                    style={{ maxHeight: `${dropdownLayout.maxHeight}px` }}
+                  >
+                    {options.map((option, index) => {
+                      const isActive = index === activeIndex;
+                      const isSelected =
+                        option.value ===
+                        (value !== undefined ? value : internalValue);
 
-                          return (
-                            <li
-                              key={option.value}
-                              ref={(el) => (optionRefs.current[index] = el)}
-                              role="option"
-                              aria-selected={isSelected}
-                              className={[
-                                "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors duration-150",
-                                isActive
-                                  ? "bg-cyan-100/70 dark:bg-cyan-900/40"
-                                  : "",
-                                isSelected
-                                  ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-200"
-                                  : "text-slate-800 dark:text-slate-100",
-                                "hover:bg-slate-100 dark:hover:bg-slate-700",
-                              ].join(" ")}
-                              onClick={() => handleOptionSelect(option)}
-                              onMouseEnter={() => setActiveIndex(index)}
-                            >
-                              {option.icon && (
-                                <option.icon
-                                  className="w-5 h-5 text-gray-400"
-                                  aria-hidden="true"
-                                />
-                              )}
-                              <div className="flex-1">
-                                <div className="font-medium">
-                                  {option.label}
-                                </div>
-                                {option.description && (
-                                  <div className="text-xs text-slate-500 dark:text-slate-300">
-                                    {option.description}
-                                  </div>
-                                )}
+                      return (
+                        <li
+                          key={option.value}
+                          ref={(el) => (optionRefs.current[index] = el)}
+                          role="option"
+                          aria-selected={isSelected}
+                          className={[
+                            "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors duration-150",
+                            isActive
+                              ? "bg-cyan-100/70 dark:bg-cyan-900/40"
+                              : "",
+                            isSelected
+                              ? "bg-cyan-50 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-200"
+                              : "text-slate-800 dark:text-slate-100",
+                            "hover:bg-slate-100 dark:hover:bg-slate-700",
+                          ].join(" ")}
+                          onClick={() => handleOptionSelect(option)}
+                          onMouseEnter={() => setActiveIndex(index)}
+                        >
+                          {option.icon && (
+                            <option.icon
+                              className="w-5 h-5 text-gray-400"
+                              aria-hidden="true"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="font-medium">{option.label}</div>
+                            {option.description && (
+                              <div className="text-xs text-slate-500 dark:text-slate-300">
+                                {option.description}
                               </div>
-                              {isSelected && (
-                                <svg
-                                  className="h-4 w-4 text-cyan-600 dark:text-cyan-300"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                  aria-hidden="true"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>,
+                            )}
+                          </div>
+                          {isSelected && (
+                            <svg
+                              className="h-4 w-4 text-cyan-600 dark:text-cyan-300"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>,
                 document.body,
               )
             : null}

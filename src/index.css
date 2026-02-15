@@ -2,6 +2,24 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @import "./styles/tokens.css";
 
+/* ── View Transition (theme switch) ── */
+/* Prevent the default cross-fade so our clip-path circle animation is the
+   only visual. Force both snapshots to render as opaque, non-blended layers
+   and ensure the NEW snapshot sits on top of the OLD one. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+::view-transition-old(root) {
+  z-index: -1;
+}
+
 /* Global styles */
 html {
   scroll-behavior: smooth;
@@ -25,7 +43,9 @@ select {
 
 /* Prevent automatic zoom on iOS/Android when focusing small text inputs. */
 @media (max-width: 640px) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="file"]
+    ),
   textarea,
   select {
     font-size: 16px !important;
@@ -421,6 +441,29 @@ input[type="reset"]:disabled {
   animation: glitch-soft 2.4s steps(2, end) infinite;
 }
 
+/* Marketing Landing Page */
+@keyframes marketing-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+  }
+}
+
+.marketing-orb {
+  animation: marketing-float 20s ease-in-out infinite;
+}
+
+.marketing-orb-reverse {
+  animation-direction: reverse;
+  animation-duration: 25s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .error-orb,
   .error-card-enter,
@@ -428,7 +471,8 @@ input[type="reset"]:disabled {
   .animate-spin-very-slow,
   .animate-float-y,
   .animate-shake-soft,
-  .animate-glitch-soft {
+  .animate-glitch-soft,
+  .marketing-orb {
     animation: none !important;
   }
 }

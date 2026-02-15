@@ -1,3 +1,4 @@
+import { useRef, useCallback } from "react";
 import { Home, Menu, Monitor, Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +15,14 @@ const DashboardNavbar = ({
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { theme, changeTheme, changeLanguage } = useUI();
+  const {
+    theme,
+    effectiveTheme,
+    changeTheme,
+    changeThemeAnimated,
+    changeLanguage,
+  } = useUI();
+  const themeBtnRef = useRef(null);
   const language = i18n.resolvedLanguage || i18n.language || "es";
   const currentTheme =
     theme === "light" || theme === "dark" || theme === "system"
@@ -37,9 +45,26 @@ const DashboardNavbar = ({
     changeLanguage(nextLanguage);
   };
 
-  const onToggleTheme = () => {
-    changeTheme(nextTheme);
-  };
+  const onToggleTheme = useCallback(() => {
+    // Determine if the effective theme will actually flip (dark↔light)
+    const willBeDark =
+      nextTheme === "dark" ||
+      (nextTheme === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const currentlyDark = effectiveTheme === "dark";
+
+    if (willBeDark !== currentlyDark && themeBtnRef.current) {
+      // Effective theme flips → circle animation from the button center
+      const rect = themeBtnRef.current.getBoundingClientRect();
+      changeThemeAnimated(nextTheme, {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    } else {
+      // Same effective theme → just persist preference
+      changeTheme(nextTheme);
+    }
+  }, [nextTheme, effectiveTheme, changeTheme, changeThemeAnimated]);
 
   const onLogout = async () => {
     await logout();
@@ -108,6 +133,7 @@ const DashboardNavbar = ({
           </a>
 
           <button
+            ref={themeBtnRef}
             onClick={onToggleTheme}
             className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             aria-label={themeToggleLabel}

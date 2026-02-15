@@ -17,114 +17,122 @@
   },
   "landing": {
     "hero": {
-      "title": "Encuentra Tu Propiedad Ideal",
-      "subtitle": "Explora las mejores propiedades en venta y renta. Tu próximo hogar te está esperando.",
-      "stats": {
-        "properties": "Propiedades",
-        "satisfaction": "Satisfacción",
-        "cities": "Ciudades"
-      },
-      "search": {
-        "title": "Busca tu propiedad",
-        "location": "Ubicación",
-        "locationPlaceholder": "Ciudad, Estado...",
-        "operationType": "Tipo de operación",
-        "selectOperation": "Selecciona...",
-        "allOperations": "Todas las operaciones",
-        "propertyType": "Tipo de propiedad",
-        "selectType": "Selecciona...",
-        "allTypes": "Todos los tipos",
-        "searchButton": "Buscar Propiedades"
-      },
-      "badge": "Más de 500 propiedades exclusivas",
-      "imageAlt": "Propiedad de lujo"
+      "badge": "Plataforma inmobiliaria todo-en-uno",
+      "titleStart": "Tu CRM",
+      "titleHighlight": "inmobiliario",
+      "titleEnd": "inteligente",
+      "subtitle": "Gestiona propiedades, captura leads, procesa reservaciones y pagos, y analiza tu rendimiento — todo desde una sola plataforma diseñada para el profesional inmobiliario.",
+      "startFree": "Comenzar gratis",
+      "hasAccount": "Ya tengo cuenta"
     },
     "features": {
-      "sectionTitle": "¿Por qué elegir Inmobo?",
-      "sectionSubtitle": "Ofrecemos una experiencia completa en bienes raíces con tecnología de vanguardia",
-      "trust": {
-        "title": "Confianza y Seguridad",
-        "description": "Todas nuestras propiedades son verificadas y los procesos son transparentes y seguros."
-      },
-      "fast": {
-        "title": "Proceso Ágil",
-        "description": "Encuentra, agenda y cierra en tiempo récord. Optimizamos cada paso del proceso."
-      },
-      "experience": {
-        "title": "Experiencia Premium",
-        "description": "Atención personalizada y acompañamiento en cada etapa de tu búsqueda."
-      },
-      "quality": {
-        "title": "Propiedades Selectas",
-        "description": "Catálogo curado con las mejores opciones en ubicaciones privilegiadas."
-      },
-      "investment": {
-        "title": "Mejor Inversión",
-        "description": "Análisis de mercado y asesoría para maximizar el valor de tu inversión."
-      },
-      "support": {
-        "title": "Soporte 24/7",
-        "description": "Nuestro equipo está disponible para ayudarte cuando lo necesites."
-      }
-    },
-    "propertyShowcase": {
-      "sectionTitle": "Propiedades Destacadas",
-      "sectionSubtitle": "Descubre las mejores opciones disponibles",
-      "viewAll": "Ver Todas",
-      "loading": "Cargando propiedades...",
-      "errorLoading": "Error al cargar propiedades",
-      "noProperties": "No hay propiedades disponibles en este momento",
-      "eyebrow": "Exclusivas"
-    },
-    "howItWorks": {
-      "sectionTitle": "¿Cómo Funciona?",
-      "sectionSubtitle": "Un proceso simple y transparente de principio a fin",
-      "step1": {
-        "title": "Busca y Explora",
-        "description": "Navega por nuestro catálogo y filtra según tus necesidades y presupuesto."
-      },
-      "step2": {
-        "title": "Agenda una Visita",
-        "description": "Programa una cita para conocer las propiedades que te interesan en persona."
-      },
-      "step3": {
-        "title": "Cierra el Trato",
-        "description": "Te acompañamos en todo el proceso legal y administrativo hasta la firma."
-      },
-      "step4": {
-        "title": "Disfruta tu Nuevo Hogar",
-        "description": "Recibe las llaves y comienza tu nueva etapa con total tranquilidad."
-      },
-      "bottomText": "Todo el proceso diseñado para tu comodidad y seguridad"
+      "sectionTitle": "¿Qué es Inmobo?",
+      "sectionSubtitle": "La plataforma que transforma tu negocio inmobiliario",
+      "description": "Inmobo es un CRM inmobiliario completo que centraliza todas las operaciones de tu negocio: desde la publicación de propiedades hasta el cierre de ventas, pasando por la gestión de leads, reservaciones y cobros."
     },
     "stats": {
-      "sectionTitle": "Números que Hablan por Nosotros",
-      "sectionSubtitle": "Miles de clientes satisfechos confían en nuestra plataforma",
-      "properties": "Propiedades Activas",
-      "clients": "Clientes Felices",
-      "cities": "Ciudades Cubiertas",
-      "satisfaction": "Satisfacción"
+      "cloud": "Plataforma en la nube",
+      "leads": "Captación de leads",
+      "gateways": "Pasarelas de pago",
+      "unlimited": "Propiedades ilimitadas"
     },
-    "cta": {
-      "title": "¿Listo para Encontrar tu Propiedad Ideal?",
-      "subtitle": "Únete a miles de personas que ya encontraron su hogar perfecto con nosotros.",
-      "getStarted": "Comenzar Ahora",
-      "browseProperties": "Ver Propiedades",
-      "noFees": "Sin comisiones ocultas",
-      "support24": "Soporte 24/7",
-      "verified": "Propiedades verificadas",
-      "contactTitle": "¿Necesitas Ayuda?",
-      "contactSubtitle": "Nuestro equipo está listo para asistirte",
-      "phone": "Teléfono",
-      "email": "Correo electrónico",
-      "availability": "Disponible de Lunes a Viernes, 9:00 AM - 6:00 PM",
-      "contactButton": "Contactar agente"
+    "grid": {
+      "sectionTitle": "Características",
+      "sectionSubtitle": "Todo lo que necesitas para",
+      "subtitleHighlight": "vender más",
+      "feature1": {
+        "title": "Gestión de Propiedades",
+        "desc": "Registra, edita y organiza todas tus propiedades en un solo lugar con imágenes, amenidades y detalles personalizados."
+      },
+      "feature2": {
+        "title": "CRM de Leads",
+        "desc": "Captura leads automáticamente desde tu sitio público, rastrea su interés y convierte prospectos en clientes."
+      },
+      "feature3": {
+        "title": "Reservaciones",
+        "desc": "Sistema completo de reservaciones con calendario, confirmaciones automáticas y gestión de disponibilidad."
+      },
+      "feature4": {
+        "title": "Pagos Integrados",
+        "desc": "Acepta pagos con Stripe y MercadoPago. Genera vouchers automáticos y lleva control financiero al día."
+      },
+      "feature5": {
+        "title": "Analíticas en Tiempo Real",
+        "desc": "Dashboard con métricas de visitas, reservaciones, ingresos y rendimiento de cada propiedad."
+      },
+      "feature6": {
+        "title": "Equipo & Permisos",
+        "desc": "Invita a tu equipo con roles y permisos específicos. Controla quién puede ver, editar o administrar."
+      }
     },
-    "quickCategories": {
-      "beachfront": "Frente al mar",
-      "luxuryVillas": "Villas de lujo",
+    "allInOne": {
+      "eyebrow": "Todo en un solo lugar",
+      "title": "Deja de usar",
+      "strikethrough": "Excel, WhatsApp, notas",
+      "description": "Con Inmobo centralizas toda la información de tu negocio inmobiliario. Ya no necesitas saltar entre 10 herramientas diferentes — todo está integrado y sincronizado en tiempo real.",
+      "list1": "Datos seguros en la nube con Appwrite",
+      "list2": "Sitio público para captar clientes 24/7",
+      "list3": "Automatiza cobros, notificaciones y vouchers"
+    },
+    "mockup": {
+      "properties": "Propiedades",
+      "leadsToday": "Leads hoy",
+      "income": "Ingresos",
+      "weeklyVisits": "Visitas semanales",
+      "newReservation": "Nueva reservación",
+      "timeAgo": "hace 2 minutos"
+    },
+    "howItWorks": {
+      "sectionTitle": "Cómo funciona",
+      "sectionSubtitle": "Empieza en",
+      "subtitleHighlight": "3 simples pasos",
+      "step1": {
+        "title": "Registra tu cuenta",
+        "desc": "Crea tu cuenta gratis en minutos. Configura tu perfil y comienza a agregar propiedades."
+      },
+      "step2": {
+        "title": "Agrega tus propiedades",
+        "desc": "Sube fotos, describe amenidades y personaliza cada listado para atraer a los mejores clientes."
+      },
+      "step3": {
+        "title": "Gestiona y crece",
+        "desc": "Recibe leads, reservaciones y pagos automáticamente. Analiza tu rendimiento y escala tu negocio."
+      }
+    },
+    "socialProof": {
+      "title": "Diseñado para escalar",
+      "subtitle": "Herramientas pensadas para el profesional inmobiliario moderno",
+      "stat1": { "label": "Uptime garantizado" },
+      "stat2": { "label": "Propiedades gestionadas" },
+      "stat3": { "label": "Tiempo de carga" },
+      "stat4": { "label": "Más productividad" }
+    },
+    "finalCta": {
+      "badge": "Empieza gratis, sin tarjeta de crédito",
+      "title": "¿Listo para transformar tu negocio",
+      "titleHighlight": "inmobiliario",
+      "titleEnd": "?",
+      "subtitle": "Únete a los profesionales que ya gestionan sus propiedades, leads y cobros con Inmobo.",
+      "button": "Crear cuenta gratis",
+      "login": "Iniciar sesión"
+    },
+    "footer": {
+      "rights": "© {{year}} Inmobo. Todos los derechos reservados.",
+      "privacy": "Aviso de Privacidad",
+      "terms": "Términos y Condiciones"
+    }
+  },
+  "publicSearch": {
+    "placeholder": "Buscar propiedades, ciudades, características…",
+    "searchFor": "Buscar",
+    "open": "Buscar",
+    "quickFilters": "Búsquedas populares",
+    "suggestions": {
+      "vacationRentals": "Rentas Vacacionales",
+      "houses": "Casas en venta",
       "apartments": "Departamentos",
-      "newDevelopments": "Nuevos desarrollos"
+      "puertoVallarta": "Puerto Vallarta",
+      "rivieraNayarit": "Riviera Nayarit"
     }
   },
   "nav": {
@@ -139,7 +147,25 @@
     "realEstate": "Bienes raices",
     "vacation": "Rentas vacacionales",
     "services": "Servicios",
-    "goToLanding": "Ir a la página de inicio"
+    "goToLanding": "Ir a la página de inicio",
+    "dropdown": {
+      "houses": "Casas",
+      "housesDesc": "Casas en venta en las mejores zonas",
+      "apartments": "Departamentos",
+      "apartmentsDesc": "Departamentos y condominios",
+      "land": "Terrenos",
+      "landDesc": "Terrenos listos para construir",
+      "commercial": "Comercial",
+      "commercialDesc": "Locales y oficinas comerciales",
+      "hotels": "Hoteles",
+      "hotelsDesc": "Hoteles boutique y resorts",
+      "vacationCondos": "Condominios",
+      "vacationCondosDesc": "Rentas vacacionales de lujo",
+      "villas": "Villas",
+      "villasDesc": "Villas privadas con servicio",
+      "budget": "Económicas",
+      "budgetDesc": "Opciones accesibles"
+    }
   },
   "sidebar": {
     "overview": "Resumen",

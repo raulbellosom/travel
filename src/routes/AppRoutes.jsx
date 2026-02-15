@@ -62,6 +62,9 @@ import {
   getInternalEditPropertyRoute,
 } from "../utils/internalRoutes";
 import env from "../env";
+import LoadingScreen from "../components/loaders/LoadingScreen";
+import { useAuth } from "../hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
 const LegacyEditPropertyRedirect = () => {
   const { id } = useParams();
@@ -74,8 +77,20 @@ const LegacyPropertyDetailRedirect = () => {
 };
 
 const MarketingEntryRoute = () => {
+  const { t } = useTranslation();
+  const { loading } = useAuth();
+
   if (!env.features.marketingSite) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (loading) {
+    return (
+      <LoadingScreen
+        transparent={false}
+        title={t("routeGuards.validatingSession")}
+      />
+    );
   }
 
   return <Home />;

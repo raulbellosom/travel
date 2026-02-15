@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -34,7 +34,14 @@ const mobileIconButtonClass =
 const Navbar = () => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
-  const { theme, changeTheme, changeLanguage } = useUI();
+  const {
+    theme,
+    effectiveTheme,
+    changeTheme,
+    changeThemeAnimated,
+    changeLanguage,
+  } = useUI();
+  const themeBtnRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -110,9 +117,23 @@ const Navbar = () => {
     changeLanguage(nextLanguage);
   };
 
-  const onToggleTheme = () => {
-    changeTheme(nextTheme);
-  };
+  const onToggleTheme = useCallback(() => {
+    const willBeDark =
+      nextTheme === "dark" ||
+      (nextTheme === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const currentlyDark = effectiveTheme === "dark";
+
+    if (willBeDark !== currentlyDark && themeBtnRef.current) {
+      const rect = themeBtnRef.current.getBoundingClientRect();
+      changeThemeAnimated(nextTheme, {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+    } else {
+      changeTheme(nextTheme);
+    }
+  }, [nextTheme, effectiveTheme, changeTheme, changeThemeAnimated]);
 
   const onLogout = async () => {
     await logout();
@@ -239,6 +260,7 @@ const Navbar = () => {
           </Link>
 
           <button
+            ref={themeBtnRef}
             onClick={onToggleTheme}
             className={mobileIconButtonClass}
             aria-label={themeToggleLabel}
