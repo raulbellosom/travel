@@ -191,31 +191,102 @@
   "propertyDetail": {
     "loading": "Cargando propiedad...",
     "backHome": "Volver al inicio",
-    "priceHint": "Precio de lista",
     "verifiedListing": "Propiedad Verificada",
     "descriptionTitle": "Descripción",
     "amenitiesTitle": "Amenidades",
-    "galleryTitle": "Galería",
-    "reserveHint": "Reserva en línea con confirmación y voucher digital.",
-    "reserveCta": "Reservar ahora",
+    "galleryTitle": "Galería de fotos",
+    "viewAllPhotos": "Ver todas las fotos",
+    "shareProperty": "Compartir",
+    "saveProperty": "Guardar",
     "errors": {
       "notFound": "No encontramos la propiedad que buscas.",
       "load": "Error al cargar la propiedad."
     },
+    "price": {
+      "sale": "Precio de venta",
+      "rent": "Precio de renta",
+      "vacationRental": "Precio por noche",
+      "from": "Desde",
+      "negotiable": "Precio negociable",
+      "perMonth": "/mes",
+      "perYear": "/año",
+      "perWeek": "/semana",
+      "perNight": "/noche",
+      "perSqm": "/m²",
+      "perSqft": "/ft²",
+      "total": "total"
+    },
     "stats": {
       "bedrooms": "Recámaras",
       "bathrooms": "Baños",
-      "totalArea": "Área Total",
-      "type": "Tipo"
+      "totalArea": "Área total",
+      "builtArea": "Área construida",
+      "type": "Tipo",
+      "parkingSpaces": "Estacionamientos",
+      "floors": "Pisos",
+      "yearBuilt": "Año de construcción",
+      "maxGuests": "Huéspedes máx.",
+      "furnished": "Amueblado",
+      "petsAllowed": "Mascotas"
+    },
+    "furnishedStatus": {
+      "unfurnished": "Sin amueblar",
+      "semi_furnished": "Semi amueblado",
+      "furnished": "Amueblado"
+    },
+    "petsStatus": {
+      "allowed": "Se permiten mascotas",
+      "notAllowed": "No se permiten mascotas"
+    },
+    "sections": {
+      "details": "Detalles de la propiedad",
+      "features": "Características",
+      "rentalTerms": "Términos de renta",
+      "vacationRules": "Reglas de la estancia",
+      "location": "Ubicación"
+    },
+    "rental": {
+      "period": "Periodo de renta",
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "weekly": "Semanal"
+    },
+    "vacation": {
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "minStay": "Estancia mínima",
+      "maxStay": "Estancia máxima",
+      "nights": "noches",
+      "night": "noche",
+      "guests": "huéspedes",
+      "maxGuestsLabel": "Capacidad máxima"
+    },
+    "cta": {
+      "sale": {
+        "title": "¿Te interesa esta propiedad?",
+        "hint": "Agenda una visita presencial para conocer tu futuro hogar.",
+        "button": "Agendar visita"
+      },
+      "rent": {
+        "title": "¿Quieres vivir aquí?",
+        "hint": "Contacta al agente para conocer disponibilidad y condiciones de renta.",
+        "button": "Solicitar información"
+      },
+      "vacationRental": {
+        "title": "Reserva tu estancia",
+        "hint": "Reserva en línea con confirmación instantánea y voucher digital.",
+        "button": "Reservar ahora"
+      }
     },
     "owner": {
-      "title": "Anfitrión / Agente",
+      "title": "Agente de la propiedad",
       "unavailable": "No disponible",
       "noPhone": "Sin teléfono",
-      "rating": "Anfitrión destacado"
+      "rating": "Agente recomendado",
+      "whatsapp": "WhatsApp"
     },
     "contact": {
-      "title": "Contactar al anunciante",
+      "title": "Contactar al agente",
       "success": "Mensaje enviado con éxito. Pronto te contactarán.",
       "fields": {
         "name": "Nombre completo",
@@ -230,6 +301,10 @@
       "errors": {
         "send": "No pudimos enviar tu mensaje. Intenta de nuevo."
       }
+    },
+    "breadcrumb": {
+      "home": "Inicio",
+      "properties": "Propiedades"
     }
   },
   "map": {

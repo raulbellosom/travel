@@ -221,12 +221,116 @@ Rutas privadas y root no indexables.
 
 ---
 
-## 10. Estado del Documento
+## 10. Comportamiento del Detalle de Propiedad por Tipo de Operación
+
+La ruta `/propiedades/:slug` muestra el detalle público de una propiedad.
+Los campos, secciones y acciones varían según `operationType`.
+
+### 10.1 Venta (`sale`)
+
+**CTA Principal:** "Agendar visita" — enlace a formulario de contacto con mensaje prefijado.
+No existe flujo de reservación ni pago online para ventas.
+
+**Campos visibles:**
+
+| Campo                     | Obligatorio |
+| ------------------------- | ----------- |
+| `price` (total)           | sí          |
+| `currency`                | sí          |
+| `pricePerUnit`            | si aplica   |
+| `priceNegotiable`         | sí          |
+| `bedrooms`                | sí          |
+| `bathrooms`               | sí          |
+| `parkingSpaces`           | sí          |
+| `totalArea` / `builtArea` | sí          |
+| `floors`                  | sí          |
+| `yearBuilt`               | si existe   |
+| `furnished`               | si existe   |
+| `propertyType`            | sí          |
+
+**Etiqueta de precio:** "Precio de venta"
+**Secciones ocultas:** reservación, check-in/out, estancia mínima/máxima, maxGuests.
+
+### 10.2 Renta a largo plazo (`rent`)
+
+**CTA Principal:** "Solicitar información" — enlace a formulario de contacto.
+Se permite agendar visita. Las reservaciones de renta se manejan vía contacto directo,
+no con el flujo online de pago+voucher.
+
+**Campos visibles:**
+
+| Campo                                        | Obligatorio |
+| -------------------------------------------- | ----------- |
+| `price` (por periodo)                        | sí          |
+| `currency`                                   | sí          |
+| `rentPeriod` (`monthly`, `yearly`, `weekly`) | sí          |
+| `priceNegotiable`                            | sí          |
+| `bedrooms`                                   | sí          |
+| `bathrooms`                                  | sí          |
+| `parkingSpaces`                              | sí          |
+| `totalArea` / `builtArea`                    | sí          |
+| `floors`                                     | sí          |
+| `furnished`                                  | sí          |
+| `petsAllowed`                                | sí          |
+| `propertyType`                               | sí          |
+
+**Etiqueta de precio:** "Precio de renta" + sufijo del periodo (ej: "/mes", "/año", "/semana").
+**Secciones ocultas:** check-in/out, estancia mínima/máxima (en noches), maxGuests, reservación online.
+
+### 10.3 Renta vacacional (`vacation_rental`)
+
+**CTA Principal:** "Reservar ahora" — enlace a `/reservar/:slug`.
+Flujo completo de reservación online con pago y voucher digital.
+
+**Campos visibles:**
+
+| Campo                     | Obligatorio |
+| ------------------------- | ----------- |
+| `price` (por noche)       | sí          |
+| `currency`                | sí          |
+| `maxGuests`               | sí          |
+| `bedrooms`                | sí          |
+| `bathrooms`               | sí          |
+| `parkingSpaces`           | sí          |
+| `totalArea` / `builtArea` | si existe   |
+| `minStayNights`           | sí          |
+| `maxStayNights`           | sí          |
+| `checkInTime`             | sí          |
+| `checkOutTime`            | sí          |
+| `furnished`               | sí          |
+| `petsAllowed`             | sí          |
+| `propertyType`            | sí          |
+
+**Etiqueta de precio:** "Precio por noche" o "Desde $X /noche".
+**Secciones adicionales:** Reglas de la casa (check-in, check-out, estancia mín/máx, huéspedes máx).
+
+### 10.4 Resumen de CTAs por tipo
+
+| `operationType`   | CTA Principal         | Destino                         | Flujo de pago |
+| ----------------- | --------------------- | ------------------------------- | ------------- |
+| `sale`            | Agendar visita        | Scroll a formulario de contacto | No            |
+| `rent`            | Solicitar información | Scroll a formulario de contacto | No            |
+| `vacation_rental` | Reservar ahora        | `/reservar/:slug`               | Sí            |
+
+### 10.5 Secciones comunes a todos los tipos
+
+- Galería de imágenes
+- Información principal (título, ubicación, precio, badges)
+- Características rápidas (recámaras, baños, área, estacionamiento, tipo)
+- Descripción completa
+- Amenidades
+- Mapa de ubicación
+- Información del agente/anfitrión
+- Formulario de contacto
+
+---
+
+## 11. Estado del Documento
 
 - Definitivo para rutas y flujos MVP con reservas/pagos/staff/root.
 - Extensible por personalizaciones visuales por cliente.
 
 ---
 
-Ultima actualizacion: 2026-02-11
-Version: 2.1.0
+Ultima actualizacion: 2026-02-15
+Version: 2.2.0
