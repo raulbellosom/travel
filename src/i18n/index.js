@@ -5,13 +5,17 @@ import LanguageDetector from "i18next-browser-languagedetector";
 // Import translation files
 import en from "./en.json";
 import es from "./es.json";
+import landingEn from "./landing_en.json";
+import landingEs from "./landing_es.json";
 
 const resources = {
   en: {
     translation: en,
+    landing: landingEn,
   },
   es: {
     translation: es,
+    landing: landingEs,
   },
 };
 

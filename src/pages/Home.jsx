@@ -15,6 +15,7 @@ import { usePageSeo } from "../hooks/usePageSeo";
 import { Select } from "../components/common";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import LandingTemplate from "../components/common/templates/LandingTemplate";
+import env from "../env";
 
 const STOCK_IMAGES = [
   "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
@@ -44,7 +45,7 @@ const PropertyCard = ({ property, t, locale, index }) => {
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-slate-950/10 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950/50 via-slate-950/10 to-transparent" />
         <span className="absolute left-3 top-3 rounded-full bg-cyan-500/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
           {t(`homePage.enums.operation.${property.operationType}`, {
             defaultValue: property.operationType,
@@ -86,7 +87,7 @@ const PropertyCard = ({ property, t, locale, index }) => {
           </strong>
           <Link
             to={`/propiedades/${property.slug}`}
-            className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
+            className="inline-flex min-h-11 items-center rounded-xl bg-linear-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
           >
             {t("homePage.viewDetail")}
           </Link>
@@ -158,8 +159,8 @@ const Home = () => {
     }
   }, [hasActiveFilters]);
 
-  // Show landing page if no filters are active
-  if (!hasActiveFilters) {
+  // Show landing page if no filters are active AND marketing site is enabled
+  if (!hasActiveFilters && env.features.marketingSite) {
     return <LandingTemplate featuredProperties={featuredProperties} />;
   }
 
@@ -252,7 +253,7 @@ const Home = () => {
           className="h-[380px] w-full object-cover"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/55 to-cyan-700/55" />
+        <div className="absolute inset-0 bg-linear-to-r from-slate-950/80 via-slate-900/55 to-cyan-700/55" />
         <div className="absolute inset-0">
           <div className="mx-auto flex h-full max-w-7xl items-end px-4 pb-10 sm:px-6 lg:px-8">
             <div className="max-w-2xl space-y-4 text-white">

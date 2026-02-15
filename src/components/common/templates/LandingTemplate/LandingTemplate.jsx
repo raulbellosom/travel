@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,17 +8,35 @@ import {
   CreditCard,
   BarChart3,
   Shield,
+  ArrowLeft,
   ArrowRight,
   Sparkles,
   Zap,
   Globe,
   Lock,
   ChevronRight,
+  ChevronLeft,
   Mail,
   MessageSquare,
 } from "lucide-react";
-import { motion, useInView } from "framer-motion";
-import PublicNavbar from "../../../layout/PublicNavbar";
+import {
+  motion,
+  useInView,
+  useSpring,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
+import MarketingNavbar from "../../../layout/MarketingNavbar";
+import MarketingFooter from "../../../layout/MarketingFooter";
+import ContactSection from "./ContactSection";
+import ApplicationShowcase from "./ApplicationShowcase";
+import {
+  CrmMockup,
+  WebsiteMockup,
+  ReservationsMockup,
+  UsersMockup,
+} from "./Mockups";
+import { cn } from "../../../../utils/cn";
 
 /* ─── Scroll-triggered wrapper ─── */
 const Reveal = ({ children, delay = 0, className = "", direction = "up" }) => {
@@ -49,15 +67,69 @@ const Reveal = ({ children, delay = 0, className = "", direction = "up" }) => {
   );
 };
 
+const ScaleIn = ({ children, delay = 0, className = "" }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.6, delay, ease: "easeOut" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 /* ─── Plus Grid Pattern ─── */
+
 const PlusGrid = ({ className = "" }) => (
   <div
-    className={`absolute inset-0 pointer-events-none opacity-[0.4] ${className}`}
+    className={`absolute inset-0 pointer-events-none ${className}`}
     style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
     }}
   />
 );
+
+/* ─── Grid Pattern ─── */
+const GridPattern = ({
+  width = 40,
+  height = 40,
+  x = -1,
+  y = -1,
+  className,
+  ...props
+}) => {
+  const id = React.useId();
+  return (
+    <svg
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-400/30",
+        className,
+      )}
+      {...props}
+    >
+      <defs>
+        <pattern
+          id={id}
+          width={width}
+          height={height}
+          patternUnits="userSpaceOnUse"
+          x={x}
+          y={y}
+        >
+          <path d={`M.5 ${height}V.5H${width}`} fill="none" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" strokeWidth={0} fill={`url(#${id})`} />
+    </svg>
+  );
+};
 
 /* ─── SVG Dividers ─── */
 const WaveDividerBottom = ({ fill = "#f8fafc", className = "" }) => (
@@ -99,17 +171,35 @@ const Counter = ({ value, suffix = "", label }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
 
+  // Parse numeric value. E.g. "99.9" -> 99.9, "500" -> 500
+  const numericValue = parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
+  const isFloat = value.includes(".");
+
+  const springValue = useSpring(0, {
+    mass: 1,
+    stiffness: 75,
+    damping: 15, // Softer ease out
+  });
+
+  const displayValue = useTransform(springValue, (current) => {
+    if (isFloat) {
+      return current.toFixed(1);
+    }
+    return Math.round(current);
+  });
+
+  React.useEffect(() => {
+    if (isInView) {
+      springValue.set(numericValue);
+    }
+  }, [isInView, numericValue, springValue]);
+
   return (
     <div ref={ref} className="text-center">
-      <motion.span
-        className="block text-4xl sm:text-5xl md:text-6xl font-black text-white"
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={isInView ? { opacity: 1, scale: 1 } : {}}
-        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-      >
-        {isInView ? value : 0}
-        {suffix}
-      </motion.span>
+      <div className="text-4xl sm:text-5xl md:text-6xl font-black text-white flex justify-center items-center">
+        <motion.span>{displayValue}</motion.span>
+        <span>{suffix}</span>
+      </div>
       <span className="mt-2 block text-sm sm:text-base text-white/70 font-medium">
         {label}
       </span>
@@ -123,13 +213,46 @@ const Counter = ({ value, suffix = "", label }) => {
 const LandingTemplate = () => {
   const { t } = useTranslation(); // Use translation hook
 
+  const mockups = [
+    { id: "crm", component: <CrmMockup />, title: "CRM Inmobiliario" },
+    {
+      id: "website",
+      component: <WebsiteMockup />,
+      title: "Sitio Web y Landing Pages",
+    },
+    {
+      id: "reservations",
+      component: <ReservationsMockup />,
+      title: "Motor de Reservas",
+    },
+    { id: "users", component: <UsersMockup />, title: "Gestión de Equipo" },
+  ];
+
+  /* ─── Hero Carousel State ─── */
+  const [activeMockup, setActiveMockup] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveMockup((prev) => (prev + 1) % 4);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleNext = () => {
+    setActiveMockup((prev) => (prev + 1) % 4);
+  };
+
+  const handlePrev = () => {
+    setActiveMockup((prev) => (prev - 1 + 4) % 4);
+  };
+
   /* ─── Feature data ─── */
   const features = [
     {
       icon: Building2,
-      title: t("landing.grid.feature1.title", "Gestión de Propiedades"),
+      title: t("landing:grid.feature1.title", "Gestión de Propiedades"),
       desc: t(
-        "landing.grid.feature1.desc",
+        "landing:grid.feature1.desc",
         "Registra, edita y organiza todas tus propiedades",
       ),
       color: "from-cyan-500 to-blue-600",
@@ -137,9 +260,9 @@ const LandingTemplate = () => {
     },
     {
       icon: Users,
-      title: t("landing.grid.feature2.title", "CRM de Leads"),
+      title: t("landing:grid.feature2.title", "CRM de Leads"),
       desc: t(
-        "landing.grid.feature2.desc",
+        "landing:grid.feature2.desc",
         "Captura leads automáticamente desde tu sitio público",
       ),
       color: "from-violet-500 to-purple-600",
@@ -147,9 +270,9 @@ const LandingTemplate = () => {
     },
     {
       icon: CalendarCheck,
-      title: t("landing.grid.feature3.title", "Reservaciones"),
+      title: t("landing:grid.feature3.title", "Reservaciones"),
       desc: t(
-        "landing.grid.feature3.desc",
+        "landing:grid.feature3.desc",
         "Sistema completo de reservaciones con calendario",
       ),
       color: "from-emerald-500 to-teal-600",
@@ -157,9 +280,9 @@ const LandingTemplate = () => {
     },
     {
       icon: CreditCard,
-      title: t("landing.grid.feature4.title", "Pagos Integrados"),
+      title: t("landing:grid.feature4.title", "Pagos Integrados"),
       desc: t(
-        "landing.grid.feature4.desc",
+        "landing:grid.feature4.desc",
         "Acepta pagos con Stripe y MercadoPago",
       ),
       color: "from-amber-500 to-orange-600",
@@ -167,9 +290,9 @@ const LandingTemplate = () => {
     },
     {
       icon: BarChart3,
-      title: t("landing.grid.feature5.title", "Analíticas en Tiempo Real"),
+      title: t("landing:grid.feature5.title", "Analíticas en Tiempo Real"),
       desc: t(
-        "landing.grid.feature5.desc",
+        "landing:grid.feature5.desc",
         "Dashboard con métricas de visitas",
       ),
       color: "from-rose-500 to-pink-600",
@@ -177,8 +300,8 @@ const LandingTemplate = () => {
     },
     {
       icon: Shield,
-      title: t("landing.grid.feature6.title", "Equipo & Permisos"),
-      desc: t("landing.grid.feature6.desc", "Invita a tu equipo con roles"),
+      title: t("landing:grid.feature6.title", "Equipo & Permisos"),
+      desc: t("landing:grid.feature6.desc", "Invita a tu equipo con roles"),
       color: "from-sky-500 to-indigo-600",
       bg: "bg-sky-50 dark:bg-sky-900/20",
     },
@@ -188,97 +311,231 @@ const LandingTemplate = () => {
   const steps = [
     {
       num: "01",
-      title: t("landing.howItWorks.step1.title", "Registra tu cuenta"),
-      desc: t("landing.howItWorks.step1.desc", "Crea tu cuenta gratis"),
+      title: t("landing:howItWorks.step1.title", "Registra tu cuenta"),
+      desc: t("landing:howItWorks.step1.desc", "Crea tu cuenta gratis"),
       icon: Sparkles,
     },
     {
       num: "02",
-      title: t("landing.howItWorks.step2.title", "Agrega tus propiedades"),
-      desc: t("landing.howItWorks.step2.desc", "Sube fotos y describe"),
+      title: t("landing:howItWorks.step2.title", "Agrega tus propiedades"),
+      desc: t("landing:howItWorks.step2.desc", "Sube fotos y describe"),
       icon: Zap,
     },
     {
       num: "03",
-      title: t("landing.howItWorks.step3.title", "Gestiona y crece"),
-      desc: t("landing.howItWorks.step3.desc", "Recibe leads y reservaciones"),
+      title: t("landing:howItWorks.step3.title", "Gestiona y crece"),
+      desc: t("landing:howItWorks.step3.desc", "Recibe leads y reservaciones"),
       icon: Globe,
     },
   ];
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-slate-50 dark:bg-slate-950 font-sans">
-      <PublicNavbar />
+      <MarketingNavbar />
 
       {/* ──────────────────────────────────────────
           HERO
       ────────────────────────────────────────── */}
-      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Plus Grid Pattern */}
-        <PlusGrid className="opacity-30 dark:opacity-20" />
+      <section className="relative min-h-dvh flex flex-col items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-950 pt-32 pb-20">
+        {/* Grid Pattern */}
+        <GridPattern
+          width={60}
+          height={60}
+          x={-1}
+          y={-1}
+          className={cn(
+            "mask-[radial-gradient(ellipse_at_center,white,transparent)] opacity-[0.65] dark:opacity-[0.3] text-slate-300 dark:text-slate-500",
+          )}
+        />
 
         {/* Animated gradient orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="marketing-orb absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-cyan-500/20 blur-[100px]" />
-          <div className="marketing-orb marketing-orb-reverse absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-blue-600/15 blur-[120px]" />
-          <div className="marketing-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-violet-500/10 blur-[100px]" />
+          <div className="marketing-orb absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-cyan-500/20 blur-[100px] opacity-50 dark:opacity-100" />
+          <div className="marketing-orb marketing-orb-reverse absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-blue-600/15 blur-[120px] opacity-50 dark:opacity-100" />
+          <div className="marketing-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-violet-500/10 blur-[100px] opacity-50 dark:opacity-100" />
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 text-center pt-24 pb-32">
+        <div className="relative z-10 container mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
+          {/* Badge */}
           <Reveal>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.07] backdrop-blur-md border border-white/10 mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-200/50 dark:bg-white/[0.07] backdrop-blur-md border border-slate-300/50 dark:border-white/10 mb-8 shadow-2xl">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-500 dark:bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500 dark:bg-cyan-400" />
               </span>
-              <span className="text-sm font-medium text-white/80 tracking-wide">
-                {t("landing.hero.badge", "Plataforma inmobiliaria todo-en-uno")}
+              <span className="text-sm font-medium text-slate-700 dark:text-white/90 tracking-wide">
+                {t("landing:hero.badge", "Plataforma dual")}
               </span>
             </div>
           </Reveal>
 
+          {/* Heading */}
           <Reveal delay={0.1}>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[1.05] tracking-tight max-w-5xl mx-auto mb-6">
-              {t("landing.hero.titleStart", "Tu CRM")}{" "}
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
-                {t("landing.hero.titleHighlight", "inmobiliario")}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white leading-[1.05] tracking-tight max-w-5xl mx-auto mb-8">
+              Tu{" "}
+              <span className="bg-linear-to-r from-cyan-500 via-blue-600 to-violet-600 dark:from-cyan-400 dark:via-blue-500 dark:to-violet-500 bg-clip-text text-transparent">
+                CRM Inmobiliario
               </span>{" "}
-              {t("landing.hero.titleEnd", "inteligente")}
+              <br className="hidden sm:block" />y Sitio Web en uno
             </h1>
           </Reveal>
 
+          {/* Connective Subtitle */}
           <Reveal delay={0.2}>
-            <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-              {t("landing.hero.subtitle", "Gestiona propiedades...")}
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
+              {t("landing:hero.subtitle", "Gestiona propiedades...")}
             </p>
           </Reveal>
 
+          {/* CTA */}
           <Reveal delay={0.3}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/register"
-                className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full font-bold text-base sm:text-lg shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-300 active:scale-95"
+            <div className="flex flex-col sm:flex-row gap-4 mb-20">
+              <a
+                href="#contacto"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document
+                    .getElementById("contacto")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-full font-bold text-base sm:text-lg shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-300 active:scale-95"
               >
-                {t("landing.hero.startFree", "Comenzar gratis")}
+                {t("landing:hero.contact", "Comenzar Ahora")}
                 <ArrowRight
                   size={20}
                   className="transition-transform group-hover:translate-x-1"
                 />
-              </Link>
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/[0.07] backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-base sm:text-lg hover:bg-white/[0.12] transition-all duration-300 active:scale-95"
-              >
-                {t("landing.hero.hasAccount", "Ya tengo cuenta")}
-              </Link>
+              </a>
             </div>
           </Reveal>
+
+          {/* FLOATING MOCKUPS - CAROUSEL */}
+          <div className="w-full max-w-5xl flex flex-col items-center gap-8">
+            {/* Dynamic Title */}
+            <div className="h-8 flex items-center justify-center overflow-hidden relative w-full">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={activeMockup}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute text-lg sm:text-2xl font-bold bg-linear-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-blue-500 bg-clip-text text-transparent"
+                >
+                  {mockups[activeMockup].title}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+
+            <div className="relative w-full h-[250px] sm:h-[350px] md:h-[500px] perspective-[2000px] flex items-center justify-center touch-pan-y">
+              {/* Navigation Buttons (Desktop: Side, Mobile: Bottom/Overlay maybe?) */}
+              <button
+                onClick={handlePrev}
+                className="absolute left-0 md:-left-12 z-50 p-2 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-all hidden md:flex"
+              >
+                <ArrowLeft size={24} />
+              </button>
+
+              <button
+                onClick={handleNext}
+                className="absolute right-0 md:-right-12 z-50 p-2 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-all hidden md:flex"
+              >
+                <ArrowRight size={24} />
+              </button>
+
+              <AnimatePresence mode="popLayout">
+                {mockups.map((item, index) => {
+                  // Calculate position relative to active
+                  const offset = (index - activeMockup + 4) % 4;
+
+                  // We show active (0) and next 2 (1, 2). 3 is hidden.
+                  if (offset === 3) return null;
+
+                  const isMobile =
+                    typeof window !== "undefined" && window.innerWidth < 768;
+
+                  const zIndex = 30 - offset * 10;
+
+                  // Desktop vals
+                  let scale = 1 - offset * 0.05;
+                  let y = offset * 40;
+                  let opacity = 1 - offset * 0.2;
+                  let rotateX = 0;
+
+                  return (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9, y: 100, rotateX: -20 }}
+                      animate={{
+                        opacity,
+                        scale,
+                        y,
+                        rotateX,
+                        zIndex,
+                        filter: offset === 0 ? "blur(0px)" : "blur(1px)",
+                      }}
+                      exit={{
+                        opacity: 0,
+                        scale: 1.1,
+                        y: -50,
+                        rotateX: 20,
+                        filter: "blur(10px)",
+                        zIndex: 40,
+                      }}
+                      transition={{
+                        duration: 0.8,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className="absolute top-0 w-[90%] md:w-[70%] max-w-[800px] aspect-video bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden"
+                      style={{
+                        boxShadow:
+                          offset === 0
+                            ? "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+                            : "none",
+                      }}
+                    >
+                      {/* Header bar specific to the frame */}
+                      <div className="h-4 sm:h-6 w-full bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 gap-1.5">
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-rose-400" />
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-400" />
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-400" />
+                      </div>
+                      {/* Content */}
+                      <div className="w-full h-[calc(100%-16px)] sm:h-[calc(100%-24px)] overflow-hidden bg-slate-50 dark:bg-slate-900 relative">
+                        {/* Mobile: Scale content down to fit "as is" without scroll */}
+                        <div className="absolute inset-0 origin-top-left md:static md:scale-100 transform scale-[0.55] w-[181%] h-[181%] md:w-full md:h-full">
+                          {item.component}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+
+            {/* Mobile Controls */}
+            <div className="flex md:hidden gap-4 mt-4">
+              <button
+                onClick={handlePrev}
+                className="p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm text-slate-700 dark:text-slate-200 active:scale-95 transition-transform"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <button
+                onClick={handleNext}
+                className="p-3 rounded-full bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm text-slate-700 dark:text-slate-200 active:scale-95 transition-transform"
+              >
+                <ArrowRight size={20} />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Wave bottom */}
         <WaveDividerBottom
           fill="currentColor"
-          className="text-slate-50 dark:text-slate-950"
+          className="text-slate-50 dark:text-slate-950 z-30 translate-y-1"
         />
       </section>
 
@@ -287,23 +544,26 @@ const LandingTemplate = () => {
       ────────────────────────────────────────── */}
       <section
         id="que-es"
-        className="relative py-20 sm:py-28 bg-slate-50 dark:bg-slate-950"
+        className="relative py-20 sm:py-28 bg-linear-to-b from-blue-50 via-indigo-50/60 to-slate-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 overflow-hidden"
       >
+        {/* Decorative background elements */}
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-blue-200/30 dark:bg-blue-900/10 blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-indigo-200/30 dark:bg-indigo-900/10 blur-[100px] translate-x-1/4 translate-y-1/4 pointer-events-none" />
         <div className="container mx-auto px-4 sm:px-6">
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-16">
               <span className="inline-block text-sm font-bold text-cyan-600 dark:text-cyan-400 tracking-widest uppercase mb-4">
-                {t("landing.features.sectionTitle", "¿Qué es Inmobo?")}
+                {t("landing:features.sectionTitle", "¿Qué es Inmobo?")}
               </span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-6">
                 {t(
-                  "landing.features.sectionSubtitle",
+                  "landing:features.sectionSubtitle",
                   "La plataforma que transforma...",
                 )}
               </h2>
               <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
                 {t(
-                  "landing.features.description",
+                  "landing:features.description",
                   "Inmobo es un CRM inmobiliario completo...",
                 )}
               </p>
@@ -315,19 +575,19 @@ const LandingTemplate = () => {
             {[
               {
                 value: "100%",
-                label: t("landing.stats.cloud", "Cloud Native"),
+                label: t("landing:stats.cloud", "Cloud Native"),
               },
               {
                 value: "24/7",
-                label: t("landing.stats.leads", "Soporte Dedicado"),
+                label: t("landing:stats.leads", "Soporte Dedicado"),
               },
               {
                 value: "API",
-                label: t("landing.stats.gateways", "Integración Total"),
+                label: t("landing:stats.gateways", "Integración Total"),
               },
               {
                 value: "∞",
-                label: t("landing.stats.unlimited", "Escalabilidad"),
+                label: t("landing:stats.unlimited", "Escalabilidad"),
               },
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 0.1}>
@@ -346,7 +606,7 @@ const LandingTemplate = () => {
 
         {/* Diagonal clip bottom */}
         <div
-          className="absolute bottom-0 left-0 w-full h-[60px] sm:h-[80px] bg-white dark:bg-slate-900"
+          className="absolute bottom-0 left-0 w-full h-[60px] sm:h-[80px] bg-linear-to-r from-sky-100 to-blue-100 dark:from-slate-900 dark:to-slate-900"
           style={{ clipPath: "polygon(0 100%, 100% 0, 100% 100%)" }}
         />
       </section>
@@ -356,11 +616,15 @@ const LandingTemplate = () => {
       ────────────────────────────────────────── */}
       <section
         id="caracteristicas"
-        className="relative py-20 sm:py-28 bg-white dark:bg-slate-900"
+        className="relative py-20 sm:py-28 bg-linear-to-br from-sky-100 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 overflow-hidden"
       >
+        <PlusGrid className="opacity-[0.08] dark:opacity-[0.05]" />
+        {/* Decorative background elements */}
+        <div className="absolute top-20 right-0 w-[400px] h-[400px] rounded-full bg-sky-200/40 dark:bg-transparent blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-20 left-0 w-[350px] h-[350px] rounded-full bg-indigo-200/30 dark:bg-transparent blur-[100px] pointer-events-none" />
         {/* Diagonal clip top */}
         <div
-          className="absolute top-0 left-0 w-full h-[60px] sm:h-[80px] bg-slate-50 dark:bg-slate-950"
+          className="absolute top-0 left-0 w-full h-[60px] sm:h-[80px] bg-linear-to-r from-indigo-50/60 to-slate-50 dark:from-slate-950 dark:to-slate-950"
           style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}
         />
 
@@ -368,15 +632,15 @@ const LandingTemplate = () => {
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-16">
               <span className="inline-block text-sm font-bold text-cyan-600 dark:text-cyan-400 tracking-widest uppercase mb-4">
-                {t("landing.grid.sectionTitle", "Características")}
+                {t("landing:grid.sectionTitle", "Características")}
               </span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight">
                 {t(
-                  "landing.grid.sectionSubtitle",
+                  "landing:grid.sectionSubtitle",
                   "Todo lo que necesitas para",
                 )}{" "}
                 <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
-                  {t("landing.grid.subtitleHighlight", "vender más")}
+                  {t("landing:grid.subtitleHighlight", "vender más")}
                 </span>
               </h2>
             </div>
@@ -386,8 +650,8 @@ const LandingTemplate = () => {
             {features.map((f, i) => {
               const Icon = f.icon;
               return (
-                <Reveal key={f.title} delay={i * 0.1}>
-                  <div className="group relative bg-slate-50 dark:bg-slate-800/60 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700/50 hover:border-cyan-300 dark:hover:border-cyan-600 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                <Reveal key={f.title} delay={i * 0.1} className="h-full">
+                  <div className="group relative bg-slate-50 dark:bg-slate-800/60 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700/50 hover:border-cyan-300 dark:hover:border-cyan-600 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full flex flex-col">
                     {/* Gradient glow on hover */}
                     <div
                       className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300`}
@@ -406,7 +670,7 @@ const LandingTemplate = () => {
                     <h3 className="relative z-10 text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3">
                       {f.title}
                     </h3>
-                    <p className="relative z-10 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="relative z-10 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed grow">
                       {f.desc}
                     </p>
                   </div>
@@ -418,18 +682,23 @@ const LandingTemplate = () => {
       </section>
 
       {/* ──────────────────────────────────────────
+          APPLICATION SHOWCASE
+      ────────────────────────────────────────── */}
+      <ApplicationShowcase />
+
+      {/* ──────────────────────────────────────────
           DIAGONAL SPLIT — "TODO EN UN SOLO LUGAR"
       ────────────────────────────────────────── */}
       <section
         id="plataforma"
-        className="relative py-20 sm:py-28 overflow-hidden"
+        className="relative py-20 sm:py-28 overflow-hidden -mt-px"
       >
-        {/* Diagonal background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+        {/* Diagonal background - Light: soft blue gradient, Dark: dark slate */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
         <PlusGrid className="opacity-10" />
 
         <div
-          className="absolute top-0 left-0 w-full h-[60px] sm:h-[100px] bg-white dark:bg-slate-900"
+          className="absolute -top-px left-0 w-full h-[62px] sm:h-[102px] bg-white dark:bg-slate-950"
           style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }}
         />
 
@@ -443,20 +712,20 @@ const LandingTemplate = () => {
             <div>
               <Reveal direction="left">
                 <span className="inline-block text-sm font-bold text-cyan-400 tracking-widest uppercase mb-4">
-                  {t("landing.allInOne.eyebrow", "Todo en un solo lugar")}
+                  {t("landing:allInOne.eyebrow", "Todo en un solo lugar")}
                 </span>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight mb-6">
-                  {t("landing.allInOne.title", "Deja de usar")}{" "}
+                  {t("landing:allInOne.title", "Deja de usar")}{" "}
                   <span className="line-through opacity-50">
                     {t(
-                      "landing.allInOne.strikethrough",
+                      "landing:allInOne.strikethrough",
                       "Excel, WhatsApp, notas",
                     )}
                   </span>
                 </h2>
                 <p className="text-base sm:text-lg text-slate-300 leading-relaxed mb-8">
                   {t(
-                    "landing.allInOne.description",
+                    "landing:allInOne.description",
                     "Con Inmobo centralizas toda la información...",
                   )}
                 </p>
@@ -466,17 +735,17 @@ const LandingTemplate = () => {
                     {
                       icon: Lock,
                       text: t(
-                        "landing.allInOne.list1",
+                        "landing:allInOne.list1",
                         "Datos seguros en la nube",
                       ),
                     },
                     {
                       icon: Globe,
-                      text: t("landing.allInOne.list2", "Sitio público..."),
+                      text: t("landing:allInOne.list2", "Sitio público..."),
                     },
                     {
                       icon: Zap,
-                      text: t("landing.allInOne.list3", "Automatiza cobros..."),
+                      text: t("landing:allInOne.list3", "Automatiza cobros..."),
                     },
                   ].map((item, i) => {
                     const Icon = item.icon;
@@ -517,17 +786,17 @@ const LandingTemplate = () => {
                     <div className="grid grid-cols-3 gap-3 mb-4">
                       {[
                         {
-                          l: t("landing.mockup.properties", "Propiedades"),
+                          l: t("landing:mockup.properties", "Propiedades"),
                           v: "24",
                           c: "text-cyan-400",
                         },
                         {
-                          l: t("landing.mockup.leadsToday", "Leads hoy"),
+                          l: t("landing:mockup.leadsToday", "Leads hoy"),
                           v: "12",
                           c: "text-emerald-400",
                         },
                         {
-                          l: t("landing.mockup.income", "Ingresos"),
+                          l: t("landing:mockup.income", "Ingresos"),
                           v: "$48K",
                           c: "text-amber-400",
                         },
@@ -550,7 +819,7 @@ const LandingTemplate = () => {
                     {/* Chart bars */}
                     <div className="bg-slate-800 rounded-xl p-4">
                       <div className="text-xs text-slate-500 mb-3">
-                        {t("landing.mockup.weeklyVisits", "Visitas semanales")}
+                        {t("landing:mockup.weeklyVisits", "Visitas semanales")}
                       </div>
                       <div className="flex items-end gap-2 h-20">
                         {[40, 65, 50, 80, 70, 90, 60].map((h, i) => (
@@ -589,12 +858,12 @@ const LandingTemplate = () => {
                     <div className="min-w-0">
                       <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                         {t(
-                          "landing.mockup.newReservation",
+                          "landing:mockup.newReservation",
                           "Nueva reservación",
                         )}
                       </p>
                       <p className="text-[10px] sm:text-xs text-slate-500">
-                        {t("landing.mockup.timeAgo", "hace 2 minutos")}
+                        {t("landing:mockup.timeAgo", "hace 2 minutos")}
                       </p>
                     </div>
                   </div>
@@ -607,7 +876,7 @@ const LandingTemplate = () => {
         {/* Wave bottom */}
         <WaveDividerBottom
           fill="currentColor"
-          className="text-slate-50 dark:text-slate-950"
+          className="text-white dark:text-slate-950"
         />
       </section>
 
@@ -616,18 +885,18 @@ const LandingTemplate = () => {
       ────────────────────────────────────────── */}
       <section
         id="como-funciona"
-        className="relative py-20 sm:py-28 bg-slate-50 dark:bg-slate-950"
+        className="relative py-20 sm:py-28 bg-white dark:bg-slate-950"
       >
         <div className="container mx-auto px-4 sm:px-6">
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-16">
               <span className="inline-block text-sm font-bold text-cyan-600 dark:text-cyan-400 tracking-widest uppercase mb-4">
-                {t("landing.howItWorks.sectionTitle", "Cómo funciona")}
+                {t("landing:howItWorks.sectionTitle", "Cómo funciona")}
               </span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight">
-                {t("landing.howItWorks.sectionSubtitle", "Empieza en")}{" "}
+                {t("landing:howItWorks.sectionSubtitle", "Empieza en")}{" "}
                 <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
-                  {t("landing.howItWorks.subtitleHighlight", "3 simples pasos")}
+                  {t("landing:howItWorks.subtitleHighlight", "3 simples pasos")}
                 </span>
               </h2>
             </div>
@@ -688,11 +957,11 @@ const LandingTemplate = () => {
         <div className="relative z-10 container mx-auto px-4 sm:px-6">
           <Reveal>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white text-center mb-4">
-              {t("landing.socialProof.title", "Diseñado para escalar")}
+              {t("landing:socialProof.title", "Diseñado para escalar")}
             </h2>
             <p className="text-center text-white/70 text-base sm:text-lg max-w-2xl mx-auto mb-14">
               {t(
-                "landing.socialProof.subtitle",
+                "landing:socialProof.subtitle",
                 "Herramientas pensadas para el profesional...",
               )}
             </p>
@@ -702,13 +971,13 @@ const LandingTemplate = () => {
             <Counter
               value="99.9"
               suffix="%"
-              label={t("landing.socialProof.stat1.label", "Uptime garantizado")}
+              label={t("landing:socialProof.stat1.label", "Uptime garantizado")}
             />
             <Counter
               value="500"
               suffix="+"
               label={t(
-                "landing.socialProof.stat2.label",
+                "landing:socialProof.stat2.label",
                 "Propiedades gestionadas",
               )}
             />
@@ -727,85 +996,14 @@ const LandingTemplate = () => {
       </section>
 
       {/* ──────────────────────────────────────────
-          FINAL CTA
+          CONTACT FORM
       ────────────────────────────────────────── */}
-      <section className="relative py-20 sm:py-28 bg-slate-50 dark:bg-slate-950">
-        <div className="container mx-auto px-4 sm:px-6">
-          <Reveal>
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 sm:p-12 md:p-16 text-center">
-              {/* Decorative gradient */}
-              <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-cyan-500/10 blur-[80px] -translate-y-1/2 translate-x-1/2" />
-              <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-blue-600/10 blur-[60px] translate-y-1/2 -translate-x-1/2" />
+      <ContactSection />
 
-              <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.07] backdrop-blur-md border border-white/10 mb-8">
-                  <Sparkles size={14} className="text-cyan-400" />
-                  <span className="text-sm font-medium text-white/80">
-                    {t(
-                      "landing.finalCta.badge",
-                      "Empieza gratis, sin tarjeta de crédito",
-                    )}
-                  </span>
-                </div>
-
-                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6 max-w-3xl mx-auto">
-                  {t("landing.finalCta.title", "¿Listo para transformar tu")}{" "}
-                  <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                    {t("landing.finalCta.titleHighlight", "inmobiliario")}
-                  </span>
-                  {t("landing.finalCta.titleEnd", "?")}
-                </h2>
-
-                <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto mb-10 leading-relaxed">
-                  {t(
-                    "landing.finalCta.subtitle",
-                    "Únete a los profesionales que...",
-                  )}
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a
-                    href="mailto:ventas@racoondevs.com"
-                    className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full font-bold text-base sm:text-lg shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-105 transition-all duration-300 active:scale-95"
-                  >
-                    <Mail size={20} />
-                    {t("landing.cta.contactButton", "Contactar Ventas")}
-                  </a>
-                  <a
-                    href="mailto:demo@racoondevs.com"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/[0.07] border border-white/20 text-white rounded-full font-bold text-base sm:text-lg hover:bg-white/[0.12] transition-all duration-300 active:scale-95"
-                  >
-                    {t("landing.cta.scheduleDemo", "Agendar Demo")}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-
-        {/* Footer credits */}
-        <div className="container mx-auto px-4 sm:px-6 mt-12">
-          <div className="text-center text-sm text-slate-400 dark:text-slate-600">
-            <p>
-              {t("landing.footer.rights", { year: new Date().getFullYear() })}
-            </p>
-            <div className="flex justify-center gap-4 mt-3">
-              <Link
-                to="/aviso-privacidad"
-                className="hover:text-cyan-600 transition-colors"
-              >
-                Aviso de Privacidad
-              </Link>
-              <Link
-                to="/terminos-condiciones"
-                className="hover:text-cyan-600 transition-colors"
-              >
-                Términos y Condiciones
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ──────────────────────────────────────────
+          FOOTER
+      ────────────────────────────────────────── */}
+      <MarketingFooter />
     </div>
   );
 };

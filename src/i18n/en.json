@@ -117,9 +117,35 @@
       "login": "Sign in"
     },
     "footer": {
+      "sections": {
+        "product": "Product",
+        "company": "Company",
+        "contact": "Contact",
+        "newsletter": "Subscribe"
+      },
+      "links": {
+        "features": "Features",
+        "pricing": "Pricing",
+        "integrations": "Integrations",
+        "changelog": "Changelog",
+        "about": "About Us",
+        "blog": "Blog",
+        "careers": "Careers"
+      },
       "rights": "© {{year}} Inmobo. All rights reserved.",
       "privacy": "Privacy Policy",
-      "terms": "Terms and Conditions"
+      "terms": "Terms and Conditions",
+      "cookies": "Cookies"
+    },
+    "showcase": {
+      "title": "Power for every",
+      "titleHighlight": "workflow",
+      "subtitle": "From property acquisition to closing deals, Inmobo gives you the tools to manage every step of your operation with precision.",
+      "tabs": {
+        "listings": "Property Management",
+        "crm": "CRM & Leads",
+        "site": "Public Website"
+      }
     },
     "quickCategories": {
       "beachfront": "Beachfront",

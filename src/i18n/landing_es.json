@@ -1,0 +1,183 @@
+{
+  "hero": {
+    "badge": "Plataforma inmobiliaria dual",
+    "titleStart": "Tu CRM Inmobiliario",
+    "titleHighlight": "y Sitio Web",
+    "titleEnd": "en uno",
+    "subtitle": "La única plataforma que une tu gestión interna con tu presencia pública. Controla tus leads y propiedades mientras cautivas a tus clientes.",
+    "contact": "Comenzar Ahora"
+  },
+  "features": {
+    "sectionTitle": "¿Qué es Inmobo?",
+    "sectionSubtitle": "La plataforma que transforma tu negocio inmobiliario",
+    "description": "Inmobo es un CRM inmobiliario completo que centraliza todas las operaciones de tu negocio: desde la publicación de propiedades hasta el cierre de ventas, pasando por la gestión de leads, reservaciones y cobros."
+  },
+  "stats": {
+    "cloud": "Plataforma en la nube",
+    "leads": "Captación de leads",
+    "gateways": "Pasarelas de pago",
+    "unlimited": "Propiedades ilimitadas"
+  },
+  "grid": {
+    "sectionTitle": "Características",
+    "sectionSubtitle": "Todo lo que necesitas para",
+    "subtitleHighlight": "vender más",
+    "feature1": {
+      "title": "Gestión de Propiedades",
+      "desc": "Registra, edita y organiza todas tus propiedades en un solo lugar con imágenes, amenidades y detalles personalizados."
+    },
+    "feature2": {
+      "title": "CRM de Leads",
+      "desc": "Captura leads automáticamente desde tu sitio público, rastrea su interés y convierte prospectos en clientes."
+    },
+    "feature3": {
+      "title": "Reservaciones",
+      "desc": "Sistema completo de reservaciones con calendario, confirmaciones automáticas y gestión de disponibilidad."
+    },
+    "feature4": {
+      "title": "Pagos Integrados",
+      "desc": "Acepta pagos con Stripe y MercadoPago. Genera vouchers automáticos y lleva control financiero al día."
+    },
+    "feature5": {
+      "title": "Analíticas en Tiempo Real",
+      "desc": "Dashboard con métricas de visitas, reservaciones, ingresos y rendimiento de cada propiedad."
+    },
+    "feature6": {
+      "title": "Equipo & Permisos",
+      "desc": "Invita a tu equipo con roles y permisos específicos. Controla quién puede ver, editar o administrar."
+    }
+  },
+  "allInOne": {
+    "eyebrow": "Todo en un solo lugar",
+    "title": "Deja de usar",
+    "strikethrough": "Excel, WhatsApp, notas",
+    "description": "Con Inmobo centralizas toda la información de tu negocio inmobiliario. Ya no necesitas saltar entre 10 herramientas diferentes — todo está integrado y sincronizado en tiempo real.",
+    "list1": "Datos seguros en la nube con Appwrite",
+    "list2": "Sitio público para captar clientes 24/7",
+    "list3": "Automatiza cobros, notificaciones y vouchers"
+  },
+  "mockup": {
+    "properties": "Propiedades",
+    "leadsToday": "Leads hoy",
+    "income": "Ingresos",
+    "weeklyVisits": "Visitas semanales",
+    "newReservation": "Nueva reservación",
+    "timeAgo": "hace 2 minutos"
+  },
+  "howItWorks": {
+    "sectionTitle": "Cómo funciona",
+    "sectionSubtitle": "Empieza en",
+    "subtitleHighlight": "3 simples pasos",
+    "step1": {
+      "title": "Registra tu cuenta",
+      "desc": "Crea tu cuenta gratis en minutos. Configura tu perfil y comienza a agregar propiedades."
+    },
+    "step2": {
+      "title": "Agrega tus propiedades",
+      "desc": "Sube fotos, describe amenidades y personaliza cada listado para atraer a los mejores clientes."
+    },
+    "step3": {
+      "title": "Gestiona y crece",
+      "desc": "Recibe leads, reservaciones y pagos automáticamente. Analiza tu rendimiento y escala tu negocio."
+    }
+  },
+  "socialProof": {
+    "title": "Diseñado para escalar",
+    "subtitle": "Herramientas pensadas para el profesional inmobiliario moderno",
+    "stat1": { "label": "Uptime garantizado" },
+    "stat2": { "label": "Propiedades gestionadas" },
+    "stat3": { "label": "Tiempo de carga" },
+    "stat4": { "label": "Más productividad" }
+  },
+  "showcase": {
+    "title": "Poder para cada",
+    "titleHighlight": "flujo de trabajo",
+    "subtitle": "Desde la captación de propiedades hasta el cierre de tratos, Inmobo te da las herramientas para gestionar cada paso de tu operación con precisión.",
+    "tabs": {
+      "listings": "Gestión de Propiedades",
+      "crm": "CRM y Leads",
+      "site": "Sitio Web Público"
+    },
+    "listings": {
+      "toolbar": {
+        "title": "Propiedades",
+        "search": "Buscar...",
+        "newProperty": "Nueva propiedad",
+        "total": "total"
+      },
+      "table": {
+        "property": "Propiedad",
+        "status": "Estado",
+        "price": "Precio",
+        "stats": "Estadísticas",
+        "actions": "Acciones"
+      },
+      "status": {
+        "published": "Publicada",
+        "draft": "Borrador"
+      },
+      "type": {
+        "sale": "Venta"
+      }
+    },
+    "crm": {
+      "columns": {
+        "new": "Nuevos",
+        "contacted": "Contactados",
+        "closing": "Cierre"
+      },
+      "cards": {
+        "highIntent": "Alta intención",
+        "contractSent": "Contrato enviado para firma",
+        "appointment": "Cita: Mañana 10:00 AM",
+        "ago": {
+          "2h": "Hace 2h",
+          "yesterday": "Ayer"
+        }
+      }
+    },
+    "website": {
+      "hero": {
+        "title": "Encuentra tu hogar ideal",
+        "searchPlaceholder": "Buscar propiedades..."
+      },
+      "cards": {
+        "sale": "Venta"
+      }
+    }
+  },
+  "nav": {
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "dashboard": "Mi Panel",
+    "logout": "Cerrar Sesión",
+    "contact": "Contacto",
+    "sections": {
+      "whatIs": "¿Qué es?",
+      "features": "Características",
+      "platform": "Plataforma",
+      "howItWorks": "Cómo funciona"
+    }
+  },
+  "footer": {
+    "sections": {
+      "product": "Producto",
+      "company": "Compañía",
+      "contact": "Contacto",
+      "newsletter": "Suscríbete"
+    },
+    "links": {
+      "features": "Características",
+      "pricing": "Precios",
+      "integrations": "Integraciones",
+      "changelog": "Novedades",
+      "about": "Nosotros",
+      "blog": "Blog",
+      "careers": "Carreras"
+    },
+    "rights": "© {{year}} Inmobo. Todos los derechos reservados.",
+    "privacy": "Aviso de Privacidad",
+    "terms": "Términos y Condiciones",
+    "cookies": "Cookies"
+  }
+}

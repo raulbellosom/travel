@@ -29,7 +29,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
-import PublicSearch from "../navigation/PublicSearch";
+// Removed PublicSearch import and usages
 
 const PublicNavbar = () => {
   const { t, i18n } = useTranslation();
@@ -303,15 +303,6 @@ const PublicNavbar = () => {
             ))}
           </div>
 
-          {/* Desktop Search */}
-          <div className="hidden lg:flex flex-1 justify-center max-w-md px-2">
-            <PublicSearch
-              showDesktopInput={true}
-              showMobileTrigger={false}
-              variant={isScrolled ? "default" : "transparent"}
-            />
-          </div>
-
           {/* Right Actions — Desktop */}
           <div className="hidden lg:flex items-center gap-2">
             {/* Language Circle */}
@@ -429,9 +420,6 @@ const PublicNavbar = () => {
 
           {/* Mobile Actions (search icon + hamburger) */}
           <div className="flex items-center gap-2 lg:hidden relative z-50">
-            {!isMobileMenuOpen && (
-              <PublicSearch showDesktopInput={false} showMobileTrigger={true} />
-            )}
             <button
               className={cn(
                 "p-2 rounded-lg transition-colors",

@@ -80,10 +80,6 @@ const MarketingEntryRoute = () => {
   const { t } = useTranslation();
   const { loading } = useAuth();
 
-  if (!env.features.marketingSite) {
-    return <Navigate to="/login" replace />;
-  }
-
   if (loading) {
     return (
       <LoadingScreen
@@ -93,6 +89,8 @@ const MarketingEntryRoute = () => {
     );
   }
 
+  // If marketing site is disabled, we still want to show the Home properties
+  // The logic inside Home.jsx will handle what to show
   return <Home />;
 };
 

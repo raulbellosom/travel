@@ -1,0 +1,183 @@
+{
+  "hero": {
+    "badge": "Dual Real Estate Platform",
+    "titleStart": "Your Real Estate CRM",
+    "titleHighlight": "and Website",
+    "titleEnd": "in one",
+    "subtitle": "The only platform that bridges your internal management with your public presence. Control your leads and properties while captivating your clients.",
+    "contact": "Start Now"
+  },
+  "features": {
+    "sectionTitle": "What is Inmobo?",
+    "sectionSubtitle": "The platform that transforms your real estate business",
+    "description": "Inmobo is a complete real estate CRM that centralizes all your business operations: from property publishing to closing sales, including lead management, bookings, and payments."
+  },
+  "stats": {
+    "cloud": "Cloud Native Platform",
+    "leads": "Lead Capture",
+    "gateways": "Payment Gateways",
+    "unlimited": "Unlimited Properties"
+  },
+  "grid": {
+    "sectionTitle": "Features",
+    "sectionSubtitle": "Everything you need to",
+    "subtitleHighlight": "sell more",
+    "feature1": {
+      "title": "Property Management",
+      "desc": "Register, edit, and organize all your properties in one place with images, amenities, and custom details."
+    },
+    "feature2": {
+      "title": "Lead CRM",
+      "desc": "Automatically capture leads from your public site, track their interest, and turn prospects into clients."
+    },
+    "feature3": {
+      "title": "Bookings",
+      "desc": "Complete booking system with calendar, automatic confirmations, and availability management."
+    },
+    "feature4": {
+      "title": "Integrated Payments",
+      "desc": "Accept payments with Stripe and MercadoPago. Generate automatic vouchers and keep up-to-date financial control."
+    },
+    "feature5": {
+      "title": "Real-Time Analytics",
+      "desc": "Dashboard with metrics on visits, bookings, income, and performance of each property."
+    },
+    "feature6": {
+      "title": "Team & Permissions",
+      "desc": "Invite your team with specific roles and permissions. Control who can view, edit, or manage."
+    }
+  },
+  "allInOne": {
+    "eyebrow": "Everything in one place",
+    "title": "Stop using",
+    "strikethrough": "Excel, WhatsApp, sticky notes",
+    "description": "With Inmobo, you centralize all your real estate business information. You no longer need to jump between 10 different tools — everything is integrated and synchronized in real time.",
+    "list1": "Secure data in the cloud with Appwrite",
+    "list2": "Public site to capture clients 24/7",
+    "list3": "Automate payments, notifications, and vouchers"
+  },
+  "mockup": {
+    "properties": "Properties",
+    "leadsToday": "Leads today",
+    "income": "Income",
+    "weeklyVisits": "Weekly visits",
+    "newReservation": "New reservation",
+    "timeAgo": "2 minutes ago"
+  },
+  "howItWorks": {
+    "sectionTitle": "How it works",
+    "sectionSubtitle": "Start in",
+    "subtitleHighlight": "3 simple steps",
+    "step1": {
+      "title": "Register your account",
+      "desc": "Create your free account in minutes. Set up your profile and start adding properties."
+    },
+    "step2": {
+      "title": "Add your properties",
+      "desc": "Upload photos, describe amenities, and customize each listing to attract the best clients."
+    },
+    "step3": {
+      "title": "Manage and grow",
+      "desc": "Receive leads, bookings, and payments automatically. Analyze your performance and scale your business."
+    }
+  },
+  "socialProof": {
+    "title": "Designed to scale",
+    "subtitle": "Tools designed for the modern real estate professional",
+    "stat1": { "label": "Guaranteed Uptime" },
+    "stat2": { "label": "Properties Managed" },
+    "stat3": { "label": "Load Time" },
+    "stat4": { "label": "More Productivity" }
+  },
+  "showcase": {
+    "title": "Power for every",
+    "titleHighlight": "workflow",
+    "subtitle": "From property acquisition to deal closing, Inmobo gives you the tools to manage every step of your operation with precision.",
+    "tabs": {
+      "listings": "Property Management",
+      "crm": "CRM & Leads",
+      "site": "Public Website"
+    },
+    "listings": {
+      "toolbar": {
+        "title": "Properties",
+        "search": "Search...",
+        "newProperty": "New Property",
+        "total": "total"
+      },
+      "table": {
+        "property": "Property",
+        "status": "Status",
+        "price": "Price",
+        "stats": "Stats",
+        "actions": "Actions"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "type": {
+        "sale": "Sale"
+      }
+    },
+    "crm": {
+      "columns": {
+        "new": "New",
+        "contacted": "Contacted",
+        "closing": "Closing"
+      },
+      "cards": {
+        "highIntent": "High Intent",
+        "contractSent": "Contract sent for signature",
+        "appointment": "Appointment: Tomorrow 10:00 AM",
+        "ago": {
+          "2h": "2h ago",
+          "yesterday": "Yesterday"
+        }
+      }
+    },
+    "website": {
+      "hero": {
+        "title": "Find your ideal home",
+        "searchPlaceholder": "Search properties..."
+      },
+      "cards": {
+        "sale": "Sale"
+      }
+    }
+  },
+  "nav": {
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "My Dashboard",
+    "logout": "Logout",
+    "contact": "Contact",
+    "sections": {
+      "whatIs": "What is it?",
+      "features": "Features",
+      "platform": "Platform",
+      "howItWorks": "How it works"
+    }
+  },
+  "footer": {
+    "sections": {
+      "product": "Product",
+      "company": "Company",
+      "contact": "Contact",
+      "newsletter": "Subscribe"
+    },
+    "links": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "integrations": "Integrations",
+      "changelog": "Changelog",
+      "about": "About Us",
+      "blog": "Blog",
+      "careers": "Careers"
+    },
+    "rights": "© {{year}} Inmobo. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions",
+    "cookies": "Cookies"
+  }
+}

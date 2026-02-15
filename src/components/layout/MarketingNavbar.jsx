@@ -13,15 +13,24 @@ import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
 
-const SECTIONS = [
-  { id: "que-es", label: "¿Qué es?" },
-  { id: "caracteristicas", label: "Características" },
-  { id: "plataforma", label: "Plataforma" },
-  { id: "como-funciona", label: "Cómo funciona" },
-];
-
 const MarketingNavbar = () => {
   const { t, i18n } = useTranslation();
+
+  const sections = [
+    { id: "que-es", label: t("landing:nav.sections.whatIs", "¿Qué es?") },
+    {
+      id: "caracteristicas",
+      label: t("landing:nav.sections.features", "Características"),
+    },
+    {
+      id: "plataforma",
+      label: t("landing:nav.sections.platform", "Plataforma"),
+    },
+    {
+      id: "como-funciona",
+      label: t("landing:nav.sections.howItWorks", "Cómo funciona"),
+    },
+  ];
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, effectiveTheme, changeTheme, changeLanguage } = useUI();
@@ -138,16 +147,16 @@ const MarketingNavbar = () => {
   const circleScrolled =
     "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700";
   const circleTransparent =
-    "bg-white/15 border-white/30 text-white hover:bg-white/25 backdrop-blur-sm";
+    "bg-slate-200/50 border-slate-300/50 text-slate-700 hover:bg-slate-200/70 dark:bg-white/15 dark:border-white/30 dark:text-white dark:hover:bg-white/25 backdrop-blur-sm";
   const circleMobile =
     "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700";
 
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-[100] transition-all duration-300",
         isScrolled
-          ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-lg py-3"
+          ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm py-3"
           : "bg-transparent py-5",
       )}
     >
@@ -160,7 +169,7 @@ const MarketingNavbar = () => {
 
           {/* Desktop Section Links */}
           <div className="hidden lg:flex items-center gap-1">
-            {SECTIONS.map((s) => (
+            {sections.map((s) => (
               <button
                 key={s.id}
                 onClick={() => scrollToSection(s.id)}
@@ -168,7 +177,7 @@ const MarketingNavbar = () => {
                   "px-4 py-2 text-sm font-semibold rounded-full transition-colors",
                   isScrolled
                     ? "text-slate-700 hover:text-cyan-600 hover:bg-cyan-50 dark:text-slate-200 dark:hover:text-cyan-400 dark:hover:bg-slate-800"
-                    : "text-white/80 hover:text-white hover:bg-white/10",
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-white/80 dark:hover:text-white dark:hover:bg-white/10",
                 )}
               >
                 {s.label}
@@ -268,24 +277,16 @@ const MarketingNavbar = () => {
               <UserDropdown user={user} onLogout={onLogout} />
             ) : (
               <>
-                <Link
-                  to="/login"
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-full font-semibold transition-all text-sm",
-                    isScrolled
-                      ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-                      : "bg-white text-slate-900 hover:bg-slate-100 shadow-md",
-                  )}
-                >
-                  <LogIn size={18} />
-                  <span>{t("nav.login", "Iniciar Sesión")}</span>
-                </Link>
-                <Link
-                  to="/register"
+                <button
+                  onClick={() => {
+                    document
+                      .getElementById("contacto")
+                      ?.scrollIntoView({ behavior: "smooth" });
+                  }}
                   className="px-5 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-sm shadow-lg hover:shadow-cyan-500/30 hover:scale-105 transition-all active:scale-95"
                 >
-                  {t("nav.register", "Registrarse")}
-                </Link>
+                  {t("landing:nav.contact", "Contacto")}
+                </button>
               </>
             )}
           </div>
@@ -297,7 +298,7 @@ const MarketingNavbar = () => {
                 "p-2 rounded-lg transition-colors",
                 isScrolled || isMobileMenuOpen
                   ? "text-slate-800 dark:text-white"
-                  : "text-white",
+                  : "text-slate-700 dark:text-white",
               )}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
@@ -314,12 +315,12 @@ const MarketingNavbar = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-white dark:bg-slate-900 pt-24 px-6 overflow-y-auto lg:hidden"
+            className="fixed inset-0 z-[90] bg-white dark:bg-slate-900 pt-24 px-6 overflow-y-auto lg:hidden"
           >
             <div className="flex flex-col gap-6">
               {/* Section links */}
               <div className="space-y-1">
-                {SECTIONS.map((s) => (
+                {sections.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => scrollToSection(s.id)}
@@ -382,29 +383,28 @@ const MarketingNavbar = () => {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="w-full py-3 bg-cyan-500 rounded-xl text-white font-bold text-center"
                     >
-                      {t("nav.dashboard", "Mi Panel")}
+                      {t("landing:nav.dashboard", "Mi Panel")}
                     </Link>
                     <button
                       onClick={onLogout}
                       className="w-full py-3 border border-rose-300 rounded-xl text-rose-600 font-bold text-center"
                     >
-                      {t("nav.logout", "Cerrar Sesión")}
+                      {t("landing:nav.logout", "Cerrar Sesión")}
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link
-                      to="/login"
-                      className="w-full py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white font-bold text-center flex items-center justify-center gap-2"
-                    >
-                      <LogIn size={20} /> {t("nav.login", "Iniciar Sesión")}
-                    </Link>
-                    <Link
-                      to="/register"
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        document
+                          .getElementById("contacto")
+                          ?.scrollIntoView({ behavior: "smooth" });
+                      }}
                       className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl text-white font-bold text-center"
                     >
-                      {t("nav.register", "Registrarse")}
-                    </Link>
+                      {t("landing:nav.contact", "Contacto")}
+                    </button>
                   </>
                 )}
               </div>
