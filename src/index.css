@@ -457,11 +457,20 @@ input[type="reset"]:disabled {
 
 .marketing-orb {
   animation: marketing-float 20s ease-in-out infinite;
+  will-change: transform;
 }
 
 .marketing-orb-reverse {
   animation-direction: reverse;
   animation-duration: 25s;
+}
+
+/* Disable heavy orb animations on mobile for better performance */
+@media (max-width: 768px) {
+  .marketing-orb,
+  .marketing-orb-reverse {
+    animation: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -472,7 +481,8 @@ input[type="reset"]:disabled {
   .animate-float-y,
   .animate-shake-soft,
   .animate-glitch-soft,
-  .marketing-orb {
+  .marketing-orb,
+  .marketing-orb-reverse {
     animation: none !important;
   }
 }

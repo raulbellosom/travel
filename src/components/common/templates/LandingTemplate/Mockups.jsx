@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
 import {
   Search,
   Plus,
@@ -86,11 +85,8 @@ export const ListingsMockup = ({ hideUI = false }) => {
       {/* Table Rows */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {[1, 2, 3].map((i) => (
-          <motion.div
+          <div
             key={i}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.1 }}
             className="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-6 py-4 items-center border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
           >
             {/* Property Info */}
@@ -161,7 +157,7 @@ export const ListingsMockup = ({ hideUI = false }) => {
                 <MoreVertical size={16} />
               </button>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>
@@ -185,11 +181,8 @@ export const CrmMockup = () => {
             </span>
           </div>
           {[1, 2].map((i) => (
-            <motion.div
+            <div
               key={`col1-${i}`}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 * i }}
               className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
             >
               <div className="flex justify-between items-start mb-2">
@@ -225,7 +218,7 @@ export const CrmMockup = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -240,11 +233,8 @@ export const CrmMockup = () => {
             </span>
           </div>
           {[3, 4].map((i) => (
-            <motion.div
+            <div
               key={`col2-${i}`}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 + 0.1 * i }}
               className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm opacity-80"
             >
               <div className="flex justify-between items-start mb-2">
@@ -270,7 +260,7 @@ export const CrmMockup = () => {
                   )}
                 </span>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -284,12 +274,7 @@ export const CrmMockup = () => {
               1
             </span>
           </div>
-          <motion.div
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white dark:bg-slate-800 p-3 rounded-xl border-l-4 border-l-emerald-500 border-y border-r border-slate-200 dark:border-slate-700 shadow-md"
-          >
+          <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border-l-4 border-l-emerald-500 border-y border-r border-slate-200 dark:border-slate-700 shadow-md">
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 flex items-center justify-center text-[10px] font-bold">
@@ -309,7 +294,7 @@ export const CrmMockup = () => {
             <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
               <div className="h-full w-3/4 bg-emerald-500 rounded-full" />
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>

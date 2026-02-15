@@ -350,9 +350,9 @@ const LandingTemplate = () => {
 
         {/* Animated gradient orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="marketing-orb absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-cyan-500/20 blur-[100px] opacity-50 dark:opacity-100" />
-          <div className="marketing-orb marketing-orb-reverse absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-blue-600/15 blur-[120px] opacity-50 dark:opacity-100" />
-          <div className="marketing-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-violet-500/10 blur-[100px] opacity-50 dark:opacity-100" />
+          <div className="marketing-orb absolute -top-40 -left-40 w-[300px] h-[300px] md:w-[500px] md:h-[500px] rounded-full bg-cyan-500/20 blur-[60px] md:blur-[100px] opacity-30 md:opacity-50 dark:opacity-100" />
+          <div className="marketing-orb marketing-orb-reverse absolute -bottom-40 -right-40 w-[350px] h-[350px] md:w-[600px] md:h-[600px] rounded-full bg-blue-600/15 blur-[60px] md:blur-[120px] opacity-30 md:opacity-50 dark:opacity-100" />
+          <div className="marketing-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] md:w-[400px] md:h-[400px] rounded-full bg-violet-500/10 blur-[60px] md:blur-[100px] opacity-30 md:opacity-50 dark:opacity-100" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
@@ -360,7 +360,6 @@ const LandingTemplate = () => {
           <Reveal>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-200/50 dark:bg-white/[0.07] backdrop-blur-md border border-slate-300/50 dark:border-white/10 mb-8 shadow-2xl">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-500 dark:bg-cyan-400 opacity-75" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500 dark:bg-cyan-400" />
               </span>
               <span className="text-sm font-medium text-slate-700 dark:text-white/90 tracking-wide">
@@ -451,43 +450,32 @@ const LandingTemplate = () => {
                   // We show active (0) and next 2 (1, 2). 3 is hidden.
                   if (offset === 3) return null;
 
-                  const isMobile =
-                    typeof window !== "undefined" && window.innerWidth < 768;
-
                   const zIndex = 30 - offset * 10;
-
-                  // Desktop vals
-                  let scale = 1 - offset * 0.05;
-                  let y = offset * 40;
-                  let opacity = 1 - offset * 0.2;
-                  let rotateX = 0;
+                  const scale = 1 - offset * 0.05;
+                  const y = offset * 40;
+                  const opacity = 1 - offset * 0.2;
 
                   return (
                     <motion.div
                       key={item.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.9, y: 100, rotateX: -20 }}
+                      initial={{ opacity: 0, scale: 0.9, y: 100 }}
                       animate={{
                         opacity,
                         scale,
                         y,
-                        rotateX,
                         zIndex,
-                        filter: offset === 0 ? "blur(0px)" : "blur(1px)",
                       }}
                       exit={{
                         opacity: 0,
                         scale: 1.1,
                         y: -50,
-                        rotateX: 20,
-                        filter: "blur(10px)",
                         zIndex: 40,
                       }}
                       transition={{
-                        duration: 0.8,
+                        duration: 0.6,
                         ease: [0.16, 1, 0.3, 1],
                       }}
-                      className="absolute top-0 w-[90%] md:w-[70%] max-w-[800px] aspect-video bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden"
+                      className="absolute top-0 w-[90%] md:w-[70%] max-w-[800px] aspect-video bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden will-change-transform"
                       style={{
                         boxShadow:
                           offset === 0
@@ -505,7 +493,7 @@ const LandingTemplate = () => {
                       <div className="w-full h-[calc(100%-16px)] sm:h-[calc(100%-24px)] overflow-hidden bg-slate-50 dark:bg-slate-900 relative">
                         {/* Mobile: Scale content down to fit "as is" without scroll */}
                         <div className="absolute inset-0 origin-top-left md:static md:scale-100 transform scale-[0.55] w-[181%] h-[181%] md:w-full md:h-full">
-                          {item.component}
+                          {offset === 0 ? item.component : null}
                         </div>
                       </div>
                     </motion.div>
@@ -547,8 +535,8 @@ const LandingTemplate = () => {
         className="relative py-20 sm:py-28 bg-linear-to-b from-blue-50 via-indigo-50/60 to-slate-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 overflow-hidden"
       >
         {/* Decorative background elements */}
-        <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-blue-200/30 dark:bg-blue-900/10 blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-indigo-200/30 dark:bg-indigo-900/10 blur-[100px] translate-x-1/4 translate-y-1/4 pointer-events-none" />
+        <div className="hidden md:block absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-blue-200/30 dark:bg-blue-900/10 blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="hidden md:block absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-indigo-200/30 dark:bg-indigo-900/10 blur-[100px] translate-x-1/4 translate-y-1/4 pointer-events-none" />
         <div className="container mx-auto px-4 sm:px-6">
           <Reveal>
             <div className="text-center max-w-3xl mx-auto mb-16">
@@ -620,8 +608,8 @@ const LandingTemplate = () => {
       >
         <PlusGrid className="opacity-[0.08] dark:opacity-[0.05]" />
         {/* Decorative background elements */}
-        <div className="absolute top-20 right-0 w-[400px] h-[400px] rounded-full bg-sky-200/40 dark:bg-transparent blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-20 left-0 w-[350px] h-[350px] rounded-full bg-indigo-200/30 dark:bg-transparent blur-[100px] pointer-events-none" />
+        <div className="hidden md:block absolute top-20 right-0 w-[400px] h-[400px] rounded-full bg-sky-200/40 dark:bg-transparent blur-[100px] pointer-events-none" />
+        <div className="hidden md:block absolute bottom-20 left-0 w-[350px] h-[350px] rounded-full bg-indigo-200/30 dark:bg-transparent blur-[100px] pointer-events-none" />
         {/* Diagonal clip top */}
         <div
           className="absolute top-0 left-0 w-full h-[60px] sm:h-[80px] bg-linear-to-r from-indigo-50/60 to-slate-50 dark:from-slate-950 dark:to-slate-950"
@@ -703,8 +691,8 @@ const LandingTemplate = () => {
         />
 
         {/* Decorative orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-cyan-500/10 blur-[80px]" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-blue-600/10 blur-[100px]" />
+        <div className="hidden md:block absolute top-20 left-10 w-72 h-72 rounded-full bg-cyan-500/10 blur-[80px]" />
+        <div className="hidden md:block absolute bottom-20 right-10 w-96 h-96 rounded-full bg-blue-600/10 blur-[100px]" />
 
         <div className="relative z-10 container mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">

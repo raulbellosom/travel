@@ -79,8 +79,8 @@ const ApplicationShowcase = () => {
       {/* Background Decor */}
       <PlusGrid className="opacity-[0.3] dark:opacity-[0.3]" />
       <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
-      <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute top-40 -left-20 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="hidden md:block absolute -top-40 -right-40 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="hidden md:block absolute top-40 -left-20 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -178,11 +178,11 @@ const ApplicationShowcase = () => {
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={activeTab}
-                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                        transition={{ duration: 0.4 }}
-                        className="h-full"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="h-full will-change-transform"
                       >
                         {activeTab === "listings" && (
                           <ListingsMockup hideUI={true} />
