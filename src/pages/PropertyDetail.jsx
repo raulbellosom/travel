@@ -69,6 +69,7 @@ const PropertyDetail = () => {
   const { t, i18n } = useTranslation();
   const { slug } = useParams();
   const contactRef = useRef(null);
+  const [heroSlide, setHeroSlide] = useState(0);
 
   const [property, setProperty] = useState(null);
   const [owner, setOwner] = useState(null);
@@ -190,6 +191,16 @@ const PropertyDetail = () => {
     ].filter(Boolean);
   }, [images, property]);
 
+  /* ─── Mobile hero auto-slide ─────────────────────────── */
+  useEffect(() => {
+    if (gallery.length <= 1) return;
+    const total = Math.min(gallery.length, 6);
+    const timer = setInterval(() => {
+      setHeroSlide((prev) => (prev + 1) % total);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [gallery.length]);
+
   const operationBadge = useMemo(() => {
     if (!property) return { color: "bg-cyan-500", label: "" };
     if (isSale(opType))
@@ -298,11 +309,77 @@ const PropertyDetail = () => {
   /* ─── Render ─────────────────────────────────────────── */
 
   return (
-    <div className="pt-20 pb-12">
-      {/* ── Breadcrumb ──────────────────────────────────── */}
+    <div className="pb-12 md:pt-20">
+      {/* ── Mobile Hero Cover (auto-sliding) ──────────────── */}
+      <section className="relative md:hidden">
+        <div className="relative aspect-[4/3] w-full overflow-hidden">
+          {/* Slides */}
+          {gallery.slice(0, 6).map((url, i) => (
+            <img
+              key={url + i}
+              src={url || FALLBACK_BANNERS[0]}
+              alt={`${property.title} ${i + 1}`}
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+                i === heroSlide ? "opacity-100" : "opacity-0"
+              }`}
+              loading={i === 0 ? "eager" : "lazy"}
+            />
+          ))}
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
+
+          {/* Bottom overlay content */}
+          <div className="absolute right-0 bottom-0 left-0 flex flex-col gap-3 px-4 pb-4">
+            {/* Title row: badge + title */}
+            <div>
+              <span
+                className={`${operationBadge.color} mb-1.5 inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg`}
+              >
+                {operationBadge.label}
+              </span>
+              <h1 className="text-lg font-bold leading-snug text-white drop-shadow-lg sm:text-xl">
+                {property.title}
+              </h1>
+              <p className="mt-1 flex items-center gap-1.5 text-[13px] text-white/90">
+                <MapPin size={13} className="shrink-0" />
+                {[property.neighborhood, property.city, property.state]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            </div>
+
+            {/* Gallery button - own row, no overlap */}
+            <button
+              type="button"
+              onClick={() => openImageViewer(gallery[heroSlide], heroSlide)}
+              className="inline-flex w-fit items-center gap-2 self-end rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-slate-800 shadow-lg backdrop-blur-sm transition active:scale-95"
+            >
+              <Camera size={14} />
+              {gallery.length} {t("client:propertyDetail.viewAllPhotos")}
+            </button>
+          </div>
+
+          {/* Slide indicators */}
+          {gallery.length > 1 && (
+            <div className="absolute right-0 bottom-1.5 left-0 flex justify-center gap-1.5">
+              {gallery.slice(0, 6).map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1 rounded-full transition-all duration-300 ${
+                    i === heroSlide ? "w-4 bg-white" : "w-1 bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Breadcrumb ────────────────────────────────── */}
       <nav
         aria-label="breadcrumb"
-        className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8"
+        className="mx-auto max-w-7xl px-4 py-3 sm:px-6 md:py-4 lg:px-8"
       >
         <ol className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
           <li>
@@ -329,25 +406,11 @@ const PropertyDetail = () => {
         </ol>
       </nav>
 
-      {/* ── Image Gallery Grid ──────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* ── Desktop Image Gallery Grid ──────────────────── */}
+      <section className="mx-auto hidden max-w-7xl px-4 sm:px-6 md:block lg:px-8">
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl">
-          {/* Mobile: single image carousel */}
-          <div className="md:hidden">
-            <Carousel
-              images={gallery}
-              showArrows
-              showCounter
-              showDots={false}
-              variant="default"
-              aspectRatio="16/10"
-              className="rounded-2xl"
-              onImageClick={openImageViewer}
-            />
-          </div>
-
           {/* Desktop: grid gallery */}
-          <div className="hidden md:grid md:grid-cols-4 md:grid-rows-2 md:gap-2">
+          <div className="grid md:grid-cols-4 md:grid-rows-2 md:gap-2">
             {/* Main large image */}
             <button
               type="button"
@@ -408,8 +471,8 @@ const PropertyDetail = () => {
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
           {/* ── Left Column ─────────────────────────────── */}
           <div className="min-w-0 space-y-8">
-            {/* Title + Location + Badge row */}
-            <div className="space-y-3">
+            {/* Title + Location + Badge row (desktop only – on mobile it's in the hero) */}
+            <div className="hidden space-y-3 md:block">
               <div className="flex flex-wrap items-center gap-3">
                 <span
                   className={`${operationBadge.color} inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white`}
@@ -447,6 +510,14 @@ const PropertyDetail = () => {
                   )}
                 </span>
               </div>
+            </div>
+
+            {/* Mobile: verified badge (title/location already in hero) */}
+            <div className="flex items-center gap-2 md:hidden">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <ShieldCheck size={13} />
+                {t("client:propertyDetail.verifiedListing")}
+              </span>
             </div>
 
             {/* ── Price bar (mobile only – on desktop it's in sidebar) ── */}
