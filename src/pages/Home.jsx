@@ -18,6 +18,7 @@ import PropertyCard from "../components/common/molecules/PropertyCard";
 import Button from "../components/common/atoms/Button";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import LandingTemplate from "../components/common/templates/LandingTemplate/LandingTemplate";
+import LoadingSpinner from "../components/loaders/LoadingSpinner";
 
 const Home = () => {
   const { t } = useTranslation();
@@ -178,11 +179,14 @@ const Home = () => {
 
         {/* Content */}
         {loading ? (
-          <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-            <Loader2 size={48} className="animate-spin text-cyan-600" />
-            <span className="text-slate-500 font-medium animate-pulse">
-              Cargando catálogo...
-            </span>
+          <div className="flex min-h-[400px] items-center justify-center">
+            <LoadingSpinner
+              size="lg"
+              message={t(
+                "client:home.status.loadingCatalog",
+                "Cargando catálogo...",
+              )}
+            />
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center gap-6 rounded-3xl border border-dashed border-red-200 bg-red-50/50 py-20 text-center dark:border-red-900/30 dark:bg-red-900/10">

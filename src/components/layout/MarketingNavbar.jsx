@@ -12,6 +12,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
+import env from "../../env";
 
 const MarketingNavbar = () => {
   const { t, i18n } = useTranslation();
@@ -164,8 +165,23 @@ const MarketingNavbar = () => {
         <div className="container mx-auto px-4 md:px-6">
           <nav className="flex items-center justify-between gap-3">
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0 relative z-50">
+            <Link
+              to="/"
+              className="flex-shrink-0 relative z-50 flex items-center gap-3"
+            >
               <BrandLogo className="h-10 w-auto" />
+              <div>
+                <p
+                  className={cn(
+                    "text-base sm:text-lg font-bold transition-colors",
+                    isScrolled
+                      ? "text-slate-900 dark:text-white"
+                      : "text-white",
+                  )}
+                >
+                  {env.app.name}
+                </p>
+              </div>
             </Link>
 
             {/* Desktop Section Links */}
@@ -334,7 +350,12 @@ const MarketingNavbar = () => {
             >
               {/* Sidebar header */}
               <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-                <BrandLogo className="h-9 w-auto" />
+                <div className="flex items-center gap-3">
+                  <BrandLogo className="h-9 w-auto" />
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">
+                    {env.app.name}
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

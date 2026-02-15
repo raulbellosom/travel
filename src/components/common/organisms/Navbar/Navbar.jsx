@@ -25,6 +25,7 @@ import ThemeToggle from "./ThemeToggle";
 import LanguageSwitcher from "./LanguageSwitcher";
 import BrandLogo from "../../BrandLogo";
 import UserDropdown from "./UserDropdown";
+import env from "../../../../env";
 
 const navItemClass =
   "inline-flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-medium transition";
@@ -59,8 +60,8 @@ const Navbar = () => {
         : "system";
   const ThemeIcon =
     currentTheme === "light" ? Sun : currentTheme === "dark" ? Moon : Monitor;
-  const themeToggleLabel = t("dashboardNavbar.toggleThemeTo", {
-    theme: t(`theme.${nextTheme}`),
+  const themeToggleLabel = t("client:dashboardNavbar.toggleThemeTo", {
+    theme: t(`client:theme.${nextTheme}`),
   });
   const languageLabel = String(language || "es")
     .split("-")[0]
@@ -82,31 +83,39 @@ const Navbar = () => {
           {
             to: INTERNAL_ROUTES.dashboard,
             icon: LayoutDashboard,
-            label: t("nav.dashboard"),
+            label: t("client:nav.dashboard"),
           },
         ]
       : []),
-    { to: "/perfil", icon: UserCircle2, label: t("navbar.userMenu.profile") },
+    {
+      to: "/perfil",
+      icon: UserCircle2,
+      label: t("client:navbar.userMenu.profile"),
+    },
     {
       to: "/mis-reservas",
       icon: BookOpen,
-      label: t("navbar.userMenu.reservations"),
+      label: t("client:navbar.userMenu.reservations"),
     },
-    { to: "/mis-resenas", icon: Star, label: t("navbar.userMenu.reviews") },
+    {
+      to: "/mis-resenas",
+      icon: Star,
+      label: t("client:navbar.userMenu.reviews"),
+    },
     {
       to: "/recuperar-password",
       icon: KeyRound,
-      label: t("navbar.userMenu.password"),
+      label: t("client:navbar.userMenu.password"),
     },
     {
       to: "/aviso-privacidad",
       icon: ShieldCheck,
-      label: t("navbar.userMenu.privacy"),
+      label: t("client:navbar.userMenu.privacy"),
     },
     {
       to: "/terminos-condiciones",
       icon: FileText,
-      label: t("navbar.userMenu.terms"),
+      label: t("client:navbar.userMenu.terms"),
     },
   ];
 
@@ -149,7 +158,7 @@ const Navbar = () => {
             type="button"
             onClick={() => setMobileOpen((prev) => !prev)}
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 lg:hidden max-[380px]:h-9 max-[380px]:w-9"
-            aria-label={t("navbar.toggleMenu")}
+            aria-label={t("client:navbar.toggleMenu")}
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -158,15 +167,15 @@ const Navbar = () => {
             <BrandLogo
               size="sm"
               mode="adaptive"
-              alt={t("navbar.brand")}
+              alt={env.app.name}
               className="rounded-xl shadow-md"
             />
             <div className="min-w-0 leading-tight">
               <p className="truncate whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-white max-[380px]:text-[13px]">
-                {t("navbar.brand")}
+                {env.app.name}
               </p>
               <p className="hidden text-xs text-cyan-600 dark:text-cyan-400 sm:block">
-                {t("navbar.tagline")}
+                {t("client:navbar.tagline")}
               </p>
             </div>
           </Link>
@@ -181,25 +190,25 @@ const Navbar = () => {
                 : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             }`}
           >
-            {t("nav.home")}
+            {t("client:nav.home")}
           </Link>
           <Link
             to="/"
             className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}
           >
-            {t("nav.realEstate")}
+            {t("client:nav.realEstate")}
           </Link>
           <Link
             to="/"
             className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}
           >
-            {t("nav.vacation")}
+            {t("client:nav.vacation")}
           </Link>
           <Link
             to="/"
             className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}
           >
-            {t("nav.services")}
+            {t("client:nav.services")}
           </Link>
         </div>
 
@@ -211,7 +220,7 @@ const Navbar = () => {
             />
             <input
               type="search"
-              placeholder={t("navbar.searchPlaceholder")}
+              placeholder={t("client:navbar.searchPlaceholder")}
               className="min-h-11 w-52 rounded-xl border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             />
           </label>
@@ -228,13 +237,13 @@ const Navbar = () => {
                 to="/login"
                 className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                {t("nav.login")}
+                {t("client:nav.login")}
               </Link>
               <Link
                 to="/register"
                 className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500"
               >
-                {t("nav.register")}
+                {t("client:nav.register")}
               </Link>
             </>
           )}
@@ -244,8 +253,8 @@ const Navbar = () => {
           <button
             onClick={onToggleLanguage}
             className={`${mobileIconButtonClass} text-[11px] font-semibold uppercase tracking-wide max-[380px]:text-[10px]`}
-            aria-label={t("dashboardNavbar.toggleLanguage")}
-            title={t("dashboardNavbar.toggleLanguage")}
+            aria-label={t("client:dashboardNavbar.toggleLanguage")}
+            title={t("client:dashboardNavbar.toggleLanguage")}
           >
             <span>{languageLabel}</span>
           </button>
@@ -253,8 +262,8 @@ const Navbar = () => {
           <Link
             to="/"
             className={mobileIconButtonClass}
-            aria-label={t("nav.home")}
-            title={t("nav.home")}
+            aria-label={t("client:nav.home")}
+            title={t("client:nav.home")}
           >
             <Home size={17} />
           </Link>
@@ -270,17 +279,15 @@ const Navbar = () => {
           </button>
 
           {user ? (
-            <button
-              type="button"
-              onClick={() => setMobileOpen((prev) => !prev)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white/80 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:bg-slate-800 max-[380px]:h-9 max-[380px]:w-9"
-              aria-label={user?.name || t("navbar.userMenu.defaultUser")}
-              title={user?.name || t("navbar.userMenu.defaultUser")}
+            <div
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white/80 dark:border-slate-700 dark:bg-slate-900/60 max-[380px]:h-9 max-[380px]:w-9"
+              aria-label={user?.name || t("client:navbar.userMenu.defaultUser")}
+              title={user?.name || t("client:navbar.userMenu.defaultUser")}
             >
               {user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
-                  alt={user?.name || t("navbar.userMenu.defaultUser")}
+                  alt={user?.name || t("client:navbar.userMenu.defaultUser")}
                   className="h-8 w-8 rounded-full border border-slate-200 object-cover dark:border-slate-700 max-[380px]:h-7 max-[380px]:w-7"
                   loading="lazy"
                 />
@@ -289,13 +296,13 @@ const Navbar = () => {
                   {mobileInitials}
                 </span>
               )}
-            </button>
+            </div>
           ) : (
             <Link
               to="/login"
               className={mobileIconButtonClass}
-              aria-label={t("nav.login")}
-              title={t("nav.login")}
+              aria-label={t("client:nav.login")}
+              title={t("client:nav.login")}
             >
               <UserCircle2 size={17} />
             </Link>
@@ -303,7 +310,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {mobileOpen ? (
+      {mobileOpen && (
         <div className="border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950 lg:hidden">
           <div className="flex flex-col gap-2">
             <Link
@@ -311,28 +318,28 @@ const Navbar = () => {
               onClick={() => setMobileOpen(false)}
               className={navItemClass}
             >
-              {t("nav.home")}
+              {t("client:nav.home")}
             </Link>
             <Link
               to="/"
               onClick={() => setMobileOpen(false)}
               className={navItemClass}
             >
-              {t("nav.realEstate")}
+              {t("client:nav.realEstate")}
             </Link>
             <Link
               to="/"
               onClick={() => setMobileOpen(false)}
               className={navItemClass}
             >
-              {t("nav.vacation")}
+              {t("client:nav.vacation")}
             </Link>
             <Link
               to="/"
               onClick={() => setMobileOpen(false)}
               className={navItemClass}
             >
-              {t("nav.services")}
+              {t("client:nav.services")}
             </Link>
 
             <div className="mt-2 flex items-center gap-2">
@@ -344,7 +351,7 @@ const Navbar = () => {
               <>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    {user?.name || t("navbar.userMenu.defaultUser")}
+                    {user?.name || t("client:navbar.userMenu.defaultUser")}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-300">
                     {user?.email}
@@ -373,7 +380,7 @@ const Navbar = () => {
                   onClick={onLogout}
                   className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200"
                 >
-                  {t("nav.logout")}
+                  {t("client:nav.logout")}
                 </button>
               </>
             ) : (
@@ -383,20 +390,20 @@ const Navbar = () => {
                   onClick={() => setMobileOpen(false)}
                   className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200"
                 >
-                  {t("nav.login")}
+                  {t("client:nav.login")}
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setMobileOpen(false)}
                   className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white"
                 >
-                  {t("nav.register")}
+                  {t("client:nav.register")}
                 </Link>
               </>
             )}
           </div>
         </div>
-      ) : null}
+      )}
     </header>
   );
 };

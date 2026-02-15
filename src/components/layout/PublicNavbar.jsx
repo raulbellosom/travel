@@ -30,6 +30,7 @@ import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
 import PublicSearch from "../navigation/PublicSearch";
+import env from "../../env";
 
 const PublicNavbar = () => {
   const { t, i18n } = useTranslation();
@@ -236,8 +237,21 @@ const PublicNavbar = () => {
       <div className="container mx-auto px-4 md:px-6">
         <nav className="flex items-center justify-between gap-3">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0 relative z-50">
+          <Link
+            to="/"
+            className="flex-shrink-0 relative z-50 flex items-center gap-3"
+          >
             <BrandLogo className="h-10 w-auto" />
+            <div>
+              <p
+                className={cn(
+                  "text-base sm:text-lg font-bold transition-colors",
+                  isScrolled ? "text-slate-900 dark:text-white" : "text-white",
+                )}
+              >
+                {env.app.name}
+              </p>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -324,7 +338,7 @@ const PublicNavbar = () => {
               title={t("dashboardNavbar.toggleLanguage")}
             >
               <span className="text-[11px] font-semibold uppercase tracking-wide">
-                {String(language || "es").toUpperCase()}
+                {String(nextLanguage || "en").toUpperCase()}
               </span>
             </button>
 
@@ -443,8 +457,7 @@ const PublicNavbar = () => {
         </nav>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      {/* Mobile Sidebar Drawer */}
+      {/* Mobile Sidebar Drawer — outside header to avoid backdrop-blur clipping */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -454,7 +467,7 @@ const PublicNavbar = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-200 bg-black/40 backdrop-blur-sm lg:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             />
 
@@ -464,11 +477,16 @@ const PublicNavbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-x-0 bottom-0 top-[64px] z-200 block overflow-y-auto bg-white p-6 dark:bg-slate-950 lg:hidden"
+              className="fixed top-0 right-0 bottom-0 z-210 w-[85%] max-w-md bg-white dark:bg-slate-950 shadow-2xl lg:hidden overflow-y-auto"
             >
               {/* Sidebar header */}
               <div className="flex items-center justify-between border-b border-slate-100 px-6 pb-4 pt-6 dark:border-slate-800">
-                <BrandLogo className="h-9 w-auto" />
+                <div className="flex items-center gap-3">
+                  <BrandLogo className="h-9 w-auto" />
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">
+                    {env.app.name}
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
@@ -537,7 +555,7 @@ const PublicNavbar = () => {
                     aria-label={t("client:navbar.toggleLanguage")}
                   >
                     <span className="text-[11px] font-semibold uppercase tracking-wide">
-                      {String(language || "es").toUpperCase()}
+                      {String(nextLanguage || "en").toUpperCase()}
                     </span>
                   </button>
 

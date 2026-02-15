@@ -42,7 +42,8 @@
     },
     "status": {
       "totalProperties": "{{count}} properties found",
-      "searching": "Searching..."
+      "searching": "Searching...",
+      "loadingCatalog": "Loading catalog..."
     },
     "empty": {
       "title": "No properties found",
@@ -56,6 +57,7 @@
     "retry": "Retry",
     "errorLoading": "We could not load the properties",
     "viewAll": "View all",
+    "loading": "Loading...",
     "units": {
       "squareMeters": "m²"
     },
@@ -88,8 +90,10 @@
     "premium": "Premium"
   },
   "nav": {
+    "home": "Home",
     "realEstate": "Real Estate",
     "vacation": "Vacation Rentals",
+    "services": "Services",
     "dashboard": "My Dashboard",
     "login": "Log In",
     "register": "Register",
@@ -120,10 +124,23 @@
     "currentThemeAria": "Current theme: {{theme}}"
   },
   "navbar": {
+    "brand": "Inmobo",
+    "tagline": "Properties and experiences",
+    "toggleMenu": "Open navigation menu",
+    "searchPlaceholder": "Search properties...",
     "userMenu": {
       "defaultUser": "User",
-      "profile": "Edit Profile"
+      "profile": "Edit Profile",
+      "reservations": "My Reservations",
+      "reviews": "My Reviews",
+      "password": "Change Password",
+      "privacy": "Privacy Policy",
+      "terms": "Terms & Conditions"
     },
+    "toggleLanguage": "Change language"
+  },
+  "dashboardNavbar": {
+    "toggleThemeTo": "Switch theme to {{theme}}",
     "toggleLanguage": "Change language"
   },
   "footer": {
