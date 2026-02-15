@@ -78,7 +78,7 @@ const AdvancedSearch = ({ className = "" }) => {
   ];
 
   const bedroomOptions = [
-    { value: "", label: "Cualquiera" },
+    { value: "", label: t("client:search.anyOption", "Any") },
     { value: "1", label: "1+" },
     { value: "2", label: "2+" },
     { value: "3", label: "3+" },
@@ -86,7 +86,7 @@ const AdvancedSearch = ({ className = "" }) => {
   ];
 
   const bathroomOptions = [
-    { value: "", label: "Cualquiera" },
+    { value: "", label: t("client:search.anyOption", "Any") },
     { value: "1", label: "1+" },
     { value: "2", label: "2+" },
     { value: "3", label: "3+" },
@@ -186,7 +186,7 @@ const AdvancedSearch = ({ className = "" }) => {
               />
               <input
                 type="number"
-                placeholder="Max..."
+                placeholder={t("client:search.price", "Max...")}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-2 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-green-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-green-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-all"
                 value={filters.maxPrice}
                 onChange={(e) =>
@@ -254,7 +254,7 @@ const AdvancedSearch = ({ className = "" }) => {
                   options={bedroomOptions}
                   value={filters.bedrooms}
                   onChange={(val) => setFilters({ ...filters, bedrooms: val })}
-                  placeholder="Any"
+                  placeholder={t("client:search.anyOption", "Any")}
                   size="sm"
                 />
               </div>
@@ -266,7 +266,7 @@ const AdvancedSearch = ({ className = "" }) => {
                   options={bathroomOptions}
                   value={filters.bathrooms}
                   onChange={(val) => setFilters({ ...filters, bathrooms: val })}
-                  placeholder="Any"
+                  placeholder={t("client:search.anyOption", "Any")}
                   size="sm"
                 />
               </div>

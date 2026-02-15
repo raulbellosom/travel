@@ -2,6 +2,8 @@
   "hero": {
     "title": "Descubre tu próximo hogar",
     "subtitle": "Explora las mejores propiedades en venta y renta en las zonas más exclusivas.",
+    "mainTitle": "Tu próximo hogar comienza aquí",
+    "subTitle": "Explora las mejores propiedades en venta y renta en las zonas más exclusivas.",
     "stats": {
       "properties": "Propiedades",
       "satisfaction": "Clientes Satisfechos",
@@ -30,6 +32,19 @@
     "title": "Explora por Categoría",
     "subtitle": "Encuentra el tipo de propiedad que se adapta a tu estilo de vida.",
     "view": "Ver propiedades"
+  },
+  "search": {
+    "location": "Ubicación",
+    "locationPlaceholder": "Ciudad, Zona o Código Postal",
+    "type": "Tipo de Propiedad",
+    "allTypes": "Todos los tipos",
+    "price": "Precio Máx",
+    "button": "Buscar",
+    "minPrice": "Precio Mínimo",
+    "bedrooms": "Habitaciones",
+    "bathrooms": "Baños",
+    "anyOption": "Cualquiera",
+    "unknownLocation": "Ubicación desconocida"
   },
   "home": {
     "seo": {
@@ -71,7 +86,8 @@
         "house": "Casa",
         "apartment": "Departamento",
         "land": "Terreno",
-        "commercial": "Comercial"
+        "commercial": "Comercial",
+        "industrial": "Industrial"
       }
     }
   },

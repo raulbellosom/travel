@@ -164,7 +164,7 @@ const HomeHeroCarousel = () => {
               <span className="truncate">
                 {activeProperty.location ||
                   activeProperty.address ||
-                  "Ubicación desconocida"}
+                  t("client:search.unknownLocation", "Unknown location")}
               </span>
             </div>
             <div className="flex items-center justify-between">

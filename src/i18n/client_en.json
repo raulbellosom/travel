@@ -2,6 +2,8 @@
   "hero": {
     "title": "Discover your next home",
     "subtitle": "Explore the best properties for sale and rent in the most exclusive areas.",
+    "mainTitle": "Your next home starts here",
+    "subTitle": "Explore the best properties for sale and rent in the most exclusive areas.",
     "stats": {
       "properties": "Properties",
       "satisfaction": "Satisfied Clients",
@@ -30,6 +32,19 @@
     "title": "Explore by Category",
     "subtitle": "Find the type of property that fits your lifestyle.",
     "view": "View properties"
+  },
+  "search": {
+    "location": "Location",
+    "locationPlaceholder": "City, Area or Postal Code",
+    "type": "Property Type",
+    "allTypes": "All types",
+    "price": "Max Price",
+    "button": "Search",
+    "minPrice": "Min Price",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "anyOption": "Any",
+    "unknownLocation": "Unknown location"
   },
   "home": {
     "seo": {
@@ -71,7 +86,8 @@
         "house": "House",
         "apartment": "Apartment",
         "land": "Land",
-        "commercial": "Commercial"
+        "commercial": "Commercial",
+        "industrial": "Industrial"
       }
     }
   },
