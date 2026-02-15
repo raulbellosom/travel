@@ -171,7 +171,7 @@ const ApplicationShowcase = () => {
               </div>
 
               {/* Window Content */}
-              <div className="h-[500px] relative bg-slate-100 dark:bg-slate-900 overflow-hidden pt-0">
+              <div className="h-[280px] sm:h-[350px] md:h-[500px] relative bg-slate-100 dark:bg-slate-900 overflow-hidden pt-0">
                 <div className="h-full relative">
                   {/* Mobile Scaling Wrapper */}
                   <div className="absolute inset-0 origin-top-left md:static md:scale-100 transform scale-[0.55] w-[181%] h-[181%] md:w-full md:h-full">
