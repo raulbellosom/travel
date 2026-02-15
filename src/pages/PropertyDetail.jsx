@@ -118,7 +118,7 @@ const PropertyDetail = () => {
         const [ownerDoc, imageDocs, amenityDocs] = await Promise.all([
           propertiesService.getOwnerProfile(doc.ownerUserId).catch(() => null),
           propertiesService.listImages(doc.$id).catch(() => []),
-          amenitiesService.listForProperty(doc.$id).catch(() => []),
+          amenitiesService.getBySlugs(doc.amenities || []).catch(() => []),
         ]);
 
         if (!mounted) return;

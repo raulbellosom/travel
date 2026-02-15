@@ -33,18 +33,22 @@ const EditProperty = () => {
     Promise.all([
       propertiesService.getById(id),
       amenitiesService.listActive().catch(() => []),
-      amenitiesService.listPropertyAmenityIds(id).catch(() => []),
       propertiesService.listImages(id).catch(() => []),
     ])
-      .then(([doc, amenityOptions, selectedAmenityIds, imageDocs]) => {
+      .then(([doc, amenityOptions, imageDocs]) => {
         if (!mounted) return;
+
+        // Get amenity IDs from the amenities slugs in the property document
+        const amenitySlugs = Array.isArray(doc.amenities) ? doc.amenities : [];
+        const selectedAmenityIds = amenityOptions
+          .filter((amenity) => amenitySlugs.includes(amenity.slug))
+          .map((amenity) => amenity.$id);
+
         setAmenities(amenityOptions || []);
         setExistingImages(Array.isArray(imageDocs) ? imageDocs : []);
         setInitialValues({
           ...doc,
-          amenityIds: Array.isArray(selectedAmenityIds)
-            ? selectedAmenityIds
-            : [],
+          amenityIds: selectedAmenityIds,
         });
       })
       .catch((err) => {
@@ -67,8 +71,17 @@ const EditProperty = () => {
     setError("");
     try {
       const { amenityIds = [], imageFiles = [], ...propertyData } = values;
-      await propertiesService.update(id, user.$id, propertyData);
-      await amenitiesService.syncPropertyAmenities(id, amenityIds);
+
+      // Convert amenity IDs to slugs
+      const amenitySlugs = await amenitiesService.convertIdsToSlugs(amenityIds);
+
+      // Update property with amenities array included
+      await propertiesService.update(id, user.$id, {
+        ...propertyData,
+        amenities: amenitySlugs,
+      });
+
+      // Upload new images if any
       if (Array.isArray(imageFiles) && imageFiles.length > 0) {
         const nextSortOrder =
           existingImages.reduce(
@@ -89,6 +102,7 @@ const EditProperty = () => {
           ),
         });
       }
+
       navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, t("editPropertyPage.errors.save")));

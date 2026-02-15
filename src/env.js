@@ -43,7 +43,6 @@ const env = {
       properties: get("APPWRITE_COLLECTION_PROPERTIES_ID"),
       propertyImages: get("APPWRITE_COLLECTION_PROPERTY_IMAGES_ID"),
       amenities: get("APPWRITE_COLLECTION_AMENITIES_ID"),
-      propertyAmenities: get("APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID"),
       leads: get("APPWRITE_COLLECTION_LEADS_ID"),
       reservations: get("APPWRITE_COLLECTION_RESERVATIONS_ID"),
       reservationPayments: get("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID"),

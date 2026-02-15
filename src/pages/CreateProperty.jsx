@@ -47,8 +47,17 @@ const CreateProperty = () => {
     setError("");
     try {
       const { amenityIds = [], imageFiles = [], ...propertyData } = values;
-      const created = await propertiesService.create(user.$id, propertyData);
-      await amenitiesService.syncPropertyAmenities(created.$id, amenityIds);
+
+      // Convert amenity IDs to slugs
+      const amenitySlugs = await amenitiesService.convertIdsToSlugs(amenityIds);
+
+      // Create property with amenities array included
+      const created = await propertiesService.create(user.$id, {
+        ...propertyData,
+        amenities: amenitySlugs,
+      });
+
+      // Upload images if any
       if (Array.isArray(imageFiles) && imageFiles.length > 0) {
         await propertiesService.uploadPropertyImages(created.$id, imageFiles, {
           title: propertyData.title,
@@ -56,6 +65,7 @@ const CreateProperty = () => {
           existingFileIds: created.galleryImageIds || [],
         });
       }
+
       navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, t("createPropertyPage.errors.create")));

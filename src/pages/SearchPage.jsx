@@ -657,10 +657,20 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* ─── Search Hero Banner ─── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 pb-8 pt-28 sm:pt-32 sm:pb-10">
+      <section className="relative overflow-hidden pb-8 pt-28 sm:pt-32 sm:pb-10">
+        {/* Background image with overlay */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=80"
+            alt=""
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-cyan-950/85 to-slate-900/90" />
+        </div>
+
         {/* Decorative blobs */}
-        <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl z-[1]" />
+        <div className="absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl z-[1]" />
 
         <div className="container relative mx-auto px-4 sm:px-6">
           <motion.h1

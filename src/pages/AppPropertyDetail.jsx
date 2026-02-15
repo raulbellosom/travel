@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  lazy,
+  Suspense,
+} from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -42,7 +49,9 @@ import {
   getPublicPropertyRoute,
 } from "../utils/internalRoutes";
 
-const MapDisplay = lazy(() => import("../components/common/molecules/MapDisplay"));
+const MapDisplay = lazy(
+  () => import("../components/common/molecules/MapDisplay"),
+);
 
 /**
  * InfoCard - Displays a labeled value in a card.
@@ -116,16 +125,21 @@ const AppPropertyDetail = () => {
       const [doc, gallery, amenitiesData] = await Promise.all([
         propertiesService.getById(id),
         propertiesService.listImages(id).catch(() => []),
-        amenitiesService.listForProperty(id).catch(() => []),
+        amenitiesService.getBySlugs([]).catch(() => []), // Will be populated once we have doc
       ]);
 
       if (!doc || doc.enabled === false) {
         throw new Error(t("appPropertyDetailPage.errors.notFound"));
       }
 
+      // Now get amenities using slugs from the document
+      const propertyAmenities = await amenitiesService
+        .getBySlugs(doc.amenities || [])
+        .catch(() => []);
+
       setProperty(doc);
       setImages(Array.isArray(gallery) ? gallery : []);
-      setAmenities(Array.isArray(amenitiesData) ? amenitiesData : []);
+      setAmenities(Array.isArray(propertyAmenities) ? propertyAmenities : []);
     } catch (err) {
       setError(getErrorMessage(err, t("appPropertyDetailPage.errors.load")));
       setProperty(null);
@@ -259,7 +273,9 @@ const AppPropertyDetail = () => {
                 )}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                <span>{t("appPropertyDetailPage.viewPublic", "Ver en landing")}</span>
+                <span>
+                  {t("appPropertyDetailPage.viewPublic", "Ver en landing")}
+                </span>
               </a>
             )}
           </div>
@@ -320,7 +336,10 @@ const AppPropertyDetail = () => {
         <div className="space-y-3">
           {/* Main Image */}
           <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
-            <div className="relative flex items-center justify-center bg-slate-50 dark:bg-slate-900" style={{ minHeight: "400px", maxHeight: "500px" }}>
+            <div
+              className="relative flex items-center justify-center bg-slate-50 dark:bg-slate-900"
+              style={{ minHeight: "400px", maxHeight: "500px" }}
+            >
               <img
                 src={images[currentImageIndex]?.url}
                 alt={images[currentImageIndex]?.altText || property.title}
@@ -333,7 +352,10 @@ const AppPropertyDetail = () => {
                 type="button"
                 onClick={() => setIsImageViewerOpen(true)}
                 className="absolute right-3 top-3 rounded-full bg-black/50 p-2 text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100"
-                aria-label={t("appPropertyDetailPage.zoomImage", "Ver imagen completa")}
+                aria-label={t(
+                  "appPropertyDetailPage.zoomImage",
+                  "Ver imagen completa",
+                )}
               >
                 <Maximize2 size={18} />
               </button>

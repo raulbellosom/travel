@@ -104,6 +104,15 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
       : [];
   }
 
+  // amenities: array of slugs
+  if (!forUpdate || hasOwn(source, "amenities")) {
+    data.amenities = Array.isArray(source.amenities)
+      ? source.amenities
+          .map((slug) => String(slug || "").trim())
+          .filter(Boolean)
+      : [];
+  }
+
   return data;
 };
 
@@ -214,6 +223,17 @@ export const propertiesService = {
     if (filters.furnished)
       queries.push(Query.equal("furnished", filters.furnished));
     if (filters.petsAllowed) queries.push(Query.equal("petsAllowed", true));
+
+    // ── Amenities ──
+    // Amenities are stored as an array. Appwrite uses Query.contains() to check
+    // if an array attribute contains specific values.
+    if (filters.amenities && Array.isArray(filters.amenities)) {
+      filters.amenities.forEach((amenity) => {
+        if (amenity && String(amenity).trim()) {
+          queries.push(Query.contains("amenities", String(amenity).trim()));
+        }
+      });
+    }
 
     // ── Featured ──
     if (filters.featured) queries.push(Query.equal("featured", true));

@@ -11,7 +11,6 @@ import {
 } from "../data/amenitiesCatalog";
 
 const AMENITIES_COLLECTION_ID = env.appwrite.collections.amenities;
-const PROPERTY_AMENITIES_COLLECTION_ID = env.appwrite.collections.propertyAmenities;
 const PAGE_SIZE = 100;
 
 const ensureCollectionId = (collectionId, envKey) => {
@@ -117,7 +116,11 @@ const buildDefaultCatalogSeedPlan = (existing = []) => {
     const nameEsKey = normalizeComparableText(normalized.name_es);
     const nameEnKey = normalizeComparableText(normalized.name_en);
 
-    let target = findFirstAvailableByKey(bySlug, normalized.slug, usedExistingIds);
+    let target = findFirstAvailableByKey(
+      bySlug,
+      normalized.slug,
+      usedExistingIds,
+    );
     if (!target) {
       target = findFirstAvailableByKey(byNameEs, nameEsKey, usedExistingIds);
     }
@@ -161,7 +164,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
     const documents = await listAllDocuments({
@@ -176,7 +179,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
     return listAllDocuments({
@@ -189,7 +192,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
     const data = normalizeAmenityInput(input, { includeEnabled: true });
@@ -210,12 +213,12 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
     const shouldIncludeEnabled = Object.prototype.hasOwnProperty.call(
       input || {},
-      "enabled"
+      "enabled",
     );
 
     const data = normalizeAmenityInput(input, {
@@ -237,7 +240,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
     return databases.updateDocument({
@@ -252,7 +255,7 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
     const plan =
@@ -321,102 +324,69 @@ export const amenitiesService = {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
     const existing = await this.listAll();
     return buildDefaultCatalogSeedPlan(existing);
   },
 
-  async listPropertyAmenityIds(propertyId) {
-    ensureAppwriteConfigured();
-    ensureCollectionId(
-      PROPERTY_AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID"
-    );
+  /**
+   * Convert amenity IDs to slugs
+   * @param {string[]} amenityIds - Array of amenity document IDs
+   * @returns {Promise<string[]>} - Array of amenity slugs
+   */
+  async convertIdsToSlugs(amenityIds = []) {
+    if (!Array.isArray(amenityIds) || amenityIds.length === 0) return [];
 
-    const links = await listAllDocuments({
-      collectionId: PROPERTY_AMENITIES_COLLECTION_ID,
-      queries: [Query.equal("propertyId", propertyId)],
-    });
-
-    return links.map((item) => item.amenityId).filter(Boolean);
-  },
-
-  async listForProperty(propertyId) {
     ensureAppwriteConfigured();
     ensureCollectionId(
       AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_AMENITIES_ID"
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
-
-    const amenityIds = await this.listPropertyAmenityIds(propertyId);
-    if (amenityIds.length === 0) return [];
 
     const response = await databases.listDocuments({
       databaseId: env.appwrite.databaseId,
       collectionId: AMENITIES_COLLECTION_ID,
       queries: [
         Query.equal("$id", amenityIds),
-        Query.equal("enabled", true),
         Query.limit(Math.min(PAGE_SIZE, amenityIds.length)),
       ],
     });
 
-    return response.documents || [];
+    return (response.documents || []).map((doc) => doc.slug).filter(Boolean);
   },
 
-  async syncPropertyAmenities(propertyId, amenityIds = []) {
+  /**
+   * Convert amenity slugs to full amenity documents
+   * @param {string[]} slugs - Array of amenity slugs
+   * @returns {Promise<Object[]>} - Array of amenity documents
+   */
+  async getBySlugs(slugs = []) {
+    if (!Array.isArray(slugs) || slugs.length === 0) return [];
+
     ensureAppwriteConfigured();
     ensureCollectionId(
-      PROPERTY_AMENITIES_COLLECTION_ID,
-      "APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID"
+      AMENITIES_COLLECTION_ID,
+      "APPWRITE_COLLECTION_AMENITIES_ID",
     );
 
-    const nextIds = Array.from(
-      new Set((amenityIds || []).map((id) => String(id || "").trim()).filter(Boolean))
-    );
+    const cleanSlugs = slugs
+      .map((slug) => String(slug || "").trim())
+      .filter(Boolean);
 
-    const currentLinks = await listAllDocuments({
-      collectionId: PROPERTY_AMENITIES_COLLECTION_ID,
-      queries: [Query.equal("propertyId", propertyId)],
+    if (cleanSlugs.length === 0) return [];
+
+    const response = await databases.listDocuments({
+      databaseId: env.appwrite.databaseId,
+      collectionId: AMENITIES_COLLECTION_ID,
+      queries: [
+        Query.equal("slug", cleanSlugs),
+        Query.equal("enabled", true),
+        Query.limit(Math.min(PAGE_SIZE, cleanSlugs.length)),
+      ],
     });
 
-    const currentByAmenityId = new Map(
-      currentLinks.map((link) => [link.amenityId, link])
-    );
-
-    const toDelete = currentLinks.filter((link) => !nextIds.includes(link.amenityId));
-    const toCreate = nextIds.filter((amenityId) => !currentByAmenityId.has(amenityId));
-
-    await Promise.all(
-      toDelete.map((link) =>
-        databases.deleteDocument({
-          databaseId: env.appwrite.databaseId,
-          collectionId: PROPERTY_AMENITIES_COLLECTION_ID,
-          documentId: link.$id,
-        })
-      )
-    );
-
-    await Promise.all(
-      toCreate.map((amenityId) =>
-        databases.createDocument({
-          databaseId: env.appwrite.databaseId,
-          collectionId: PROPERTY_AMENITIES_COLLECTION_ID,
-          documentId: ID.unique(),
-          data: {
-            propertyId,
-            amenityId,
-          },
-        })
-      )
-    );
-
-    return {
-      created: toCreate.length,
-      deleted: toDelete.length,
-      total: nextIds.length,
-    };
+    return response.documents || [];
   },
 };

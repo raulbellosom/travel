@@ -96,7 +96,6 @@ Regla:
 | `properties`           | Catalogo de propiedades                 | 0     |
 | `property_images`      | Galeria por propiedad                   | 0     |
 | `amenities`            | Catalogo de amenidades                  | 0     |
-| `property_amenities`   | Relacion many-to-many                   | 0     |
 | `leads`                | Mensajes/contactos                      | 0     |
 | `reservations`         | Reservaciones                           | 0     |
 | `reservation_payments` | Intentos/confirmaciones de pago         | 0     |
@@ -240,6 +239,7 @@ Purpose: catalogo de propiedades del cliente.
 | `videoUrl`         | URL      | -    | no       | -       | URL valida                                                   |
 | `virtualTourUrl`   | URL      | -    | no       | -       | URL valida                                                   |
 | `galleryImageIds`  | string[] | 64   | no       | -       | max 50 elementos, cada elemento size 64                      |
+| `amenities`        | string[] | 64   | no       | -       | Slugs de amenidades (denormalizado de property_amenities)    |
 | `status`           | enum     | -    | no       | `draft` | `draft`,`published`,`inactive`,`archived`                    |
 | `featured`         | boolean  | -    | no       | false   | -                                                            |
 | `views`            | integer  | -    | no       | 0       | min `0`, max `2147483647`                                    |
@@ -273,6 +273,7 @@ Notas:
 - `videoUrl`: URL de video (YouTube, Vimeo, etc.)
 - `virtualTourUrl`: URL de tour virtual 360
 - `galleryImageIds`: `string[]` para lista rapida de file IDs
+- `amenities`: Array de slugs de amenidades (campo denormalizado). Se sincroniza desde `property_amenities` para permitir filtros eficientes con `Query.contains()`. Appwrite no soporta JOINs, por lo que este campo cache es necesario para búsquedas.
 - `views`: Contador
 - `contactCount`: Contador
 - `reservationCount`: Contador
@@ -311,6 +312,7 @@ Notas:
 | `idx_properties_status_date` | idx  | `status ↑, $createdAt ↓` | Lista publica paginada |
 | `full_title_search`          | full | `title`                  | Fulltext titulo        |
 | `full_description_search`    | full | `description`            | Fulltext descripcion   |
+| `idx_properties_amenities`   | idx  | `amenities`              | Filtro por amenidades  |
 
 ### Permissions
 
@@ -390,34 +392,6 @@ Notas:
 
 - Lectura publica de amenidades activas.
 - Escritura solo por owner/root via Function.
-
----
-
-## Collection: property_amenities
-
-Purpose: relacion many-to-many entre propiedades y amenidades.
-
-### Attributes
-
-| Attribute    | Type   | Size | Required | Default | Constraint                    |
-| ------------ | ------ | ---- | -------- | ------- | ----------------------------- |
-| `propertyId` | string | 64   | yes      | -       | FK logical a `properties.$id` |
-| `amenityId`  | string | 64   | yes      | -       | FK logical a `amenities.$id`  |
-
-Notas:
-
-### Indexes
-
-| Index Name                | Type | Attributes                  | Notes                    |
-| ------------------------- | ---- | --------------------------- | ------------------------ |
-| `uq_propamen_combo`       | uq   | `propertyId ↑, amenityId ↑` | Evita duplicados         |
-| `idx_propamen_propertyid` | idx  | `propertyId ↑`              | Amenidades de propiedad  |
-| `idx_propamen_amenityid`  | idx  | `amenityId ↑`               | Propiedades por amenidad |
-
-### Permissions
-
-- Lectura publica en contexto de propiedad publicada.
-- Escritura por owner/staff autorizado.
 
 ---
 
@@ -787,8 +761,6 @@ Notas:
 - `users (1) -> (N) reservations` (como `guestUserId`)
 - `users (1) -> (N) reviews` (como `authorUserId`)
 - `properties (1) -> (N) property_images`
-- `properties (1) -> (N) property_amenities`
-- `amenities (1) -> (N) property_amenities`
 - `properties (1) -> (N) leads`
 - `properties (1) -> (N) reservations`
 - `reservations (1) -> (N) reservation_payments`
@@ -858,6 +830,42 @@ Formato obligatorio:
 - Indice `full_title_search` (fulltext en `title`). Busqueda por titulo.
 - Indice `full_description_search` (fulltext en `description`). Busqueda por descripcion.
 
+## Migration: 2026-02-15-simplify-amenities-to-array
+
+### Added
+
+- Campo `properties.amenities` (string[], size 64). Array de slugs de amenidades.
+- Indice `idx_properties_amenities` para filtros con `Query.contains()`.
+
+### Removed
+
+- Coleccion `property_amenities` (junction table many-to-many).
+- Indices: `uq_propamen_combo`, `idx_propamen_propertyid`, `idx_propamen_amenityid`.
+
+### Rationale
+
+- Appwrite no soporta JOINs.
+- Mantener `property_amenities` + `properties.amenities[]` crea redundancia y requiere sincronizacion constante.
+- Simplificar a solo array en `properties` es mas mantenible y permite filtros eficientes.
+- El wizard/forms se actualizan para guardar directamente en el array.
+
+### Manual Steps
+
+1. En Appwrite Console, abrir coleccion `properties`
+2. Agregar atributo:
+   - Name: `amenities`
+   - Type: `String[]`
+   - Size: `64`
+   - Required: `No`
+   - Array: `Yes`
+3. Crear indice:
+   - Name: `idx_properties_amenities`
+   - Type: `index`
+   - Attributes: `amenities`
+4. **ELIMINAR** coleccion `property_amenities` completamente
+5. Migrar datos existentes: copiar amenity slugs desde `property_amenities` a `properties.amenities[]` antes de eliminar
+6. Actualizar wizard/forms en frontend para guardar directamente en array
+
 ---
 
 ## Estado del Documento
@@ -869,5 +877,5 @@ Formato obligatorio:
 ---
 
 Ultima actualizacion: 2026-02-15
-Version: 2.2.2
-Schema Version: 2.3
+Version: 2.3.0
+Schema Version: 2.5
