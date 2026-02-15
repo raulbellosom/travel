@@ -1,0 +1,463 @@
+{
+  "hero": {
+    "title": "Discover your next home",
+    "subtitle": "Explore the best properties for sale and rent in the most exclusive areas.",
+    "stats": {
+      "properties": "Properties",
+      "satisfaction": "Satisfied Clients",
+      "cities": "Cities"
+    },
+    "search": {
+      "title": "Find your ideal place",
+      "location": "Location",
+      "locationPlaceholder": "Where do you want to live?",
+      "operationType": "Operation Type",
+      "propertyType": "Property Type",
+      "selectOperation": "Select operation",
+      "selectType": "Select type",
+      "searchButton": "Search Properties",
+      "allOperations": "All operations",
+      "allTypes": "All types"
+    }
+  },
+  "featured": {
+    "badge": "Exclusive",
+    "title": "Featured Properties",
+    "subtitle": "A curated selection of the best properties available for you.",
+    "viewAll": "View all"
+  },
+  "categories": {
+    "title": "Explore by Category",
+    "subtitle": "Find the type of property that fits your lifestyle.",
+    "view": "View properties"
+  },
+  "home": {
+    "seo": {
+      "title": "Inmobo | Property Catalog",
+      "description": "Find your ideal property for sale or rent."
+    },
+    "headings": {
+      "searchResults": "Search Results",
+      "latestProperties": "Recent Properties"
+    },
+    "status": {
+      "totalProperties": "{{count}} properties found",
+      "searching": "Searching..."
+    },
+    "empty": {
+      "title": "No properties found",
+      "description": "Try adjusting your search filters to see more results."
+    },
+    "actions": {
+      "clearFilters": "Clear filters"
+    }
+  },
+  "common": {
+    "retry": "Retry",
+    "errorLoading": "We could not load the properties",
+    "viewAll": "View all",
+    "units": {
+      "squareMeters": "m²"
+    },
+    "enums": {
+      "operation": {
+        "sale": "Sale",
+        "rent": "Rent",
+        "vacation_rental": "Vacation Rental"
+      },
+      "propertyType": {
+        "house": "House",
+        "apartment": "Apartment",
+        "land": "Land",
+        "commercial": "Commercial"
+      }
+    }
+  },
+  "property": {
+    "bedrooms": "bd",
+    "bathrooms": "ba",
+    "from": "From"
+  },
+  "pricing": {
+    "perNight": "per night"
+  },
+  "actions": {
+    "viewDetails": "View details"
+  },
+  "badges": {
+    "premium": "Premium"
+  },
+  "nav": {
+    "realEstate": "Real Estate",
+    "vacation": "Vacation Rentals",
+    "dashboard": "My Dashboard",
+    "login": "Log In",
+    "register": "Register",
+    "logout": "Log Out",
+    "dropdown": {
+      "houses": "Houses",
+      "housesDesc": "Homes for sale in the best areas",
+      "apartments": "Apartments",
+      "apartmentsDesc": "Apartments and condos",
+      "land": "Land",
+      "landDesc": "Land ready to build",
+      "commercial": "Commercial",
+      "commercialDesc": "Commercial premises and offices",
+      "hotels": "Hotels",
+      "hotelsDesc": "Accommodation in local hotels",
+      "condos": "Condos",
+      "condosDesc": "Condos for short stays",
+      "villas": "Villas",
+      "villasDesc": "Luxury villas for vacations",
+      "budget": "Budget",
+      "budgetDesc": "Affordable options for everyone"
+    }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "currentThemeAria": "Current theme: {{theme}}"
+  },
+  "navbar": {
+    "userMenu": {
+      "defaultUser": "User",
+      "profile": "Edit Profile"
+    },
+    "toggleLanguage": "Change language"
+  },
+  "footer": {
+    "brand": "Inmobo",
+    "tagline": "Properties and experiences",
+    "description": "The leading platform to find your ideal property in Puerto Vallarta and Riviera Nayarit.",
+    "copyright": "© {{year}} Inmobo. All rights reserved.",
+    "sections": {
+      "explore": "Explore",
+      "legal": "Legal",
+      "newsletter": "Newsletter"
+    },
+    "links": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "properties": "My Properties",
+      "profile": "My Profile",
+      "privacy": "Privacy Policy",
+      "terms": "Terms & Conditions"
+    },
+    "contact": {
+      "city": "Puerto Vallarta, Jal.",
+      "email": "contact@inmobo.com",
+      "phone": "+52 (322) 123-4567"
+    },
+    "newsletter": {
+      "text": "Subscribe to receive the latest news and exclusive offers.",
+      "placeholder": "Your email address",
+      "action": "Subscribe"
+    }
+  },
+  "propertyDetail": {
+    "loading": "Loading property...",
+    "backHome": "Back to home",
+    "priceHint": "List price",
+    "verifiedListing": "Verified Listing",
+    "descriptionTitle": "Description",
+    "amenitiesTitle": "Amenities",
+    "galleryTitle": "Gallery",
+    "reserveHint": "Book online with confirmation and digital voucher.",
+    "reserveCta": "Book now",
+    "errors": {
+      "notFound": "We could not find the property you are looking for.",
+      "load": "Error loading property."
+    },
+    "stats": {
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "totalArea": "Total Area",
+      "type": "Type"
+    },
+    "owner": {
+      "title": "Host / Agent",
+      "unavailable": "Unavailable",
+      "noPhone": "No phone",
+      "rating": "Superhost"
+    },
+    "contact": {
+      "title": "Contact advertiser",
+      "success": "Message sent successfully. You will be contacted soon.",
+      "fields": {
+        "name": "Full Name",
+        "email": "Email",
+        "phoneOptional": "Phone (optional)",
+        "message": "Message"
+      },
+      "actions": {
+        "send": "Send message",
+        "sending": "Sending..."
+      },
+      "errors": {
+        "send": "Could not send your message. Please try again."
+      }
+    }
+  },
+  "map": {
+    "locationTitle": "Location"
+  },
+  "profile": {
+    "summary": {
+      "defaultName": "User"
+    },
+    "emailVerified": "Email Verified",
+    "emailNotVerified": "Email Not Verified",
+    "view": {
+      "empty": "—"
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone",
+      "whatsappNumber": "WhatsApp",
+      "phoneCountryCode": "Country Code",
+      "whatsappCountryCode": "Country Code (WA)"
+    },
+    "placeholders": {
+      "phoneCountryCode": "US +1",
+      "noCountryCodeResults": "Not found",
+      "phoneNumber": "1234567890",
+      "whatsappNumber": "1234567890"
+    },
+    "sections": {
+      "preferences": "Account Preferences"
+    },
+    "preferences": {
+      "theme": "Theme",
+      "language": "Language",
+      "branding": "Brand Customization (Root)",
+      "brandPrimaryColor": "Primary Color",
+      "brandSecondaryColor": "Secondary Color",
+      "brandFontHeading": "Heading Font",
+      "brandFontBody": "Body Font"
+    },
+    "actions": {
+      "editProfile": "Edit Profile",
+      "cancelEdit": "Cancel",
+      "saveProfile": "Save Changes",
+      "savePreferences": "Save Preferences",
+      "saving": "Saving..."
+    },
+    "messages": {
+      "profileSaved": "Profile updated successfully.",
+      "preferencesSaved": "Preferences updated successfully.",
+      "avatarUpdated": "Profile picture updated.",
+      "avatarRemoved": "Profile picture removed."
+    },
+    "errors": {
+      "profile": "Error saving profile.",
+      "preferences": "Error saving preferences.",
+      "avatarUpload": "Error uploading image.",
+      "avatarRemove": "Error removing image.",
+      "avatarSize": "Image must not differ more than {{max}}MB.",
+      "invalidPhone": "Invalid phone number.",
+      "invalidWhatsapp": "Invalid WhatsApp number.",
+      "phoneCountryCodeRequired": "Country code required.",
+      "whatsappCountryCodeRequired": "Country code required (WA).",
+      "brandPrimaryColorInvalid": "Invalid primary color.",
+      "brandSecondaryColorInvalid": "Invalid secondary color.",
+      "brandFontHeadingInvalid": "Invalid heading font name.",
+      "brandFontBodyInvalid": "Invalid body font name."
+    },
+    "security": {
+      "title": "Security",
+      "subtitle": "Update your password and security settings.",
+      "action": "Change Password"
+    },
+    "internal": {
+      "title": "Team Profile",
+      "subtitle": "Manage your information within the admin panel."
+    }
+  },
+  "language": {
+    "spanish": "Spanish",
+    "english": "English"
+  },
+  "myReservations": {
+    "title": "My Reservations",
+    "subtitle": "Check the history and status of your reservations.",
+    "loading": "Loading reservations...",
+    "empty": "No reservations yet",
+    "errors": {
+      "load": "Error loading reservations."
+    },
+    "stats": {
+      "total": "Total",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed"
+    },
+    "labels": {
+      "property": "Property",
+      "guests": "Guests",
+      "created": "Booked on"
+    }
+  },
+  "myReviews": {
+    "title": "My Reviews",
+    "subtitle": "Manage the reviews you have left on properties.",
+    "loading": "Loading reviews...",
+    "empty": "No reviews written yet",
+    "errors": {
+      "load": "Error loading reviews."
+    },
+    "stats": {
+      "total": "Total",
+      "average": "Average Rating"
+    },
+    "labels": {
+      "property": "Property",
+      "created": "Posted on"
+    }
+  },
+  "reserveProperty": {
+    "title": "Book Property",
+    "loading": "Loading booking information...",
+    "errors": {
+      "notFound": "Property not found.",
+      "load": "Error loading property information.",
+      "verifyEmail": "Verify your email to book.",
+      "invalidDates": "Select valid dates.",
+      "invalidGuests": "Invalid number of guests.",
+      "missingReservation": "Error creating reservation.",
+      "missingCheckout": "Error starting payment session.",
+      "create": "Error processing booking."
+    },
+    "actions": {
+      "backToHome": "Back to Home",
+      "processing": "Processing...",
+      "payAndConfirm": "Pay and Confirm"
+    },
+    "labels": {
+      "operation": "Operation",
+      "maxGuests": "Max Guests",
+      "nightlyRate": "Nightly Rate"
+    },
+    "form": {
+      "title": "Booking Details",
+      "fields": {
+        "dateRange": "Dates",
+        "guestCount": "Guests",
+        "guestNameOptional": "Guest Name (optional)",
+        "provider": "Payment Method",
+        "specialRequestsOptional": "Special Requests (optional)"
+      }
+    },
+    "summary": {
+      "nights": "Nights",
+      "baseAmount": "Base Amount",
+      "total": "Total to Pay"
+    },
+    "messages": {
+      "redirecting": "Redirecting to payment..."
+    }
+  },
+  "reservationStatus": {
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "paymentStatus": {
+    "pending": "Pending",
+    "paid": "Paid",
+    "refunded": "Refunded",
+    "failed": "Failed"
+  },
+  "reviewStatus": {
+    "published": "Published",
+    "pending": "Pending",
+    "rejected": "Rejected"
+  },
+  "myProperties": {
+    "title": "My Properties",
+    "subtitle": "Manage your property inventory.",
+    "loading": "Loading properties...",
+    "empty": "You have no registered properties.",
+    "emptyFiltered": "No results for \"{{query}}\".",
+    "errors": {
+      "load": "Error loading properties.",
+      "toggleStatus": "Error changing status.",
+      "delete": "Error deleting property."
+    },
+    "actions": {
+      "create": "Post Property",
+      "openMenu": "Open actions menu",
+      "menuLabel": "Property actions",
+      "view": "View details",
+      "edit": "Edit",
+      "toDraft": "Move to Drafts",
+      "publish": "Publish Property"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Title, slug, city or state"
+    },
+    "table": {
+      "image": "Image",
+      "title": "Title",
+      "location": "Location",
+      "type": "Type",
+      "operation": "Operation",
+      "rooms": "Beds/Baths",
+      "status": "Status",
+      "metrics": "Metrics",
+      "price": "Price",
+      "updatedAt": "Updated",
+      "actions": "Actions",
+      "views": "Views",
+      "leads": "Leads",
+      "reservations": "Reservations"
+    }
+  },
+  "propertyStatus": {
+    "draft": "Draft",
+    "published": "Published",
+    "inactive": "Inactive",
+    "archived": "Archived"
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "updated": "Last updated: February 15, 2026",
+    "intro": "Welcome to Inmobo. By using our services, you agree to these terms and conditions in full. Please read them carefully.",
+    "sections": {
+      "access": {
+        "title": "1. Access and Use",
+        "body": "Access to the platform is free, but certain features may require registration. We reserve the right to suspend or cancel accounts that violate our policies."
+      },
+      "reservations": {
+        "title": "2. Reservations",
+        "body": "Reservations are subject to availability and confirmation by the host. Inmobo does not guarantee the availability of any property until the reservation is confirmed."
+      },
+      "liability": {
+        "title": "3. Liability",
+        "body": "Inmobo acts as an intermediary and is not responsible for the accuracy of the listings or the services provided by the hosts, although we work to verify the quality of the properties."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Privacy Notice",
+    "updated": "Last updated: February 15, 2026",
+    "intro": "At Inmobo, we take the privacy of your data very seriously. This notice describes how we collect, use, and protect your personal information.",
+    "sections": {
+      "data": {
+        "title": "1. Data We Collect",
+        "body": "We collect personal information such as name, email, and phone number to facilitate the booking process and communication."
+      },
+      "usage": {
+        "title": "2. Use of Information",
+        "body": "We use your data to process reservations, improve our services, and communicate with you about your account or transactions."
+      },
+      "rights": {
+        "title": "3. Your Rights",
+        "body": "You have the right to Access, Rectify, Cancel, or Object to the processing of your personal data. You can exercise these rights by contacting us via our support email."
+      }
+    }
+  }
+}

@@ -6,9 +6,12 @@ import {
   Bath,
   Square,
   Heart,
-  Star,
   ChevronLeft,
   ChevronRight,
+  Home,
+  Building2,
+  Store,
+  Warehouse,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +26,7 @@ const normalizeEnumValue = (value) =>
 const humanizeEnumValue = (value) =>
   String(value || "")
     .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
     .trim();
 
 const PropertyCard = ({ property, className }) => {
@@ -30,6 +34,7 @@ const PropertyCard = ({ property, className }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Fallback images logic
   const images =
     property.images && property.images.length > 0
       ? property.images
@@ -38,174 +43,273 @@ const PropertyCard = ({ property, className }) => {
             "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
         ];
 
-  const nextImage = (e) => {
+  // Logic to handle gallery navigation safely
+  const handleNextImage = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    if (images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }
   };
 
-  const prevImage = (e) => {
+  const handlePrevImage = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    if (images.length > 1) {
+      setCurrentImageIndex(
+        (prev) => (prev - 1 + images.length) % images.length,
+      );
+    }
   };
 
   const formatPrice = (price, currency) => {
+    // If we have a valid number, format it. Otherwise show something like "Consultar" or 0
+    if (price === 0 || price === null || price === undefined)
+      return t("client:pricing.contactForPrice");
+
     return new Intl.NumberFormat(i18n.language, {
       style: "currency",
-      currency: currency || "USD",
+      currency: currency || "MXN",
       maximumFractionDigits: 0,
-    }).format(price || 0);
+    }).format(price);
+  };
+
+  // Determine property type icon
+  const getPropertyIcon = (type) => {
+    const normalized = normalizeEnumValue(type);
+    switch (normalized) {
+      case "apartment":
+      case "condo":
+        return Building2;
+      case "land":
+      case "lot":
+        return Square;
+      case "commercial":
+      case "office":
+        return Store;
+      case "industrial":
+      case "warehouse":
+        return Warehouse;
+      default:
+        return Home;
+    }
   };
 
   const propertyTypeRaw = property?.propertyType || property?.type;
   const operationRaw = property?.operationType || property?.operation;
-  const propertyType = normalizeEnumValue(propertyTypeRaw);
-  const operationType = normalizeEnumValue(operationRaw);
-  const typeLabel = propertyType
-    ? t(`homePage.enums.propertyType.${propertyType}`, {
-        defaultValue:
-          humanizeEnumValue(propertyTypeRaw) || t("listingCard.fallbackTitle"),
+
+  const formattedPropertyType = propertyTypeRaw
+    ? t(
+        `client:common.enums.propertyType.${normalizeEnumValue(propertyTypeRaw)}`,
+        {
+          defaultValue: humanizeEnumValue(propertyTypeRaw),
+        },
+      )
+    : t("client:common.enums.propertyType.property");
+
+  const formattedOperationType = operationRaw
+    ? t(`client:common.enums.operation.${normalizeEnumValue(operationRaw)}`, {
+        defaultValue: humanizeEnumValue(operationRaw),
       })
-    : t("listingCard.fallbackTitle");
+    : "";
+
   const isNightlyOperation =
-    operationType === "rent" || operationType === "vacation_rental";
-  const area = property?.totalArea ?? property?.area ?? 0;
+    normalizeEnumValue(operationRaw) === "vacation_rental" ||
+    normalizeEnumValue(operationRaw) === "rent_short";
+
+  const PropertyIcon = getPropertyIcon(propertyTypeRaw);
+
+  // Choose which area to display (built vs total)
+  const displayArea = property.builtArea || property.totalArea || 0;
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
       className={cn(
-        "group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 relative",
+        "group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-200/50 transition-all hover:shadow-2xl hover:shadow-cyan-500/10 dark:bg-slate-900 dark:shadow-none dark:ring-1 dark:ring-white/10",
         className,
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-200">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentImageIndex}
-            src={images[currentImageIndex]}
-            alt={property.title}
-            className="w-full h-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        </AnimatePresence>
+      {/* Image Carousel */}
+      <div className="relative aspect-4/3 overflow-hidden bg-slate-200 dark:bg-slate-800">
+        <Link
+          to={`/propiedades/${property.slug || property.$id}`}
+          className="block h-full w-full"
+        >
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={currentImageIndex}
+              src={images[currentImageIndex]}
+              alt={property.title}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              loading="lazy"
+            />
+          </AnimatePresence>
 
-        <div className="absolute top-4 left-4 flex gap-2">
-          {property.isPremium && (
-            <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-md shadow-sm uppercase tracking-wider">
-              {t("badges.premium")}
+          {/* Overlay Gradient */}
+          <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40" />
+        </Link>
+
+        {/* Badges */}
+        <div className="absolute left-4 top-4 flex flex-col gap-2">
+          {formattedOperationType && (
+            <span className="inline-flex items-center rounded-lg bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-900 shadow-sm backdrop-blur-sm dark:bg-slate-950/90 dark:text-white">
+              {formattedOperationType}
             </span>
           )}
-          <span className="bg-white/90 backdrop-blur-sm text-slate-800 text-xs font-bold px-2 py-1 rounded-md shadow-sm uppercase tracking-wider">
-            {typeLabel}
-          </span>
+          {property.featured && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-950 shadow-sm backdrop-blur-sm">
+              <Star size={10} fill="currentColor" />{" "}
+              {t("client:badges.featured", "Destacado")}
+            </span>
+          )}
         </div>
 
-        <button className="absolute top-4 right-4 p-2 rounded-full bg-white/70 hover:bg-white text-slate-600 hover:text-red-500 transition-all shadow-sm">
+        {/* Favorite Button (Visual only for now) */}
+        <button className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white transition-colors hover:bg-white hover:text-rose-500 backdrop-blur-md">
           <Heart size={18} />
         </button>
 
+        {/* Navigation Arrows */}
         {images.length > 1 && (
-          <div
-            className={cn(
-              "absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 transition-opacity duration-200",
-              isHovered ? "opacity-100" : "opacity-0",
-            )}
-          >
+          <>
             <button
-              onClick={prevImage}
-              className="p-1.5 rounded-full bg-white/80 hover:bg-white text-slate-800 shadow-lg"
+              onClick={handlePrevImage}
+              className={cn(
+                "absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-0",
+                isHovered ? "opacity-100" : "opacity-0",
+              )}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} />
             </button>
             <button
-              onClick={nextImage}
-              className="p-1.5 rounded-full bg-white/80 hover:bg-white text-slate-800 shadow-lg"
+              onClick={handleNextImage}
+              className={cn(
+                "absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-0",
+                isHovered ? "opacity-100" : "opacity-0",
+              )}
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             </button>
-          </div>
-        )}
 
-        {images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {images.slice(0, 5).map((_, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full transition-all bg-white shadow-sm",
-                  currentImageIndex === idx
-                    ? "w-2.5 opacity-100"
-                    : "opacity-60",
-                )}
-              />
-            ))}
-          </div>
+            {/* Dots */}
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+              {images.slice(0, 5).map((_, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all shadow-sm",
+                    idx === currentImageIndex
+                      ? "w-4 bg-white"
+                      : "w-1.5 bg-white/50 hover:bg-white/80",
+                  )}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
-      <Link to={`/propiedades/${property.slug}`} className="block p-5">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-cyan-600 transition-colors">
-            {property.title}
-          </h3>
-          <div className="flex items-center gap-1 text-slate-800 dark:text-slate-200 font-bold">
-            <Star size={14} className="fill-yellow-400 text-yellow-400" />
-            <span>{property.rating || "4.8"}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 mb-4">
-          <MapPin size={14} />
-          <span className="truncate">
-            {property.location?.address || `${property.city}, ${property.state}`}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4 mb-4 text-xs text-slate-600 dark:text-slate-300">
-          <div className="flex items-center gap-1">
-            <BedDouble size={16} />
-            <span>
-              {property.bedrooms || 0} {t("property.bedrooms")}
+      {/* Content */}
+      <div className="flex flex-1 flex-col justify-between p-5">
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">
+              <PropertyIcon size={14} />
+              {formattedPropertyType}
             </span>
+            {/* Rating or other metadata could go here */}
           </div>
-          <div className="flex items-center gap-1">
-            <Bath size={16} />
-            <span>
-              {property.bathrooms || 0} {t("property.bathrooms")}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Square size={16} />
-            <span>
-              {area} {t("homePage.units.squareMeters")}
-            </span>
-          </div>
-        </div>
 
-        <div className="flex items-end justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
-          <div>
-            <p className="text-xs text-slate-500 uppercase font-semibold">
-              {t("listingCard.from")}
+          <Link
+            to={`/propiedades/${property.slug || property.$id}`}
+            className="group-hover:underline"
+          >
+            <h3
+              className="line-clamp-1 text-lg font-bold text-slate-900 dark:text-white"
+              title={property.title}
+            >
+              {property.title}
+            </h3>
+          </Link>
+
+          <div className="mt-2 flex items-start gap-1.5 text-slate-500 dark:text-slate-400">
+            <MapPin size={16} className="mt-0.5 shrink-0" />
+            <p className="line-clamp-1 text-sm">
+              {property.streetAddress ||
+                property.address ||
+                `${property.city}, ${property.state}`}
             </p>
-            <p className="text-xl font-black text-cyan-600 dark:text-cyan-400">
-              {formatPrice(property.price, property.currency)}
-              <span className="text-xs font-normal text-slate-500 ml-1">
-                {isNightlyOperation ? `/ ${t("pricing.perNight")}` : ""}
+          </div>
+
+          {/* Features Grid */}
+          <div className="mt-4 grid grid-cols-3 gap-2 border-y border-slate-100 py-3 dark:border-slate-800">
+            <div className="flex flex-col items-center justify-center gap-1 text-center">
+              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                <BedDouble size={16} />
+                <span className="text-xs font-medium uppercase">
+                  {t("client:property.bedrooms", "Hab")}
+                </span>
+              </div>
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {property.bedrooms || 0}
               </span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center gap-1 text-center border-x border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                <Bath size={16} />
+                <span className="text-xs font-medium uppercase">
+                  {t("client:property.bathrooms", "Baños")}
+                </span>
+              </div>
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {property.bathrooms || 0}
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center gap-1 text-center">
+              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                <Square size={16} />
+                <span className="text-xs font-medium uppercase">m²</span>
+              </div>
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {displayArea}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-end justify-between">
+          <div>
+            <p className="text-xs text-slate-400 font-medium uppercase mb-0.5">
+              {isNightlyOperation
+                ? t("client:pricing.pricePerNight", "Precio por noche")
+                : t("client:pricing.label", "Precio")}
+            </p>
+            <p className="text-xl font-black text-slate-900 dark:text-white">
+              {formatPrice(property.price, property.currency)}
             </p>
           </div>
-          <button className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold rounded-xl opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-            {t("actions.viewDetails")}
-          </button>
+
+          <Link
+            to={`/propiedades/${property.slug || property.$id}`}
+            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-lg active:scale-95 dark:bg-white dark:text-slate-900 dark:hover:bg-cyan-400 opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 duration-300"
+          >
+            {t("client:actions.viewDetails", "Ver Detalles")}
+          </Link>
         </div>
-      </Link>
-    </div>
+      </div>
+    </motion.div>
   );
 };
 

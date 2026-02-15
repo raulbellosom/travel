@@ -52,16 +52,16 @@
 
 ## 3. Rutas Publicas
 
-| Ruta | Descripcion |
-| ---- | ----------- |
-| `/` | Home/catalogo publico |
-| `/propiedades/:slug` | Detalle de propiedad |
-| `/reservar/:slug` | Flujo de reserva (requiere login para confirmar) |
-| `/voucher/:code` | Consulta publica opcional de voucher |
-| `/login` | Inicio de sesion |
-| `/register` | Registro |
-| `/recuperar-password` | Recovery |
-| `/reset-password` | Reset |
+| Ruta                  | Descripcion                                      |
+| --------------------- | ------------------------------------------------ |
+| `/`                   | Home/catalogo publico                            |
+| `/propiedades/:slug`  | Detalle de propiedad                             |
+| `/reservar/:slug`     | Flujo de reserva (requiere login para confirmar) |
+| `/voucher/:code`      | Consulta publica opcional de voucher             |
+| `/login`              | Inicio de sesion                                 |
+| `/register`           | Registro                                         |
+| `/recuperar-password` | Recovery                                         |
+| `/reset-password`     | Reset                                            |
 
 ### 3.1 Flujo `/reservar/:slug`
 
@@ -74,24 +74,45 @@
 7. Webhook confirma pago.
 8. Usuario recibe mensaje de confirmacion + voucher.
 
+### 3.2 Landing Page Toggle (`FEATURE_MARKETING_SITE`)
+
+La ruta `/` muestra contenido diferente dependiendo de `FEATURE_MARKETING_SITE`:
+
+| Valor   | Ruta `/` muestra                             | Caso de uso                             |
+| ------- | -------------------------------------------- | --------------------------------------- |
+| `true`  | `LandingTemplate` — marketing del CRM        | Tú (dueño del CRM) anuncias el producto |
+| `false` | Catálogo de propiedades (`Home` con filtros) | Tu cliente anuncia sus inmuebles        |
+
+**Flujo técnico:**
+
+1. `vite.config.js` → inyecta la variable en `globalThis.__TRAVEL_ENV__`
+2. `src/env.js` → expone como `env.features.marketingSite`
+3. `src/pages/Home.jsx` → si `true` y sin filtros activos, renderiza `LandingTemplate`
+
+**Tres capas de la plataforma:**
+
+- **Marketing CRM** (`true`): Landing con `MarketingNavbar` + `LandingTemplate`
+- **Panel administrativo** (`/app/*`): Dashboard para clientes que compraron el CRM
+- **Catálogo público** (`false`): Landing con `MainLayout` + propiedades del cliente
+
 ---
 
 ## 4. Rutas Privadas de Operacion
 
-| Ruta | Guard | Rol/Scope |
-| ---- | ----- | --------- |
-| `/app/dashboard` | InternalRoute | cualquier usuario interno |
-| `/app/my-properties` | ScopeRoute | `properties.read` |
-| `/app/properties/new` | ScopeRoute | `properties.write` |
-| `/app/properties/:id/edit` | ScopeRoute | `properties.write` |
-| `/app/leads` | ScopeRoute | `leads.read` |
-| `/app/clients` | OwnerRoute | `owner` |
-| `/app/reservations` | ScopeRoute | `reservations.read` |
-| `/app/payments` | ScopeRoute | `payments.read` |
-| `/app/reviews` | ScopeRoute | `reviews.moderate` |
-| `/app/team` | ScopeRoute | `staff.manage` |
-| `/perfil` | ProtectedRoute | usuario autenticado |
-| `/app/settings` | RoleRoute | `owner` o `root` |
+| Ruta                       | Guard          | Rol/Scope                 |
+| -------------------------- | -------------- | ------------------------- |
+| `/app/dashboard`           | InternalRoute  | cualquier usuario interno |
+| `/app/my-properties`       | ScopeRoute     | `properties.read`         |
+| `/app/properties/new`      | ScopeRoute     | `properties.write`        |
+| `/app/properties/:id/edit` | ScopeRoute     | `properties.write`        |
+| `/app/leads`               | ScopeRoute     | `leads.read`              |
+| `/app/clients`             | OwnerRoute     | `owner`                   |
+| `/app/reservations`        | ScopeRoute     | `reservations.read`       |
+| `/app/payments`            | ScopeRoute     | `payments.read`           |
+| `/app/reviews`             | ScopeRoute     | `reviews.moderate`        |
+| `/app/team`                | ScopeRoute     | `staff.manage`            |
+| `/perfil`                  | ProtectedRoute | usuario autenticado       |
+| `/app/settings`            | RoleRoute      | `owner` o `root`          |
 
 En `/app/dashboard` se deben mostrar visualizaciones minimas:
 
@@ -103,10 +124,10 @@ En `/app/dashboard` se deben mostrar visualizaciones minimas:
 
 ## 5. Ruta Oculta Root
 
-| Ruta | Guard | Visible en menu |
-| ---- | ----- | --------------- |
-| `/app/activity` | RootRoute | Si (solo root) |
-| `/app/amenities` | RootRoute | Si (solo root) |
+| Ruta             | Guard     | Visible en menu |
+| ---------------- | --------- | --------------- |
+| `/app/activity`  | RootRoute | Si (solo root)  |
+| `/app/amenities` | RootRoute | Si (solo root)  |
 
 Panel `ActivityLog`:
 

@@ -29,7 +29,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
-// Removed PublicSearch import and usages
+import PublicSearch from "../navigation/PublicSearch";
 
 const PublicNavbar = () => {
   const { t, i18n } = useTranslation();
@@ -303,6 +303,14 @@ const PublicNavbar = () => {
             ))}
           </div>
 
+          {/* Search Bar - Desktop */}
+          <div className="hidden flex-1 items-center justify-center px-6 lg:flex">
+            <PublicSearch
+              variant={isScrolled ? "default" : "transparent"}
+              showMobileTrigger={false}
+            />
+          </div>
+
           {/* Right Actions — Desktop */}
           <div className="hidden lg:flex items-center gap-2">
             {/* Language Circle */}
@@ -436,135 +444,179 @@ const PublicNavbar = () => {
       </div>
 
       {/* Mobile Menu Overlay */}
+      {/* Mobile Sidebar Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-[90] bg-white dark:bg-slate-900 pt-24 px-6 overflow-y-auto lg:hidden"
-          >
-            <div className="flex flex-col gap-6">
-              {navLinks.map((link) => (
-                <div
-                  key={link.name}
-                  className="border-b border-slate-100 dark:border-slate-800 pb-4"
-                >
-                  <Link
-                    to={link.path}
-                    className="text-xl font-bold text-slate-900 dark:text-white mb-3 block"
-                  >
-                    {link.name}
-                  </Link>
-                  <div className="grid grid-cols-2 gap-2">
-                    {link.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.to}
-                          to={item.to}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors"
-                        >
-                          <Icon
-                            size={15}
-                            className="text-cyan-600 dark:text-cyan-400 shrink-0"
-                          />
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+          <>
+            {/* Blurred backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm lg:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
 
-              {/* Language & Theme — dashboard-style circles */}
-              <div className="flex items-center gap-3 py-2">
+            {/* Sidebar panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-x-0 bottom-0 top-[64px] z-200 block overflow-y-auto bg-white p-6 dark:bg-slate-950 lg:hidden"
+            >
+              {/* Sidebar header */}
+              <div className="flex items-center justify-between border-b border-slate-100 px-6 pb-4 pt-6 dark:border-slate-800">
+                <BrandLogo className="h-9 w-auto" />
                 <button
-                  onClick={onToggleLanguage}
-                  className={cn(circleBase, circleMobile)}
-                  aria-label={t("dashboardNavbar.toggleLanguage")}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                 >
-                  <span className="text-[11px] font-semibold uppercase tracking-wide">
-                    {String(language || "es").toUpperCase()}
-                  </span>
+                  <X size={24} />
                 </button>
-
-                {/* Mobile theme — cycle through modes like dashboard navbar */}
-                {themes.map((themeOption) => {
-                  const Icon = themeOption.icon;
-                  const isSelected = theme === themeOption.value;
-                  return (
-                    <button
-                      key={themeOption.value}
-                      onClick={() => handleThemeChange(themeOption.value)}
-                      className={cn(
-                        circleBase,
-                        isSelected
-                          ? "bg-cyan-100 border-cyan-300 text-cyan-700 dark:bg-cyan-900/40 dark:border-cyan-700 dark:text-cyan-400"
-                          : circleMobile,
-                      )}
-                      aria-label={themeOption.name}
-                      title={themeOption.name}
-                    >
-                      <Icon size={16} />
-                    </button>
-                  );
-                })}
               </div>
 
-              <div className="flex flex-col gap-4 mt-4">
-                {user ? (
-                  <>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {user?.name ||
-                          t("navbar.userMenu.defaultUser", "Usuario")}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-300">
-                        {user?.email}
-                      </p>
+              <div className="flex flex-col gap-6 p-6">
+                {/* Mobile Search */}
+                <div className="mb-2">
+                  <PublicSearch
+                    showDesktopInput={false}
+                    showMobileTrigger={false}
+                  />
+                  {/* We manually render a visible input for mobile sidebar if PublicSearch doesn't handle it well inline. 
+                         Actually PublicSearch has a mobile overlay mode, but here we want it IN the sidebar?
+                         The previous PublicNavbar didn't have search in menu. 
+                         Let's just use the PublicSearch input style or rely on its mobile trigger behavior?
+                         The user wants "Sidebar". 
+                         Let's inspect PublicSearch again. It has `showDesktopInput` and `showMobileTrigger`.
+                         If I want it embedded in the sidebar, I might need to adjust PublicSearch or just mock it here.
+                         For now, let's leave it out or add a simple button to open the search overlay.
+                     */}
+                </div>
+
+                {navLinks.map((link) => (
+                  <div
+                    key={link.name}
+                    className="border-b border-slate-100 pb-4 dark:border-slate-800"
+                  >
+                    <Link
+                      to={link.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="mb-3 block text-xl font-bold text-slate-900 dark:text-white"
+                    >
+                      {link.name}
+                    </Link>
+                    <div className="grid grid-cols-1 gap-2">
+                      {link.items.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.to}
+                            to={item.to}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 transition-colors hover:bg-cyan-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <Icon
+                              size={18}
+                              className="shrink-0 text-cyan-600 dark:text-cyan-400"
+                            />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
-                    <Link
-                      to="/perfil"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="w-full py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white font-bold text-center"
-                    >
-                      {t("navbar.userMenu.profile", "Editar Perfil")}
-                    </Link>
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="w-full py-3 bg-cyan-500 rounded-xl text-white font-bold text-center"
-                    >
-                      {t("nav.dashboard", "Mi Panel")}
-                    </Link>
-                    <button
-                      onClick={onLogout}
-                      className="w-full py-3 border border-rose-300 rounded-xl text-rose-600 font-bold text-center"
-                    >
-                      {t("nav.logout", "Cerrar Sesión")}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to="/login"
-                      className="w-full py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white font-bold text-center flex items-center justify-center gap-2"
-                    >
-                      <LogIn size={20} /> {t("nav.login", "Iniciar Sesión")}
-                    </Link>
-                    <Link
-                      to="/register"
-                      className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl text-white font-bold text-center"
-                    >
-                      {t("nav.register", "Registrarse")}
-                    </Link>
-                  </>
-                )}
+                  </div>
+                ))}
+
+                {/* Language & Theme */}
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                  <button
+                    onClick={onToggleLanguage}
+                    className={cn(circleBase, circleMobile)}
+                    aria-label={t("client:navbar.toggleLanguage")}
+                  >
+                    <span className="text-[11px] font-semibold uppercase tracking-wide">
+                      {String(language || "es").toUpperCase()}
+                    </span>
+                  </button>
+
+                  {themes.map((themeOption) => {
+                    const Icon = themeOption.icon;
+                    const isSelected = theme === themeOption.value;
+                    return (
+                      <button
+                        key={themeOption.value}
+                        onClick={() => handleThemeChange(themeOption.value)}
+                        className={cn(
+                          circleBase,
+                          isSelected
+                            ? "border-cyan-300 bg-cyan-100 text-cyan-700 dark:border-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400"
+                            : circleMobile,
+                        )}
+                        aria-label={themeOption.name}
+                        title={themeOption.name}
+                      >
+                        <Icon size={16} />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-2 flex flex-col gap-4">
+                  {user ? (
+                    <>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {user?.name ||
+                            t("client:navbar.userMenu.defaultUser", "Usuario")}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300">
+                          {user?.email}
+                        </p>
+                      </div>
+                      <Link
+                        to="/perfil"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
+                      >
+                        {t("client:navbar.userMenu.profile", "Editar Perfil")}
+                      </Link>
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full rounded-xl bg-cyan-500 py-3 text-center font-bold text-white"
+                      >
+                        {t("client:nav.dashboard", "Mi Panel")}
+                      </Link>
+                      <button
+                        onClick={onLogout}
+                        className="w-full rounded-xl border border-rose-300 py-3 text-center font-bold text-rose-600"
+                      >
+                        {t("client:nav.logout", "Cerrar Sesión")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
+                      >
+                        <LogIn size={20} />{" "}
+                        {t("client:nav.login", "Iniciar Sesión")}
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-center font-bold text-white"
+                      >
+                        {t("client:nav.register", "Registrarse")}
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </header>

@@ -257,17 +257,17 @@ const ReserveProperty = () => {
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-300">
-                {t("reservePropertyPage.labels.operation")}
+                {t("client:reserveProperty.labels.operation")}
               </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
-                {t(`homePage.enums.operation.${property.operationType}`, {
+                {t(`client:common.enums.operation.${property.operationType}`, {
                   defaultValue: property.operationType,
                 })}
               </p>
             </div>
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-300">
-                {t("reservePropertyPage.labels.maxGuests")}
+                {t("client:reserveProperty.labels.maxGuests")}
               </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
                 {property.maxGuests || "-"}
@@ -275,7 +275,7 @@ const ReserveProperty = () => {
             </div>
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-300">
-                {t("reservePropertyPage.labels.nightlyRate")}
+                {t("client:reserveProperty.labels.nightlyRate")}
               </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
                 {formatCurrency(property.price, property.currency, locale)}
@@ -394,7 +394,7 @@ const ReserveProperty = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-cyan-600 to-blue-600 px-6 py-4 font-bold text-white shadow-lg shadow-cyan-900/20 transition-all hover:shadow-cyan-900/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
           >
             <CreditCard size={16} />
             {submitting

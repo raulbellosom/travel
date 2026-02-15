@@ -21,21 +21,27 @@ const HeroSection = ({ className = "" }) => {
   });
 
   const operationOptions = [
-    { value: "", label: t("landing.hero.search.allOperations") },
-    { value: "sale", label: t("homePage.enums.operation.sale") },
-    { value: "rent", label: t("homePage.enums.operation.rent") },
+    { value: "", label: t("client:hero.search.allOperations") },
+    { value: "sale", label: t("client:common.enums.operation.sale") },
+    { value: "rent", label: t("client:common.enums.operation.rent") },
     {
       value: "vacation_rental",
-      label: t("homePage.enums.operation.vacation_rental"),
+      label: t("client:common.enums.operation.vacation_rental"),
     },
   ];
 
   const propertyTypeOptions = [
-    { value: "", label: t("landing.hero.search.allTypes") },
-    { value: "house", label: t("homePage.enums.propertyType.house") },
-    { value: "apartment", label: t("homePage.enums.propertyType.apartment") },
-    { value: "land", label: t("homePage.enums.propertyType.land") },
-    { value: "commercial", label: t("homePage.enums.propertyType.commercial") },
+    { value: "", label: t("client:hero.search.allTypes") },
+    { value: "house", label: t("client:common.enums.propertyType.house") },
+    {
+      value: "apartment",
+      label: t("client:common.enums.propertyType.apartment"),
+    },
+    { value: "land", label: t("client:common.enums.propertyType.land") },
+    {
+      value: "commercial",
+      label: t("client:common.enums.propertyType.commercial"),
+    },
   ];
 
   const handleSearch = () => {
@@ -49,7 +55,7 @@ const HeroSection = ({ className = "" }) => {
 
   return (
     <section
-      className={`relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 ${className}`}
+      className={`relative overflow-hidden bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 ${className}`}
     >
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
@@ -58,7 +64,7 @@ const HeroSection = ({ className = "" }) => {
           alt="Real estate hero"
           className="h-full w-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-cyan-600/20" />
+        <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 via-transparent to-cyan-600/20" />
       </div>
 
       {/* Content */}
@@ -78,7 +84,7 @@ const HeroSection = ({ className = "" }) => {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
               >
-                {t("landing.hero.title")}
+                {t("client:hero.title")}
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -86,7 +92,7 @@ const HeroSection = ({ className = "" }) => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-lg leading-relaxed text-slate-200 sm:text-xl"
               >
-                {t("landing.hero.subtitle")}
+                {t("client:hero.subtitle")}
               </motion.p>
             </div>
 
@@ -103,7 +109,7 @@ const HeroSection = ({ className = "" }) => {
                   500+
                 </div>
                 <p className="mt-1 text-xs text-slate-300">
-                  {t("landing.hero.stats.properties")}
+                  {t("client:hero.stats.properties")}
                 </p>
               </div>
               <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
@@ -112,7 +118,7 @@ const HeroSection = ({ className = "" }) => {
                   98%
                 </div>
                 <p className="mt-1 text-xs text-slate-300">
-                  {t("landing.hero.stats.satisfaction")}
+                  {t("client:hero.stats.satisfaction")}
                 </p>
               </div>
               <div className="rounded-lg border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
@@ -121,7 +127,7 @@ const HeroSection = ({ className = "" }) => {
                   15+
                 </div>
                 <p className="mt-1 text-xs text-slate-300">
-                  {t("landing.hero.stats.cities")}
+                  {t("client:hero.stats.cities")}
                 </p>
               </div>
             </motion.div>
@@ -136,14 +142,14 @@ const HeroSection = ({ className = "" }) => {
           >
             <div className="w-full rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-xl lg:p-8">
               <h2 className="mb-6 text-2xl font-bold text-white">
-                {t("landing.hero.search.title")}
+                {t("client:hero.search.title")}
               </h2>
 
               <div className="space-y-4">
                 {/* City Input */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-white">
-                    {t("landing.hero.search.location")}
+                    {t("client:hero.search.location")}
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -156,7 +162,7 @@ const HeroSection = ({ className = "" }) => {
                           city: e.target.value,
                         })
                       }
-                      placeholder={t("landing.hero.search.locationPlaceholder")}
+                      placeholder={t("client:hero.search.locationPlaceholder")}
                       className="w-full rounded-lg border border-white/20 bg-white/90 py-3 pl-10 pr-4 text-slate-900 placeholder-slate-500 backdrop-blur-sm transition focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
                     />
                   </div>
@@ -165,7 +171,7 @@ const HeroSection = ({ className = "" }) => {
                 {/* Operation Type */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-white">
-                    {t("landing.hero.search.operationType")}
+                    {t("client:hero.search.operationType")}
                   </label>
                   <Select
                     options={operationOptions}
@@ -173,7 +179,7 @@ const HeroSection = ({ className = "" }) => {
                     onChange={(value) =>
                       setSearchParams({ ...searchParams, operation: value })
                     }
-                    placeholder={t("landing.hero.search.selectOperation")}
+                    placeholder={t("client:hero.search.selectOperation")}
                     className="bg-white/90 backdrop-blur-sm"
                   />
                 </div>
@@ -181,7 +187,7 @@ const HeroSection = ({ className = "" }) => {
                 {/* Property Type */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-white">
-                    {t("landing.hero.search.propertyType")}
+                    {t("client:hero.search.propertyType")}
                   </label>
                   <Select
                     options={propertyTypeOptions}
@@ -189,7 +195,7 @@ const HeroSection = ({ className = "" }) => {
                     onChange={(value) =>
                       setSearchParams({ ...searchParams, propertyType: value })
                     }
-                    placeholder={t("landing.hero.search.selectType")}
+                    placeholder={t("client:hero.search.selectType")}
                     className="bg-white/90 backdrop-blur-sm"
                   />
                 </div>
@@ -202,7 +208,7 @@ const HeroSection = ({ className = "" }) => {
                   onClick={handleSearch}
                   leftIcon={Search}
                 >
-                  {t("landing.hero.search.searchButton")}
+                  {t("client:hero.search.searchButton")}
                 </Button>
               </div>
             </div>

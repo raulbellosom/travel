@@ -580,7 +580,7 @@ const LandingTemplate = () => {
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 0.1}>
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 text-center border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                  <span className="block text-2xl sm:text-3xl font-black bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent mb-1">
+                  <span className="block text-2xl sm:text-3xl font-black bg-linear-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent mb-1">
                     {stat.value}
                   </span>
                   <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
@@ -627,7 +627,7 @@ const LandingTemplate = () => {
                   "landing:grid.sectionSubtitle",
                   "Todo lo que necesitas para",
                 )}{" "}
-                <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
                   {t("landing:grid.subtitleHighlight", "vender más")}
                 </span>
               </h2>
@@ -650,7 +650,7 @@ const LandingTemplate = () => {
                     >
                       <Icon
                         size={28}
-                        className={`bg-gradient-to-r ${f.color} bg-clip-text`}
+                        className={`bg-linear-to-r ${f.color} bg-clip-text`}
                         style={{ color: "var(--tw-gradient-from)" }}
                       />
                     </div>
@@ -883,7 +883,7 @@ const LandingTemplate = () => {
               </span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight">
                 {t("landing:howItWorks.sectionSubtitle", "Empieza en")}{" "}
-                <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
                   {t("landing:howItWorks.subtitleHighlight", "3 simples pasos")}
                 </span>
               </h2>
@@ -892,7 +892,7 @@ const LandingTemplate = () => {
 
           <div className="relative max-w-4xl mx-auto">
             {/* Connecting line (desktop) */}
-            <div className="hidden md:block absolute top-24 left-[16.66%] right-[16.66%] h-0.5 bg-gradient-to-r from-cyan-500/30 via-blue-500/30 to-violet-500/30" />
+            <div className="hidden md:block absolute top-24 left-[16.66%] right-[16.66%] h-0.5 bg-linear-to-r from-cyan-500/30 via-blue-500/30 to-violet-500/30" />
 
             <div className="grid md:grid-cols-3 gap-8 sm:gap-10">
               {steps.map((step, i) => {

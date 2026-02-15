@@ -143,6 +143,14 @@ MAPBOX_ACCESS_TOKEN=
 GA_MEASUREMENT_ID=
 ```
 
+| Variable                 | Descripción                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| `FEATURE_GEOLOCATION`    | Habilita geolocalización en el mapa                                                         |
+| `FEATURE_DARK_MODE`      | Habilita selector de tema oscuro                                                            |
+| `FEATURE_I18N`           | Habilita selector de idioma                                                                 |
+| `FEATURE_VERBOSE_LOGS`   | Activa logs detallados en consola                                                           |
+| `FEATURE_MARKETING_SITE` | `true` = landing CRM marketing en `/`, `false` = catálogo de propiedades del cliente en `/` |
+
 ---
 
 ## 9. Validacion Recomendada

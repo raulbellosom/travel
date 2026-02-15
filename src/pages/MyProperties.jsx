@@ -483,12 +483,14 @@ const MyProperties = () => {
         <label className="grid gap-1 text-sm">
           <span className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-200">
             <Search size={14} />
-            {t("myPropertiesPage.filters.search", { defaultValue: "Buscar" })}
+            {t("client:myProperties.filters.search", {
+              defaultValue: "Buscar",
+            })}
           </span>
           <input
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
-            placeholder={t("myPropertiesPage.filters.searchPlaceholder", {
+            placeholder={t("client:myProperties.filters.searchPlaceholder", {
               defaultValue: "Titulo, slug, ciudad o estado",
             })}
             className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
@@ -498,7 +500,7 @@ const MyProperties = () => {
 
       {loading ? (
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("myPropertiesPage.loading")}
+          {t("client:myProperties.loading")}
         </p>
       ) : null}
 
@@ -513,14 +515,14 @@ const MyProperties = () => {
           icon={Building2}
           title={
             normalizedSearch
-              ? t("myPropertiesPage.emptyFiltered", {
+              ? t("client:myProperties.emptyFiltered", {
                   defaultValue: 'No hay resultados para "{{query}}".',
                   query: searchText.trim(),
                 })
-              : t("myPropertiesPage.empty")
+              : t("client:myProperties.empty")
           }
-          description={t("myPropertiesPage.subtitle")}
-          actionLabel={t("myPropertiesPage.actions.create")}
+          description={t("client:myProperties.subtitle")}
+          actionLabel={t("client:myProperties.actions.create")}
           actionTo={INTERNAL_ROUTES.createProperty}
         />
       ) : null}
@@ -532,47 +534,49 @@ const MyProperties = () => {
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.image", {
+                    {t("client:myProperties.table.image", {
                       defaultValue: "Imagen",
                     })}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.title")}
+                    {t("client:myProperties.table.title")}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.location")}
+                    {t("client:myProperties.table.location")}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.type", { defaultValue: "Tipo" })}
+                    {t("client:myProperties.table.type", {
+                      defaultValue: "Tipo",
+                    })}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.operation", {
+                    {t("client:myProperties.table.operation", {
                       defaultValue: "Operacion",
                     })}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.rooms", {
+                    {t("client:myProperties.table.rooms", {
                       defaultValue: "Recamaras/Banos",
                     })}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.status")}
+                    {t("client:myProperties.table.status")}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.metrics", {
+                    {t("client:myProperties.table.metrics", {
                       defaultValue: "Metricas",
                     })}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.price")}
+                    {t("client:myProperties.table.price")}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.updatedAt", {
+                    {t("client:myProperties.table.updatedAt", {
                       defaultValue: "Actualizada",
                     })}
                   </th>
                   <th className="px-4 py-3">
-                    {t("myPropertiesPage.table.actions")}
+                    {t("client:myProperties.table.actions")}
                   </th>
                 </tr>
               </thead>
@@ -738,10 +742,10 @@ const MyProperties = () => {
             <div
               ref={rowActionMenuRef}
               role="menu"
-              aria-label={t("myPropertiesPage.actions.menuLabel", {
+              aria-label={t("client:myProperties.actions.menuLabel", {
                 defaultValue: "Acciones de la propiedad",
               })}
-              className="fixed z-[130] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+              className="fixed z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
               style={{
                 top: `${rowActionMenu.top}px`,
                 left: `${rowActionMenu.left}px`,

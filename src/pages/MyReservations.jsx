@@ -208,7 +208,7 @@ const MyReservations = () => {
                   <Users size={14} />
                   <span>
                     {reservation.guestCount}{" "}
-                    {t("myReservationsPage.labels.guests")}
+                    {t("client:myReservations.labels.guests")}
                   </span>
                 </div>
                 <div className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
@@ -223,7 +223,7 @@ const MyReservations = () => {
                 <div className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                   <MapPin size={14} />
                   <span>
-                    {t("myReservationsPage.labels.created")}:{" "}
+                    {t("client:myReservations.labels.created")}:{" "}
                     {formatDate(reservation.$createdAt, locale)}
                   </span>
                 </div>

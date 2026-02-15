@@ -7,15 +7,19 @@ import en from "./en.json";
 import es from "./es.json";
 import landingEn from "./landing_en.json";
 import landingEs from "./landing_es.json";
+import clientEn from "./client_en.json";
+import clientEs from "./client_es.json";
 
 const resources = {
   en: {
     translation: en,
     landing: landingEn,
+    client: clientEn,
   },
   es: {
     translation: es,
     landing: landingEs,
+    client: clientEs,
   },
 };
 

@@ -26,10 +26,7 @@ import {
   splitE164Phone,
 } from "../utils/phone";
 
-const PROFILE_TEXT_FIELDS = [
-  "firstName",
-  "lastName",
-];
+const PROFILE_TEXT_FIELDS = ["firstName", "lastName"];
 
 const PROFILE_EDIT_KEYS = [
   ...PROFILE_TEXT_FIELDS,
@@ -55,7 +52,9 @@ const inputClass =
   "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50";
 
 const splitFullName = (value) => {
-  const normalized = String(value || "").trim().replace(/\s+/g, " ");
+  const normalized = String(value || "")
+    .trim()
+    .replace(/\s+/g, " ");
   if (!normalized) return { firstName: "", lastName: "" };
   const [firstName, ...rest] = normalized.split(" ");
   return {
@@ -81,13 +80,13 @@ const buildProfileFormFromSources = ({ profile, user }) => {
     profile?.phoneCountryCode ||
       profilePhoneParts.dialCode ||
       authPhoneParts.dialCode ||
-      "+52"
+      "+52",
   );
 
   const phone = sanitizePhoneLocalNumber(
     profilePhoneRaw.startsWith("+")
       ? profilePhoneParts.localNumber
-      : profile?.phone || authPhoneParts.localNumber || ""
+      : profile?.phone || authPhoneParts.localNumber || "",
   );
 
   return {
@@ -96,12 +95,14 @@ const buildProfileFormFromSources = ({ profile, user }) => {
     phoneCountryCode,
     phone,
     whatsappCountryCode: normalizePhoneDialCode(
-      profile?.whatsappCountryCode || whatsappParts.dialCode || phoneCountryCode
+      profile?.whatsappCountryCode ||
+        whatsappParts.dialCode ||
+        phoneCountryCode,
     ),
     whatsappNumber: sanitizePhoneLocalNumber(
       whatsappRaw.startsWith("+")
         ? whatsappParts.localNumber
-        : profile?.whatsappNumber || ""
+        : profile?.whatsappNumber || "",
     ),
   };
 };
@@ -120,11 +121,16 @@ const hasChanged = (current, initial, keys) =>
     const currentValue = current?.[key];
     const initialValue = initial?.[key];
 
-    if (typeof currentValue === "boolean" || typeof initialValue === "boolean") {
+    if (
+      typeof currentValue === "boolean" ||
+      typeof initialValue === "boolean"
+    ) {
       return Boolean(currentValue) !== Boolean(initialValue);
     }
 
-    return String(currentValue ?? "").trim() !== String(initialValue ?? "").trim();
+    return (
+      String(currentValue ?? "").trim() !== String(initialValue ?? "").trim()
+    );
   });
 
 const Profile = ({ mode = "client" }) => {
@@ -141,14 +147,16 @@ const Profile = ({ mode = "client" }) => {
   } = useAuth();
 
   const [profileForm, setProfileForm] = useState(() =>
-    buildProfileFormFromSources({ profile: null, user: null })
+    buildProfileFormFromSources({ profile: null, user: null }),
   );
   const [initialProfileForm, setInitialProfileForm] = useState(() =>
-    buildProfileFormFromSources({ profile: null, user: null })
+    buildProfileFormFromSources({ profile: null, user: null }),
   );
-  const [preferencesForm, setPreferencesForm] = useState(() => buildPreferencesForm(null));
+  const [preferencesForm, setPreferencesForm] = useState(() =>
+    buildPreferencesForm(null),
+  );
   const [initialPreferencesForm, setInitialPreferencesForm] = useState(() =>
-    buildPreferencesForm(null)
+    buildPreferencesForm(null),
   );
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -158,18 +166,21 @@ const Profile = ({ mode = "client" }) => {
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const isRootUser = String(user?.role || "").trim().toLowerCase() === "root";
+  const isRootUser =
+    String(user?.role || "")
+      .trim()
+      .toLowerCase() === "root";
   const activePreferenceKeys = useMemo(
     () =>
       isRootUser
         ? [...BASE_PREFERENCE_KEYS, ...ROOT_BRAND_PREFERENCE_KEYS]
         : BASE_PREFERENCE_KEYS,
-    [isRootUser]
+    [isRootUser],
   );
 
   const countryDialCodeOptions = useMemo(
     () => getCountryDialCodeOptions(i18n.language),
-    [i18n.language]
+    [i18n.language],
   );
 
   useEffect(() => {
@@ -188,7 +199,9 @@ const Profile = ({ mode = "client" }) => {
 
   const fullName = useMemo(() => {
     const value = `${profileForm.firstName} ${profileForm.lastName}`.trim();
-    return value || user?.name || t("profilePage.summary.defaultName") || "User";
+    return (
+      value || user?.name || t("profilePage.summary.defaultName") || "User"
+    );
   }, [profileForm.firstName, profileForm.lastName, t, user?.name]);
 
   const initials = useMemo(() => {
@@ -203,17 +216,20 @@ const Profile = ({ mode = "client" }) => {
 
   const hasProfileChanges = useMemo(
     () => hasChanged(profileForm, initialProfileForm, PROFILE_EDIT_KEYS),
-    [profileForm, initialProfileForm]
+    [profileForm, initialProfileForm],
   );
   const hasPreferencesChanges = useMemo(
-    () => hasChanged(preferencesForm, initialPreferencesForm, activePreferenceKeys),
-    [activePreferenceKeys, initialPreferencesForm, preferencesForm]
+    () =>
+      hasChanged(preferencesForm, initialPreferencesForm, activePreferenceKeys),
+    [activePreferenceKeys, initialPreferencesForm, preferencesForm],
   );
   const preferencesValidationMessage = useMemo(() => {
     if (!isRootUser) return "";
 
     const primaryColor = String(preferencesForm.brandPrimaryColor || "").trim();
-    const secondaryColor = String(preferencesForm.brandSecondaryColor || "").trim();
+    const secondaryColor = String(
+      preferencesForm.brandSecondaryColor || "",
+    ).trim();
     const headingFont = String(preferencesForm.brandFontHeading || "").trim();
     const bodyFont = String(preferencesForm.brandFontBody || "").trim();
 
@@ -245,7 +261,7 @@ const Profile = ({ mode = "client" }) => {
         dialCode: profileForm.phoneCountryCode,
         localNumber: profileForm.phone,
       }),
-    [profileForm.phone, profileForm.phoneCountryCode]
+    [profileForm.phone, profileForm.phoneCountryCode],
   );
   const whatsappValidationCode = useMemo(
     () =>
@@ -253,7 +269,7 @@ const Profile = ({ mode = "client" }) => {
         dialCode: profileForm.whatsappCountryCode,
         localNumber: profileForm.whatsappNumber,
       }),
-    [profileForm.whatsappCountryCode, profileForm.whatsappNumber]
+    [profileForm.whatsappCountryCode, profileForm.whatsappNumber],
   );
   const phoneValidationMessage = useMemo(() => {
     if (phoneValidationCode === PHONE_VALIDATION_CODES.NONE) return "";
@@ -278,9 +294,13 @@ const Profile = ({ mode = "client" }) => {
     if (!hasProfileChanges) return;
 
     const phone = sanitizePhoneLocalNumber(profileForm.phone);
-    const phoneCountryCode = normalizePhoneDialCode(profileForm.phoneCountryCode);
+    const phoneCountryCode = normalizePhoneDialCode(
+      profileForm.phoneCountryCode,
+    );
     const whatsappNumber = sanitizePhoneLocalNumber(profileForm.whatsappNumber);
-    const whatsappCountryCode = normalizePhoneDialCode(profileForm.whatsappCountryCode);
+    const whatsappCountryCode = normalizePhoneDialCode(
+      profileForm.whatsappCountryCode,
+    );
 
     if (phoneValidationCode !== PHONE_VALIDATION_CODES.NONE) {
       setError(phoneValidationMessage || t("profilePage.errors.invalidPhone"));
@@ -288,7 +308,9 @@ const Profile = ({ mode = "client" }) => {
     }
 
     if (whatsappValidationCode !== PHONE_VALIDATION_CODES.NONE) {
-      setError(whatsappValidationMessage || t("profilePage.errors.invalidWhatsapp"));
+      setError(
+        whatsappValidationMessage || t("profilePage.errors.invalidWhatsapp"),
+      );
       return;
     }
 
@@ -338,9 +360,15 @@ const Profile = ({ mode = "client" }) => {
       locale: preferencesForm.locale,
       ...(isRootUser
         ? {
-            brandPrimaryColor: String(preferencesForm.brandPrimaryColor || "").trim(),
-            brandSecondaryColor: String(preferencesForm.brandSecondaryColor || "").trim(),
-            brandFontHeading: String(preferencesForm.brandFontHeading || "").trim(),
+            brandPrimaryColor: String(
+              preferencesForm.brandPrimaryColor || "",
+            ).trim(),
+            brandSecondaryColor: String(
+              preferencesForm.brandSecondaryColor || "",
+            ).trim(),
+            brandFontHeading: String(
+              preferencesForm.brandFontHeading || "",
+            ).trim(),
             brandFontBody: String(preferencesForm.brandFontBody || "").trim(),
           }
         : {}),
@@ -353,7 +381,10 @@ const Profile = ({ mode = "client" }) => {
     try {
       await updatePreferences(nextPreferencesPatch);
       setPreferencesForm((prev) => ({ ...prev, ...nextPreferencesPatch }));
-      setInitialPreferencesForm((prev) => ({ ...prev, ...nextPreferencesPatch }));
+      setInitialPreferencesForm((prev) => ({
+        ...prev,
+        ...nextPreferencesPatch,
+      }));
       setMessage(t("profilePage.messages.preferencesSaved"));
     } catch (err) {
       setError(getErrorMessage(err, t("profilePage.errors.preferences")));
@@ -368,7 +399,9 @@ const Profile = ({ mode = "client" }) => {
     if (!file) return;
 
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
-      setError(t("profilePage.errors.avatarSize", { max: MAX_AVATAR_SIZE_MB }));
+      setError(
+        t("client:profile.errors.avatarSize", { max: MAX_AVATAR_SIZE_MB }),
+      );
       return;
     }
 
@@ -377,9 +410,9 @@ const Profile = ({ mode = "client" }) => {
     setMessage("");
     try {
       await updateAvatar(file);
-      setMessage(t("profilePage.messages.avatarUpdated"));
+      setMessage(t("client:profile.messages.avatarUpdated"));
     } catch (err) {
-      setError(getErrorMessage(err, t("profilePage.errors.avatarUpload")));
+      setError(getErrorMessage(err, t("client:profile.errors.avatarUpload")));
     } finally {
       setUploadingAvatar(false);
     }
@@ -391,9 +424,9 @@ const Profile = ({ mode = "client" }) => {
     setMessage("");
     try {
       await removeAvatar();
-      setMessage(t("profilePage.messages.avatarRemoved"));
+      setMessage(t("client:profile.messages.avatarRemoved"));
     } catch (err) {
-      setError(getErrorMessage(err, t("profilePage.errors.avatarRemove")));
+      setError(getErrorMessage(err, t("client:profile.errors.avatarRemove")));
     } finally {
       setRemovingAvatar(false);
     }
@@ -411,19 +444,19 @@ const Profile = ({ mode = "client" }) => {
 
   const themeOptions = useMemo(
     () => [
-      { value: "system", label: t("theme.system") },
-      { value: "light", label: t("theme.light") },
-      { value: "dark", label: t("theme.dark") },
+      { value: "system", label: t("client:theme.system") },
+      { value: "light", label: t("client:theme.light") },
+      { value: "dark", label: t("client:theme.dark") },
     ],
-    [t]
+    [t],
   );
 
   const localeOptions = useMemo(
     () => [
-      { value: "es", label: t("language.spanish") },
-      { value: "en", label: t("language.english") },
+      { value: "es", label: t("client:language.spanish") },
+      { value: "en", label: t("client:language.english") },
     ],
-    [t]
+    [t],
   );
 
   return (
@@ -431,11 +464,14 @@ const Profile = ({ mode = "client" }) => {
       {isInternalPanel ? (
         <header className="rounded-2xl border border-cyan-200 bg-cyan-50/70 px-4 py-3 text-sm text-cyan-900 dark:border-cyan-900/60 dark:bg-cyan-950/20 dark:text-cyan-100">
           <p className="font-semibold">
-            {t("profilePage.internal.title", { defaultValue: "Perfil del equipo" })}
+            {t("client:profile.internal.title", {
+              defaultValue: "Perfil del equipo",
+            })}
           </p>
           <p className="text-xs opacity-90">
-            {t("profilePage.internal.subtitle", {
-              defaultValue: "Administra tu informacion dentro del panel administrativo.",
+            {t("client:profile.internal.subtitle", {
+              defaultValue:
+                "Administra tu informacion dentro del panel administrativo.",
             })}
           </p>
         </header>
@@ -452,8 +488,12 @@ const Profile = ({ mode = "client" }) => {
                   className="h-20 w-20 rounded-full border border-slate-200 object-cover shadow-md dark:border-slate-700"
                 />
               ) : (
-                <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 text-xl font-black text-white shadow-md">
-                  {initials}
+                <div className="grid h-24 w-24 place-items-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-3xl font-bold text-white shadow-xl shadow-cyan-500/20">
+                  {getInitials(
+                    user?.name ||
+                      t("client:profile.summary.defaultName") ||
+                      "User",
+                  )}
                 </div>
               )}
 
@@ -482,13 +522,17 @@ const Profile = ({ mode = "client" }) => {
             </div>
 
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{fullName}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {fullName}
+              </h1>
               <p className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                 <Mail size={14} /> {user?.email}
               </p>
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                 <ShieldCheck size={12} />
-                {user?.emailVerified ? t("profilePage.emailVerified") : t("profilePage.emailNotVerified")}
+                {user?.emailVerified
+                  ? t("profilePage.emailVerified")
+                  : t("profilePage.emailNotVerified")}
               </p>
             </div>
           </div>
@@ -521,7 +565,10 @@ const Profile = ({ mode = "client" }) => {
         </p>
       ) : null}
 
-      <form onSubmit={onSaveProfile} className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2">
+      <form
+        onSubmit={onSaveProfile}
+        className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
+      >
         {PROFILE_TEXT_FIELDS.map((key) => (
           <label key={key} className="grid gap-1 text-sm">
             <span>{t(`profilePage.fields.${key}`)}</span>
@@ -529,13 +576,17 @@ const Profile = ({ mode = "client" }) => {
               <input
                 value={profileForm[key]}
                 onChange={(event) =>
-                  setProfileForm((prev) => ({ ...prev, [key]: event.target.value }))
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    [key]: event.target.value,
+                  }))
                 }
                 className={inputClass}
               />
             ) : (
               <span className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
-                {String(profileForm[key] || "").trim() || t("profilePage.view.empty")}
+                {String(profileForm[key] || "").trim() ||
+                  t("profilePage.view.empty")}
               </span>
             )}
           </label>
@@ -550,10 +601,15 @@ const Profile = ({ mode = "client" }) => {
                   options={countryDialCodeOptions}
                   value={profileForm.phoneCountryCode}
                   onChange={(value) =>
-                    setProfileForm((prev) => ({ ...prev, phoneCountryCode: value || "" }))
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      phoneCountryCode: value || "",
+                    }))
                   }
                   placeholder={t("profilePage.placeholders.phoneCountryCode")}
-                  noResultsText={t("profilePage.placeholders.noCountryCodeResults")}
+                  noResultsText={t(
+                    "profilePage.placeholders.noCountryCodeResults",
+                  )}
                   inputClassName={inputClass}
                 />
                 <input
@@ -569,7 +625,9 @@ const Profile = ({ mode = "client" }) => {
                 />
               </div>
               {phoneValidationMessage ? (
-                <p className="text-xs text-red-600 dark:text-red-300">{phoneValidationMessage}</p>
+                <p className="text-xs text-red-600 dark:text-red-300">
+                  {phoneValidationMessage}
+                </p>
               ) : null}
             </>
           ) : (
@@ -588,10 +646,15 @@ const Profile = ({ mode = "client" }) => {
                   options={countryDialCodeOptions}
                   value={profileForm.whatsappCountryCode}
                   onChange={(value) =>
-                    setProfileForm((prev) => ({ ...prev, whatsappCountryCode: value || "" }))
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      whatsappCountryCode: value || "",
+                    }))
                   }
                   placeholder={t("profilePage.placeholders.phoneCountryCode")}
-                  noResultsText={t("profilePage.placeholders.noCountryCodeResults")}
+                  noResultsText={t(
+                    "profilePage.placeholders.noCountryCodeResults",
+                  )}
                   inputClassName={inputClass}
                 />
                 <input
@@ -599,7 +662,9 @@ const Profile = ({ mode = "client" }) => {
                   onChange={(event) =>
                     setProfileForm((prev) => ({
                       ...prev,
-                      whatsappNumber: sanitizePhoneLocalNumber(event.target.value),
+                      whatsappNumber: sanitizePhoneLocalNumber(
+                        event.target.value,
+                      ),
                     }))
                   }
                   placeholder={t("profilePage.placeholders.whatsappNumber")}
@@ -626,7 +691,7 @@ const Profile = ({ mode = "client" }) => {
             disabled={!isEditingProfile || savingProfile}
             className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            {t("profilePage.actions.cancelEdit")}
+            {t("client:profile.actions.cancelEdit")}
           </button>
 
           <button
@@ -637,15 +702,22 @@ const Profile = ({ mode = "client" }) => {
               savingProfile ||
               hasProfileContactErrors
             }
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-linear-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {savingProfile ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
-            {savingProfile ? t("profilePage.actions.saving") : t("profilePage.actions.saveProfile")}
+            {savingProfile ? (
+              <Loader2 size={16} className="mr-2 animate-spin" />
+            ) : null}
+            {savingProfile
+              ? t("client:profile.actions.saving")
+              : t("client:profile.actions.saveProfile")}
           </button>
         </div>
       </form>
 
-      <form onSubmit={onSavePreferences} className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2">
+      <form
+        onSubmit={onSavePreferences}
+        className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
+      >
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 md:col-span-2">
           {t("profilePage.sections.preferences")}
         </h2>
@@ -756,17 +828,29 @@ const Profile = ({ mode = "client" }) => {
 
         <button
           type="submit"
-          disabled={!hasPreferencesChanges || savingPreferences || Boolean(preferencesValidationMessage)}
+          disabled={
+            !hasPreferencesChanges ||
+            savingPreferences ||
+            Boolean(preferencesValidationMessage)
+          }
           className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
         >
-          {savingPreferences ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
-          {savingPreferences ? t("profilePage.actions.saving") : t("profilePage.actions.savePreferences")}
+          {savingPreferences ? (
+            <Loader2 size={16} className="mr-2 animate-spin" />
+          ) : null}
+          {savingPreferences
+            ? t("profilePage.actions.saving")
+            : t("profilePage.actions.savePreferences")}
         </button>
       </form>
 
       <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <p className="mb-2 font-semibold text-slate-900 dark:text-slate-100">{t("profilePage.security.title")}</p>
-        <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">{t("profilePage.security.subtitle")}</p>
+        <p className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
+          {t("profilePage.security.title")}
+        </p>
+        <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">
+          {t("profilePage.security.subtitle")}
+        </p>
         <Link
           to="/recuperar-password"
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"

@@ -24,7 +24,9 @@ import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import { usePageSeo } from "../hooks/usePageSeo";
 
-const MapDisplay = lazy(() => import("../components/common/molecules/MapDisplay"));
+const MapDisplay = lazy(
+  () => import("../components/common/molecules/MapDisplay"),
+);
 
 const FALLBACK_BANNERS = [
   "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80",
@@ -208,13 +210,13 @@ const PropertyDetail = () => {
           className="h-full w-full object-cover"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/45 to-cyan-700/45" />
+        <div className="absolute inset-0 bg-linear-to-r from-slate-950/85 via-slate-900/45 to-cyan-700/45" />
 
         <div className="absolute inset-0">
           <div className="mx-auto flex h-full max-w-7xl items-end px-4 pb-8 sm:px-6 lg:px-8">
             <div className="max-w-2xl space-y-3 text-white">
               <span className="inline-flex rounded-full bg-cyan-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                {t(`homePage.enums.operation.${property.operationType}`, {
+                {t(`client:common.enums.operation.${property.operationType}`, {
                   defaultValue: property.operationType,
                 })}
               </span>
@@ -266,7 +268,7 @@ const PropertyDetail = () => {
               </div>
               <div className="rounded-xl bg-slate-100 p-3 text-sm dark:bg-slate-800">
                 <p className="text-slate-500 dark:text-slate-300">
-                  {t("propertyDetailPage.stats.totalArea")}
+                  {t("client:propertyDetail.stats.totalArea")}
                 </p>
                 <p className="mt-1 inline-flex items-center gap-1 font-semibold text-slate-900 dark:text-slate-100">
                   <Landmark size={15} /> {property.totalArea || 0}
@@ -274,19 +276,22 @@ const PropertyDetail = () => {
               </div>
               <div className="rounded-xl bg-slate-100 p-3 text-sm dark:bg-slate-800">
                 <p className="text-slate-500 dark:text-slate-300">
-                  {t("propertyDetailPage.stats.type")}
+                  {t("client:propertyDetail.stats.type")}
                 </p>
                 <p className="mt-1 inline-flex items-center gap-1 font-semibold text-slate-900 dark:text-slate-100">
                   <Building2 size={15} />{" "}
-                  {t(`homePage.enums.propertyType.${property.propertyType}`, {
-                    defaultValue: property.propertyType,
-                  })}
+                  {t(
+                    `client:common.enums.propertyType.${property.propertyType}`,
+                    {
+                      defaultValue: property.propertyType,
+                    },
+                  )}
                 </p>
               </div>
             </div>
 
             <h2 className="mt-6 text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {t("propertyDetailPage.descriptionTitle")}
+              {t("client:propertyDetail.descriptionTitle")}
             </h2>
             <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
               {property.description}
@@ -295,7 +300,7 @@ const PropertyDetail = () => {
             {amenities.length > 0 ? (
               <div className="mt-6 space-y-2">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  {t("propertyDetailPage.amenitiesTitle")}
+                  {t("client:propertyDetail.amenitiesTitle")}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {amenities.map((amenity) => (

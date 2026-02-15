@@ -389,7 +389,7 @@ export const WebsiteMockup = ({ hideUI = false }) => {
                   <MapPin size={9} className="shrink-0" />
                   <span className="truncate">{prop.location}</span>
                 </div>
-                <p className="text-[8px] sm:text-[9px] text-slate-400 leading-snug line-clamp-2 mb-1.5 hidden sm:block">
+                <p className="text-[8px] sm:text-[9px] text-left text-slate-400 leading-snug line-clamp-2 mb-1.5 hidden sm:block">
                   {prop.desc}
                 </p>
               </div>
