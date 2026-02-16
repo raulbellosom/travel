@@ -39,7 +39,6 @@ import AppPayments from "../pages/AppPayments";
 import AppReviews from "../pages/AppReviews";
 import Profile from "../pages/Profile";
 import AppProfile from "../pages/AppProfile";
-import Settings from "../pages/Settings";
 import MyReservations from "../pages/MyReservations";
 import MyReviews from "../pages/MyReviews";
 import ReserveProperty from "../pages/ReserveProperty";
@@ -298,14 +297,6 @@ const AppRoutes = () => {
                 />
                 <Route path="profile" element={<AppProfile />} />
                 <Route
-                  path="settings"
-                  element={
-                    <RoleRoute minimumRole="owner">
-                      <Settings />
-                    </RoleRoute>
-                  }
-                />
-                <Route
                   path="mis-propiedades"
                   element={
                     <Navigate to={INTERNAL_ROUTES.myProperties} replace />
@@ -350,10 +341,6 @@ const AppRoutes = () => {
                 <Route
                   path="perfil"
                   element={<Navigate to={INTERNAL_ROUTES.profile} replace />}
-                />
-                <Route
-                  path="configuracion"
-                  element={<Navigate to={INTERNAL_ROUTES.settings} replace />}
                 />
               </Route>
 
@@ -440,14 +427,6 @@ const AppRoutes = () => {
               <Route
                 path="/app/profile"
                 element={<Navigate to={INTERNAL_ROUTES.profile} replace />}
-              />
-              <Route
-                path="/configuracion"
-                element={<Navigate to={INTERNAL_ROUTES.settings} replace />}
-              />
-              <Route
-                path="/settings"
-                element={<Navigate to={INTERNAL_ROUTES.settings} replace />}
               />
 
               <Route

@@ -360,12 +360,7 @@ const searchPreferencesLocal = async ({ userId, query }) => {
   const preference = rows?.[0] || null;
   if (!preference) return null;
 
-  const score = getScore(query, [
-    preference.theme,
-    preference.locale,
-    preference.brandFontHeading,
-    preference.brandFontBody,
-  ]);
+  const score = getScore(query, [preference.theme, preference.locale]);
   return score > 0 ? preference : null;
 };
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FileText, LogOut, Settings, ShieldCheck, UserCircle2 } from "lucide-react";
+import { FileText, LogOut, ShieldCheck, UserCircle2 } from "lucide-react";
 import { INTERNAL_ROUTES } from "../../utils/internalRoutes";
 
 const DashboardUserDropdown = ({ user, onLogout, showIdentity = false }) => {
@@ -53,11 +53,6 @@ const DashboardUserDropdown = ({ user, onLogout, showIdentity = false }) => {
       to: INTERNAL_ROUTES.profile,
       icon: UserCircle2,
       label: t("navbar.userMenu.profile"),
-    },
-    {
-      to: INTERNAL_ROUTES.settings,
-      icon: Settings,
-      label: t("sidebar.settings"),
     },
   ];
 

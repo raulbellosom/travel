@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -16,6 +16,10 @@ import {
   UserCircle2,
   X,
 } from "lucide-react";
+import {
+  ThemeAnimationType,
+  useModeAnimation,
+} from "react-theme-switch-animation";
 import { useAuth } from "../../../../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { useUI } from "../../../../contexts/UIContext";
@@ -35,14 +39,7 @@ const mobileIconButtonClass =
 const Navbar = () => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
-  const {
-    theme,
-    effectiveTheme,
-    changeTheme,
-    changeThemeAnimated,
-    changeLanguage,
-  } = useUI();
-  const themeBtnRef = useRef(null);
+  const { theme, changeTheme, changeLanguage } = useUI();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -76,6 +73,25 @@ const Navbar = () => {
       .join("");
     return value || "U";
   }, [user?.name]);
+
+  // react-theme-switch-animation for circle animation
+  const {
+    ref: animRef,
+    toggleSwitchTheme,
+    isDarkMode,
+  } = useModeAnimation({
+    animationType: ThemeAnimationType.CIRCLE,
+    duration: 750,
+  });
+
+  // Sync the library's isDarkMode back to UIContext
+  const prevIsDark = useRef(isDarkMode);
+  useEffect(() => {
+    if (prevIsDark.current !== isDarkMode) {
+      prevIsDark.current = isDarkMode;
+      changeTheme(isDarkMode ? "dark" : "light");
+    }
+  }, [isDarkMode, changeTheme]);
 
   const accountLinks = [
     ...(isInternalUser
@@ -131,18 +147,20 @@ const Navbar = () => {
       nextTheme === "dark" ||
       (nextTheme === "system" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
-    const currentlyDark = effectiveTheme === "dark";
+    const currentlyDark = isDarkMode;
 
-    if (willBeDark !== currentlyDark && themeBtnRef.current) {
-      const rect = themeBtnRef.current.getBoundingClientRect();
-      changeThemeAnimated(nextTheme, {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      });
+    if (willBeDark !== currentlyDark) {
+      // Effective theme flips → trigger the library's circle animation
+      toggleSwitchTheme();
+      // If "system" was chosen, persist that specific preference
+      if (nextTheme === "system") {
+        changeTheme("system");
+      }
     } else {
+      // Same effective theme → just persist preference
       changeTheme(nextTheme);
     }
-  }, [nextTheme, effectiveTheme, changeTheme, changeThemeAnimated]);
+  }, [nextTheme, isDarkMode, toggleSwitchTheme, changeTheme]);
 
   const onLogout = async () => {
     await logout();
@@ -269,7 +287,7 @@ const Navbar = () => {
           </Link>
 
           <button
-            ref={themeBtnRef}
+            ref={animRef}
             onClick={onToggleTheme}
             className={mobileIconButtonClass}
             aria-label={themeToggleLabel}

@@ -56,7 +56,6 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const canReadPayments = hasScope(user, "payments.read");
   const canReadReviews = hasScope(user, "reviews.moderate");
   const canManageTeam = hasScope(user, "staff.manage");
-  const canSeeSettings = hasRoleAtLeast(user?.role, "owner");
   const canReadClients = hasRoleAtLeast(user?.role, "owner");
   const canReadProfile = Boolean(user?.$id);
   const hasOpenOverlay = isDesktopOpen || isMobileOpen;
@@ -138,7 +137,6 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
         canReadReviews,
         canWriteProperties,
         canManageTeam,
-        canSeeSettings,
         canReadClients,
         canReadProfile,
       }),
@@ -151,7 +149,6 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
       canReadReviews,
       canReadProperties,
       canReadReservations,
-      canSeeSettings,
       canWriteProperties,
       dataset,
       query,

@@ -194,7 +194,12 @@ const PropertyEditor = ({
     const container = tabsRef.current;
     if (!container) return;
     const el = container.querySelector(`[data-tab="${tabId}"]`);
-    if (el) el.scrollIntoView({ inline: "center", behavior: "smooth" });
+    if (el)
+      el.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        behavior: "smooth",
+      });
   }, []);
 
   const switchTab = useCallback(
@@ -204,7 +209,6 @@ const PropertyEditor = ({
     },
     [scrollTabIntoView],
   );
-
 
   /* ── discard changes ────────────────────────────── */
   const handleDiscardChanges = useCallback(() => {

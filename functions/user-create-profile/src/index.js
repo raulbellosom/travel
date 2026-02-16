@@ -301,10 +301,6 @@ const safeCreatePreferences = async (db, config, userId) => {
         userId,
         theme: "system",
         locale: "es",
-        brandPrimaryColor: "#0F172A",
-        brandSecondaryColor: "#16A34A",
-        brandFontHeading: "Poppins",
-        brandFontBody: "Inter",
         enabled: true,
       },
       [

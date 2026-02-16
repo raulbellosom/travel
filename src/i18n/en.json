@@ -843,11 +843,6 @@
     "preferences": {
       "theme": "Theme",
       "language": "Language",
-      "branding": "Branding (root only)",
-      "brandPrimaryColor": "Brand primary color",
-      "brandSecondaryColor": "Brand secondary color",
-      "brandFontHeading": "Brand heading font",
-      "brandFontBody": "Brand body font",
       "currency": "Currency",
       "measurement": "Measurement system",
       "metric": "Metric",
@@ -880,11 +875,7 @@
       "phoneCountryCodeRequired": "Country code is required when phone is provided.",
       "whatsappCountryCodeRequired": "Country code is required when WhatsApp number is provided.",
       "invalidPhone": "Enter a valid phone number.",
-      "invalidWhatsapp": "Enter a valid WhatsApp number.",
-      "brandPrimaryColorInvalid": "Primary color is invalid. Use #RRGGBB format.",
-      "brandSecondaryColorInvalid": "Secondary color is invalid. Use #RRGGBB format.",
-      "brandFontHeadingInvalid": "Heading font is required and must be 80 characters or less.",
-      "brandFontBodyInvalid": "Body font is required and must be 80 characters or less."
+      "invalidWhatsapp": "Enter a valid WhatsApp number."
     },
     "placeholders": {
       "phoneCountryCode": "Select country code",

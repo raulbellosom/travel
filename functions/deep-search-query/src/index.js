@@ -475,7 +475,7 @@ export default async ({ req, res }) => {
       preferences: (() => {
         const pref = preferencesPool?.[0] || null;
         if (!pref) return null;
-        return getScore(rawQuery, [pref.theme, pref.locale, pref.brandFontBody, pref.brandFontHeading]) > 0
+        return getScore(rawQuery, [pref.theme, pref.locale]) > 0
           ? pref
           : null;
       })(),

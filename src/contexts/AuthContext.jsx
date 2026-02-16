@@ -18,12 +18,6 @@ import env from "../env";
 
 const AuthContext = createContext(null);
 const BASE_PREFERENCE_FIELDS = new Set(["theme", "locale"]);
-const ROOT_ONLY_PREFERENCE_FIELDS = new Set([
-  "brandPrimaryColor",
-  "brandSecondaryColor",
-  "brandFontHeading",
-  "brandFontBody",
-]);
 
 const normalizeRole = (role) =>
   String(role || "")
@@ -32,10 +26,7 @@ const normalizeRole = (role) =>
 
 const sanitizePreferencesPatch = (patch, role) => {
   const source = patch && typeof patch === "object" ? patch : {};
-  const isRoot = normalizeRole(role) === "root";
-  const allowedFields = isRoot
-    ? new Set([...BASE_PREFERENCE_FIELDS, ...ROOT_ONLY_PREFERENCE_FIELDS])
-    : BASE_PREFERENCE_FIELDS;
+  const allowedFields = BASE_PREFERENCE_FIELDS;
   const safePatch = {};
 
   Object.keys(source).forEach((key) => {

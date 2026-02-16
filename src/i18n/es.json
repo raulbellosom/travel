@@ -705,11 +705,6 @@
     "preferences": {
       "theme": "Tema",
       "language": "Idioma",
-      "branding": "Branding (solo root)",
-      "brandPrimaryColor": "Color primario de marca",
-      "brandSecondaryColor": "Color secundario de marca",
-      "brandFontHeading": "Fuente para titulos",
-      "brandFontBody": "Fuente para texto",
       "currency": "Moneda",
       "measurement": "Sistema de medida",
       "metric": "Metrico",
@@ -742,11 +737,7 @@
       "phoneCountryCodeRequired": "La lada es obligatoria cuando capturas telefono.",
       "whatsappCountryCodeRequired": "La lada es obligatoria cuando capturas WhatsApp.",
       "invalidPhone": "Ingresa un telefono valido.",
-      "invalidWhatsapp": "Ingresa un numero de WhatsApp valido.",
-      "brandPrimaryColorInvalid": "Color primario invalido. Usa formato #RRGGBB.",
-      "brandSecondaryColorInvalid": "Color secundario invalido. Usa formato #RRGGBB.",
-      "brandFontHeadingInvalid": "La fuente de titulos es obligatoria y maximo 80 caracteres.",
-      "brandFontBodyInvalid": "La fuente de texto es obligatoria y maximo 80 caracteres."
+      "invalidWhatsapp": "Ingresa un numero de WhatsApp valido."
     },
     "placeholders": {
       "phoneCountryCode": "Selecciona lada",

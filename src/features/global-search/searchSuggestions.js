@@ -50,7 +50,6 @@ const COMMAND_ENTITIES = Object.freeze({
     "miembro",
   ],
   clients: ["client", "clients", "customer", "customers", "cliente", "clientes"],
-  settings: ["settings", "configuracion", "config", "preferences", "ajustes"],
 });
 
 const normalizeText = (value) =>
@@ -149,7 +148,6 @@ const getCommandLabel = (t, intent, entity) => {
     reviews: t("globalSearch.commandEntities.reviews", { defaultValue: "resenas" }),
     team: t("globalSearch.commandEntities.team"),
     clients: t("globalSearch.commandEntities.clients"),
-    settings: t("globalSearch.commandEntities.settings"),
   };
 
   return `${verbs[intent] || verbs.open} ${entities[entity] || t("globalSearch.commandEntities.section")}`.trim();
@@ -165,7 +163,6 @@ const resolveCommandResult = ({
   canReadPayments,
   canWriteProperties,
   canManageTeam,
-  canSeeSettings,
   canReadClients,
   canReadReviews,
   canReadProfile,
@@ -252,11 +249,6 @@ const resolveCommandResult = ({
         to: buildRouteWithParams(INTERNAL_ROUTES.clients, { search: remainder }),
       };
     }
-  } else if (entity === "settings") {
-    icon = "settings";
-    if (canSeeSettings) {
-      action = { type: "navigate", to: INTERNAL_ROUTES.settings };
-    }
   }
 
   if (!action) return null;
@@ -284,7 +276,6 @@ const toActionItems = ({
   canReadPayments,
   canWriteProperties,
   canManageTeam,
-  canSeeSettings,
   canReadClients,
   canReadReviews,
   canReadProfile,
@@ -502,18 +493,6 @@ const toActionItems = ({
     });
   }
 
-  if (canSeeSettings) {
-    items.push({
-      id: "action-settings",
-      group: "actions",
-      title: t("globalSearch.quickActions.settings.title"),
-      subtitle: t("globalSearch.quickActions.settings.subtitle"),
-      icon: "settings",
-      action: { type: "navigate", to: INTERNAL_ROUTES.settings },
-      keywords: ["settings", "configuracion", "preferences", "ajustes", "config"],
-    });
-  }
-
   return items;
 };
 
@@ -555,7 +534,6 @@ export const buildGlobalSearchResults = ({
   canReadPayments = false,
   canWriteProperties = false,
   canManageTeam = false,
-  canSeeSettings = false,
   canReadClients = false,
   canReadReviews = false,
   canReadProfile = false,
@@ -572,7 +550,6 @@ export const buildGlobalSearchResults = ({
     canReadPayments,
     canWriteProperties,
     canManageTeam,
-    canSeeSettings,
     canReadClients,
     canReadReviews,
     canReadProfile,
@@ -593,7 +570,6 @@ export const buildGlobalSearchResults = ({
         canReadPayments,
         canWriteProperties,
         canManageTeam,
-        canSeeSettings,
         canReadClients,
         canReadReviews,
         canReadProfile,
@@ -862,8 +838,6 @@ export const buildGlobalSearchResults = ({
         const values = [
           dataset.preferences.theme,
           dataset.preferences.locale,
-          dataset.preferences.brandFontHeading,
-          dataset.preferences.brandFontBody,
         ];
         return {
           id: `preferences-${dataset.preferences.$id || "me"}`,

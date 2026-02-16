@@ -375,12 +375,7 @@
     },
     "preferences": {
       "theme": "Tema",
-      "language": "Idioma",
-      "branding": "Personalización de Marca (Root)",
-      "brandPrimaryColor": "Color Primario",
-      "brandSecondaryColor": "Color Secundario",
-      "brandFontHeading": "Fuente de Títulos",
-      "brandFontBody": "Fuente de Cuerpo"
+      "language": "Idioma"
     },
     "actions": {
       "editProfile": "Editar Perfil",
@@ -404,11 +399,7 @@
       "invalidPhone": "Número de teléfono inválido.",
       "invalidWhatsapp": "Número de WhatsApp inválido.",
       "phoneCountryCodeRequired": "Código de país requerido.",
-      "whatsappCountryCodeRequired": "Código de país requerido (WA).",
-      "brandPrimaryColorInvalid": "Color primario inválido.",
-      "brandSecondaryColorInvalid": "Color secundario inválido.",
-      "brandFontHeadingInvalid": "Nombre de fuente de títulos inválido.",
-      "brandFontBodyInvalid": "Nombre de fuente de cuerpo inválido."
+      "whatsappCountryCodeRequired": "Código de país requerido (WA)."
     },
     "security": {
       "title": "Seguridad",

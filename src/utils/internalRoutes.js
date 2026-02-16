@@ -16,7 +16,6 @@ export const INTERNAL_ROUTES = Object.freeze({
   rootAmenities: withInternalBase("amenities"),
   rootFunctionsDiagnostics: withInternalBase("functions-health"),
   profile: withInternalBase("profile"),
-  settings: withInternalBase("settings"),
 });
 
 export const getInternalEditPropertyRoute = (id) =>

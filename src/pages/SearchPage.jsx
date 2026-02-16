@@ -31,6 +31,7 @@ import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
 import PropertyCard from "../components/common/molecules/PropertyCard";
 import Button from "../components/common/atoms/Button";
+import Select from "../components/common/atoms/Select";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import LoadingSpinner from "../components/loaders/LoadingSpinner";
 import { DEFAULT_AMENITIES_CATALOG } from "../data/amenitiesCatalog";
@@ -89,7 +90,7 @@ const PROPERTY_TYPE_OPTIONS = [
 ];
 
 const BEDROOM_OPTIONS = [
-  { value: "", labelKey: "search.anyOption" },
+  { value: "", labelKey: "search.anyOption", label: "Cualquiera" },
   { value: "1", label: "1+" },
   { value: "2", label: "2+" },
   { value: "3", label: "3+" },
@@ -98,7 +99,7 @@ const BEDROOM_OPTIONS = [
 ];
 
 const BATHROOM_OPTIONS = [
-  { value: "", labelKey: "search.anyOption" },
+  { value: "", labelKey: "search.anyOption", label: "Cualquiera" },
   { value: "1", label: "1+" },
   { value: "2", label: "2+" },
   { value: "3", label: "3+" },
@@ -106,7 +107,7 @@ const BATHROOM_OPTIONS = [
 ];
 
 const PARKING_OPTIONS = [
-  { value: "", labelKey: "search.anyOption" },
+  { value: "", labelKey: "search.anyOption", label: "Cualquiera" },
   { value: "1", label: "1+" },
   { value: "2", label: "2+" },
   { value: "3", label: "3+" },
@@ -142,12 +143,12 @@ const SORT_OPTIONS = [
 ];
 
 const PRICE_PRESETS = [
-  { label: "< $500K", min: "", max: "500000" },
+  { label: "Hasta $500K", min: "", max: "500000" },
   { label: "$500K - $1M", min: "500000", max: "1000000" },
   { label: "$1M - $3M", min: "1000000", max: "3000000" },
   { label: "$3M - $5M", min: "3000000", max: "5000000" },
   { label: "$5M - $10M", min: "5000000", max: "10000000" },
-  { label: "> $10M", min: "10000000", max: "" },
+  { label: "Más de $10M", min: "10000000", max: "" },
 ];
 
 /* ─────────────────────── helper components ─────────────────────── */
@@ -171,31 +172,16 @@ const FilterChip = ({ label, onRemove }) => (
 const FilterSelect = ({ label, value, options, onChange, icon: Icon }) => (
   <div className="space-y-1.5">
     <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      {Icon && <Icon size={13} className="mr-1 inline" />}
       {label}
     </label>
-    <div className="relative">
-      {Icon && (
-        <Icon
-          size={15}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-        />
-      )}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pr-8 text-sm font-medium text-slate-700 transition focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 ${Icon ? "pl-9" : "pl-3"}`}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        size={14}
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-      />
-    </div>
+    <Select
+      value={value}
+      onChange={onChange}
+      options={options}
+      size="sm"
+      variant="outlined"
+    />
   </div>
 );
 
@@ -284,8 +270,11 @@ const SearchPage = () => {
       ),
     );
 
+    // Separate page/limit from filter parameters
+    const { page, limit, ...filterParams } = cleanFilters;
+
     propertiesService
-      .listPublic({ ...cleanFilters })
+      .listPublic({ page, limit, filters: filterParams })
       .then((data) => {
         setProperties(data.documents || []);
         setTotal(data.total || 0);
@@ -495,7 +484,7 @@ const SearchPage = () => {
                 className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
                   isActive
                     ? "bg-cyan-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
                 }`}
               >
                 {p.label}
@@ -524,7 +513,7 @@ const SearchPage = () => {
                 className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
                   isActive
                     ? "bg-cyan-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
                 }`}
               >
                 {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
@@ -553,7 +542,7 @@ const SearchPage = () => {
                 className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
                   isActive
                     ? "bg-cyan-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
                 }`}
               >
                 {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
@@ -582,7 +571,7 @@ const SearchPage = () => {
                 className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
                   isActive
                     ? "bg-cyan-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
                 }`}
               >
                 {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
@@ -604,7 +593,7 @@ const SearchPage = () => {
       {/* Toggles */}
       <div className="space-y-3">
         {/* Mascotas */}
-        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800">
+        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-500">
           <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
             <PawPrint size={16} className="text-amber-500" />
             {t("client:search.petsAllowed")}
@@ -620,7 +609,7 @@ const SearchPage = () => {
         </label>
 
         {/* Destacadas */}
-        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800">
+        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-500">
           <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
             <Sparkles size={16} className="text-yellow-500" />
             {t("client:search.featured")}
@@ -784,7 +773,7 @@ const SearchPage = () => {
                       className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold transition ${
                         isActive
                           ? "bg-cyan-600 text-white"
-                          : "bg-white text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-300"
+                          : "bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
                       {t(`client:${pt.labelKey}`, pt.fallback)}
@@ -797,7 +786,7 @@ const SearchPage = () => {
               <button
                 type="button"
                 onClick={() => setIsMobileFiltersOpen(true)}
-                className="ml-auto flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300"
+                className="ml-auto flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
               >
                 <SlidersHorizontal size={14} />
                 {t("client:search.moreFilters")}
@@ -863,7 +852,7 @@ const SearchPage = () => {
                 <select
                   value={filters.sort}
                   onChange={(e) => updateFilter("sort", e.target.value)}
-                  className="appearance-none rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  className="appearance-none rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:focus:border-cyan-400"
                 >
                   {tSortOptions.map((o) => (
                     <option key={o.value} value={o.value}>

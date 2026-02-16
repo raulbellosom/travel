@@ -11,7 +11,6 @@ import {
   Inbox,
   List,
   MessageSquareText,
-  Settings,
   ShieldAlert,
   Sparkles,
   Users,
@@ -93,7 +92,6 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
           },
         ]
       : []),
-    { name: t("sidebar.settings"), href: INTERNAL_ROUTES.settings, icon: Settings },
   ];
 
   const isActive = (href) => {

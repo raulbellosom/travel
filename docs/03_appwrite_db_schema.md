@@ -161,26 +161,22 @@ Notas:
 
 ## Collection: user_preferences
 
-Purpose: preferencias de UI y branding base por usuario.
+Purpose: preferencias de UI por usuario.
 
 ### Attributes
 
-| Attribute             | Type    | Size | Required | Default   | Constraint                |
-| --------------------- | ------- | ---- | -------- | --------- | ------------------------- |
-| `userId`              | string  | 64   | yes      | -         | FK logical a `users.$id`  |
-| `theme`               | enum    | -    | no       | `system`  | `light`,`dark`,`system`   |
-| `locale`              | enum    | -    | no       | `es`      | `es`,`en`                 |
-| `brandPrimaryColor`   | string  | 7    | no       | `#0F172A` | regex `^#[0-9A-Fa-f]{6}$` |
-| `brandSecondaryColor` | string  | 7    | no       | `#16A34A` | regex `^#[0-9A-Fa-f]{6}$` |
-| `brandFontHeading`    | string  | 80   | no       | `Poppins` | min 1                     |
-| `brandFontBody`       | string  | 80   | no       | `Inter`   | min 1                     |
-| `enabled`             | boolean | -    | no       | true      | -                         |
+| Attribute | Type    | Size | Required | Default  | Constraint              |
+| --------- | ------- | ---- | -------- | -------- | ----------------------- |
+| `userId`  | string  | 64   | yes      | -        | FK logical a `users.$id` |
+| `theme`   | enum    | -    | no       | `system` | `light`,`dark`,`system` |
+| `locale`  | enum    | -    | no       | `es`     | `es`,`en`               |
+| `enabled` | boolean | -    | no       | true     | -                       |
 
 Notas:
 
 - `userId`: Un registro por usuario
-- `brandPrimaryColor`: Hex
-- `brandSecondaryColor`: Hex
+- `theme`: Tema visual de la interfaz
+- `locale`: Idioma preferido
 
 ### Indexes
 

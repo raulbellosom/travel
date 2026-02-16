@@ -375,12 +375,7 @@
     },
     "preferences": {
       "theme": "Theme",
-      "language": "Language",
-      "branding": "Brand Customization (Root)",
-      "brandPrimaryColor": "Primary Color",
-      "brandSecondaryColor": "Secondary Color",
-      "brandFontHeading": "Heading Font",
-      "brandFontBody": "Body Font"
+      "language": "Language"
     },
     "actions": {
       "editProfile": "Edit Profile",
@@ -404,11 +399,7 @@
       "invalidPhone": "Invalid phone number.",
       "invalidWhatsapp": "Invalid WhatsApp number.",
       "phoneCountryCodeRequired": "Country code required.",
-      "whatsappCountryCodeRequired": "Country code required (WA).",
-      "brandPrimaryColorInvalid": "Invalid primary color.",
-      "brandSecondaryColorInvalid": "Invalid secondary color.",
-      "brandFontHeadingInvalid": "Invalid heading font name.",
-      "brandFontBodyInvalid": "Invalid body font name."
+      "whatsappCountryCodeRequired": "Country code required (WA)."
     },
     "security": {
       "title": "Security",

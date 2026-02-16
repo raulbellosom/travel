@@ -37,17 +37,19 @@ const PROFILE_EDIT_KEYS = [
 ];
 
 const BASE_PREFERENCE_KEYS = ["theme", "locale"];
-const ROOT_BRAND_PREFERENCE_KEYS = [
-  "brandPrimaryColor",
-  "brandSecondaryColor",
-  "brandFontHeading",
-  "brandFontBody",
-];
-const BRAND_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
-const BRAND_FONT_MAX_LENGTH = 80;
 
 const MAX_AVATAR_SIZE_MB = 5;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
+
+// Generate initials from name
+const getInitials = (name) => {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
+};
 const inputClass =
   "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50";
 
@@ -110,10 +112,6 @@ const buildProfileFormFromSources = ({ profile, user }) => {
 const buildPreferencesForm = (preferences) => ({
   theme: preferences?.theme || "system",
   locale: preferences?.locale || "es",
-  brandPrimaryColor: preferences?.brandPrimaryColor || "#0F172A",
-  brandSecondaryColor: preferences?.brandSecondaryColor || "#16A34A",
-  brandFontHeading: preferences?.brandFontHeading || "Poppins",
-  brandFontBody: preferences?.brandFontBody || "Inter",
 });
 
 const hasChanged = (current, initial, keys) =>
@@ -166,17 +164,6 @@ const Profile = ({ mode = "client" }) => {
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const isRootUser =
-    String(user?.role || "")
-      .trim()
-      .toLowerCase() === "root";
-  const activePreferenceKeys = useMemo(
-    () =>
-      isRootUser
-        ? [...BASE_PREFERENCE_KEYS, ...ROOT_BRAND_PREFERENCE_KEYS]
-        : BASE_PREFERENCE_KEYS,
-    [isRootUser],
-  );
 
   const countryDialCodeOptions = useMemo(
     () => getCountryDialCodeOptions(i18n.language),
@@ -220,41 +207,9 @@ const Profile = ({ mode = "client" }) => {
   );
   const hasPreferencesChanges = useMemo(
     () =>
-      hasChanged(preferencesForm, initialPreferencesForm, activePreferenceKeys),
-    [activePreferenceKeys, initialPreferencesForm, preferencesForm],
+      hasChanged(preferencesForm, initialPreferencesForm, BASE_PREFERENCE_KEYS),
+    [initialPreferencesForm, preferencesForm],
   );
-  const preferencesValidationMessage = useMemo(() => {
-    if (!isRootUser) return "";
-
-    const primaryColor = String(preferencesForm.brandPrimaryColor || "").trim();
-    const secondaryColor = String(
-      preferencesForm.brandSecondaryColor || "",
-    ).trim();
-    const headingFont = String(preferencesForm.brandFontHeading || "").trim();
-    const bodyFont = String(preferencesForm.brandFontBody || "").trim();
-
-    if (!BRAND_COLOR_REGEX.test(primaryColor)) {
-      return t("profilePage.errors.brandPrimaryColorInvalid");
-    }
-    if (!BRAND_COLOR_REGEX.test(secondaryColor)) {
-      return t("profilePage.errors.brandSecondaryColorInvalid");
-    }
-    if (!headingFont || headingFont.length > BRAND_FONT_MAX_LENGTH) {
-      return t("profilePage.errors.brandFontHeadingInvalid");
-    }
-    if (!bodyFont || bodyFont.length > BRAND_FONT_MAX_LENGTH) {
-      return t("profilePage.errors.brandFontBodyInvalid");
-    }
-
-    return "";
-  }, [
-    isRootUser,
-    preferencesForm.brandFontBody,
-    preferencesForm.brandFontHeading,
-    preferencesForm.brandPrimaryColor,
-    preferencesForm.brandSecondaryColor,
-    t,
-  ]);
   const phoneValidationCode = useMemo(
     () =>
       getOptionalPhonePairValidationCode({
@@ -350,28 +305,10 @@ const Profile = ({ mode = "client" }) => {
   const onSavePreferences = async (event) => {
     event.preventDefault();
     if (!hasPreferencesChanges) return;
-    if (preferencesValidationMessage) {
-      setError(preferencesValidationMessage);
-      return;
-    }
 
     const nextPreferencesPatch = {
       theme: preferencesForm.theme,
       locale: preferencesForm.locale,
-      ...(isRootUser
-        ? {
-            brandPrimaryColor: String(
-              preferencesForm.brandPrimaryColor || "",
-            ).trim(),
-            brandSecondaryColor: String(
-              preferencesForm.brandSecondaryColor || "",
-            ).trim(),
-            brandFontHeading: String(
-              preferencesForm.brandFontHeading || "",
-            ).trim(),
-            brandFontBody: String(preferencesForm.brandFontBody || "").trim(),
-          }
-        : {}),
     };
 
     setSavingPreferences(true);
@@ -462,33 +399,33 @@ const Profile = ({ mode = "client" }) => {
   return (
     <section className="space-y-6">
       {isInternalPanel ? (
-        <header className="rounded-2xl border border-cyan-200 bg-cyan-50/70 px-4 py-3 text-sm text-cyan-900 dark:border-cyan-900/60 dark:bg-cyan-950/20 dark:text-cyan-100">
-          <p className="font-semibold">
+        <header className="rounded-2xl border border-cyan-200/80 bg-linear-to-r from-cyan-50/90 to-sky-50/90 px-5 py-4 dark:border-cyan-900/50 dark:from-cyan-950/30 dark:to-sky-950/30">
+          <p className="font-semibold text-cyan-900 dark:text-cyan-100">
             {t("client:profile.internal.title", {
               defaultValue: "Perfil del equipo",
             })}
           </p>
-          <p className="text-xs opacity-90">
+          <p className="mt-0.5 text-sm text-cyan-800/80 dark:text-cyan-200/70">
             {t("client:profile.internal.subtitle", {
               defaultValue:
-                "Administra tu informacion dentro del panel administrativo.",
+                "Administra tu información dentro del panel administrativo.",
             })}
           </p>
         </header>
       ) : null}
 
-      <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
+      <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <div className="relative">
               {user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
                   alt={fullName}
-                  className="h-20 w-20 rounded-full border border-slate-200 object-cover shadow-md dark:border-slate-700"
+                  className="h-24 w-24 rounded-full border-2 border-slate-200 object-cover shadow-lg dark:border-slate-700"
                 />
               ) : (
-                <div className="grid h-24 w-24 place-items-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-3xl font-bold text-white shadow-xl shadow-cyan-500/20">
+                <div className="grid h-24 w-24 place-items-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-3xl font-bold text-white shadow-xl shadow-cyan-500/25">
                   {getInitials(
                     user?.name ||
                       t("client:profile.summary.defaultName") ||
@@ -497,9 +434,9 @@ const Profile = ({ mode = "client" }) => {
                 </div>
               )}
 
-              <div className="absolute -bottom-1 -right-1 flex gap-1">
-                <label className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-slate-600 shadow dark:bg-slate-800 dark:text-slate-200">
-                  <Camera size={14} />
+              <div className="absolute -bottom-1 -right-1 flex gap-1.5">
+                <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                  <Camera size={16} />
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
@@ -513,9 +450,9 @@ const Profile = ({ mode = "client" }) => {
                     type="button"
                     onClick={onRemoveAvatar}
                     disabled={uploadingAvatar || removingAvatar}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-rose-600 shadow hover:bg-rose-50 dark:bg-slate-800"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-white text-rose-600 shadow-md transition hover:bg-rose-50 dark:border-rose-900 dark:bg-slate-800 dark:hover:bg-rose-950/50"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                   </button>
                 ) : null}
               </div>
@@ -525,11 +462,11 @@ const Profile = ({ mode = "client" }) => {
               <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {fullName}
               </h1>
-              <p className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <Mail size={14} /> {user?.email}
+              <p className="mt-1 inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                <Mail size={15} /> {user?.email}
               </p>
-              <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                <ShieldCheck size={12} />
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                <ShieldCheck size={13} />
                 {user?.emailVerified
                   ? t("profilePage.emailVerified")
                   : t("profilePage.emailNotVerified")}
@@ -537,18 +474,20 @@ const Profile = ({ mode = "client" }) => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsEditingProfile(true);
-              setError("");
-              setMessage("");
-            }}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <PencilLine size={14} />
-            {t("profilePage.actions.editProfile")}
-          </button>
+          {!isEditingProfile ? (
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditingProfile(true);
+                setError("");
+                setMessage("");
+              }}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              <PencilLine size={16} />
+              {t("profilePage.actions.editProfile")}
+            </button>
+          ) : null}
         </div>
       </article>
 
@@ -565,14 +504,29 @@ const Profile = ({ mode = "client" }) => {
         </p>
       ) : null}
 
-      <form
-        onSubmit={onSaveProfile}
-        className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
-      >
-        {PROFILE_TEXT_FIELDS.map((key) => (
-          <label key={key} className="grid gap-1 text-sm">
-            <span>{t(`profilePage.fields.${key}`)}</span>
-            {isEditingProfile ? (
+      {isEditingProfile ? (
+        <form
+          onSubmit={onSaveProfile}
+          className="grid gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
+        >
+          <div className="md:col-span-2">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              {t("profilePage.sections.editingProfile", {
+                defaultValue: "Editando información del perfil",
+              })}
+            </h2>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              {t("profilePage.sections.editingProfileSubtitle", {
+                defaultValue: "Actualiza tu información personal y de contacto",
+              })}
+            </p>
+          </div>
+
+          {PROFILE_TEXT_FIELDS.map((key) => (
+            <label key={key} className="grid gap-2 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">
+                {t(`profilePage.fields.${key}`)}
+              </span>
               <input
                 value={profileForm[key]}
                 onChange={(event) =>
@@ -583,279 +537,239 @@ const Profile = ({ mode = "client" }) => {
                 }
                 className={inputClass}
               />
-            ) : (
-              <span className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
-                {String(profileForm[key] || "").trim() ||
-                  t("profilePage.view.empty")}
-              </span>
-            )}
-          </label>
-        ))}
+            </label>
+          ))}
 
-        <div className="grid gap-1 text-sm">
-          <span>{t("profilePage.fields.phone")}</span>
-          {isEditingProfile ? (
-            <>
-              <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
-                <Combobox
-                  options={countryDialCodeOptions}
-                  value={profileForm.phoneCountryCode}
-                  onChange={(value) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      phoneCountryCode: value || "",
-                    }))
-                  }
-                  placeholder={t("profilePage.placeholders.phoneCountryCode")}
-                  noResultsText={t(
-                    "profilePage.placeholders.noCountryCodeResults",
-                  )}
-                  inputClassName={inputClass}
-                />
-                <input
-                  value={profileForm.phone}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      phone: sanitizePhoneLocalNumber(event.target.value),
-                    }))
-                  }
-                  placeholder={t("profilePage.placeholders.phoneNumber")}
-                  className={inputClass}
-                />
-              </div>
-              {phoneValidationMessage ? (
-                <p className="text-xs text-red-600 dark:text-red-300">
-                  {phoneValidationMessage}
-                </p>
-              ) : null}
-            </>
-          ) : (
-            <span className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
-              {phoneDisplay || t("profilePage.view.empty")}
+          <div className="grid gap-2 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {t("profilePage.fields.phone")}
             </span>
-          )}
-        </div>
-
-        <div className="grid gap-1 text-sm">
-          <span>{t("profilePage.fields.whatsappNumber")}</span>
-          {isEditingProfile ? (
-            <>
-              <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
-                <Combobox
-                  options={countryDialCodeOptions}
-                  value={profileForm.whatsappCountryCode}
-                  onChange={(value) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      whatsappCountryCode: value || "",
-                    }))
-                  }
-                  placeholder={t("profilePage.placeholders.phoneCountryCode")}
-                  noResultsText={t(
-                    "profilePage.placeholders.noCountryCodeResults",
-                  )}
-                  inputClassName={inputClass}
-                />
-                <input
-                  value={profileForm.whatsappNumber}
-                  onChange={(event) =>
-                    setProfileForm((prev) => ({
-                      ...prev,
-                      whatsappNumber: sanitizePhoneLocalNumber(
-                        event.target.value,
-                      ),
-                    }))
-                  }
-                  placeholder={t("profilePage.placeholders.whatsappNumber")}
-                  className={inputClass}
-                />
-              </div>
-              {whatsappValidationMessage ? (
-                <p className="text-xs text-red-600 dark:text-red-300">
-                  {whatsappValidationMessage}
-                </p>
-              ) : null}
-            </>
-          ) : (
-            <span className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
-              {whatsappDisplay || t("profilePage.view.empty")}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 md:col-span-2">
-          <button
-            type="button"
-            onClick={onCancelProfileEdit}
-            disabled={!isEditingProfile || savingProfile}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {t("client:profile.actions.cancelEdit")}
-          </button>
-
-          <button
-            type="submit"
-            disabled={
-              !isEditingProfile ||
-              !hasProfileChanges ||
-              savingProfile ||
-              hasProfileContactErrors
-            }
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-linear-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {savingProfile ? (
-              <Loader2 size={16} className="mr-2 animate-spin" />
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
+              <Combobox
+                options={countryDialCodeOptions}
+                value={profileForm.phoneCountryCode}
+                onChange={(value) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    phoneCountryCode: value || "",
+                  }))
+                }
+                placeholder={t("profilePage.placeholders.phoneCountryCode")}
+                noResultsText={t(
+                  "profilePage.placeholders.noCountryCodeResults",
+                )}
+                inputClassName={inputClass}
+              />
+              <input
+                value={profileForm.phone}
+                onChange={(event) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    phone: sanitizePhoneLocalNumber(event.target.value),
+                  }))
+                }
+                placeholder={t("profilePage.placeholders.phoneNumber")}
+                className={inputClass}
+              />
+            </div>
+            {phoneValidationMessage ? (
+              <p className="text-xs text-red-600 dark:text-red-300">
+                {phoneValidationMessage}
+              </p>
             ) : null}
-            {savingProfile
-              ? t("client:profile.actions.saving")
-              : t("client:profile.actions.saveProfile")}
-          </button>
-        </div>
-      </form>
+          </div>
+
+          <div className="grid gap-2 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {t("profilePage.fields.whatsappNumber")}
+            </span>
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
+              <Combobox
+                options={countryDialCodeOptions}
+                value={profileForm.whatsappCountryCode}
+                onChange={(value) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    whatsappCountryCode: value || "",
+                  }))
+                }
+                placeholder={t("profilePage.placeholders.phoneCountryCode")}
+                noResultsText={t(
+                  "profilePage.placeholders.noCountryCodeResults",
+                )}
+                inputClassName={inputClass}
+              />
+              <input
+                value={profileForm.whatsappNumber}
+                onChange={(event) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    whatsappNumber: sanitizePhoneLocalNumber(
+                      event.target.value,
+                    ),
+                  }))
+                }
+                placeholder={t("profilePage.placeholders.whatsappNumber")}
+                className={inputClass}
+              />
+            </div>
+            {whatsappValidationMessage ? (
+              <p className="text-xs text-red-600 dark:text-red-300">
+                {whatsappValidationMessage}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 md:col-span-2">
+            <button
+              type="button"
+              onClick={onCancelProfileEdit}
+              disabled={savingProfile}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t("client:profile.actions.cancelEdit")}
+            </button>
+
+            <button
+              type="submit"
+              disabled={
+                !hasProfileChanges || savingProfile || hasProfileContactErrors
+              }
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-linear-to-r from-cyan-500 to-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {savingProfile ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : null}
+              {savingProfile
+                ? t("client:profile.actions.saving")
+                : t("client:profile.actions.saveProfile")}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="mb-5 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            {t("profilePage.sections.personalInfo", {
+              defaultValue: "Información personal",
+            })}
+          </h2>
+
+          <dl className="grid gap-6 md:grid-cols-2">
+            {PROFILE_TEXT_FIELDS.map((key) => (
+              <div key={key} className="space-y-1">
+                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t(`profilePage.fields.${key}`)}
+                </dt>
+                <dd className="text-base font-medium text-slate-900 dark:text-slate-100">
+                  {String(profileForm[key] || "").trim() || (
+                    <span className="italic text-slate-400 dark:text-slate-500">
+                      {t("profilePage.view.empty")}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            ))}
+
+            <div className="space-y-1">
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t("profilePage.fields.phone")}
+              </dt>
+              <dd className="text-base font-medium text-slate-900 dark:text-slate-100">
+                {phoneDisplay || (
+                  <span className="italic text-slate-400 dark:text-slate-500">
+                    {t("profilePage.view.empty")}
+                  </span>
+                )}
+              </dd>
+            </div>
+
+            <div className="space-y-1">
+              <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t("profilePage.fields.whatsappNumber")}
+              </dt>
+              <dd className="text-base font-medium text-slate-900 dark:text-slate-100">
+                {whatsappDisplay || (
+                  <span className="italic text-slate-400 dark:text-slate-500">
+                    {t("profilePage.view.empty")}
+                  </span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </article>
+      )}
 
       <form
         onSubmit={onSavePreferences}
-        className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 md:grid-cols-2"
+        className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
       >
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 md:col-span-2">
+        <h2 className="mb-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
           {t("profilePage.sections.preferences")}
         </h2>
+        <p className="mb-5 text-xs text-slate-600 dark:text-slate-400">
+          {t("profilePage.sections.preferencesSubtitle", {
+            defaultValue: "Personaliza tu experiencia en la plataforma",
+          })}
+        </p>
 
-        <label className="grid gap-1 text-sm">
-          <span>{t("profilePage.preferences.theme")}</span>
-          <Select
-            value={preferencesForm.theme}
-            onChange={(value) =>
-              setPreferencesForm((prev) => ({ ...prev, theme: value }))
-            }
-            options={themeOptions}
-            className={inputClass}
-          />
-        </label>
+        <div className="grid gap-5 md:grid-cols-2">
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {t("profilePage.preferences.theme")}
+            </span>
+            <Select
+              value={preferencesForm.theme}
+              onChange={(value) =>
+                setPreferencesForm((prev) => ({ ...prev, theme: value }))
+              }
+              options={themeOptions}
+              className={inputClass}
+            />
+          </label>
 
-        <label className="grid gap-1 text-sm">
-          <span>{t("profilePage.preferences.language")}</span>
-          <Select
-            value={preferencesForm.locale}
-            onChange={(value) =>
-              setPreferencesForm((prev) => ({ ...prev, locale: value }))
-            }
-            options={localeOptions}
-            className={inputClass}
-          />
-        </label>
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {t("profilePage.preferences.language")}
+            </span>
+            <Select
+              value={preferencesForm.locale}
+              onChange={(value) =>
+                setPreferencesForm((prev) => ({ ...prev, locale: value }))
+              }
+              options={localeOptions}
+              className={inputClass}
+            />
+          </label>
+        </div>
 
-        {isRootUser ? (
-          <>
-            <div className="md:col-span-2">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                {t("profilePage.preferences.branding")}
-              </p>
-            </div>
-
-            <label className="grid gap-1 text-sm">
-              <span>{t("profilePage.preferences.brandPrimaryColor")}</span>
-              <input
-                value={preferencesForm.brandPrimaryColor}
-                onChange={(event) =>
-                  setPreferencesForm((prev) => ({
-                    ...prev,
-                    brandPrimaryColor: event.target.value,
-                  }))
-                }
-                placeholder="#0F172A"
-                maxLength={7}
-                className={inputClass}
-              />
-            </label>
-
-            <label className="grid gap-1 text-sm">
-              <span>{t("profilePage.preferences.brandSecondaryColor")}</span>
-              <input
-                value={preferencesForm.brandSecondaryColor}
-                onChange={(event) =>
-                  setPreferencesForm((prev) => ({
-                    ...prev,
-                    brandSecondaryColor: event.target.value,
-                  }))
-                }
-                placeholder="#16A34A"
-                maxLength={7}
-                className={inputClass}
-              />
-            </label>
-
-            <label className="grid gap-1 text-sm">
-              <span>{t("profilePage.preferences.brandFontHeading")}</span>
-              <input
-                value={preferencesForm.brandFontHeading}
-                onChange={(event) =>
-                  setPreferencesForm((prev) => ({
-                    ...prev,
-                    brandFontHeading: event.target.value,
-                  }))
-                }
-                placeholder="Poppins"
-                maxLength={BRAND_FONT_MAX_LENGTH}
-                className={inputClass}
-              />
-            </label>
-
-            <label className="grid gap-1 text-sm">
-              <span>{t("profilePage.preferences.brandFontBody")}</span>
-              <input
-                value={preferencesForm.brandFontBody}
-                onChange={(event) =>
-                  setPreferencesForm((prev) => ({
-                    ...prev,
-                    brandFontBody: event.target.value,
-                  }))
-                }
-                placeholder="Inter"
-                maxLength={BRAND_FONT_MAX_LENGTH}
-                className={inputClass}
-              />
-            </label>
-          </>
-        ) : null}
-
-        {preferencesValidationMessage ? (
-          <p className="text-xs text-red-600 dark:text-red-300 md:col-span-2">
-            {preferencesValidationMessage}
-          </p>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={
-            !hasPreferencesChanges ||
-            savingPreferences ||
-            Boolean(preferencesValidationMessage)
-          }
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
-        >
-          {savingPreferences ? (
-            <Loader2 size={16} className="mr-2 animate-spin" />
-          ) : null}
-          {savingPreferences
-            ? t("profilePage.actions.saving")
-            : t("profilePage.actions.savePreferences")}
-        </button>
+        <div className="mt-6 flex justify-end">
+          <button
+            type="submit"
+            disabled={!hasPreferencesChanges || savingPreferences}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-linear-to-r from-cyan-500 to-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {savingPreferences ? (
+              <Loader2 size={16} className="mr-2 animate-spin" />
+            ) : null}
+            {savingPreferences
+              ? t("profilePage.actions.saving")
+              : t("profilePage.actions.savePreferences")}
+          </button>
+        </div>
       </form>
 
-      <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <p className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
+      <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <h2 className="mb-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
           {t("profilePage.security.title")}
-        </p>
-        <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">
+        </h2>
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
           {t("profilePage.security.subtitle")}
         </p>
         <Link
           to="/recuperar-password"
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
-          <KeyRound size={14} />
+          <KeyRound size={16} />
           {t("profilePage.security.action")}
         </Link>
       </article>

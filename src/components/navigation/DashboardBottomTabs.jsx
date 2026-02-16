@@ -6,7 +6,6 @@ import {
   Home,
   Inbox,
   List,
-  Settings,
   Users,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
@@ -34,7 +33,6 @@ const DashboardBottomTabs = () => {
     ...(hasScope(user, "staff.manage")
       ? [{ key: "team", to: INTERNAL_ROUTES.team, icon: Users, label: t("sidebar.team") }]
       : []),
-    { key: "settings", to: INTERNAL_ROUTES.settings, icon: Settings, label: t("sidebar.settings") },
   ];
 
   const tabs = candidates.slice(0, 5);

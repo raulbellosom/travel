@@ -1,7 +1,11 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { Home, Menu, Monitor, Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import {
+  ThemeAnimationType,
+  useModeAnimation,
+} from "react-theme-switch-animation";
 import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
@@ -15,14 +19,7 @@ const DashboardNavbar = ({
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const {
-    theme,
-    effectiveTheme,
-    changeTheme,
-    changeThemeAnimated,
-    changeLanguage,
-  } = useUI();
-  const themeBtnRef = useRef(null);
+  const { theme, changeTheme, changeLanguage } = useUI();
   const language = i18n.resolvedLanguage || i18n.language || "es";
   const currentTheme =
     theme === "light" || theme === "dark" || theme === "system"
@@ -41,30 +38,48 @@ const DashboardNavbar = ({
   });
   const nextLanguage = language === "es" ? "en" : "es";
 
+  // react-theme-switch-animation for circle animation
+  const {
+    ref: animRef,
+    toggleSwitchTheme,
+    isDarkMode,
+  } = useModeAnimation({
+    animationType: ThemeAnimationType.CIRCLE,
+    duration: 750,
+  });
+
+  // Sync the library's isDarkMode back to UIContext
+  const prevIsDark = useRef(isDarkMode);
+  useEffect(() => {
+    if (prevIsDark.current !== isDarkMode) {
+      prevIsDark.current = isDarkMode;
+      changeTheme(isDarkMode ? "dark" : "light");
+    }
+  }, [isDarkMode, changeTheme]);
+
   const onToggleLanguage = () => {
     changeLanguage(nextLanguage);
   };
 
   const onToggleTheme = useCallback(() => {
-    // Determine if the effective theme will actually flip (dark↔light)
     const willBeDark =
       nextTheme === "dark" ||
       (nextTheme === "system" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
-    const currentlyDark = effectiveTheme === "dark";
+    const currentlyDark = isDarkMode;
 
-    if (willBeDark !== currentlyDark && themeBtnRef.current) {
-      // Effective theme flips → circle animation from the button center
-      const rect = themeBtnRef.current.getBoundingClientRect();
-      changeThemeAnimated(nextTheme, {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      });
+    if (willBeDark !== currentlyDark) {
+      // Effective theme flips → trigger the library's circle animation
+      toggleSwitchTheme();
+      // If "system" was chosen, persist that specific preference
+      if (nextTheme === "system") {
+        changeTheme("system");
+      }
     } else {
       // Same effective theme → just persist preference
       changeTheme(nextTheme);
     }
-  }, [nextTheme, effectiveTheme, changeTheme, changeThemeAnimated]);
+  }, [nextTheme, isDarkMode, toggleSwitchTheme, changeTheme]);
 
   const onLogout = async () => {
     await logout();
@@ -133,7 +148,7 @@ const DashboardNavbar = ({
           </a>
 
           <button
-            ref={themeBtnRef}
+            ref={animRef}
             onClick={onToggleTheme}
             className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             aria-label={themeToggleLabel}
