@@ -533,49 +533,49 @@ const MyProperties = () => {
             <table className="w-full min-w-[1240px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
-                  <th className="px-4 py-3">
+                  <th className="w-24 px-4 py-3">
                     {t("client:myProperties.table.image", {
                       defaultValue: "Imagen",
                     })}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[200px] px-4 py-3">
                     {t("client:myProperties.table.title")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[160px] px-4 py-3">
                     {t("client:myProperties.table.location")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[120px] px-4 py-3">
                     {t("client:myProperties.table.type", {
                       defaultValue: "Tipo",
                     })}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[120px] px-4 py-3">
                     {t("client:myProperties.table.operation", {
                       defaultValue: "Operacion",
                     })}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[100px] px-4 py-3">
                     {t("client:myProperties.table.rooms", {
                       defaultValue: "Recamaras/Banos",
                     })}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[160px] px-4 py-3">
                     {t("client:myProperties.table.status")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[140px] px-4 py-3">
                     {t("client:myProperties.table.metrics", {
                       defaultValue: "Metricas",
                     })}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[120px] px-4 py-3">
                     {t("client:myProperties.table.price")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[120px] px-4 py-3">
                     {t("client:myProperties.table.updatedAt", {
                       defaultValue: "Actualizada",
                     })}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[100px] px-4 py-3">
                     {t("client:myProperties.table.actions")}
                   </th>
                 </tr>
@@ -636,12 +636,12 @@ const MyProperties = () => {
                           {item.country || "-"}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {t(`homePage.enums.propertyType.${item.propertyType}`, {
                           defaultValue: item.propertyType,
                         })}
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {t(`homePage.enums.operation.${item.operationType}`, {
                           defaultValue: item.operationType,
                         })}

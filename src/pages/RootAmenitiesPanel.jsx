@@ -387,22 +387,22 @@ const RootAmenitiesPanel = () => {
               <table className="w-full min-w-[760px] text-left text-sm md:min-w-[900px]">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                   <tr>
-                    <th className="px-3 py-2">
+                    <th className="w-14 px-3 py-2">
                       {t("rootAmenitiesPage.table.icon")}
                     </th>
-                    <th className="px-3 py-2">
+                    <th className="min-w-[140px] px-3 py-2">
                       {t("rootAmenitiesPage.table.slug")}
                     </th>
-                    <th className="px-3 py-2">
+                    <th className="min-w-[200px] px-3 py-2">
                       {t("rootAmenitiesPage.table.name")}
                     </th>
-                    <th className="px-3 py-2">
+                    <th className="min-w-[120px] px-3 py-2">
                       {t("rootAmenitiesPage.table.category")}
                     </th>
-                    <th className="px-3 py-2">
+                    <th className="min-w-[100px] px-3 py-2">
                       {t("rootAmenitiesPage.table.status")}
                     </th>
-                    <th className="px-3 py-2">
+                    <th className="min-w-[160px] px-3 py-2">
                       {t("rootAmenitiesPage.table.actions")}
                     </th>
                   </tr>
@@ -439,12 +439,12 @@ const RootAmenitiesPanel = () => {
                             </p>
                           </div>
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="whitespace-nowrap px-3 py-2">
                           <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                             {t(`rootAmenitiesPage.categories.${item.category}`)}
                           </span>
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="whitespace-nowrap px-3 py-2">
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                               item.enabled

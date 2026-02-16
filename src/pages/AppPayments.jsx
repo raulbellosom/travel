@@ -215,22 +215,22 @@ const AppPayments = () => {
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[160px] px-4 py-3">
                     {t("appPaymentsPage.table.date")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[120px] px-4 py-3">
                     {t("appPaymentsPage.table.provider")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[160px] px-4 py-3">
                     {t("appPaymentsPage.table.reservationId")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[120px] px-4 py-3">
                     {t("appPaymentsPage.table.status")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[120px] px-4 py-3">
                     {t("appPaymentsPage.table.amount")}
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="min-w-[160px] px-4 py-3">
                     {t("appPaymentsPage.table.reference")}
                   </th>
                 </tr>
@@ -247,21 +247,21 @@ const AppPayments = () => {
                         isFocused ? "bg-cyan-50/70 dark:bg-cyan-900/20" : ""
                       }`}
                     >
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {new Date(payment.$createdAt).toLocaleString(locale)}
                       </td>
-                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
                         {payment.provider}
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                         {payment.reservationId}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                           {payment.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {new Intl.NumberFormat(locale, {
                           style: "currency",
                           currency: payment.currency || "MXN",

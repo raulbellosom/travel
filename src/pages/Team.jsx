@@ -961,13 +961,21 @@ const Team = () => {
               <table className="w-full min-w-[980px] text-left text-sm">
                 <thead className="bg-slate-50/90 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/80 dark:text-slate-300">
                   <tr>
-                    <th className="px-4 py-3">{t("teamPage.table.member")}</th>
-                    <th className="px-4 py-3">{t("teamPage.table.role")}</th>
-                    <th className="px-4 py-3">
+                    <th className="min-w-[220px] px-4 py-3">
+                      {t("teamPage.table.member")}
+                    </th>
+                    <th className="min-w-[140px] px-4 py-3">
+                      {t("teamPage.table.role")}
+                    </th>
+                    <th className="min-w-[160px] px-4 py-3">
                       {t("teamPage.table.permissions")}
                     </th>
-                    <th className="px-4 py-3">{t("teamPage.table.status")}</th>
-                    <th className="px-4 py-3">{t("teamPage.table.actions")}</th>
+                    <th className="min-w-[120px] px-4 py-3">
+                      {t("teamPage.table.status")}
+                    </th>
+                    <th className="min-w-[100px] px-4 py-3">
+                      {t("teamPage.table.actions")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1000,7 +1008,7 @@ const Team = () => {
                           </div>
                         </td>
 
-                        <td className="px-4 py-3">
+                        <td className="whitespace-nowrap px-4 py-3">
                           <span className="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100">
                             {roleLabel}
                           </span>
@@ -1018,7 +1026,7 @@ const Team = () => {
                           </button>
                         </td>
 
-                        <td className="px-4 py-3">
+                        <td className="whitespace-nowrap px-4 py-3">
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                               item.enabled !== false

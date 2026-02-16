@@ -263,11 +263,21 @@ const Leads = () => {
             <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                 <tr>
-                  <th className="px-4 py-3">{t("leadsPage.table.date")}</th>
-                  <th className="px-4 py-3">{t("leadsPage.table.contact")}</th>
-                  <th className="px-4 py-3">{t("leadsPage.table.property")}</th>
-                  <th className="px-4 py-3">{t("leadsPage.table.status")}</th>
-                  <th className="px-4 py-3">{t("leadsPage.table.actions")}</th>
+                  <th className="min-w-[160px] px-4 py-3">
+                    {t("leadsPage.table.date")}
+                  </th>
+                  <th className="min-w-[200px] px-4 py-3">
+                    {t("leadsPage.table.contact")}
+                  </th>
+                  <th className="min-w-[180px] px-4 py-3">
+                    {t("leadsPage.table.property")}
+                  </th>
+                  <th className="min-w-[140px] px-4 py-3">
+                    {t("leadsPage.table.status")}
+                  </th>
+                  <th className="min-w-[100px] px-4 py-3">
+                    {t("leadsPage.table.actions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -282,7 +292,7 @@ const Leads = () => {
                         isFocused ? "bg-cyan-50/70 dark:bg-cyan-900/20" : ""
                       }`}
                     >
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
                         {new Date(lead.$createdAt).toLocaleString(locale)}
                       </td>
                       <td className="px-4 py-3">
