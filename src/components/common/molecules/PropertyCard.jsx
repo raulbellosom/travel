@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   MapPin,
@@ -12,10 +12,14 @@ import {
   Building2,
   Store,
   Warehouse,
+  Star,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../../utils/cn";
+import { storage } from "../../../api/appwriteClient";
+import env from "../../../env";
+import PropertyImagePlaceholder from "../atoms/PropertyImagePlaceholder";
 
 const normalizeEnumValue = (value) =>
   String(value || "")
@@ -33,15 +37,35 @@ const PropertyCard = ({ property, className }) => {
   const { t, i18n } = useTranslation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  // Fallback images logic
-  const images =
-    property.images && property.images.length > 0
-      ? property.images
-      : [
-          property.mainImageUrl ||
-            "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
-        ];
+  // Build image URLs from galleryImageIds
+  const images = useMemo(() => {
+    // If property already has pre-processed images array (from detail pages), use it
+    if (property.images && property.images.length > 0) {
+      return property.images;
+    }
+
+    // Build URLs from galleryImageIds
+    if (
+      property.galleryImageIds &&
+      Array.isArray(property.galleryImageIds) &&
+      property.galleryImageIds.length > 0 &&
+      env.appwrite.buckets.propertyImages
+    ) {
+      return property.galleryImageIds.filter(Boolean).map((fileId) =>
+        storage.getFileView({
+          bucketId: env.appwrite.buckets.propertyImages,
+          fileId,
+        }),
+      );
+    }
+
+    // No images available
+    return [];
+  }, [property.images, property.galleryImageIds]);
+
+  const hasImages = images.length > 0 && !imageError;
 
   // Logic to handle gallery navigation safely
   const handleNextImage = (e) => {
@@ -141,22 +165,33 @@ const PropertyCard = ({ property, className }) => {
           to={`/propiedades/${property.slug || property.$id}`}
           className="block h-full w-full"
         >
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={currentImageIndex}
-              src={images[currentImageIndex]}
-              alt={property.title}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-              loading="lazy"
-            />
-          </AnimatePresence>
+          {hasImages ? (
+            <>
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImageIndex}
+                  src={images[currentImageIndex]}
+                  alt={property.title}
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  loading="lazy"
+                  onError={() => setImageError(true)}
+                />
+              </AnimatePresence>
 
-          {/* Overlay Gradient */}
-          <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40" />
+              {/* Overlay Gradient */}
+              <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40" />
+            </>
+          ) : (
+            /* Beautiful placeholder with pattern */
+            <PropertyImagePlaceholder
+              propertyType={property.propertyType || property.type}
+              iconSize={64}
+            />
+          )}
         </Link>
 
         {/* Badges */}

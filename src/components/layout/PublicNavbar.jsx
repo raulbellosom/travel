@@ -41,6 +41,7 @@ import UserDropdown from "../common/organisms/Navbar/UserDropdown";
 import PublicSearch from "../navigation/PublicSearch";
 import { DEFAULT_AMENITIES_CATALOG } from "../../data/amenitiesCatalog";
 import { propertiesService } from "../../services/propertiesService";
+import { storage } from "../../api/appwriteClient";
 import env from "../../env";
 
 const PublicNavbar = () => {
@@ -818,10 +819,18 @@ const PublicNavbar = () => {
                             </p>
                             {liveResults.map((p) => {
                               const myIdx = idx++;
+                              // Build image URL from galleryImageIds or use first image if available
                               const img =
                                 p.images?.[0] ||
-                                p.mainImageUrl ||
-                                "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=200&q=60";
+                                (p.galleryImageIds &&
+                                p.galleryImageIds[0] &&
+                                env.appwrite.buckets.propertyImages
+                                  ? storage.getFileView({
+                                      bucketId:
+                                        env.appwrite.buckets.propertyImages,
+                                      fileId: p.galleryImageIds[0],
+                                    })
+                                  : null);
                               return (
                                 <button
                                   key={p.$id}
@@ -842,11 +851,23 @@ const PublicNavbar = () => {
                                       : "hover:bg-cyan-50 dark:hover:bg-slate-700",
                                   )}
                                 >
-                                  <img
-                                    src={img}
-                                    alt={p.title}
-                                    className="h-11 w-14 shrink-0 rounded-lg object-cover"
-                                  />
+                                  {img ? (
+                                    <img
+                                      src={img}
+                                      alt={p.title}
+                                      className="h-11 w-14 shrink-0 rounded-lg object-cover"
+                                      onError={(e) => {
+                                        e.target.style.display = "none";
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="h-11 w-14 shrink-0 rounded-lg bg-gradient-to-br from-slate-100 to-cyan-50 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
+                                      <HomeIcon
+                                        size={14}
+                                        className="text-slate-400 dark:text-slate-500"
+                                      />
+                                    </div>
+                                  )}
                                   <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                                       {p.title}

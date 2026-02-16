@@ -7,6 +7,8 @@ import Button from "../../atoms/Button";
 import ListingCard from "../ListingCard";
 import Spinner from "../../atoms/Spinner";
 import { propertiesService } from "../../../../services/propertiesService";
+import { storage } from "../../../../api/appwriteClient";
+import env from "../../../../env";
 import { getErrorMessage } from "../../../../utils/errors";
 
 /**
@@ -106,35 +108,45 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
         {/* Properties Grid */}
         {!loading && !error && properties.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-            {properties.map((property, index) => (
-              <motion.div
-                key={property.$id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Link
-                  to={`/propiedades/${property.slug}`}
-                  className="block h-full"
+            {properties.map((property, index) => {
+              // Build images array from galleryImageIds - using regular function, not useMemo
+              const propertyImages =
+                property.galleryImageIds &&
+                property.galleryImageIds.length > 0 &&
+                env.appwrite.buckets.propertyImages
+                  ? property.galleryImageIds.map((fileId) =>
+                      storage.getFileView({
+                        bucketId: env.appwrite.buckets.propertyImages,
+                        fileId,
+                      }),
+                    )
+                  : [];
+
+              return (
+                <motion.div
+                  key={property.$id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <ListingCard
-                    listing={{
-                      ...property,
-                      images: [
-                        property.mainImageUrl ||
-                          property.coverImageUrl ||
-                          property.thumbnailUrl ||
-                          `https://images.unsplash.com/photo-${1505693416388 + index}?auto=format&fit=crop&w=800&q=80`,
-                      ],
-                      location: `${property.city}, ${property.state}`,
-                    }}
-                    onCardClick={handleCardClick}
-                    className="h-full transition hover:shadow-xl"
-                  />
-                </Link>
-              </motion.div>
-            ))}
+                  <Link
+                    to={`/propiedades/${property.slug}`}
+                    className="block h-full"
+                  >
+                    <ListingCard
+                      listing={{
+                        ...property,
+                        images: propertyImages,
+                        location: `${property.city}, ${property.state}`,
+                      }}
+                      onCardClick={handleCardClick}
+                      className="h-full transition hover:shadow-xl"
+                    />
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         )}
 

@@ -9,7 +9,7 @@ import { Select, TablePagination } from "../components/common";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Plus } from "lucide-react";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 
 const emptyForm = {
@@ -38,6 +38,8 @@ const RootAmenitiesPanel = () => {
   const [seedPreviewTab, setSeedPreviewTab] = useState(
     SEED_PREVIEW_TABS.create,
   );
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState("");
   const [editForm, setEditForm] = useState(emptyForm);
@@ -127,6 +129,7 @@ const RootAmenitiesPanel = () => {
     try {
       await amenitiesService.create(form);
       setForm(emptyForm);
+      setCreateModalOpen(false);
       await loadAmenities();
     } catch (err) {
       setError(getErrorMessage(err, t("rootAmenitiesPage.errors.create")));
@@ -148,7 +151,20 @@ const RootAmenitiesPanel = () => {
     }
   };
 
-  const startEdit = (item) => {
+  const openCreateModal = () => {
+    setForm(emptyForm);
+    setError("");
+    setCreateModalOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    if (saving) return;
+    setCreateModalOpen(false);
+    setForm(emptyForm);
+    setError("");
+  };
+
+  const openEditModal = (item) => {
     setEditId(item.$id);
     setEditForm({
       slug: item.slug || "",
@@ -156,20 +172,28 @@ const RootAmenitiesPanel = () => {
       name_en: item.name_en || "",
       category: item.category || "general",
     });
+    setError("");
+    setEditModalOpen(true);
   };
 
-  const cancelEdit = () => {
+  const closeEditModal = () => {
+    if (saving) return;
+    setEditModalOpen(false);
     setEditId("");
     setEditForm(emptyForm);
+    setError("");
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = async (event) => {
+    event.preventDefault();
     if (!editId) return;
     setSaving(true);
     setError("");
     try {
       await amenitiesService.update(editId, editForm);
-      cancelEdit();
+      setEditModalOpen(false);
+      setEditId("");
+      setEditForm(emptyForm);
       await loadAmenities();
     } catch (err) {
       setError(getErrorMessage(err, t("rootAmenitiesPage.errors.update")));
@@ -300,72 +324,29 @@ const RootAmenitiesPanel = () => {
       ) : null}
 
       <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-          {t("rootAmenitiesPage.createTitle")}
-        </h2>
-        <form
-          className="mt-4 grid gap-3 sm:grid-cols-2"
-          onSubmit={handleCreate}
-        >
-          <label className="grid gap-1 text-sm">
-            <span>{t("rootAmenitiesPage.fields.slug")}</span>
-            <input
-              required
-              value={form.slug}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, slug: event.target.value }))
-              }
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-            />
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span>{t("rootAmenitiesPage.fields.category")}</span>
-            <Select
-              value={form.category}
-              onChange={(value) =>
-                setForm((prev) => ({ ...prev, category: value }))
-              }
-              options={categoryOptions}
-              size="md"
-            />
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span>{t("rootAmenitiesPage.fields.nameEs")}</span>
-            <input
-              required
-              value={form.name_es}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, name_es: event.target.value }))
-              }
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-            />
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span>{t("rootAmenitiesPage.fields.nameEn")}</span>
-            <input
-              required
-              value={form.name_en}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, name_en: event.target.value }))
-              }
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-            />
-          </label>
-          <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {saving
-                ? t("rootAmenitiesPage.actions.saving")
-                : t("rootAmenitiesPage.actions.create")}
-            </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              {t("rootAmenitiesPage.listTitle", { defaultValue: "Amenidades" })}
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {t("rootAmenitiesPage.listSubtitle", {
+                defaultValue: "Gestiona el catálogo de amenidades disponibles",
+                count: filteredAmenities.length,
+              })}
+            </p>
           </div>
-        </form>
-      </article>
+          <button
+            type="button"
+            onClick={openCreateModal}
+            disabled={saving}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <Plus size={18} />
+            {t("rootAmenitiesPage.actions.create")}
+          </button>
+        </div>
 
-      <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-3 grid gap-3 sm:grid-cols-[1fr_220px]">
           <input
             value={filters.search}
@@ -428,7 +409,6 @@ const RootAmenitiesPanel = () => {
                 </thead>
                 <tbody>
                   {paginatedAmenities.map((item) => {
-                    const isEditing = editId === item.$id;
                     const translatedName =
                       item[localeNameField] ||
                       item.name_es ||
@@ -438,83 +418,31 @@ const RootAmenitiesPanel = () => {
                     return (
                       <tr
                         key={item.$id}
-                        className="border-t border-slate-200 align-top dark:border-slate-700"
+                        className="border-t border-slate-200 dark:border-slate-700"
                       >
                         <td className="px-3 py-2 text-xl">
-                          {getAmenityIcon(item)}
+                          {(() => {
+                            const IconComponent = getAmenityIcon(item);
+                            return <IconComponent size={20} />;
+                          })()}
                         </td>
                         <td className="break-all px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-200">
-                          {isEditing ? (
-                            <input
-                              value={editForm.slug}
-                              onChange={(event) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  slug: event.target.value,
-                                }))
-                              }
-                              className="w-full min-w-[11rem] max-w-[14rem] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-                            />
-                          ) : (
-                            item.slug
-                          )}
+                          {item.slug}
                         </td>
                         <td className="px-3 py-2">
-                          {isEditing ? (
-                            <div className="grid gap-2">
-                              <input
-                                value={editForm.name_es}
-                                onChange={(event) =>
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    name_es: event.target.value,
-                                  }))
-                                }
-                                className="w-full min-w-[11rem] max-w-[14rem] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-                              />
-                              <input
-                                value={editForm.name_en}
-                                onChange={(event) =>
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    name_en: event.target.value,
-                                  }))
-                                }
-                                className="w-full min-w-[11rem] max-w-[14rem] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
-                              />
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="font-medium text-slate-900 dark:text-slate-100">
-                                {translatedName}
-                              </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-300">
-                                {item.name_es} / {item.name_en}
-                              </p>
-                            </div>
-                          )}
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-slate-100">
+                              {translatedName}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-300">
+                              {item.name_es} / {item.name_en}
+                            </p>
+                          </div>
                         </td>
                         <td className="px-3 py-2">
-                          {isEditing ? (
-                            <Select
-                              value={editForm.category}
-                              onChange={(value) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  category: value,
-                                }))
-                              }
-                              options={categoryOptions}
-                              size="sm"
-                              className="text-xs"
-                            />
-                          ) : (
-                            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                              {t(
-                                `rootAmenitiesPage.categories.${item.category}`,
-                              )}
-                            </span>
-                          )}
+                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                            {t(`rootAmenitiesPage.categories.${item.category}`)}
+                          </span>
                         </td>
                         <td className="px-3 py-2">
                           <span
@@ -531,47 +459,24 @@ const RootAmenitiesPanel = () => {
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex flex-wrap gap-2">
-                            {isEditing ? (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={saving}
-                                  onClick={handleSaveEdit}
-                                  className="rounded-md border border-sky-300 px-2 py-1 text-xs font-medium text-sky-700 dark:border-sky-700 dark:text-sky-300"
-                                >
-                                  {t("rootAmenitiesPage.actions.save")}
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={saving}
-                                  onClick={cancelEdit}
-                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
-                                >
-                                  {t("rootAmenitiesPage.actions.cancel")}
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={saving}
-                                  onClick={() => startEdit(item)}
-                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
-                                >
-                                  {t("rootAmenitiesPage.actions.edit")}
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={saving}
-                                  onClick={() => handleToggleEnabled(item)}
-                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium dark:border-slate-600"
-                                >
-                                  {item.enabled
-                                    ? t("rootAmenitiesPage.actions.disable")
-                                    : t("rootAmenitiesPage.actions.enable")}
-                                </button>
-                              </>
-                            )}
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => openEditModal(item)}
+                              className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                            >
+                              {t("rootAmenitiesPage.actions.edit")}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => handleToggleEnabled(item)}
+                              className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                            >
+                              {item.enabled
+                                ? t("rootAmenitiesPage.actions.disable")
+                                : t("rootAmenitiesPage.actions.enable")}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -694,7 +599,10 @@ const RootAmenitiesPanel = () => {
                       >
                         <div className="flex items-start gap-3">
                           <span className="text-lg" aria-hidden="true">
-                            {getAmenityIcon(item)}
+                            {(() => {
+                              const IconComponent = getAmenityIcon(item);
+                              return <IconComponent size={20} />;
+                            })()}
                           </span>
                           <div className="min-w-0 space-y-1">
                             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -770,6 +678,234 @@ const RootAmenitiesPanel = () => {
             </>
           ) : null}
         </div>
+      </Modal>
+
+      {/* Create Amenity Modal */}
+      <Modal
+        isOpen={createModalOpen}
+        onClose={closeCreateModal}
+        title={t("rootAmenitiesPage.createModal.title", {
+          defaultValue: "Crear amenidad",
+        })}
+        description={t("rootAmenitiesPage.createModal.subtitle", {
+          defaultValue: "Agrega una nueva amenidad al catálogo",
+        })}
+        size="md"
+        footer={
+          <ModalFooter>
+            <button
+              type="button"
+              onClick={closeCreateModal}
+              disabled={saving}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t("rootAmenitiesPage.actions.cancel")}
+            </button>
+            <button
+              type="submit"
+              form="create-amenity-form"
+              disabled={saving}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving
+                ? t("rootAmenitiesPage.actions.saving")
+                : t("rootAmenitiesPage.actions.create")}
+            </button>
+          </ModalFooter>
+        }
+      >
+        <form
+          id="create-amenity-form"
+          onSubmit={handleCreate}
+          className="space-y-4"
+        >
+          {error && createModalOpen ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.slug")}
+              </span>
+              <input
+                required
+                type="text"
+                value={form.slug}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, slug: event.target.value }))
+                }
+                placeholder="my-amenity-slug"
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+              />
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.category")}
+              </span>
+              <Select
+                value={form.category}
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, category: value }))
+                }
+                options={categoryOptions}
+                size="md"
+              />
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.nameEs")}
+              </span>
+              <input
+                required
+                type="text"
+                value={form.name_es}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, name_es: event.target.value }))
+                }
+                placeholder="Nombre en español"
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+              />
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.nameEn")}
+              </span>
+              <input
+                required
+                type="text"
+                value={form.name_en}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, name_en: event.target.value }))
+                }
+                placeholder="Name in English"
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+              />
+            </label>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Amenity Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={closeEditModal}
+        title={t("rootAmenitiesPage.editModal.title", {
+          defaultValue: "Editar amenidad",
+        })}
+        description={t("rootAmenitiesPage.editModal.subtitle", {
+          defaultValue: "Modifica los datos de la amenidad",
+        })}
+        size="md"
+        footer={
+          <ModalFooter>
+            <button
+              type="button"
+              onClick={closeEditModal}
+              disabled={saving}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t("rootAmenitiesPage.actions.cancel")}
+            </button>
+            <button
+              type="submit"
+              form="edit-amenity-form"
+              disabled={saving}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving
+                ? t("rootAmenitiesPage.actions.saving")
+                : t("rootAmenitiesPage.actions.save")}
+            </button>
+          </ModalFooter>
+        }
+      >
+        <form
+          id="edit-amenity-form"
+          onSubmit={handleSaveEdit}
+          className="space-y-4"
+        >
+          {error && editModalOpen ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.slug")}
+              </span>
+              <input
+                required
+                type="text"
+                value={editForm.slug}
+                onChange={(event) =>
+                  setEditForm((prev) => ({ ...prev, slug: event.target.value }))
+                }
+                placeholder="my-amenity-slug"
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+              />
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.category")}
+              </span>
+              <Select
+                value={editForm.category}
+                onChange={(value) =>
+                  setEditForm((prev) => ({ ...prev, category: value }))
+                }
+                options={categoryOptions}
+                size="md"
+              />
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.nameEs")}
+              </span>
+              <input
+                required
+                type="text"
+                value={editForm.name_es}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    name_es: event.target.value,
+                  }))
+                }
+                placeholder="Nombre en español"
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+              />
+            </label>
+
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                {t("rootAmenitiesPage.fields.nameEn")}
+              </span>
+              <input
+                required
+                type="text"
+                value={editForm.name_en}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    name_en: event.target.value,
+                  }))
+                }
+                placeholder="Name in English"
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400 dark:focus:ring-sky-900/50"
+              />
+            </label>
+          </div>
+        </form>
       </Modal>
     </section>
   );

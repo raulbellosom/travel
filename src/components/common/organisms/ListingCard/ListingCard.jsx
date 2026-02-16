@@ -1,29 +1,38 @@
 ﻿import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 import Button from "../../atoms/Button";
 import PriceBadge from "../../molecules/PriceBadge";
+import PropertyImagePlaceholder from "../../atoms/PropertyImagePlaceholder";
 
 const ListingCard = ({ listing, onCardClick, className = "", ...props }) => {
   const { t } = useTranslation();
+  const [imageError, setImageError] = useState(false);
 
   const handleCardClick = () => {
     onCardClick?.(listing);
   };
+
+  const hasImage = listing?.images?.[0] && !imageError;
 
   return (
     <article
       className={`overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 ${className}`}
       {...props}
     >
-      <div className="flex h-44 items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-        {listing?.images?.[0] ? (
+      <div className="h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
+        {hasImage ? (
           <img
             src={listing.images[0]}
             alt={listing.title || t("listingCard.fallbackTitle")}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+            onError={() => setImageError(true)}
           />
         ) : (
-          t("listingCard.noImage")
+          <PropertyImagePlaceholder
+            propertyType={listing?.propertyType || listing?.type}
+            iconSize={40}
+          />
         )}
       </div>
       <div className="space-y-3 p-4">
@@ -51,4 +60,3 @@ const ListingCard = ({ listing, onCardClick, className = "", ...props }) => {
 };
 
 export default ListingCard;
-

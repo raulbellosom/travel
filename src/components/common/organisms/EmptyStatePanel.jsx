@@ -8,6 +8,7 @@ const EmptyStatePanel = ({
   actionLabel = "",
   actionTo = "",
   onAction,
+  action,
   compact = false,
   className = "",
 }) => {
@@ -23,7 +24,9 @@ const EmptyStatePanel = ({
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_88%_88%,rgba(56,189,248,0.12),transparent_35%)]"
       />
 
-      <div className={`relative mx-auto flex max-w-xl flex-col items-center text-center ${compact ? "gap-2" : "gap-3"}`}>
+      <div
+        className={`relative mx-auto flex max-w-xl flex-col items-center text-center ${compact ? "gap-2" : "gap-3"}`}
+      >
         {Icon ? (
           <motion.div
             animate={{ y: [0, -4, 0] }}
@@ -34,11 +37,15 @@ const EmptyStatePanel = ({
           </motion.div>
         ) : null}
 
-        <h3 className={`${compact ? "text-base" : "text-lg"} font-semibold text-slate-900 dark:text-slate-100`}>
+        <h3
+          className={`${compact ? "text-base" : "text-lg"} font-semibold text-slate-900 dark:text-slate-100`}
+        >
           {title}
         </h3>
         {description ? (
-          <p className="max-w-lg text-sm text-slate-600 dark:text-slate-300">{description}</p>
+          <p className="max-w-lg text-sm text-slate-600 dark:text-slate-300">
+            {description}
+          </p>
         ) : null}
 
         {actionLabel ? (
@@ -59,6 +66,8 @@ const EmptyStatePanel = ({
             </button>
           )
         ) : null}
+
+        {action ? action : null}
       </div>
     </motion.section>
   );
