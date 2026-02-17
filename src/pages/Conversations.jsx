@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -58,6 +58,7 @@ const Conversations = () => {
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const scrolledConversationRef = useRef(null);
+  const prevMessagesCountRef = useRef(0);
 
   // Generate initials (2 letters from name)
   const getInitials = useCallback((name) => {
@@ -117,20 +118,17 @@ const Conversations = () => {
   }, [activeConversationId, goBackToList]);
 
   // Auto-scroll to bottom when conversation first loads
-  useEffect(() => {
+  // Using useLayoutEffect to run synchronously after DOM mutations
+  useLayoutEffect(() => {
     // Reset when no conversation
     if (!activeConversationId) {
       setIsScrollReady(false);
       scrolledConversationRef.current = null;
+      prevMessagesCountRef.current = 0;
       return;
     }
 
-    // Already scrolled for this conversation
-    if (scrolledConversationRef.current === activeConversationId) {
-      return;
-    }
-
-    // Wait for messages to load
+    // Still loading - wait
     if (loadingMessages) {
       setIsScrollReady(false);
       return;
@@ -140,52 +138,67 @@ const Conversations = () => {
     if (messages.length === 0) {
       setIsScrollReady(true);
       scrolledConversationRef.current = activeConversationId;
+      prevMessagesCountRef.current = 0;
       return;
     }
 
-    // Wait for DOM to render, then scroll to bottom
-    // Use multiple animation frames to ensure content is fully painted
-    let frameId1, frameId2, frameId3;
-    let cancelled = false;
+    // Already scrolled for this conversation with same message count
+    if (
+      scrolledConversationRef.current === activeConversationId &&
+      prevMessagesCountRef.current === messages.length
+    ) {
+      return;
+    }
 
-    const doScroll = () => {
-      // First frame: React has committed
-      frameId1 = requestAnimationFrame(() => {
-        if (cancelled) return;
-        // Second frame: browser has painted
-        frameId2 = requestAnimationFrame(() => {
-          if (cancelled) return;
-          // Third frame: extra safety for complex renders
-          frameId3 = requestAnimationFrame(() => {
-            if (cancelled) return;
-            
-            // Use sentinel element for reliable scroll
-            const endElement = messagesEndRef.current;
-            if (endElement) {
-              endElement.scrollIntoView({ behavior: "instant", block: "end" });
-            } else {
-              // Fallback
-              const container = messagesContainerRef.current;
-              if (container) {
-                container.scrollTop = container.scrollHeight;
-              }
-            }
-            
-            setIsScrollReady(true);
-            scrolledConversationRef.current = activeConversationId;
-          });
-        });
-      });
+    // New conversation or messages just loaded - need to scroll
+    let cancelled = false;
+    let timeoutId;
+    let frameId;
+    let retryCount = 0;
+    const maxRetries = 30; // ~500ms max wait at 60fps
+
+    const performScroll = () => {
+      if (cancelled) return;
+
+      const container = messagesContainerRef.current;
+      const endElement = messagesEndRef.current;
+
+      // Check if content is ready:
+      // 1. Sentinel element exists in DOM (React rendered messages)
+      // 2. Or container has some scroll height
+      // 3. Or we've retried enough times (fallback)
+      const contentReady =
+        endElement ||
+        (container && container.scrollHeight > 0) ||
+        retryCount >= maxRetries;
+
+      if (contentReady && container) {
+        // Scroll to bottom
+        if (endElement) {
+          endElement.scrollIntoView({ behavior: "instant", block: "end" });
+        } else {
+          container.scrollTop = container.scrollHeight;
+        }
+
+        setIsScrollReady(true);
+        scrolledConversationRef.current = activeConversationId;
+        prevMessagesCountRef.current = messages.length;
+      } else {
+        // Content not ready yet, try again in next frame
+        retryCount++;
+        frameId = requestAnimationFrame(performScroll);
+      }
     };
 
-    // Start scrolling immediately after state update
-    doScroll();
+    // Start after a microtask to let React fully commit
+    timeoutId = setTimeout(() => {
+      frameId = requestAnimationFrame(performScroll);
+    }, 0);
 
     return () => {
       cancelled = true;
-      if (frameId1) cancelAnimationFrame(frameId1);
-      if (frameId2) cancelAnimationFrame(frameId2);
-      if (frameId3) cancelAnimationFrame(frameId3);
+      if (timeoutId) clearTimeout(timeoutId);
+      if (frameId) cancelAnimationFrame(frameId);
     };
   }, [activeConversationId, loadingMessages, messages.length]);
 
