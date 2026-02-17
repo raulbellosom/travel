@@ -35,8 +35,8 @@ export const ChatProvider = ({ children }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [isRestoringConversation, setIsRestoringConversation] = useState(
-    () => Boolean(localStorage.getItem("activeConversationId")),
+  const [isRestoringConversation, setIsRestoringConversation] = useState(() =>
+    Boolean(localStorage.getItem("activeConversationId")),
   );
 
   // Refs for real-time subscriptions
@@ -262,16 +262,46 @@ export const ChatProvider = ({ children }) => {
     async (body) => {
       if (!activeConversationId || !user?.$id || !body.trim()) return null;
 
-      const message = await chatService.sendMessage({
+      const trimmedBody = body.trim();
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      // Optimistic update: add message immediately with "sending" status
+      const optimisticMessage = {
+        $id: tempId,
         conversationId: activeConversationId,
         senderUserId: user.$id,
         senderName: user.name || user.email || "Usuario",
         senderRole: chatRole,
-        body: body.trim(),
-      });
+        body: trimmedBody,
+        $createdAt: new Date().toISOString(),
+        status: "sending",
+      };
 
-      // DO NOT add message to local state here — let the real-time subscription handle it
-      // This prevents race condition duplicates
+      setMessages((prev) => [...prev, optimisticMessage]);
+
+      let message;
+      try {
+        message = await chatService.sendMessage({
+          conversationId: activeConversationId,
+          senderUserId: user.$id,
+          senderName: user.name || user.email || "Usuario",
+          senderRole: chatRole,
+          body: trimmedBody,
+        });
+
+        // Replace optimistic message with real one (real-time also handles this but may be slow)
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.$id === tempId ? { ...message, status: "sent" } : m,
+          ),
+        );
+      } catch (error) {
+        // Mark as failed on error
+        setMessages((prev) =>
+          prev.map((m) => (m.$id === tempId ? { ...m, status: "failed" } : m)),
+        );
+        throw error;
+      }
 
       // Update conversation in list
       setConversations((prev) =>
@@ -384,17 +414,34 @@ export const ChatProvider = ({ children }) => {
         const doc = response.payload;
 
         if (event.includes(".create")) {
-          // Avoid duplicating if we already optimistically added it
           setMessages((prev) => {
-            if (prev.find((m) => m.$id === doc.$id)) return prev;
-            return [...prev, doc];
+            // Check if we already have this message (by $id) or an optimistic version (by tempId)
+            const existingIndex = prev.findIndex((m) => m.$id === doc.$id);
+            if (existingIndex !== -1) return prev;
+
+            // Check for optimistic messages (same sender, body, recent timestamp)
+            const optimisticIndex = prev.findIndex(
+              (m) =>
+                m.$id.startsWith("temp-") &&
+                m.senderUserId === doc.senderUserId &&
+                m.body === doc.body,
+            );
+
+            if (optimisticIndex !== -1) {
+              // Replace optimistic message with confirmed one
+              const updated = [...prev];
+              updated[optimisticIndex] = { ...doc, status: "sent" };
+              return updated;
+            }
+
+            return [...prev, { ...doc, status: "sent" }];
           });
 
           // If message is from the other party, play notification sound and auto-mark as read
           if (doc.senderUserId !== user.$id) {
             // Play notification sound for incoming message
             playNotificationSound();
-            
+
             chatService
               .markAsRead(activeConversationId, chatRole)
               .catch(() => {});

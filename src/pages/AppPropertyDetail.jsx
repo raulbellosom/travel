@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import LazyImage from "../components/common/atoms/LazyImage";
+import Select from "../components/common/atoms/Select/Select";
 import { ImageViewerModal } from "../components/common/organisms/ImageViewerModal/ImageViewerModal";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
@@ -884,41 +885,20 @@ const AppPropertyDetail = () => {
             </p>
           ) : (
             <>
-              <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                {staffList.map((staff) => (
-                  <label
-                    key={staff.$id}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition hover:bg-slate-100 dark:hover:bg-slate-700/50"
-                  >
-                    <input
-                      type="radio"
-                      name="responsibleAgent"
-                      checked={selectedResponsibleId === staff.$id}
-                      onChange={() => setSelectedResponsibleId(staff.$id)}
-                      disabled={staffSaving}
-                      className="h-4 w-4 border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {staff.firstName} {staff.lastName}
-                        {staff.$id === property?.ownerUserId && (
-                          <span className="ml-2 inline-flex items-center rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
-                            {t(
-                              "appPropertyDetailPage.responsibleAgent.current",
-                              {
-                                defaultValue: "Actual",
-                              },
-                            )}
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {staff.email} • {staff.role}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
+              <Select
+                value={selectedResponsibleId}
+                onChange={(newValue) => setSelectedResponsibleId(newValue)}
+                disabled={staffSaving}
+                placeholder={t(
+                  "appPropertyDetailPage.responsibleAgent.selectPlaceholder",
+                  { defaultValue: "Selecciona un agente..." },
+                )}
+                options={staffList.map((staff) => ({
+                  value: staff.$id,
+                  label: `${staff.firstName} ${staff.lastName}${staff.$id === property?.ownerUserId ? ` (${t("appPropertyDetailPage.responsibleAgent.current", { defaultValue: "Actual" })})` : ""}`,
+                  description: `${staff.email} • ${staff.role}`,
+                }))}
+              />
 
               {hasResponsibleChanges && (
                 <div className="mt-3 flex justify-end">

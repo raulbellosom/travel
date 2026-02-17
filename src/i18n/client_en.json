@@ -277,6 +277,7 @@
       "unspecified": "Not specified",
       "unfurnished": "Unfurnished",
       "semiFurnished": "Semi-Furnished",
+      "semi_furnished": "Semi-Furnished",
       "furnished": "Furnished"
     },
     "petsStatus": {

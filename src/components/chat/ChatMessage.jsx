@@ -1,4 +1,38 @@
 import { cn } from "../../utils/cn";
+import { Clock, Check, AlertCircle } from "lucide-react";
+
+/**
+ * Status indicator for sent messages.
+ */
+const MessageStatus = ({ status }) => {
+  if (!status) return null;
+
+  switch (status) {
+    case "sending":
+      return (
+        <Clock
+          className="ml-1 inline-block h-3 w-3 animate-pulse text-cyan-200"
+          aria-label="Enviando..."
+        />
+      );
+    case "sent":
+      return (
+        <Check
+          className="ml-1 inline-block h-3 w-3 text-cyan-200"
+          aria-label="Enviado"
+        />
+      );
+    case "failed":
+      return (
+        <AlertCircle
+          className="ml-1 inline-block h-3 w-3 text-red-300"
+          aria-label="Error al enviar"
+        />
+      );
+    default:
+      return null;
+  }
+};
 
 /**
  * Single chat message bubble.
@@ -18,6 +52,7 @@ const ChatMessage = ({ message, isOwn }) => {
           isOwn
             ? "rounded-br-md bg-cyan-600 text-white dark:bg-cyan-500"
             : "rounded-bl-md bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white",
+          message.status === "failed" && "opacity-70",
         )}
       >
         {/* Sender name (only if not own message) */}
@@ -35,16 +70,17 @@ const ChatMessage = ({ message, isOwn }) => {
         {/* Body */}
         <p className="whitespace-pre-wrap break-words">{message.body}</p>
 
-        {/* Timestamp */}
+        {/* Timestamp and status */}
         <p
           className={cn(
-            "mt-1 text-right text-[10px]",
+            "mt-1 flex items-center justify-end text-[10px]",
             isOwn
               ? "text-cyan-100 dark:text-cyan-200"
               : "text-slate-400 dark:text-slate-500",
           )}
         >
           {time}
+          {isOwn && <MessageStatus status={message.status} />}
         </p>
       </div>
     </div>
