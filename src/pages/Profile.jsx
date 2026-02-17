@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
   Camera,
   CheckCircle2,
+  EllipsisVertical,
+  Image,
   KeyRound,
   Loader2,
   Mail,
@@ -15,6 +17,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import Combobox from "../components/common/molecules/Combobox/Combobox";
 import { Select } from "../components/common";
+import LazyImage from "../components/common/atoms/LazyImage";
 import { getErrorMessage } from "../utils/errors";
 import {
   formatPhoneForDisplay,
@@ -164,11 +167,35 @@ const Profile = ({ mode = "client" }) => {
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [avatarMenuOpenUp, setAvatarMenuOpenUp] = useState(false);
+  const avatarMenuRef = useRef(null);
+  const avatarDropdownRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const countryDialCodeOptions = useMemo(
     () => getCountryDialCodeOptions(i18n.language),
     [i18n.language],
   );
+
+  // Función para abrir/cerrar el menú del avatar
+  const handleToggleAvatarMenu = () => {
+    if (showAvatarMenu) {
+      setShowAvatarMenu(false);
+      return;
+    }
+
+    // Calcular si debe abrir hacia arriba o abajo
+    if (avatarMenuRef.current) {
+      const buttonRect = avatarMenuRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const menuHeight = user?.avatarUrl ? 110 : 56;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+      setAvatarMenuOpenUp(spaceBelow < menuHeight + 20);
+    }
+
+    setShowAvatarMenu(true);
+  };
 
   useEffect(() => {
     const nextProfileForm = buildProfileFormFromSources({
@@ -183,6 +210,24 @@ const Profile = ({ mode = "client" }) => {
     setInitialPreferencesForm(nextPreferencesForm);
     setIsEditingProfile(false);
   }, [preferences, profile, user?.name, user?.phone]);
+
+  // Close avatar menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const isInsideButton = avatarMenuRef.current?.contains(event.target);
+      const isInsideDropdown = avatarDropdownRef.current?.contains(event.target);
+      
+      if (!isInsideButton && !isInsideDropdown) {
+        setShowAvatarMenu(false);
+      }
+    };
+
+    if (showAvatarMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showAvatarMenu]);
 
   const fullName = useMemo(() => {
     const value = `${profileForm.firstName} ${profileForm.lastName}`.trim();
@@ -419,13 +464,16 @@ const Profile = ({ mode = "client" }) => {
           <div className="flex items-center gap-5">
             <div className="relative">
               {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={fullName}
-                  className="h-24 w-24 rounded-full border-2 border-slate-200 object-cover shadow-lg dark:border-slate-700"
-                />
+                <div className="relative aspect-square h-24 w-24 overflow-hidden rounded-full border-2 border-slate-200 shadow-lg dark:border-slate-700">
+                  <LazyImage
+                    src={user.avatarUrl}
+                    alt={fullName}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    eager={true}
+                  />
+                </div>
               ) : (
-                <div className="grid h-24 w-24 place-items-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-3xl font-bold text-white shadow-xl shadow-cyan-500/25">
+                <div className="grid aspect-square h-24 w-24 place-items-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-3xl font-bold text-white shadow-xl shadow-cyan-500/25">
                   {getInitials(
                     user?.name ||
                       t("client:profile.summary.defaultName") ||
@@ -434,28 +482,68 @@ const Profile = ({ mode = "client" }) => {
                 </div>
               )}
 
-              <div className="absolute -bottom-1 -right-1 flex gap-1.5">
-                <label className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                  <Camera size={16} />
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={onAvatarChange}
-                    disabled={uploadingAvatar || removingAvatar}
-                    className="hidden"
-                  />
-                </label>
-                {user?.avatarUrl ? (
-                  <button
-                    type="button"
-                    onClick={onRemoveAvatar}
-                    disabled={uploadingAvatar || removingAvatar}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-white text-rose-600 shadow-md transition hover:bg-rose-50 dark:border-rose-900 dark:bg-slate-800 dark:hover:bg-rose-950/50"
+              {/* Avatar menu button */}
+              <div className="absolute -bottom-1 -right-1">
+                <button
+                  ref={avatarMenuRef}
+                  type="button"
+                  onClick={handleToggleAvatarMenu}
+                  disabled={uploadingAvatar || removingAvatar}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  aria-label="Avatar options"
+                >
+                  <EllipsisVertical size={16} />
+                </button>
+
+                {/* Dropdown menu */}
+                {showAvatarMenu && (
+                  <div
+                    ref={avatarDropdownRef}
+                    className={`absolute left-0 ${avatarMenuOpenUp ? "bottom-full mb-2" : "top-full mt-2"} z-50 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800`}
                   >
-                    <Trash2 size={16} />
-                  </button>
-                ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        fileInputRef.current?.click();
+                        setShowAvatarMenu(false);
+                      }}
+                      disabled={uploadingAvatar || removingAvatar}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
+                    >
+                      <Image size={16} />
+                      {uploadingAvatar
+                        ? t("profilePage.actions.uploadingAvatar")
+                        : t("profilePage.actions.uploadAvatar")}
+                    </button>
+                    {user?.avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onRemoveAvatar();
+                          setShowAvatarMenu(false);
+                        }}
+                        disabled={uploadingAvatar || removingAvatar}
+                        className="flex w-full items-center gap-3 border-t border-slate-200 px-4 py-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50 dark:border-slate-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                      >
+                        <Trash2 size={16} />
+                        {removingAvatar
+                          ? t("profilePage.actions.removingAvatar")
+                          : t("profilePage.actions.removeAvatar")}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onAvatarChange}
+                disabled={uploadingAvatar || removingAvatar}
+                className="hidden"
+              />
             </div>
 
             <div>

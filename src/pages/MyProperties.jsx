@@ -21,6 +21,7 @@ import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
 import { TablePagination } from "../components/common";
+import LazyImage from "../components/common/atoms/LazyImage";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
@@ -599,7 +600,8 @@ const MyProperties = () => {
                             onClick={() => openImageViewer(item, 0)}
                             className="group relative h-16 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition hover:border-cyan-500 dark:border-slate-700 dark:bg-slate-800"
                           >
-                            <img
+                            LazyImage
+                            <LazyImage
                               src={getPropertyThumbnail(item)}
                               alt={item.title}
                               className="h-full w-full object-cover transition group-hover:scale-105"

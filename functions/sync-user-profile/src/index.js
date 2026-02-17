@@ -49,11 +49,13 @@ const ALLOWED_FIELDS = new Set([
   "phoneCountryCode",
   "whatsappNumber",
   "whatsappCountryCode",
+  "avatarFileId",
 ]);
 const OPTIONAL_COMPAT_FIELDS = [
   "phoneCountryCode",
   "whatsappCountryCode",
   "whatsappNumber",
+  "avatarFileId",
 ];
 
 const isValidEmail = (value) => EMAIL_REGEX.test(String(value || ""));
@@ -197,6 +199,12 @@ export default async ({ req, res, log, error }) => {
       body.whatsappCountryCode ?? currentProfile.whatsappCountryCode,
     );
 
+    // Sync avatarFileId from Auth prefs to Database
+    const nextAvatarFileId = normalize(
+      body.avatarFileId ?? authUser.prefs?.avatarFileId ?? currentProfile.avatarFileId ?? "",
+      64,
+    );
+
     if (!nextFirstName || !nextLastName) {
       return json(res, 422, {
         ok: false,
@@ -309,6 +317,7 @@ export default async ({ req, res, log, error }) => {
       whatsappCountryCode: hasValue(nextWhatsappNumber)
         ? nextWhatsappCountryCode
         : "",
+      avatarFileId: nextAvatarFileId,
     };
 
     const emailChanged =

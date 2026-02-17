@@ -1,6 +1,14 @@
-﻿import { useEffect, useMemo, useState, lazy, Suspense, useRef } from "react";
+﻿import {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   BedDouble,
@@ -30,11 +38,15 @@ import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
 import { amenitiesService } from "../services/amenitiesService";
 import { propertiesService } from "../services/propertiesService";
+import { profileService } from "../services/profileService";
 import { executeJsonFunction } from "../utils/functions";
 import { getErrorMessage } from "../utils/errors";
-import PropertyChatButton from "../components/chat/PropertyChatButton";
+import { useAuth } from "../hooks/useAuth";
+import { useChat } from "../contexts/ChatContext";
+import { Spinner } from "../components/common";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
+import LazyImage from "../components/common/atoms/LazyImage";
 import { usePageSeo } from "../hooks/usePageSeo";
 
 const MapDisplay = lazy(
@@ -67,7 +79,8 @@ const getRentPeriodSuffix = (period, t) => {
 const PropertyDetail = () => {
   const { t, i18n } = useTranslation();
   const { slug } = useParams();
-  const contactRef = useRef(null);
+  const { user } = useAuth();
+  const { startConversation, isAuthenticated: isChatAuth } = useChat();
   const [heroSlide, setHeroSlide] = useState(0);
 
   const [property, setProperty] = useState(null);
@@ -76,6 +89,8 @@ const PropertyDetail = () => {
   const [amenities, setAmenities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatOpened, setChatOpened] = useState(false);
   const [imageViewer, setImageViewer] = useState({
     isOpen: false,
     initialIndex: 0,
@@ -217,8 +232,37 @@ const PropertyDetail = () => {
   const closeImageViewer = () =>
     setImageViewer({ isOpen: false, initialIndex: 0 });
 
-  const scrollToContact = () =>
-    contactRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  /** Owner avatar URL (from users collection if it stores avatarFileId) */
+  const ownerAvatarUrl = useMemo(() => {
+    if (!owner?.avatarFileId) return "";
+    return profileService.getAvatarViewUrl(owner.avatarFileId);
+  }, [owner?.avatarFileId]);
+
+  /** Open chat with property agent — animated transition */
+  const handleOpenChat = useCallback(async () => {
+    if (!property || !isChatAuth || chatLoading) return;
+    const isClient = user?.role === "client";
+    const isVerified = Boolean(user?.emailVerified);
+    if (!isClient || !isVerified) return;
+    if (user?.$id === property.ownerUserId) return;
+
+    setChatLoading(true);
+    try {
+      await startConversation({
+        propertyId: property.$id,
+        propertyTitle: property.title,
+        ownerUserId: property.ownerUserId,
+        ownerName: owner?.firstName
+          ? `${owner.firstName} ${owner.lastName || ""}`.trim()
+          : owner?.email || "",
+      });
+      setChatOpened(true);
+    } catch (err) {
+      console.error("Failed to start conversation:", err);
+    } finally {
+      setChatLoading(false);
+    }
+  }, [property, owner, user, isChatAuth, startConversation, chatLoading]);
 
   /* ─── Loading / Error states ─────────────────────────── */
 
@@ -226,7 +270,7 @@ const PropertyDetail = () => {
     return (
       <div className="pb-12 md:pt-20">
         {/* Mobile Hero Skeleton */}
-        <div className="relative aspect-[4/3] w-full animate-pulse bg-slate-200 md:hidden dark:bg-slate-800" />
+        <div className="relative aspect-4/3 w-full animate-pulse bg-slate-200 md:hidden dark:bg-slate-800" />
 
         {/* Breadcrumb Skeleton */}
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 md:py-4 lg:px-8">
@@ -242,11 +286,11 @@ const PropertyDetail = () => {
         {/* Desktop Gallery Skeleton */}
         <div className="mx-auto hidden max-w-7xl px-4 sm:px-6 md:block lg:px-8">
           <div className="grid gap-2 md:grid-cols-4 md:grid-rows-2">
-            <div className="col-span-2 row-span-2 aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-            <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="col-span-2 row-span-2 aspect-4/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-4/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-4/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-4/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div className="aspect-4/3 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
           </div>
         </div>
 
@@ -355,17 +399,17 @@ const PropertyDetail = () => {
     <div className="pb-12 pt-16 md:pt-20">
       {/* ── Mobile Hero Cover (auto-sliding) ──────────────── */}
       <section className="relative md:hidden">
-        <div className="relative aspect-[4/3] w-full overflow-hidden">
+        <div className="relative aspect-4/3 w-full overflow-hidden">
           {/* Slides */}
           {gallery.slice(0, 6).map((url, i) => (
-            <img
+            <LazyImage
               key={url + i}
               src={url || FALLBACK_BANNERS[0]}
               alt={`${property.title} ${i + 1}`}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
                 i === heroSlide ? "opacity-100" : "opacity-0"
               }`}
-              loading={i === 0 ? "eager" : "lazy"}
+              eager={i === 0}
             />
           ))}
 
@@ -436,7 +480,7 @@ const PropertyDetail = () => {
           <ChevronRight size={14} className="shrink-0" />
           <li>
             <Link
-              to="/"
+              to="/buscar?page=1"
               className="transition hover:text-cyan-600 dark:hover:text-cyan-400"
             >
               {t("client:propertyDetail.breadcrumb.properties")}
@@ -452,60 +496,180 @@ const PropertyDetail = () => {
       {/* ── Desktop Image Gallery Grid ──────────────────── */}
       <section className="mx-auto hidden max-w-7xl px-4 sm:px-6 md:block lg:px-8">
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl">
-          {/* Desktop: grid gallery */}
-          <div className="grid md:grid-cols-4 md:grid-rows-2 md:gap-2">
-            {/* Main large image */}
-            <button
-              type="button"
-              className="col-span-2 row-span-2 cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50"
-              style={{ aspectRatio: "4/3" }}
-              onClick={() => openImageViewer(gallery[0], 0)}
-              aria-label={t("client:propertyDetail.viewAllPhotos")}
-            >
-              <img
-                src={gallery[0] || FALLBACK_BANNERS[0]}
-                alt={property.title}
-                className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                loading="eager"
-              />
-            </button>
-
-            {/* Secondary images */}
-            {gallery.slice(1, 5).map((url, i) => (
+          {/* Dynamic Masonry Grid based on image count */}
+          {gallery.length === 1 && (
+            // 1 imagen: Full width con altura controlada
+            <div className="grid grid-cols-1 h-[400px]">
               <button
-                key={url + i}
                 type="button"
-                className="relative cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50"
-                style={{ aspectRatio: "4/3" }}
-                onClick={() => openImageViewer(url, i + 1)}
+                className="relative h-full cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50 group"
+                onClick={() => openImageViewer(gallery[0], 0)}
+                aria-label={property.title}
               >
-                <img
-                  src={url}
-                  alt={`${property.title} ${i + 2}`}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  loading="lazy"
+                <LazyImage
+                  src={gallery[0] || FALLBACK_BANNERS[0]}
+                  alt={property.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  eager
                 />
-                {/* "View all photos" overlay on last image */}
-                {i === 3 && gallery.length > 5 && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 transition hover:bg-black/40">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-white">
-                      <Camera size={18} />+{gallery.length - 5}
-                    </span>
-                  </div>
-                )}
+                <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
               </button>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {gallery.length === 2 && (
+            // 2 imágenes: Dos columnas iguales con altura controlada
+            <div className="grid grid-cols-2 gap-2 h-[400px]">
+              {gallery.slice(0, 2).map((url, i) => (
+                <button
+                  key={url + i}
+                  type="button"
+                  className="relative h-full cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50 group"
+                  onClick={() => openImageViewer(url, i)}
+                  aria-label={
+                    i === 0 ? property.title : `${property.title} ${i + 1}`
+                  }
+                >
+                  <LazyImage
+                    src={url || FALLBACK_BANNERS[0]}
+                    alt={
+                      i === 0 ? property.title : `${property.title} ${i + 1}`
+                    }
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    eager={i === 0}
+                  />
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {gallery.length === 3 && (
+            // 3 imágenes: 1 grande izquierda + 2 apiladas derecha (altura controlada)
+            <div className="grid grid-cols-2 grid-rows-2 gap-2 h-[400px]">
+              {/* Imagen principal (2 filas) */}
+              <button
+                type="button"
+                className="relative col-span-1 row-span-2 cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50 group"
+                onClick={() => openImageViewer(gallery[0], 0)}
+                aria-label={property.title}
+              >
+                <LazyImage
+                  src={gallery[0] || FALLBACK_BANNERS[0]}
+                  alt={property.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  eager
+                />
+                <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
+              </button>
+
+              {/* 2 imágenes apiladas */}
+              {gallery.slice(1, 3).map((url, i) => (
+                <button
+                  key={url + i}
+                  type="button"
+                  className="relative col-span-1 row-span-1 cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50 group"
+                  onClick={() => openImageViewer(url, i + 1)}
+                  aria-label={`${property.title} ${i + 2}`}
+                >
+                  <LazyImage
+                    src={url || FALLBACK_BANNERS[0]}
+                    alt={`${property.title} ${i + 2}`}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {gallery.length === 4 && (
+            // 4 imágenes: Grid 2x2 simétrico con altura controlada
+            <div className="grid grid-cols-2 grid-rows-2 gap-2 h-[400px]">
+              {gallery.slice(0, 4).map((url, i) => (
+                <button
+                  key={url + i}
+                  type="button"
+                  className="relative cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50 group"
+                  onClick={() => openImageViewer(url, i)}
+                  aria-label={
+                    i === 0 ? property.title : `${property.title} ${i + 1}`
+                  }
+                >
+                  <LazyImage
+                    src={url || FALLBACK_BANNERS[0]}
+                    alt={
+                      i === 0 ? property.title : `${property.title} ${i + 1}`
+                    }
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    eager={i === 0}
+                  />
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {gallery.length >= 5 && (
+            // 5+ imágenes: Layout estilo Airbnb con altura controlada
+            <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[400px]">
+              {/* Imagen principal (2 columnas x 2 filas) */}
+              <button
+                type="button"
+                className="relative col-span-2 row-span-2 cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50 group"
+                onClick={() => openImageViewer(gallery[0], 0)}
+                aria-label={property.title}
+              >
+                <LazyImage
+                  src={gallery[0] || FALLBACK_BANNERS[0]}
+                  alt={property.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  eager
+                />
+                <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
+              </button>
+
+              {/* 4 imágenes secundarias (2 columnas x 2 filas del lado derecho) */}
+              {gallery.slice(1, 5).map((url, i) => (
+                <button
+                  key={url + i}
+                  type="button"
+                  className="relative col-span-1 row-span-1 cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-500/50 group"
+                  onClick={() => openImageViewer(url, i + 1)}
+                  aria-label={`${property.title} ${i + 2}`}
+                >
+                  <LazyImage
+                    src={url || FALLBACK_BANNERS[0]}
+                    alt={`${property.title} ${i + 2}`}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+
+                  {/* Overlay en la última imagen si hay más fotos */}
+                  {i === 3 && gallery.length > 5 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 transition group-hover:bg-black/50">
+                      <span className="flex items-center gap-2 text-lg font-semibold text-white">
+                        <Camera size={20} />+{gallery.length - 5}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* View all photos button (absolute) */}
-          <button
-            type="button"
-            onClick={() => openImageViewer(gallery[0], 0)}
-            className="absolute bottom-4 right-4 hidden items-center gap-2 rounded-xl bg-white/90 px-4 py-2 text-sm font-medium text-slate-800 shadow-lg backdrop-blur-sm transition hover:bg-white md:inline-flex dark:bg-slate-900/90 dark:text-slate-100 dark:hover:bg-slate-900"
-          >
-            <Camera size={16} />
-            {t("client:propertyDetail.viewAllPhotos")} ({gallery.length})
-          </button>
+          {gallery.length > 1 && (
+            <button
+              type="button"
+              onClick={() => openImageViewer(gallery[0], 0)}
+              className="absolute bottom-4 right-4 hidden items-center gap-2 rounded-xl bg-white/90 px-4 py-2 text-sm font-medium text-slate-800 shadow-lg backdrop-blur-sm transition hover:bg-white md:inline-flex dark:bg-slate-900/90 dark:text-slate-100 dark:hover:bg-slate-900"
+            >
+              <Camera size={16} />
+              {t("client:propertyDetail.viewAllPhotos")} ({gallery.length})
+            </button>
+          )}
         </div>
       </section>
 
@@ -572,7 +736,14 @@ const PropertyDetail = () => {
                 priceLabel={priceLabel}
                 property={property}
                 opType={opType}
-                scrollToContact={scrollToContact}
+                onContactAgent={handleOpenChat}
+                canChat={
+                  isChatAuth &&
+                  user?.role === "client" &&
+                  Boolean(user?.emailVerified) &&
+                  user?.$id !== property.ownerUserId
+                }
+                chatLoading={chatLoading}
               />
             </div>
 
@@ -880,91 +1051,14 @@ const PropertyDetail = () => {
                 priceLabel={priceLabel}
                 property={property}
                 opType={opType}
-                scrollToContact={scrollToContact}
-              />
-            </div>
-
-            {/* ── Agent Card ────────────────────────────── */}
-            <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {t("client:propertyDetail.owner.title")}
-              </h2>
-
-              <div className="flex items-center gap-4">
-                {/* Avatar */}
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-lg font-bold text-white">
-                  {(owner?.firstName?.[0] || "A").toUpperCase()}
-                  {(owner?.lastName?.[0] || "").toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold text-slate-900 dark:text-white">
-                    {ownerName}
-                  </p>
-                  <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                    <Star size={12} fill="currentColor" />
-                    {t("client:propertyDetail.owner.rating")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm dark:border-slate-800">
-                {(owner?.phone || owner?.whatsappNumber) && (
-                  <a
-                    href={`tel:${owner?.phoneCountryCode || ""}${owner?.phone || owner?.whatsappNumber || ""}`}
-                    className="flex items-center gap-2.5 text-slate-600 transition hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400"
-                  >
-                    <Phone size={15} />
-                    {owner?.phoneCountryCode || ""}{" "}
-                    {owner?.phone || owner?.whatsappNumber}
-                  </a>
-                )}
-                {owner?.whatsappNumber && (
-                  <a
-                    href={`https://wa.me/${(owner?.whatsappCountryCode || "").replace("+", "")}${owner.whatsappNumber}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2.5 text-slate-600 transition hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400"
-                  >
-                    <MessageCircle size={15} />
-                    {t("client:propertyDetail.owner.whatsapp")}
-                  </a>
-                )}
-                {owner?.email && (
-                  <a
-                    href={`mailto:${owner.email}`}
-                    className="flex items-center gap-2.5 text-slate-600 transition hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400"
-                  >
-                    <Mail size={15} />
-                    <span className="truncate">{owner.email}</span>
-                  </a>
-                )}
-              </div>
-            </article>
-
-            {/* ── Chat ───────────────────────────────── */}
-            <div
-              ref={contactRef}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-            >
-              <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
-                <MessageCircle
-                  size={18}
-                  className="text-cyan-600 dark:text-cyan-400"
-                />
-                {t("client:propertyDetail.chat.title")}
-              </h2>
-              <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-                {t("client:propertyDetail.chat.description")}
-              </p>
-              <PropertyChatButton
-                propertyId={property.$id}
-                propertyTitle={property.title}
-                ownerUserId={property.ownerUserId}
-                ownerName={
-                  owner?.firstName
-                    ? `${owner.firstName} ${owner.lastName || ""}`.trim()
-                    : owner?.email || ""
+                onContactAgent={handleOpenChat}
+                canChat={
+                  isChatAuth &&
+                  user?.role === "client" &&
+                  Boolean(user?.emailVerified) &&
+                  user?.$id !== property.ownerUserId
                 }
+                chatLoading={chatLoading}
               />
             </div>
 
@@ -987,6 +1081,157 @@ const PropertyDetail = () => {
                 </p>
               </div>
             </div>
+
+            {/* ── Agent Card (with integrated chat) ────── */}
+            <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div className="p-5">
+                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t("client:propertyDetail.owner.title")}
+                </h2>
+
+                <div className="flex items-center gap-4">
+                  {/* Owner Avatar */}
+                  {ownerAvatarUrl ? (
+                    <img
+                      src={ownerAvatarUrl}
+                      alt={ownerName}
+                      className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-cyan-100 dark:ring-cyan-900"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-lg font-bold text-white">
+                      {(owner?.firstName?.[0] || "A").toUpperCase()}
+                      {(owner?.lastName?.[0] || "").toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-lg font-semibold text-slate-900 dark:text-white">
+                      {ownerName}
+                    </p>
+                    <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                      <Star size={12} fill="currentColor" />
+                      {t("client:propertyDetail.owner.rating")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm dark:border-slate-800">
+                  {(owner?.phone || owner?.whatsappNumber) && (
+                    <a
+                      href={`tel:${owner?.phoneCountryCode || ""}${owner?.phone || owner?.whatsappNumber || ""}`}
+                      className="flex items-center gap-2.5 text-slate-600 transition hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400"
+                    >
+                      <Phone size={15} />
+                      {owner?.phoneCountryCode || ""}{" "}
+                      {owner?.phone || owner?.whatsappNumber}
+                    </a>
+                  )}
+                  {owner?.whatsappNumber && (
+                    <a
+                      href={`https://wa.me/${(owner?.whatsappCountryCode || "").replace("+", "")}${owner.whatsappNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 text-slate-600 transition hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400"
+                    >
+                      <MessageCircle size={15} />
+                      {t("client:propertyDetail.owner.whatsapp")}
+                    </a>
+                  )}
+                  {owner?.email && (
+                    <a
+                      href={`mailto:${owner.email}`}
+                      className="flex items-center gap-2.5 text-slate-600 transition hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400"
+                    >
+                      <Mail size={15} />
+                      <span className="truncate">{owner.email}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Integrated chat button ──────────── */}
+              <AnimatePresence mode="wait">
+                {chatOpened ? (
+                  /* Success state after chat opened */
+                  <motion.div
+                    key="chat-success"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                    className="border-t border-emerald-200 bg-emerald-50 px-5 py-4 dark:border-emerald-900/50 dark:bg-emerald-950/30"
+                  >
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 15,
+                          delay: 0.15,
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white"
+                      >
+                        <MessageCircle size={18} />
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.25 }}
+                      >
+                        <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                          {t("client:propertyDetail.agent.chatOpened")}
+                        </p>
+                        <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                          {t("client:propertyDetail.agent.chatOpenedHint")}
+                        </p>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                ) : isChatAuth &&
+                  user?.role === "client" &&
+                  user?.emailVerified &&
+                  user?.$id !== property.ownerUserId ? (
+                  /* Chat button for verified clients */
+                  <motion.div
+                    key="chat-button"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="border-t border-slate-100 dark:border-slate-800"
+                  >
+                    <button
+                      type="button"
+                      onClick={handleOpenChat}
+                      disabled={chatLoading}
+                      className="group flex w-full cursor-pointer items-center justify-center gap-2.5 px-5 py-4 text-sm font-semibold text-cyan-700 transition-colors hover:bg-cyan-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-cyan-400 dark:hover:bg-cyan-950/30"
+                    >
+                      {chatLoading ? (
+                        <Spinner size="xs" />
+                      ) : (
+                        <motion.span
+                          className="inline-flex"
+                          whileHover={{ scale: 1.15, rotate: -8 }}
+                          transition={{ type: "spring", stiffness: 400 }}
+                        >
+                          <MessageCircle size={16} />
+                        </motion.span>
+                      )}
+                      {t("client:propertyDetail.agent.startChat")}
+                    </button>
+                  </motion.div>
+                ) : !isChatAuth ? (
+                  /* Not logged in */
+                  <Link
+                    to="/login"
+                    className="flex w-full items-center justify-center gap-2 border-t border-slate-100 px-5 py-4 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/50"
+                  >
+                    <MessageCircle size={15} />
+                    {t("client:propertyDetail.agent.loginToChat")}
+                  </Link>
+                ) : null}
+              </AnimatePresence>
+            </article>
           </aside>
         </div>
       </div>
@@ -1061,7 +1306,9 @@ function PriceCard({
   priceLabel,
   property,
   opType,
-  scrollToContact,
+  onContactAgent,
+  canChat,
+  chatLoading,
 }) {
   const ctaKey = isSale(opType)
     ? "sale"
@@ -1129,11 +1376,12 @@ function PriceCard({
       ) : (
         <button
           type="button"
-          onClick={scrollToContact}
-          className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition ${s.btn}`}
+          onClick={canChat ? onContactAgent : undefined}
+          disabled={chatLoading || !canChat}
+          className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
         >
+          {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
           {t(`client:propertyDetail.cta.${ctaKey}.button`)}
-          <ArrowRight size={16} />
         </button>
       )}
     </article>

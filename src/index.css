@@ -473,6 +473,16 @@ input[type="reset"]:disabled {
   }
 }
 
+/* Shimmer animation for LazyImage skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .error-orb,
   .error-card-enter,

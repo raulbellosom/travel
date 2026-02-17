@@ -27,3 +27,4 @@ Synchronizes profile data between Auth user and `users` collection.
 - `phoneCountryCode`
 - `whatsappNumber`
 - `whatsappCountryCode`
+- `avatarFileId` (synced from `user.prefs.avatarFileId` to `users.avatarFileId`)

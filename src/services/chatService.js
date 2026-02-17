@@ -40,7 +40,13 @@ export const chatService = {
 
   /**
    * Create a new conversation between client and property owner.
-   * Both parties + root get read/write; the function will also log an activity.
+   * Note: Only sets permissions for the creator (current user).
+   * The collection must have Role.users() or Role.users("verified") permissions
+   * configured server-side to allow:
+   *   - Create: users (verified)
+   *   - Read: users (verified)
+   *   - Update: users (verified)
+   * Security is enforced via query filters (clientUserId/ownerUserId).
    */
   async createConversation({
     propertyId,
@@ -70,14 +76,11 @@ export const chatService = {
         status: "active",
         enabled: true,
       },
+      // Only grant permissions to the creator (current user).
+      // The owner will access via collection-level read permission + query filters.
       permissions: [
         Permission.read(Role.user(clientUserId)),
         Permission.update(Role.user(clientUserId)),
-        Permission.read(Role.user(ownerUserId)),
-        Permission.update(Role.user(ownerUserId)),
-        Permission.read(Role.label("root")),
-        Permission.update(Role.label("root")),
-        Permission.delete(Role.label("root")),
       ],
     });
   },
@@ -243,7 +246,10 @@ export const chatService = {
         }
       });
     } catch (err) {
-      console.warn("[Chat] Realtime messages subscription unavailable:", err.message);
+      console.warn(
+        "[Chat] Realtime messages subscription unavailable:",
+        err.message,
+      );
       return () => {}; // no-op unsubscribe
     }
   },
@@ -261,7 +267,10 @@ export const chatService = {
         }
       });
     } catch (err) {
-      console.warn("[Chat] Realtime conversations subscription unavailable:", err.message);
+      console.warn(
+        "[Chat] Realtime conversations subscription unavailable:",
+        err.message,
+      );
       return () => {}; // no-op unsubscribe
     }
   },

@@ -47,10 +47,11 @@ const HeroSection = ({ className = "" }) => {
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchParams.city) params.set("city", searchParams.city);
-    if (searchParams.operation) params.set("operation", searchParams.operation);
+    if (searchParams.operation)
+      params.set("operationType", searchParams.operation);
     if (searchParams.propertyType)
-      params.set("type", searchParams.propertyType);
-    navigate(`/?${params.toString()}`);
+      params.set("propertyType", searchParams.propertyType);
+    navigate(`/buscar?${params.toString()}`);
   };
 
   return (

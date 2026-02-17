@@ -258,6 +258,14 @@ export function AuthProvider({ children }) {
           avatarFileId: uploaded.$id,
           avatarUpdatedAt: new Date().toISOString(),
         });
+
+        // Sync avatarFileId to users collection
+        const hasSyncFunction = Boolean(env.appwrite.functions.syncUserProfile);
+        if (hasSyncFunction) {
+          await profileService.syncUserProfile({
+            avatarFileId: uploaded.$id,
+          });
+        }
       } catch (error) {
         await profileService.deleteAvatar(uploaded.$id).catch(() => {});
         throw error;
@@ -281,6 +289,14 @@ export function AuthProvider({ children }) {
       avatarFileId: "",
       avatarUpdatedAt: "",
     });
+
+    // Sync empty avatarFileId to users collection
+    const hasSyncFunction = Boolean(env.appwrite.functions.syncUserProfile);
+    if (hasSyncFunction) {
+      await profileService.syncUserProfile({
+        avatarFileId: "",
+      });
+    }
 
     if (previousFileId) {
       await profileService.deleteAvatar(previousFileId).catch(() => {});

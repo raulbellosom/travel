@@ -12,6 +12,7 @@ import {
   Pencil,
   FileText,
 } from "lucide-react";
+import LazyImage from "../../../../../components/common/atoms/LazyImage";
 import {
   PROPERTY_TYPES,
   OPERATION_TYPES,
@@ -389,12 +390,11 @@ const StepSummary = ({ formHook, onEditStep }) => {
             {[...normalizedExistingImages, ...pendingImageItems]
               .slice(0, 6)
               .map((img, idx) => (
-                <img
+                <LazyImage
                   key={img.$id || img.id || idx}
                   src={img.url || img.previewUrl}
                   alt=""
                   className="h-14 w-14 shrink-0 rounded-lg object-cover"
-                  loading="lazy"
                 />
               ))}
             {totalImages > 6 && (

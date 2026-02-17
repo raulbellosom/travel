@@ -34,51 +34,44 @@
     "view": "Ver propiedades"
   },
   "search": {
-    "location": "Ubicación",
-    "locationPlaceholder": "Ciudad, Zona o Código Postal",
-    "type": "Tipo de Propiedad",
-    "allTypes": "Todos los tipos",
-    "allOperations": "Todas",
-    "price": "Precio Máx",
+    "heroTitle": "Encuentra Tu Propiedad Ideal",
+    "heroSubtitle": "Explora nuestro catálogo exclusivo de propiedades en venta, renta y vacaciones.",
+    "inputPlaceholder": "Busca por ciudad, colonia o nombre de propiedad...",
     "button": "Buscar",
-    "minPrice": "Precio Mínimo",
+    "filters": "Filtros",
+    "operationType": "Tipo de Operación",
+    "propertyType": "Tipo de Propiedad",
+    "priceRange": "Rango de Precio",
     "minPricePlaceholder": "Mín",
     "maxPricePlaceholder": "Máx",
     "bedrooms": "Habitaciones",
     "bathrooms": "Baños",
     "parking": "Estacionamiento",
+    "furnished": "Amueblado",
+    "petsAllowed": "Mascotas Permitidas",
+    "featured": "Destacadas",
+    "moreFilters": "Más Filtros",
+    "clearAll": "Limpiar todo",
+    "searching": "Buscando...",
+    "resultsCount": "{{count}} resultados",
+    "loadingResults": "Cargando resultados...",
+    "showResults": "Mostrar resultados",
+    "location": "Ubicación",
+    "locationPlaceholder": "Ciudad, Zona o Código Postal",
+    "type": "Tipo de Propiedad",
+    "allTypes": "Todos los tipos",
+    "price": "Precio Máx",
+    "minPrice": "Precio Mínimo",
     "anyOption": "Cualquiera",
     "unknownLocation": "Ubicación desconocida",
-    "operationType": "Operación",
-    "propertyType": "Tipo de propiedad",
-    "priceRange": "Rango de precio",
-    "any": "Cualquiera",
-    "furnished": "Amueblado",
-    "semiFurnished": "Semi amueblado",
-    "unfurnished": "Sin muebles",
-    "sortRecent": "Más recientes",
-    "sortPriceAsc": "Precio: menor a mayor",
-    "sortPriceDesc": "Precio: mayor a menor",
-    "petsAllowed": "Acepta mascotas",
-    "featured": "Solo destacadas",
-    "filters": "Filtros",
-    "moreFilters": "Filtros",
-    "clearAll": "Limpiar todos los filtros",
-    "showResults": "Ver resultados",
-    "searching": "Buscando…",
-    "resultsCount": "propiedades encontradas",
-    "loadingResults": "Cargando propiedades…",
-    "heroTitle": "Encuentra tu propiedad ideal",
-    "heroSubtitle": "Busca por nombre, descripción, ubicación o características",
-    "inputPlaceholder": "Ej: casa con alberca en Puerto Vallarta…",
     "seo": {
       "title": "Buscar Propiedades | Inmobo",
-      "description": "Explora nuestro catálogo de propiedades con filtros avanzados."
+      "description": "Encuentra propiedades en venta, renta o vacaciones en nuestro catálogo."
     },
     "empty": {
       "title": "No encontramos propiedades",
-      "descFiltered": "Intenta ampliar tu búsqueda o reducir los filtros.",
-      "descDefault": "Aún no hay propiedades publicadas. Vuelve pronto."
+      "descDefault": "No hay propiedades disponibles en este momento. Vuelve más tarde.",
+      "descFiltered": "Intenta ajustar tus filtros para ver más resultados."
     }
   },
   "home": {
@@ -122,9 +115,7 @@
         "apartment": "Departamento",
         "land": "Terreno",
         "commercial": "Comercial",
-        "industrial": "Industrial",
-        "office": "Oficina",
-        "warehouse": "Bodega"
+        "industrial": "Industrial"
       }
     }
   },
@@ -134,7 +125,10 @@
     "from": "Desde"
   },
   "pricing": {
-    "perNight": "por noche"
+    "perNight": "por noche",
+    "pricePerNight": "Precio por noche",
+    "label": "Precio",
+    "contactForPrice": "Consultar precio"
   },
   "actions": {
     "viewDetails": "Ver detalles"
@@ -228,104 +222,111 @@
   "propertyDetail": {
     "loading": "Cargando propiedad...",
     "backHome": "Volver al inicio",
+    "priceHint": "Precio de lista",
     "verifiedListing": "Propiedad Verificada",
     "descriptionTitle": "Descripción",
     "amenitiesTitle": "Amenidades",
-    "galleryTitle": "Galería de fotos",
+    "galleryTitle": "Galería",
     "viewAllPhotos": "Ver todas las fotos",
-    "shareProperty": "Compartir",
-    "saveProperty": "Guardar",
+    "reserveHint": "Reserva en línea con confirmación y voucher digital.",
+    "reserveCta": "Reservar ahora",
     "errors": {
       "notFound": "No encontramos la propiedad que buscas.",
       "load": "Error al cargar la propiedad."
     },
+    "breadcrumb": {
+      "home": "Inicio",
+      "properties": "Propiedades"
+    },
     "price": {
-      "sale": "Precio de venta",
-      "rent": "Precio de renta",
-      "vacationRental": "Precio por noche",
-      "from": "Desde",
-      "negotiable": "Precio negociable",
       "perMonth": "/mes",
       "perYear": "/año",
       "perWeek": "/semana",
       "perNight": "/noche",
-      "perSqm": "/m²",
-      "perSqft": "/ft²",
-      "total": "total"
+      "sale": "Venta",
+      "rent": "Renta",
+      "vacationRental": "Renta Vacacional",
+      "negotiable": "Negociable"
     },
     "stats": {
       "bedrooms": "Recámaras",
       "bathrooms": "Baños",
-      "totalArea": "Área total",
-      "builtArea": "Área construida",
+      "totalArea": "Área Total",
       "type": "Tipo",
+      "builtArea": "Área Construida",
       "parkingSpaces": "Estacionamientos",
       "floors": "Pisos",
-      "yearBuilt": "Año de construcción",
-      "maxGuests": "Huéspedes máx.",
+      "yearBuilt": "Año de Construcción",
+      "maxGuests": "Máx. Huéspedes",
       "furnished": "Amueblado",
-      "petsAllowed": "Mascotas"
-    },
-    "furnishedStatus": {
-      "unfurnished": "Sin amueblar",
-      "semi_furnished": "Semi amueblado",
-      "furnished": "Amueblado"
-    },
-    "petsStatus": {
-      "allowed": "Se permiten mascotas",
-      "notAllowed": "No se permiten mascotas"
+      "petsAllowed": "Mascotas Permitidas"
     },
     "sections": {
-      "details": "Detalles de la propiedad",
+      "rentalTerms": "Términos de Renta",
+      "vacationRules": "Reglas Vacacionales",
       "features": "Características",
-      "rentalTerms": "Términos de renta",
-      "vacationRules": "Reglas de la estancia",
       "location": "Ubicación"
     },
     "rental": {
-      "period": "Periodo de renta",
+      "period": "Período de Renta",
+      "weekly": "Semanal",
       "monthly": "Mensual",
-      "yearly": "Anual",
-      "weekly": "Semanal"
+      "yearly": "Anual"
+    },
+    "furnishedStatus": {
+      "unspecified": "No especificado",
+      "unfurnished": "Sin amueblar",
+      "semiFurnished": "Semi-amueblado",
+      "furnished": "Amueblado"
+    },
+    "petsStatus": {
+      "allowed": "Mascotas Permitidas",
+      "notAllowed": "No se permiten mascotas"
     },
     "vacation": {
+      "maxGuestsLabel": "Máx. Huéspedes",
+      "guests": "huéspedes",
       "checkIn": "Check-in",
       "checkOut": "Check-out",
-      "minStay": "Estancia mínima",
-      "maxStay": "Estancia máxima",
-      "nights": "noches",
+      "minStay": "Estancia Mínima",
       "night": "noche",
-      "guests": "huéspedes",
-      "maxGuestsLabel": "Capacidad máxima"
+      "nights": "noches",
+      "maxStay": "Estancia Máxima"
+    },
+    "calendar": {
+      "title": "Calendario de Disponibilidad",
+      "placeholder": "Selecciona fechas"
+    },
+    "owner": {
+      "title": "Anfitrión / Agente",
+      "unavailable": "No disponible",
+      "noPhone": "Sin teléfono",
+      "rating": "Anfitrión destacado",
+      "whatsapp": "WhatsApp"
+    },
+    "agent": {
+      "chatOpened": "Chat iniciado",
+      "chatOpenedHint": "Ya tienes una conversación con este agente.",
+      "startChat": "Iniciar chat",
+      "loginToChat": "Inicia sesión para chatear"
     },
     "cta": {
       "sale": {
-        "title": "¿Te interesa esta propiedad?",
-        "hint": "Agenda una visita presencial para conocer tu futuro hogar.",
-        "button": "Agendar visita"
+        "hint": "¿Te interesa comprar esta propiedad?",
+        "button": "Contactar vendedor"
       },
       "rent": {
-        "title": "¿Quieres vivir aquí?",
-        "hint": "Contacta al agente para conocer disponibilidad y condiciones de renta.",
-        "button": "Solicitar información"
+        "hint": "¿Te interesa rentar esta propiedad?",
+        "button": "Contactar arrendador"
       },
       "vacationRental": {
-        "title": "Reserva tu estancia",
-        "hint": "Reserva en línea con confirmación instantánea y voucher digital.",
+        "hint": "¿Listo para reservar tu estancia vacacional?",
         "button": "Reservar ahora"
       }
     },
-    "owner": {
-      "title": "Agente de la propiedad",
-      "unavailable": "No disponible",
-      "noPhone": "Sin teléfono",
-      "rating": "Agente recomendado",
-      "whatsapp": "WhatsApp"
-    },
     "contact": {
-      "title": "Contactar al agente",
+      "title": "Contactar al anunciante",
       "success": "Mensaje enviado con éxito. Pronto te contactarán.",
-      "or": "o",
       "fields": {
         "name": "Nombre completo",
         "email": "Correo electrónico",
@@ -339,18 +340,6 @@
       "errors": {
         "send": "No pudimos enviar tu mensaje. Intenta de nuevo."
       }
-    },
-    "chat": {
-      "title": "Chat en vivo",
-      "description": "Envía un mensaje directo al agente y recibe respuesta en tiempo real."
-    },
-    "calendar": {
-      "title": "Disponibilidad",
-      "placeholder": "Próximamente: calendario de disponibilidad."
-    },
-    "breadcrumb": {
-      "home": "Inicio",
-      "properties": "Propiedades"
     }
   },
   "map": {
@@ -384,7 +373,12 @@
     },
     "preferences": {
       "theme": "Tema",
-      "language": "Idioma"
+      "language": "Idioma",
+      "branding": "Personalización de Marca (Root)",
+      "brandPrimaryColor": "Color Primario",
+      "brandSecondaryColor": "Color Secundario",
+      "brandFontHeading": "Fuente de Títulos",
+      "brandFontBody": "Fuente de Cuerpo"
     },
     "actions": {
       "editProfile": "Editar Perfil",
@@ -408,7 +402,11 @@
       "invalidPhone": "Número de teléfono inválido.",
       "invalidWhatsapp": "Número de WhatsApp inválido.",
       "phoneCountryCodeRequired": "Código de país requerido.",
-      "whatsappCountryCodeRequired": "Código de país requerido (WA)."
+      "whatsappCountryCodeRequired": "Código de país requerido (WA).",
+      "brandPrimaryColorInvalid": "Color primario inválido.",
+      "brandSecondaryColorInvalid": "Color secundario inválido.",
+      "brandFontHeadingInvalid": "Nombre de fuente de títulos inválido.",
+      "brandFontBodyInvalid": "Nombre de fuente de cuerpo inválido."
     },
     "security": {
       "title": "Seguridad",

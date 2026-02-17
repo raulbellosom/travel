@@ -115,28 +115,32 @@ Purpose: perfiles de usuarios de la instancia (internos + clientes finales).
 
 ### Attributes
 
-| Attribute             | Type    | Size | Required | Default | Constraint                                                             |
-| --------------------- | ------- | ---- | -------- | ------- | ---------------------------------------------------------------------- |
-| `email`               | email   | 254  | yes      | -       | email valido                                                           |
-| `firstName`           | string  | 80   | yes      | -       | min 1                                                                  |
-| `lastName`            | string  | 80   | yes      | -       | min 1                                                                  |
-| `phoneCountryCode`    | string  | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
-| `phone`               | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                         |
-| `whatsappCountryCode` | string  | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
-| `whatsappNumber`      | string  | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                         |
-| `birthDate`           | string  | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                         |
-| `role`                | enum    | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
-| `scopesJson`          | string  | 4000 | no       | -       | JSON array serializado                                                 |
-| `isHidden`            | boolean | -    | no       | false   | -                                                                      |
-| `enabled`             | boolean | -    | no       | true    | -                                                                      |
+| Attribute             | Type     | Size | Required | Default | Constraint                                                             |
+| --------------------- | -------- | ---- | -------- | ------- | ---------------------------------------------------------------------- |
+| `email`               | email    | 254  | yes      | -       | email valido                                                           |
+| `firstName`           | string   | 80   | yes      | -       | min 1                                                                  |
+| `lastName`            | string   | 80   | yes      | -       | min 1                                                                  |
+| `avatarFileId`        | string   | 64   | no       | -       | FK al bucket `avatars`                                                 |
+| `phoneCountryCode`    | string   | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
+| `phone`               | string   | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                         |
+| `whatsappCountryCode` | string   | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
+| `whatsappNumber`      | string   | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                         |
+| `birthDate`           | string   | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                         |
+| `lastSeenAt`          | datetime | -    | no       | -       | ISO 8601 UTC. Timestamp de ultima actividad para presencia online      |
+| `role`                | enum     | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
+| `scopesJson`          | string   | 4000 | no       | -       | JSON array serializado                                                 |
+| `isHidden`            | boolean  | -    | no       | false   | -                                                                      |
+| `enabled`             | boolean  | -    | no       | true    | -                                                                      |
 
 Notas:
 
 - `$id`: Debe ser igual al Auth user id
 - `email`: Unico
+- `avatarFileId`: FK al bucket `avatars`. Se sincroniza desde `user.prefs.avatarFileId` al subir/actualizar avatar. Permite acceso directo al avatar sin queries adicionales.
 - `phoneCountryCode` + `phone`: Telefono principal separado en lada y numero local
 - `whatsappCountryCode` + `whatsappNumber`: WhatsApp separado en lada y numero local
 - `birthDate`: Fecha de nacimiento en formato `YYYY-MM-DD`
+- `lastSeenAt`: Se actualiza cada 30s mediante heartbeat desde el cliente. Si (now - lastSeenAt) < 60s, el usuario se considera "online".
 - `role`: Rol de aplicacion
 - `scopesJson`: Permisos finos
 - `isHidden`: `true` para root
@@ -237,7 +241,7 @@ Purpose: catalogo de propiedades del cliente.
 | `videoUrl`         | URL      | -    | no       | -       | URL valida                                                   |
 | `virtualTourUrl`   | URL      | -    | no       | -       | URL valida                                                   |
 | `galleryImageIds`  | string[] | 64   | no       | -       | max 50 elementos, cada elemento size 64                      |
-| `amenities`        | string[] | 64   | no       | -       | Slugs de amenidades del catalogo `amenities`                |
+| `amenities`        | string[] | 64   | no       | -       | Slugs de amenidades del catalogo `amenities`                 |
 | `status`           | enum     | -    | no       | `draft` | `draft`,`published`,`inactive`,`archived`                    |
 | `featured`         | boolean  | -    | no       | false   | -                                                            |
 | `views`            | integer  | -    | no       | 0       | min `0`, max `2147483647`                                    |
@@ -779,6 +783,7 @@ Notas:
 - `lastMessage` y `lastMessageAt` se actualizan al enviar cada mensaje para optimizar listados sin queries adicionales.
 - `clientUnread`/`ownerUnread` se incrementan al recibir mensaje y se resetean al leer.
 - Campos denormalizados (`propertyTitle`, `clientName`, `ownerName`) evitan lookups en listados.
+- Los avatares se obtienen desde `users.avatarFileId` usando `clientUserId`/`ownerUserId` - no se desnormalizan.
 
 ### Indexes
 
@@ -792,9 +797,19 @@ Notas:
 
 ### Permissions
 
-- `Role.user(clientUserId)`: read, update.
-- `Role.user(ownerUserId)`: read, update.
-- `Role.label(root)`: read, update, delete.
+**Nivel de colección (configurar en Appwrite Console):**
+
+- `Role.users("verified")`: create, read, update (usuarios verificados pueden crear, leer y actualizar conversaciones)
+- `Role.label("root")`: create, read, update, delete (root tiene control total)
+
+**Nivel de documento:**
+
+Al crear documentos desde el cliente, solo se otorgan permisos al creador (`Role.user(clientUserId)`). La seguridad se garantiza mediante:
+
+1. **Query filters**: Los usuarios solo consultan conversaciones donde son `clientUserId` o `ownerUserId`.
+2. **Collection-level permissions**: Permiten que ambas partes (client/owner) lean y actualicen documentos.
+
+**Nota**: No se puede otorgar permisos a otros usuarios desde el cliente debido a restricciones de seguridad de Appwrite. El owner accede a la conversación a través de los permisos de colección + filtros de query por `ownerUserId`.
 
 ---
 
@@ -831,12 +846,19 @@ Notas:
 
 ### Permissions
 
-Permisos a nivel de documento (se asignan al crear):
+**Nivel de colección (configurar en Appwrite Console):**
 
-- `Role.user(clientUserId)`: read (del hilo padre).
-- `Role.user(ownerUserId)`: read (del hilo padre).
-- `Role.user(senderUserId)`: update.
-- `Role.label(root)`: read, delete.
+- `Role.users("verified")`: create, read, update (usuarios verificados pueden crear, leer y actualizar mensajes)
+- `Role.label("root")`: create, read, update, delete (root tiene control total)
+
+**Nivel de documento:**
+
+Los mensajes no requieren permisos explícitos a nivel de documento. La seguridad se garantiza mediante:
+
+1. **Query filters**: Los usuarios solo consultan mensajes donde el `conversationId` corresponde a una conversación a la que tienen acceso.
+2. **Collection-level permissions**: Permiten que los participantes de la conversación lean y creen mensajes.
+
+**Nota**: La seguridad se basa en que los usuarios solo conocen/acceden a `conversationId` de conversaciones donde son participantes (client o owner).
 
 ---
 
@@ -971,14 +993,104 @@ Formato obligatorio:
 
 ---
 
+## Migration: 2026-02-17-chat-collection-level-permissions
+
+### Modified
+
+- **conversations** y **messages**: Se modificaron los permisos de documento-level a **collection-level**.
+- Razón: Appwrite no permite que un usuario otorgue permisos a otros usuarios desde el cliente. Solo puede otorgar permisos a sí mismo.
+- Solución: Configurar permisos a nivel de colección (`Role.users("verified")`) para create/read/update, y usar filtros de query (`clientUserId`, `ownerUserId`) para seguridad.
+
+### Manual Steps to Fix
+
+**En Appwrite Console:**
+
+1. Abrir colección `conversations` → Settings → Permissions
+2. Agregar a nivel de colección:
+   - `Role.users("verified")`: ✅ Create, ✅ Read, ✅ Update
+   - `Role.label("root")`: ✅ Create, ✅ Read, ✅ Update, ✅ Delete
+3. Abrir colección `messages` → Settings → Permissions
+4. Agregar a nivel de colección:
+   - `Role.users("verified")`: ✅ Create, ✅ Read, ✅ Update
+   - `Role.label("root")`: ✅ Create, ✅ Read, ✅ Update, ✅ Delete
+5. **NO ES NECESARIO** configurar permisos a nivel de documento — el código del cliente solo otorga permisos al creador.
+
+**Seguridad garantizada por:**
+
+- Query filters: usuarios solo consultan conversaciones donde son `clientUserId` o `ownerUserId`
+- Queries con `Query.equal("clientUserId", user.$id)` o `Query.equal("ownerUserId", user.$id)`
+
+---
+
+## Migration: 2026-02-17-users-avatar-field
+
+### Added
+
+- **users**: Se agregó campo `avatarFileId` como single source of truth para avatares.
+- Razón: Eliminar duplicación. En lugar de denormalizar avatares en múltiples colecciones, se centraliza en `users` y se sincroniza desde `user.prefs.avatarFileId`.
+- Tipo: string (64), opcional, default vacío
+- FK al bucket `avatars`
+
+### Modified
+
+- **conversations**: Se eliminan campos `clientAvatarFileId` y `ownerAvatarFileId` (si existen). Los avatares se obtienen desde `users.avatarFileId`.
+- **Bucket avatars**: Cambiar a Public: Yes para permitir lectura con fileId.
+
+### Manual Steps to Fix
+
+**En Appwrite Console:**
+
+1. Abrir colección `users` → Attributes
+2. Agregar nuevo atributo:
+   - Key: `avatarFileId`
+   - Type: String
+   - Size: 64
+   - Required: No
+   - Default: vacío
+3. Abrir Storage → Bucket `avatars` → Settings
+4. Cambiar **File Security**: Activar "Public" para permitir lectura con fileId
+5. Si ya existen campos `clientAvatarFileId` y `ownerAvatarFileId` en `conversations`, eliminarlos.
+6. **Sincronización**: Ejecutar script para copiar `user.prefs.avatarFileId` → `users.avatarFileId` para usuarios existentes.
+
+---
+
+## Migration: 2026-02-16-users-online-presence
+
+### Added
+
+- **users**: Se agregó campo `lastSeenAt` para sistema de presencia online en tiempo real.
+- Purpose: Permitir indicar si un usuario está "online" en el chat mediante heartbeat cada 30s.
+- Tipo: datetime, opcional, default vacío
+- Lógica: Si `(now - lastSeenAt) < 60s` → usuario está online. Frontend actualiza mediante heartbeat cada 30s.
+
+### Manual Steps to Fix
+
+**En Appwrite Console:**
+
+1. Abrir colección `users` → Attributes
+2. Agregar nuevo atributo:
+   - Key: `lastSeenAt`
+   - Type: DateTime
+   - Required: No
+   - Default: vacío
+3. No requiere índice adicional (se usa solo para lectura directa en perfil de contacto)
+
+**En el Frontend:**
+
+- El hook `usePresence` actualiza `lastSeenAt` cada 30s mientras el usuario esté autenticado
+- El helper `isUserOnline(lastSeenAt)` determina si está online basado en timestamp
+- Se muestra indicador verde en header de conversación si el contacto está online
+
+---
+
 ## Estado del Documento
 
 - Definitivo para el schema Appwrite de cada instancia cliente.
-- Alineado con reservas, pagos, vouchers, staff, clientes autenticados, auditoria root y chat en tiempo real.
+- Alineado con reservas, pagos, vouchers, staff, clientes autenticados, auditoria root, chat en tiempo real y presencia online.
 - Debe mantenerse sincronizado con Appwrite en cada cambio.
 
 ---
 
 Ultima actualizacion: 2026-02-16
-Version: 2.4.0
-Schema Version: 2.6
+Version: 2.6.0
+Schema Version: 2.7

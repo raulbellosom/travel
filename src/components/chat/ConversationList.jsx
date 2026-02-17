@@ -1,10 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { ExternalLink, MessageCircle, Search } from "lucide-react";
+import { ExternalLink, MessageCircle, Search, Minimize2 } from "lucide-react";
 import { useState } from "react";
 import { useChat } from "../../contexts/ChatContext";
-import { useAuth } from "../../hooks/useAuth";
-import { getConversationsRoute } from "../../utils/internalRoutes";
 import { cn } from "../../utils/cn";
 import { Spinner } from "../common";
 
@@ -13,13 +11,13 @@ import { Spinner } from "../common";
  */
 const ConversationList = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const {
     conversations,
     loadingConversations,
     openConversation,
     chatRole,
     closeChat,
+    toggleChat,
   } = useChat();
   const [search, setSearch] = useState("");
 
@@ -61,18 +59,25 @@ const ConversationList = () => {
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             {t("chat.conversations.title")}
           </h2>
-        </div>{getConversationsRoute(user)}
+        </div>
         <div className="flex items-center gap-2">
           <Link
             to="/mis-conversaciones"
             onClick={closeChat}
-            className="flex items-center gap-1 text-xs font-medium text-cyan-600 transition hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+            className="rounded p-1 text-cyan-600 transition hover:bg-cyan-50 hover:text-cyan-700 dark:text-cyan-400 dark:hover:bg-cyan-950/30 dark:hover:text-cyan-300"
             title={t("chat.conversations.viewAll")}
           >
-            <ExternalLink size={14} />
+            <ExternalLink size={16} />
           </Link>
           <button
-            onClick={closeChat}
+            onClick={toggleChat}
+            className="hidden rounded p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:block dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            title={t("chat.bubble.close")}
+          >
+            <Minimize2 size={16} />
+          </button>
+          <button
+            onClick={toggleChat}
             className="text-sm text-slate-500 hover:text-slate-700 sm:hidden dark:text-slate-400 dark:hover:text-slate-200"
           >
             {t("chat.actions.close")}
@@ -127,6 +132,10 @@ const ConversationList = () => {
           const contactName =
             chatRole === "client" ? conv.ownerName : conv.clientName;
 
+          // TODO: Load user profiles in batch for avatars
+          // For now, show initials only
+          const avatarUrl = "";
+
           return (
             <button
               key={conv.$id}
@@ -137,10 +146,18 @@ const ConversationList = () => {
                 unread > 0 && "bg-cyan-50/50 dark:bg-cyan-950/20",
               )}
             >
-              {/* Avatar placeholder */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                {(contactName || "?").charAt(0).toUpperCase()}
-              </div>
+              {/* Avatar - shows initials until batch profile loading is implemented */}
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={contactName || ""}
+                  className="h-10 w-10 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
+                  {(contactName || "?").charAt(0).toUpperCase()}
+                </div>
+              )}
 
               {/* Content */}
               <div className="min-w-0 flex-1">

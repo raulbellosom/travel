@@ -80,7 +80,7 @@ const CategoriesSection = () => {
                     {cat.label}
                   </h3>
                   <p className="mt-1 text-xs font-semibold text-cyan-600 opacity-0 transition-opacity group-hover:opacity-100 dark:text-cyan-400">
-                    {t("categories.view", "Ver propiedades")} &rarr;
+                    {t("client:categories.view", "Ver propiedades")} &rarr;
                   </p>
                 </motion.div>
               </Link>

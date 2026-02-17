@@ -20,6 +20,7 @@ import { cn } from "../../../utils/cn";
 import { storage } from "../../../api/appwriteClient";
 import env from "../../../env";
 import PropertyImagePlaceholder from "../atoms/PropertyImagePlaceholder";
+import LazyImage from "../atoms/LazyImage";
 
 const normalizeEnumValue = (value) =>
   String(value || "")
@@ -168,18 +169,21 @@ const PropertyCard = ({ property, className }) => {
           {hasImages ? (
             <>
               <AnimatePresence mode="wait">
-                <motion.img
+                <motion.div
                   key={currentImageIndex}
-                  src={images[currentImageIndex]}
-                  alt={property.title}
                   initial={{ opacity: 0, scale: 1.1 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4 }}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  loading="lazy"
-                  onError={() => setImageError(true)}
-                />
+                  className="h-full w-full"
+                >
+                  <LazyImage
+                    src={images[currentImageIndex]}
+                    alt={property.title}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={() => setImageError(true)}
+                  />
+                </motion.div>
               </AnimatePresence>
 
               {/* Overlay Gradient */}
@@ -220,8 +224,9 @@ const PropertyCard = ({ property, className }) => {
             <button
               onClick={handlePrevImage}
               className={cn(
-                "absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-0",
-                isHovered ? "opacity-100" : "opacity-0",
+                "absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95",
+                // Always visible on mobile, hidden on desktop until hover
+                "opacity-100 md:opacity-0 md:group-hover:opacity-100",
               )}
             >
               <ChevronLeft size={18} />
@@ -229,8 +234,9 @@ const PropertyCard = ({ property, className }) => {
             <button
               onClick={handleNextImage}
               className={cn(
-                "absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-0",
-                isHovered ? "opacity-100" : "opacity-0",
+                "absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95",
+                // Always visible on mobile, hidden on desktop until hover
+                "opacity-100 md:opacity-0 md:group-hover:opacity-100",
               )}
             >
               <ChevronRight size={18} />
@@ -338,7 +344,7 @@ const PropertyCard = ({ property, className }) => {
 
           <Link
             to={`/propiedades/${property.slug || property.$id}`}
-            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-lg active:scale-95 dark:bg-white dark:text-slate-900 dark:hover:bg-cyan-400 opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 duration-300"
+            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-lg active:scale-95 dark:bg-white dark:text-slate-900 dark:hover:bg-cyan-400 opacity-100 transform translate-y-0 md:opacity-0 md:translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 duration-300"
           >
             {t("client:actions.viewDetails", "Ver Detalles")}
           </Link>

@@ -38,6 +38,7 @@ import {
   Video,
 } from "lucide-react";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
+import LazyImage from "../components/common/atoms/LazyImage";
 import { ImageViewerModal } from "../components/common/organisms/ImageViewerModal/ImageViewerModal";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
@@ -340,12 +341,13 @@ const AppPropertyDetail = () => {
               className="relative flex items-center justify-center bg-slate-50 dark:bg-slate-900"
               style={{ minHeight: "400px", maxHeight: "500px" }}
             >
-              <img
+              <LazyImage
                 src={images[currentImageIndex]?.url}
                 alt={images[currentImageIndex]?.altText || property.title}
                 className="h-full w-full cursor-pointer object-contain"
                 style={{ maxHeight: "500px" }}
                 onClick={() => setIsImageViewerOpen(true)}
+                eager={currentImageIndex === 0}
               />
               {/* Zoom overlay */}
               <button
@@ -405,7 +407,7 @@ const AppPropertyDetail = () => {
                   }`}
                   style={{ width: "100px", height: "75px" }}
                 >
-                  <img
+                  <LazyImage
                     src={image.url}
                     alt={image.altText || `Thumbnail ${idx + 1}`}
                     className="h-full w-full object-cover"

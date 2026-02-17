@@ -15,6 +15,222 @@
     "noListings": "No hay anuncios disponibles",
     "loading": "Cargando anuncios..."
   },
+  "landing": {
+    "hero": {
+      "badge": "Plataforma inmobiliaria todo en uno",
+      "titleStart": "Tu CRM",
+      "titleHighlight": "inmobiliario",
+      "titleEnd": "inteligente",
+      "subtitle": "Gestiona propiedades, captura leads, procesa reservas y pagos, y analiza tu rendimiento — todo desde una sola plataforma diseñada para el profesional inmobiliario.",
+      "startFree": "Comenzar gratis",
+      "hasAccount": "Tengo una cuenta"
+    },
+    "features": {
+      "sectionTitle": "¿Por qué elegir Inmobo?",
+      "sectionSubtitle": "Te conectamos con las mejores propiedades",
+      "description": "Inmobo es un CRM inmobiliario completo que centraliza todas las operaciones de tu negocio: desde la publicación de propiedades hasta el cierre de ventas, pasando por la gestión de leads, reservas y cobros.",
+      "trust": {
+        "title": "Confianza y transparencia",
+        "description": "Cada anuncio es revisado para garantizar precisión y calidad."
+      },
+      "fast": {
+        "title": "Rápido y simple",
+        "description": "Encuentra tu propiedad ideal en minutos con búsqueda inteligente."
+      },
+      "experience": {
+        "title": "Experiencias únicas",
+        "description": "Desde villas frente al mar hasta departamentos urbanos, para cada estilo de vida."
+      },
+      "quality": {
+        "title": "Calidad premium",
+        "description": "Solo propiedades curadas que cumplen nuestros estándares."
+      },
+      "investment": {
+        "title": "Oportunidades de inversión",
+        "description": "Propiedades con alto potencial de plusvalía y retornos sólidos."
+      },
+      "support": {
+        "title": "Soporte personalizado",
+        "description": "Asesoría experta durante todo el proceso."
+      }
+    },
+    "stats": {
+      "cloud": "Plataforma en la nube",
+      "leads": "Captación de leads",
+      "gateways": "Pasarelas de pago",
+      "unlimited": "Propiedades ilimitadas",
+      "sectionTitle": "Números que hablan por nosotros",
+      "sectionSubtitle": "Únete a miles de clientes satisfechos",
+      "properties": "Propiedades",
+      "clients": "Clientes felices",
+      "cities": "Ciudades",
+      "satisfaction": "Satisfacción"
+    },
+    "grid": {
+      "sectionTitle": "Características",
+      "sectionSubtitle": "Todo lo que necesitas para",
+      "subtitleHighlight": "vender más",
+      "feature1": {
+        "title": "Gestión de Propiedades",
+        "desc": "Registra, edita y organiza todas tus propiedades en un solo lugar con imágenes, amenidades y detalles personalizados."
+      },
+      "feature2": {
+        "title": "CRM de Leads",
+        "desc": "Captura leads automáticamente desde tu sitio público, rastrea su interés y convierte prospectos en clientes."
+      },
+      "feature3": {
+        "title": "Reservaciones",
+        "desc": "Sistema completo de reservaciones con calendario, confirmaciones automáticas y gestión de disponibilidad."
+      },
+      "feature4": {
+        "title": "Pagos Integrados",
+        "desc": "Acepta pagos con Stripe y MercadoPago. Genera vouchers automáticos y lleva control financiero al día."
+      },
+      "feature5": {
+        "title": "Analíticas en Tiempo Real",
+        "desc": "Dashboard con métricas de visitas, reservaciones, ingresos y rendimiento de cada propiedad."
+      },
+      "feature6": {
+        "title": "Equipo y Permisos",
+        "desc": "Invita a tu equipo con roles y permisos específicos. Controla quién puede ver, editar o administrar."
+      }
+    },
+    "allInOne": {
+      "eyebrow": "Todo en un solo lugar",
+      "title": "Deja de usar",
+      "strikethrough": "Excel, WhatsApp, notas",
+      "description": "Con Inmobo centralizas toda la información de tu negocio inmobiliario. Ya no necesitas saltar entre 10 herramientas diferentes — todo está integrado y sincronizado en tiempo real.",
+      "list1": "Datos seguros en la nube con Appwrite",
+      "list2": "Sitio público para captar clientes 24/7",
+      "list3": "Automatiza cobros, notificaciones y vouchers"
+    },
+    "mockup": {
+      "properties": "Propiedades",
+      "leadsToday": "Leads hoy",
+      "income": "Ingresos",
+      "weeklyVisits": "Visitas semanales",
+      "newReservation": "Nueva reservación",
+      "timeAgo": "hace 2 minutos"
+    },
+    "howItWorks": {
+      "sectionTitle": "Cómo funciona",
+      "sectionSubtitle": "Encuentra tu propiedad perfecta en simples pasos",
+      "subtitleHighlight": "3 simples pasos",
+      "step1": {
+        "title": "Busca y explora",
+        "desc": "Navega nuestro catálogo y usa filtros para encontrar propiedades que se ajusten a tus criterios.",
+        "description": "Navega nuestro catálogo y usa filtros para encontrar propiedades que se ajusten a tus criterios."
+      },
+      "step2": {
+        "title": "Contacta y visita",
+        "desc": "Conéctate directamente con agentes y agenda visitas a tu conveniencia.",
+        "description": "Conéctate directamente con agentes y agenda visitas a tu conveniencia."
+      },
+      "step3": {
+        "title": "Cierra el trato",
+        "desc": "Recibe leads, reservaciones y pagos automáticamente. Analiza tu rendimiento y escala tu negocio.",
+        "description": "Te acompañamos durante todo el proceso de cierre con documentación segura."
+      },
+      "step4": {
+        "title": "Disfruta tu nuevo hogar",
+        "description": "Múdate a tu propiedad ideal y disfruta el estilo de vida que mereces."
+      },
+      "bottomText": "Proceso simple, resultados extraordinarios."
+    },
+    "socialProof": {
+      "title": "Diseñado para escalar",
+      "subtitle": "Herramientas pensadas para el profesional inmobiliario moderno",
+      "stat1": { "label": "Uptime garantizado" },
+      "stat2": { "label": "Propiedades gestionadas" },
+      "stat3": { "label": "Tiempo de carga" },
+      "stat4": { "label": "Más productividad" }
+    },
+    "finalCta": {
+      "badge": "Comienza gratis, sin tarjeta de crédito",
+      "title": "¿Listo para transformar tu",
+      "titleHighlight": "negocio",
+      "titleEnd": "inmobiliario?",
+      "subtitle": "Únete a los profesionales que ya gestionan sus propiedades, leads y cobros con Inmobo.",
+      "button": "Crear cuenta gratis",
+      "login": "Iniciar sesión"
+    },
+    "footer": {
+      "sections": {
+        "product": "Producto",
+        "company": "Compañía",
+        "contact": "Contacto",
+        "newsletter": "Suscríbete"
+      },
+      "links": {
+        "features": "Características",
+        "pricing": "Precios",
+        "integrations": "Integraciones",
+        "changelog": "Novedades",
+        "about": "Nosotros",
+        "blog": "Blog",
+        "careers": "Carreras"
+      },
+      "rights": "© {{year}} Inmobo. Todos los derechos reservados.",
+      "privacy": "Aviso de Privacidad",
+      "terms": "Términos y Condiciones",
+      "cookies": "Cookies"
+    },
+    "showcase": {
+      "title": "Poder para cada",
+      "titleHighlight": "flujo de trabajo",
+      "subtitle": "Desde la captación de propiedades hasta el cierre de tratos, Inmobo te da las herramientas para gestionar cada paso de tu operación con precisión.",
+      "tabs": {
+        "listings": "Gestión de Propiedades",
+        "crm": "CRM y Leads",
+        "site": "Sitio Web Público"
+      }
+    },
+    "contact": {
+      "badge": "Hablemos de tu proyecto",
+      "title": "¿Listo para transformar tu",
+      "highlight": " negocio inmobiliario?",
+      "subtitle": "Contacta a nuestro equipo y descubre cómo Inmobo puede ayudarte.",
+      "emailLabel": "Correo Electrónico",
+      "phoneLabel": "Teléfono",
+      "disclaimer": "Al enviar este formulario aceptas nuestra política de privacidad.",
+      "form": {
+        "name": "Nombre",
+        "lastName": "Apellido",
+        "email": "Correo Electrónico",
+        "phone": "Teléfono",
+        "message": "Mensaje",
+        "submit": "Enviar Mensaje"
+      }
+    },
+    "cta": {
+      "title": "¿Listo para encontrar tu lugar ideal?",
+      "subtitle": "Explora propiedades exclusivas y vive la experiencia que mereces.",
+      "getStarted": "Comenzar",
+      "browseProperties": "Explorar propiedades",
+      "noFees": "Sin cargos ocultos",
+      "support24": "Soporte 24/7",
+      "verified": "Propiedades verificadas",
+      "contactTitle": "¿Necesitas ayuda?",
+      "contactSubtitle": "Nuestro equipo está disponible para ayudarte.",
+      "phone": "+52 322 123 4567",
+      "email": "hola@inmobo.com",
+      "availability": "Lun - Vie: 9 AM - 6 PM"
+    },
+    "propertyShowcase": {
+      "sectionTitle": "Propiedades Destacadas",
+      "sectionSubtitle": "Descubre las mejores opciones seleccionadas para ti.",
+      "viewAll": "Ver todas",
+      "loading": "Cargando propiedades...",
+      "noProperties": "No hay propiedades disponibles en este momento.",
+      "errorLoading": "No se pudieron cargar las propiedades."
+    },
+    "quickCategories": {
+      "beachfront": "Frente al mar",
+      "luxuryVillas": "Villas de lujo",
+      "apartments": "Departamentos",
+      "newDevelopments": "Nuevos desarrollos"
+    }
+  },
 
   "publicSearch": {
     "placeholder": "Buscar propiedades, ciudades, características…",
@@ -61,6 +277,8 @@
       "hotelsDesc": "Hoteles boutique y resorts",
       "vacationCondos": "Condominios",
       "vacationCondosDesc": "Rentas vacacionales de lujo",
+      "condos": "Condominios",
+      "condosDesc": "Condominios para estancias cortas",
       "villas": "Villas",
       "villasDesc": "Villas privadas con servicio",
       "budget": "Económicas",
@@ -1862,7 +2080,17 @@
     "dates": "Fechas",
     "datesPlaceholder": "Añadir fechas",
     "guests": "Huéspedes",
-    "guestsPlaceholder": "¿Cuántos?"
+    "guestsPlaceholder": "¿Cuántos?",
+    "allOperations": "Todos",
+    "allTypes": "Todos los tipos",
+    "anyOption": "Cualquiera",
+    "any": "Cualquiera",
+    "furnished": "Amueblado",
+    "semiFurnished": "Semi-amueblado",
+    "unfurnished": "Sin amueblar",
+    "sortRecent": "Más recientes",
+    "sortPriceAsc": "Precio: Menor a Mayor",
+    "sortPriceDesc": "Precio: Mayor a Menor"
   },
   "tablePagination": {
     "resultsPerPage": "Resultados por página",
@@ -1951,6 +2179,12 @@
       "loginToChat": "Inicia sesión para chatear",
       "loginRequired": "Debes iniciar sesión para usar el chat",
       "verifyRequired": "Verifica tu email para usar el chat"
+    },
+    "presence": {
+      "online": "En línea",
+      "minutesAgo": "hace {{count}} min",
+      "hoursAgo": "hace {{count}} h",
+      "daysAgo": "hace {{count}} d"
     }
   },
   "calendarPage": {
@@ -2042,6 +2276,11 @@
       "total": "Total",
       "active": "Activas",
       "unread": "Sin leer"
+    },
+    "status": {
+      "active": "Activa",
+      "archived": "Archivada",
+      "closed": "Cerrada"
     }
   },
   "myConversations": {

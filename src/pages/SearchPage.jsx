@@ -32,6 +32,7 @@ import { usePageSeo } from "../hooks/usePageSeo";
 import PropertyCard from "../components/common/molecules/PropertyCard";
 import Button from "../components/common/atoms/Button";
 import Select from "../components/common/atoms/Select";
+import LazyImage from "../components/common/atoms/LazyImage";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import LoadingSpinner from "../components/loaders/LoadingSpinner";
 import { DEFAULT_AMENITIES_CATALOG } from "../data/amenitiesCatalog";
@@ -649,10 +650,11 @@ const SearchPage = () => {
       <section className="relative overflow-hidden pb-8 pt-28 sm:pt-32 sm:pb-10">
         {/* Background image with overlay */}
         <div className="absolute inset-0 z-0">
-          <img
+          <LazyImage
             src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=80"
             alt=""
             className="h-full w-full object-cover"
+            eager={true}
           />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-cyan-950/85 to-slate-900/90" />
         </div>

@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { Select, TablePagination } from "../components/common";
+import LazyImage from "../components/common/atoms/LazyImage";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
@@ -734,7 +735,7 @@ const Team = () => {
 
     if (avatarUrl) {
       return (
-        <img
+        <LazyImage
           src={avatarUrl}
           alt={fullName}
           className="h-10 w-10 rounded-full border border-slate-200 object-cover dark:border-slate-700"
@@ -1277,10 +1278,11 @@ const Team = () => {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   {form.avatarPreviewUrl ? (
-                    <img
+                    <LazyImage
                       src={form.avatarPreviewUrl}
                       alt={t("teamPage.fields.avatar")}
                       className="h-20 w-20 rounded-full border border-slate-200 object-cover dark:border-slate-700"
+                      eager={true}
                     />
                   ) : (
                     <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 text-xl font-bold text-white">

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -8,9 +8,17 @@ import {
   Send,
   Inbox,
   CheckCheck,
+  CheckCircle2,
+  Archive,
+  XCircle,
+  Smile,
+  X,
 } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../hooks/useAuth";
 import { useChat } from "../contexts/ChatContext";
+import { profileService } from "../services/profileService";
+import { isUserOnline, getLastSeenText } from "../utils/presence";
 import { cn } from "../utils/cn";
 import { Badge, Spinner, StatsCardsRow } from "../components/common";
 import ChatMessage from "../components/chat/ChatMessage";
@@ -34,15 +42,57 @@ const Conversations = () => {
     goBackToList,
     chatRole,
     totalUnread,
+    isRestoringConversation,
   } = useChat();
 
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const messagesEndRef = useCallback((node) => {
-    node?.scrollIntoView({ behavior: "smooth" });
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [contactProfile, setContactProfile] = useState(null);
+  const [presenceRefresh, setPresenceRefresh] = useState(0);
+  const [isScrollReady, setIsScrollReady] = useState(false);
+  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const emojiPickerRef = useRef(null);
+  const scrolledConversationRef = useRef(null);
+
+  // Generate initials (2 letters from name)
+  const getInitials = useCallback((name) => {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .slice(0, 2)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("");
   }, []);
+
+  // Get status badge configuration
+  const getStatusConfig = useCallback(
+    (status) => {
+      const configs = {
+        active: {
+          variant: "success",
+          icon: CheckCircle2,
+          label: t("conversationsPage.status.active"),
+        },
+        archived: {
+          variant: "warning",
+          icon: Archive,
+          label: t("conversationsPage.status.archived"),
+        },
+        closed: {
+          variant: "secondary",
+          icon: XCircle,
+          label: t("conversationsPage.status.closed"),
+        },
+      };
+      return configs[status] || configs.active;
+    },
+    [t],
+  );
 
   // Focus on a specific conversation from URL param
   useEffect(() => {
@@ -51,6 +101,155 @@ const Conversations = () => {
       openConversation(focusId);
     }
   }, [searchParams, activeConversationId, openConversation]);
+
+  // Close conversation with Escape key
+  useEffect(() => {
+    if (!activeConversationId) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        goBackToList();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeConversationId, goBackToList]);
+
+  // Auto-scroll to bottom when conversation first loads
+  useEffect(() => {
+    // Reset when no conversation
+    if (!activeConversationId) {
+      setIsScrollReady(false);
+      scrolledConversationRef.current = null;
+      return;
+    }
+
+    // Already scrolled for this conversation
+    if (scrolledConversationRef.current === activeConversationId) {
+      return;
+    }
+
+    // Wait for messages to load
+    if (loadingMessages) {
+      setIsScrollReady(false);
+      return;
+    }
+
+    // No messages yet but not loading - show empty state
+    if (messages.length === 0) {
+      setIsScrollReady(true);
+      scrolledConversationRef.current = activeConversationId;
+      return;
+    }
+
+    // Wait for DOM to render, then scroll to bottom
+    // Use multiple animation frames to ensure content is fully painted
+    let frameId1, frameId2, frameId3;
+    let cancelled = false;
+
+    const doScroll = () => {
+      // First frame: React has committed
+      frameId1 = requestAnimationFrame(() => {
+        if (cancelled) return;
+        // Second frame: browser has painted
+        frameId2 = requestAnimationFrame(() => {
+          if (cancelled) return;
+          // Third frame: extra safety for complex renders
+          frameId3 = requestAnimationFrame(() => {
+            if (cancelled) return;
+            
+            // Use sentinel element for reliable scroll
+            const endElement = messagesEndRef.current;
+            if (endElement) {
+              endElement.scrollIntoView({ behavior: "instant", block: "end" });
+            } else {
+              // Fallback
+              const container = messagesContainerRef.current;
+              if (container) {
+                container.scrollTop = container.scrollHeight;
+              }
+            }
+            
+            setIsScrollReady(true);
+            scrolledConversationRef.current = activeConversationId;
+          });
+        });
+      });
+    };
+
+    // Start scrolling immediately after state update
+    doScroll();
+
+    return () => {
+      cancelled = true;
+      if (frameId1) cancelAnimationFrame(frameId1);
+      if (frameId2) cancelAnimationFrame(frameId2);
+      if (frameId3) cancelAnimationFrame(frameId3);
+    };
+  }, [activeConversationId, loadingMessages, messages.length]);
+
+  // Scroll when new messages arrive (smooth)
+  useEffect(() => {
+    if (!activeConversationId || messages.length === 0 || loadingMessages)
+      return;
+
+    const container = messagesContainerRef.current;
+    if (container) {
+      // Only scroll if near bottom (user hasn't scrolled up)
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <
+        100;
+      if (isNearBottom) {
+        // Use sentinel element for reliable scroll
+        const endElement = messagesEndRef.current;
+        if (endElement) {
+          endElement.scrollIntoView({ behavior: "smooth", block: "end" });
+        } else {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      }
+    }
+  }, [messages, activeConversationId, loadingMessages]);
+
+  /** Load contact user profile for presence */
+  useEffect(() => {
+    const contactUserId =
+      chatRole === "client"
+        ? activeConversation?.ownerUserId
+        : activeConversation?.clientUserId;
+
+    if (!contactUserId) {
+      setContactProfile(null);
+      return;
+    }
+
+    let mounted = true;
+    profileService
+      .getProfile(contactUserId)
+      .then((profile) => {
+        if (mounted) setContactProfile(profile);
+      })
+      .catch(() => {
+        if (mounted) setContactProfile(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [chatRole, activeConversation]);
+
+  /** Refresh presence text every minute */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPresenceRefresh((prev) => prev + 1);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   /* ── Filtered conversations ──────────────────────────── */
 
@@ -113,6 +312,27 @@ const Conversations = () => {
     }
   };
 
+  const handleEmojiClick = (emojiObject) => {
+    setInput((prev) => prev + emojiObject.emoji);
+    inputRef.current?.focus();
+  };
+
+  /* ── Close emoji picker when clicking outside ─────────── */
+
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+    const handleClickOutside = (e) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(e.target)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showEmojiPicker]);
+
   /* ── Time formatter ──────────────────────────────────── */
 
   const formatTime = (dateStr) => {
@@ -131,7 +351,28 @@ const Conversations = () => {
   const contactName = (conv) =>
     chatRole === "client" ? conv.ownerName : conv.clientName;
 
+  /** Contact presence status */
+  const contactPresence = useMemo(() => {
+    const lastSeenAt = contactProfile?.lastSeenAt;
+    if (!lastSeenAt) return null;
+
+    return {
+      isOnline: isUserOnline(lastSeenAt),
+      text: getLastSeenText(lastSeenAt, t),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactProfile?.lastSeenAt, t, presenceRefresh]);
+
   /* ── Render ──────────────────────────────────────────── */
+
+  // Show loading while restoring conversation from localStorage
+  if (isRestoringConversation || (loadingConversations && conversations.length === 0)) {
+    return (
+      <section className="flex h-[50vh] items-center justify-center">
+        <Spinner size="lg" />
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-5">
@@ -216,7 +457,7 @@ const Conversations = () => {
                   )}
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                    {(contactName(conv) || "?").charAt(0).toUpperCase()}
+                    {getInitials(contactName(conv))}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -290,26 +531,65 @@ const Conversations = () => {
                   <ArrowLeft size={18} />
                 </button>
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
-                  {(contactName(activeConversation || {}) || "?")
-                    .charAt(0)
-                    .toUpperCase()}
+                  {getInitials(contactName(activeConversation || {}))}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                     {contactName(activeConversation || {}) ||
                       t("chat.conversations.unknownUser")}
                   </p>
-                  <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                    {activeConversation?.propertyTitle || ""}
-                  </p>
+                  {contactPresence && (
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      {contactPresence.isOnline && (
+                        <span className="h-2 w-2 rounded-full bg-green-500" />
+                      )}
+                      <span
+                        className={cn(
+                          contactPresence.isOnline
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-slate-500 dark:text-slate-400"
+                        )}
+                      >
+                        {contactPresence.text}
+                      </span>
+                    </div>
+                  )}
+                  {!contactPresence && activeConversation?.propertyTitle && (
+                    <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                      {activeConversation.propertyTitle}
+                    </p>
+                  )}
                 </div>
-                <Badge variant="info" size="sm">
-                  {activeConversation?.status || "active"}
-                </Badge>
+                {activeConversation?.status &&
+                  (() => {
+                    const statusConfig = getStatusConfig(
+                      activeConversation.status,
+                    );
+                    return (
+                      <Badge
+                        variant={statusConfig.variant}
+                        size="sm"
+                        icon={statusConfig.icon}
+                      >
+                        {statusConfig.label}
+                      </Badge>
+                    );
+                  })()}
+                {/* Close conversation button */}
+                <button
+                  onClick={goBackToList}
+                  className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 md:flex dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                  title={t("chat.actions.close")}
+                >
+                  <X size={18} />
+                </button>
               </header>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-4 py-3">
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto px-4 py-3"
+              >
                 {loadingMessages && (
                   <div className="flex items-center justify-center py-8">
                     <Spinner size="sm" />
@@ -324,42 +604,76 @@ const Conversations = () => {
                   </div>
                 )}
 
-                {messages.map((msg) => (
-                  <ChatMessage
-                    key={msg.$id}
-                    message={msg}
-                    isOwn={msg.senderUserId === user?.$id}
-                  />
-                ))}
-                <div ref={messagesEndRef} />
+                <div className={!isScrollReady && messages.length > 0 ? "opacity-0" : "opacity-100"}>
+                  {messages.map((msg) => (
+                    <ChatMessage
+                      key={msg.$id}
+                      message={msg}
+                      isOwn={msg.senderUserId === user?.$id}
+                    />
+                  ))}
+                  {/* Sentinel element for reliable scroll to bottom */}
+                  <div ref={messagesEndRef} aria-hidden="true" />
+                </div>
               </div>
 
               {/* Input */}
-              <form
-                onSubmit={handleSend}
-                className="flex items-end gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-700"
-              >
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={t("chat.messages.inputPlaceholder")}
-                  rows={1}
-                  className="max-h-24 min-h-10 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || sending}
-                  className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-                    input.trim() && !sending
-                      ? "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600"
-                      : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600",
-                  )}
+              <div className="relative border-t border-slate-200 dark:border-slate-700">
+                {/* Emoji Picker */}
+                {showEmojiPicker && (
+                  <div
+                    ref={emojiPickerRef}
+                    className="absolute bottom-full left-3 mb-2 z-50"
+                  >
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      theme="auto"
+                      searchDisabled={false}
+                      skinTonesDisabled
+                      previewConfig={{ showPreview: false }}
+                      height={350}
+                      width={320}
+                    />
+                  </div>
+                )}
+
+                <form
+                  onSubmit={handleSend}
+                  className="flex items-end gap-2 px-4 py-3"
                 >
-                  {sending ? <Spinner size="xs" /> : <Send size={16} />}
-                </button>
-              </form>
+                  {/* Emoji Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                    aria-label={t("chat.actions.emoji")}
+                  >
+                    <Smile size={20} />
+                  </button>
+
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={t("chat.messages.inputPlaceholder")}
+                    rows={1}
+                    className="max-h-24 min-h-10 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || sending}
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
+                      input.trim() && !sending
+                        ? "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600"
+                        : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600",
+                    )}
+                  >
+                    {sending ? <Spinner size="xs" /> : <Send size={16} />}
+                  </button>
+                </form>
+              </div>
             </>
           )}
         </div>

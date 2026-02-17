@@ -34,51 +34,44 @@
     "view": "View properties"
   },
   "search": {
-    "location": "Location",
-    "locationPlaceholder": "City, Area or Postal Code",
-    "type": "Property Type",
-    "allTypes": "All types",
-    "allOperations": "All",
-    "price": "Max Price",
+    "heroTitle": "Find Your Perfect Property",
+    "heroSubtitle": "Explore our exclusive catalog of properties for sale, rent and vacation.",
+    "inputPlaceholder": "Search by city, neighborhood or property name...",
     "button": "Search",
-    "minPrice": "Min Price",
+    "filters": "Filters",
+    "operationType": "Operation Type",
+    "propertyType": "Property Type",
+    "priceRange": "Price Range",
     "minPricePlaceholder": "Min",
     "maxPricePlaceholder": "Max",
     "bedrooms": "Bedrooms",
     "bathrooms": "Bathrooms",
     "parking": "Parking",
+    "furnished": "Furnished",
+    "petsAllowed": "Pets Allowed",
+    "featured": "Featured",
+    "moreFilters": "More Filters",
+    "clearAll": "Clear all",
+    "searching": "Searching...",
+    "resultsCount": "{{count}} results",
+    "loadingResults": "Loading results...",
+    "showResults": "Show results",
+    "location": "Location",
+    "locationPlaceholder": "City, Area or Postal Code",
+    "type": "Property Type",
+    "allTypes": "All types",
+    "price": "Max Price",
+    "minPrice": "Min Price",
     "anyOption": "Any",
     "unknownLocation": "Unknown location",
-    "operationType": "Operation",
-    "propertyType": "Property type",
-    "priceRange": "Price range",
-    "any": "Any",
-    "furnished": "Furnished",
-    "semiFurnished": "Semi-furnished",
-    "unfurnished": "Unfurnished",
-    "sortRecent": "Most recent",
-    "sortPriceAsc": "Price: low to high",
-    "sortPriceDesc": "Price: high to low",
-    "petsAllowed": "Pets allowed",
-    "featured": "Featured only",
-    "filters": "Filters",
-    "moreFilters": "Filters",
-    "clearAll": "Clear all filters",
-    "showResults": "Show results",
-    "searching": "Searching…",
-    "resultsCount": "properties found",
-    "loadingResults": "Loading properties…",
-    "heroTitle": "Find your ideal property",
-    "heroSubtitle": "Search by name, description, location or features",
-    "inputPlaceholder": "e.g. house with pool in Puerto Vallarta…",
     "seo": {
       "title": "Search Properties | Inmobo",
-      "description": "Explore our property catalog with advanced filters."
+      "description": "Find properties for sale, rent or vacation in our catalog."
     },
     "empty": {
       "title": "No properties found",
-      "descFiltered": "Try broadening your search or reducing filters.",
-      "descDefault": "No properties published yet. Check back soon."
+      "descDefault": "There are no properties available right now. Check back later.",
+      "descFiltered": "Try adjusting your filters to see more results."
     }
   },
   "home": {
@@ -122,9 +115,7 @@
         "apartment": "Apartment",
         "land": "Land",
         "commercial": "Commercial",
-        "industrial": "Industrial",
-        "office": "Office",
-        "warehouse": "Warehouse"
+        "industrial": "Industrial"
       }
     }
   },
@@ -134,7 +125,10 @@
     "from": "From"
   },
   "pricing": {
-    "perNight": "per night"
+    "perNight": "per night",
+    "pricePerNight": "Price per night",
+    "label": "Price",
+    "contactForPrice": "Contact for price"
   },
   "actions": {
     "viewDetails": "View details"
@@ -228,104 +222,111 @@
   "propertyDetail": {
     "loading": "Loading property...",
     "backHome": "Back to home",
+    "priceHint": "List price",
     "verifiedListing": "Verified Listing",
     "descriptionTitle": "Description",
     "amenitiesTitle": "Amenities",
-    "galleryTitle": "Photo Gallery",
+    "galleryTitle": "Gallery",
     "viewAllPhotos": "View all photos",
-    "shareProperty": "Share",
-    "saveProperty": "Save",
+    "reserveHint": "Book online with confirmation and digital voucher.",
+    "reserveCta": "Book now",
     "errors": {
       "notFound": "We could not find the property you are looking for.",
       "load": "Error loading property."
     },
+    "breadcrumb": {
+      "home": "Home",
+      "properties": "Properties"
+    },
     "price": {
-      "sale": "Sale price",
-      "rent": "Rental price",
-      "vacationRental": "Price per night",
-      "from": "From",
-      "negotiable": "Negotiable price",
-      "perMonth": "/mo",
-      "perYear": "/yr",
-      "perWeek": "/wk",
+      "perMonth": "/month",
+      "perYear": "/year",
+      "perWeek": "/week",
       "perNight": "/night",
-      "perSqm": "/m²",
-      "perSqft": "/ft²",
-      "total": "total"
+      "sale": "Sale",
+      "rent": "Rent",
+      "vacationRental": "Vacation Rental",
+      "negotiable": "Negotiable"
     },
     "stats": {
       "bedrooms": "Bedrooms",
       "bathrooms": "Bathrooms",
       "totalArea": "Total Area",
-      "builtArea": "Built Area",
       "type": "Type",
-      "parkingSpaces": "Parking",
+      "builtArea": "Built Area",
+      "parkingSpaces": "Parking Spaces",
       "floors": "Floors",
       "yearBuilt": "Year Built",
       "maxGuests": "Max Guests",
       "furnished": "Furnished",
-      "petsAllowed": "Pets"
-    },
-    "furnishedStatus": {
-      "unfurnished": "Unfurnished",
-      "semi_furnished": "Semi-furnished",
-      "furnished": "Furnished"
-    },
-    "petsStatus": {
-      "allowed": "Pets allowed",
-      "notAllowed": "No pets allowed"
+      "petsAllowed": "Pets Allowed"
     },
     "sections": {
-      "details": "Property details",
+      "rentalTerms": "Rental Terms",
+      "vacationRules": "Vacation Rules",
       "features": "Features",
-      "rentalTerms": "Rental terms",
-      "vacationRules": "Stay rules",
       "location": "Location"
     },
     "rental": {
-      "period": "Rental period",
+      "period": "Rental Period",
+      "weekly": "Weekly",
       "monthly": "Monthly",
-      "yearly": "Yearly",
-      "weekly": "Weekly"
+      "yearly": "Yearly"
+    },
+    "furnishedStatus": {
+      "unspecified": "Not specified",
+      "unfurnished": "Unfurnished",
+      "semiFurnished": "Semi-Furnished",
+      "furnished": "Furnished"
+    },
+    "petsStatus": {
+      "allowed": "Pets Allowed",
+      "notAllowed": "No Pets"
     },
     "vacation": {
+      "maxGuestsLabel": "Max Guests",
+      "guests": "guests",
       "checkIn": "Check-in",
       "checkOut": "Check-out",
-      "minStay": "Minimum stay",
-      "maxStay": "Maximum stay",
-      "nights": "nights",
+      "minStay": "Minimum Stay",
       "night": "night",
-      "guests": "guests",
-      "maxGuestsLabel": "Maximum capacity"
+      "nights": "nights",
+      "maxStay": "Maximum Stay"
+    },
+    "calendar": {
+      "title": "Availability Calendar",
+      "placeholder": "Select dates"
+    },
+    "owner": {
+      "title": "Host / Agent",
+      "unavailable": "Unavailable",
+      "noPhone": "No phone",
+      "rating": "Superhost",
+      "whatsapp": "WhatsApp"
+    },
+    "agent": {
+      "chatOpened": "Chat started",
+      "chatOpenedHint": "You already have a conversation with this agent.",
+      "startChat": "Start chat",
+      "loginToChat": "Log in to chat"
     },
     "cta": {
       "sale": {
-        "title": "Interested in this property?",
-        "hint": "Schedule an in-person visit to see your future home.",
-        "button": "Schedule a visit"
+        "hint": "Interested in buying this property?",
+        "button": "Contact seller"
       },
       "rent": {
-        "title": "Want to live here?",
-        "hint": "Contact the agent to learn about availability and rental conditions.",
-        "button": "Request information"
+        "hint": "Interested in renting this property?",
+        "button": "Contact landlord"
       },
       "vacationRental": {
-        "title": "Book your stay",
-        "hint": "Book online with instant confirmation and digital voucher.",
+        "hint": "Ready to book your vacation stay?",
         "button": "Book now"
       }
     },
-    "owner": {
-      "title": "Listing agent",
-      "unavailable": "Unavailable",
-      "noPhone": "No phone",
-      "rating": "Recommended agent",
-      "whatsapp": "WhatsApp"
-    },
     "contact": {
-      "title": "Contact agent",
+      "title": "Contact advertiser",
       "success": "Message sent successfully. You will be contacted soon.",
-      "or": "or",
       "fields": {
         "name": "Full Name",
         "email": "Email",
@@ -339,18 +340,6 @@
       "errors": {
         "send": "Could not send your message. Please try again."
       }
-    },
-    "chat": {
-      "title": "Live chat",
-      "description": "Send a direct message to the agent and get a real-time response."
-    },
-    "calendar": {
-      "title": "Availability",
-      "placeholder": "Coming soon: availability calendar."
-    },
-    "breadcrumb": {
-      "home": "Home",
-      "properties": "Properties"
     }
   },
   "map": {
@@ -384,7 +373,12 @@
     },
     "preferences": {
       "theme": "Theme",
-      "language": "Language"
+      "language": "Language",
+      "branding": "Brand Customization (Root)",
+      "brandPrimaryColor": "Primary Color",
+      "brandSecondaryColor": "Secondary Color",
+      "brandFontHeading": "Heading Font",
+      "brandFontBody": "Body Font"
     },
     "actions": {
       "editProfile": "Edit Profile",
@@ -408,7 +402,11 @@
       "invalidPhone": "Invalid phone number.",
       "invalidWhatsapp": "Invalid WhatsApp number.",
       "phoneCountryCodeRequired": "Country code required.",
-      "whatsappCountryCodeRequired": "Country code required (WA)."
+      "whatsappCountryCodeRequired": "Country code required (WA).",
+      "brandPrimaryColorInvalid": "Invalid primary color.",
+      "brandSecondaryColorInvalid": "Invalid secondary color.",
+      "brandFontHeadingInvalid": "Invalid heading font name.",
+      "brandFontBodyInvalid": "Invalid body font name."
     },
     "security": {
       "title": "Security",

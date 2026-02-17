@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,8 +10,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { propertiesService } from "../../../../services/propertiesService";
-import { storage } from "../../../../api/appwriteClient";
-import env from "../../../../env";
 import Button from "../../atoms/Button";
 import AdvancedSearch from "../../molecules/AdvancedSearch/AdvancedSearch";
 import fallbackImage from "../../../../assets/img/examples/house/fachada.webp";
@@ -21,7 +19,6 @@ const HomeHeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
 
   // Fetch featured properties for the carousel
   useEffect(() => {
@@ -60,79 +57,27 @@ const HomeHeroCarousel = () => {
     );
   };
 
-  // Calculate active property and image - ALWAYS call hooks in the same order
-  const activeProperty = properties[currentSlide];
-
-  // Get the image for the current slide
-  const currentImage = useMemo(() => {
-    if (!activeProperty) return null;
-
-    // If property has images array
-    if (activeProperty.images && activeProperty.images.length > 0) {
-      return activeProperty.images[0];
-    }
-
-    // Build from galleryImageIds
-    if (
-      activeProperty.galleryImageIds &&
-      activeProperty.galleryImageIds.length > 0 &&
-      env.appwrite.buckets.propertyImages
-    ) {
-      return storage.getFileView({
-        bucketId: env.appwrite.buckets.propertyImages,
-        fileId: activeProperty.galleryImageIds[0],
-      });
-    }
-
-    return null;
-  }, [activeProperty]);
-
-  const hasImage = currentImage && !imageError;
-
   if (loading) {
     return (
-      <section className="relative h-dvh min-h-[600px] w-full overflow-hidden bg-slate-900">
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/60 to-slate-900/40 z-10" />
-
-        {/* Background skeleton */}
-        <div className="absolute inset-0 z-0 animate-pulse bg-slate-700" />
-
-        {/* Content skeleton */}
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
-          <div className="container mx-auto px-4">
-            {/* Title skeleton */}
-            <div className="mb-8 text-center space-y-4">
-              <div className="h-12 md:h-16 w-2/3 mx-auto animate-pulse rounded-lg bg-white/10 backdrop-blur-sm" />
-              <div className="h-6 md:h-8 w-1/2 mx-auto animate-pulse rounded-lg bg-white/10 backdrop-blur-sm" />
-            </div>
-
-            {/* Search form skeleton */}
-            <div className="w-full max-w-4xl mx-auto">
-              <div className="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-2xl space-y-4">
-                {/* Tabs skeleton */}
-                <div className="flex gap-2 mb-4">
-                  <div className="h-10 w-24 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-10 w-24 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-10 w-32 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                </div>
-
-                {/* Search inputs skeleton */}
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="h-12 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-12 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-12 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-                </div>
-
-                {/* Search button skeleton */}
-                <div className="h-12 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="relative h-[600px] w-full animate-pulse bg-slate-200 dark:bg-slate-800" />
     );
   }
+
+  // Fallback if no properties
+  const slides =
+    properties.length > 0
+      ? properties
+      : [
+          {
+            $id: "fallback-1",
+            mainImageUrl: fallbackImage,
+            title: t("client:hero.fallback.title", "Encuentra tu hogar ideal"),
+            location: "Puerto Vallarta, Jal.",
+            price: 0,
+          },
+        ];
+
+  const activeProperty = slides[currentSlide];
 
   return (
     <section className="relative h-dvh min-h-[600px] w-full overflow-hidden bg-slate-900">
@@ -185,10 +130,19 @@ const HomeHeroCarousel = () => {
         >
           <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-slate-900/30 z-10" />
           <img
-            src={hasImage ? currentImage : fallbackImage}
-            alt={activeProperty?.title || "Propiedad destacada"}
+            src={
+              activeProperty &&
+              activeProperty.images &&
+              activeProperty.images.length > 0
+                ? activeProperty.images[0]
+                : activeProperty?.mainImageUrl || fallbackImage
+            }
+            alt={activeProperty?.title || "Property"}
             className="h-full w-full object-cover"
-            onError={() => setImageError(true)}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = fallbackImage;
+            }}
           />
         </motion.div>
       </AnimatePresence>

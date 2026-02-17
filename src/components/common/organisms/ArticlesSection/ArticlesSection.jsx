@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
 import Button from "../../atoms/Button";
+import LazyImage from "../../atoms/LazyImage";
 
 const ArticlesSection = () => {
   const { t } = useTranslation();
@@ -77,7 +78,7 @@ const ArticlesSection = () => {
               className="group flex flex-col h-full rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300"
             >
               <div className="relative h-48 overflow-hidden">
-                <img
+                <LazyImage
                   src={article.image}
                   alt={article.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"

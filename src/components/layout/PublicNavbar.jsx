@@ -39,6 +39,7 @@ import { useUI } from "../../contexts/UIContext";
 import { getConversationsRoute } from "../../utils/internalRoutes";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
+import LazyImage from "../common/atoms/LazyImage";
 import PublicSearch from "../navigation/PublicSearch";
 import { DEFAULT_AMENITIES_CATALOG } from "../../data/amenitiesCatalog";
 import { propertiesService } from "../../services/propertiesService";
@@ -853,13 +854,10 @@ const PublicNavbar = () => {
                                   )}
                                 >
                                   {img ? (
-                                    <img
+                                    <LazyImage
                                       src={img}
                                       alt={p.title}
                                       className="h-11 w-14 shrink-0 rounded-lg object-cover"
-                                      onError={(e) => {
-                                        e.target.style.display = "none";
-                                      }}
                                     />
                                   ) : (
                                     <div className="h-11 w-14 shrink-0 rounded-lg bg-gradient-to-br from-slate-100 to-cyan-50 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">

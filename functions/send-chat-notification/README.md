@@ -1,6 +1,7 @@
 # send-chat-notification
 
-Sends email notification to the offline recipient when a new chat message is received.
+Sends email notification to the property owner when a **new conversation** is started by a client.
+Only triggers on the **first message** of a conversation - subsequent messages do not send emails.
 Also sends a CC copy to the platform owner (root).
 
 ## Execution Contract

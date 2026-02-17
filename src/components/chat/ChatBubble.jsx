@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { useChat } from "../../contexts/ChatContext";
@@ -7,32 +9,63 @@ import ChatWindow from "./ChatWindow";
 
 /**
  * Floating chat bubble + chat window overlay.
- * Visible on all pages when user is authenticated.
+ * Visible on all pages when user is authenticated, EXCEPT on conversation pages.
  */
 const ChatBubble = () => {
   const { t } = useTranslation();
-  const { isChatOpen, toggleChat, totalUnread, isAuthenticated } = useChat();
+  const location = useLocation();
+  const { isChatOpen, toggleChat, closeChat, totalUnread, isAuthenticated } =
+    useChat();
+  const [hasFocus, setHasFocus] = useState(false);
 
-  if (!isAuthenticated) return null;
+  // Don't show floating chat on dedicated conversation pages
+  const isOnConversationsPage =
+    location.pathname === "/mis-conversaciones" ||
+    location.pathname === "/app/conversations";
+
+  // Close chat bubble if user navigates to conversations page
+  // (don't call closeChat() as it clears activeConversationId)
+  useEffect(() => {
+    if (isOnConversationsPage && isChatOpen) {
+      // Just close the bubble, don't clear the active conversation
+      toggleChat();
+    }
+  }, [isOnConversationsPage, isChatOpen, toggleChat]);
+
+  // Close with Escape key only when chat window has focus (like Facebook)
+  useEffect(() => {
+    if (!isChatOpen || !hasFocus) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") {
+        closeChat();
+        setHasFocus(false);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isChatOpen, hasFocus, closeChat]);
+
+  if (!isAuthenticated || isOnConversationsPage) return null;
 
   return (
     <>
       {/* ── Chat Window (animated) ───────────────────── */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isChatOpen && (
           <motion.div
             key="chat-window"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            onClick={() => setHasFocus(true)}
             className={cn(
               "fixed z-9998",
               // Mobile: full screen
-              "inset-0 sm:inset-auto",
+              "inset-0 lg:inset-auto",
               // Desktop: anchored bottom-right
-              "sm:bottom-20 sm:right-5 sm:h-130 sm:w-95",
-              "sm:rounded-2xl sm:shadow-2xl",
+              "lg:bottom-20 lg:right-5 lg:h-130 lg:w-95",
+              "lg:rounded-2xl lg:shadow-2xl",
             )}
           >
             <ChatWindow />
@@ -45,7 +78,7 @@ const ChatBubble = () => {
         onClick={toggleChat}
         aria-label={isChatOpen ? t("chat.bubble.close") : t("chat.bubble.open")}
         className={cn(
-          "fixed bottom-5 right-5 z-9999",
+          "fixed bottom-20 right-5 z-9999 lg:bottom-5",
           "flex h-14 w-14 items-center justify-center",
           "rounded-full shadow-lg transition-all duration-200",
           "hover:scale-105 active:scale-95",

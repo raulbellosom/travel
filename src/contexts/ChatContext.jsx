@@ -8,7 +8,9 @@ import {
   useState,
 } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { usePresence } from "../hooks/usePresence";
 import { chatService } from "../services/chatService";
+import { playNotificationSound } from "../utils/notificationSound";
 import { isInternalRole } from "../utils/roles";
 
 /* ─── Context ──────────────────────────────────────────── */
@@ -33,6 +35,9 @@ export const ChatProvider = ({ children }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [isRestoringConversation, setIsRestoringConversation] = useState(
+    () => Boolean(localStorage.getItem("activeConversationId")),
+  );
 
   // Refs for real-time subscriptions
   const unsubConversationsRef = useRef(null);
@@ -43,6 +48,9 @@ export const ChatProvider = ({ children }) => {
   const isAuthenticated = Boolean(user?.$id);
   const isInternal = isInternalRole(user?.role);
   const chatRole = isInternal ? "owner" : "client";
+
+  // Initialize presence heartbeat for authenticated users
+  usePresence();
 
   const totalUnread = useMemo(() => {
     if (!isAuthenticated) return 0;
@@ -57,6 +65,78 @@ export const ChatProvider = ({ children }) => {
     () => conversations.find((c) => c.$id === activeConversationId) || null,
     [conversations, activeConversationId],
   );
+
+  /* ── Persist active conversation across page reloads ──── */
+
+  // Restore active conversation from localStorage AFTER conversations load
+  useEffect(() => {
+    const savedConversationId = localStorage.getItem("activeConversationId");
+
+    // No saved conversation - nothing to restore
+    if (!savedConversationId) {
+      setIsRestoringConversation(false);
+      return;
+    }
+
+    // Not authenticated yet
+    if (!isAuthenticated || !user?.$id) return;
+
+    // Still loading conversations
+    if (loadingConversations) return;
+
+    // Already have an active conversation (manual selection)
+    if (activeConversationId) {
+      setIsRestoringConversation(false);
+      return;
+    }
+
+    // Wait for conversations to load
+    if (conversations.length === 0 && !loadingConversations) {
+      // Conversations loaded but empty - nothing to restore
+      setIsRestoringConversation(false);
+      localStorage.removeItem("activeConversationId");
+      return;
+    }
+
+    // Verify the conversation still exists before restoring
+    const conversationExists = conversations.some(
+      (c) => c.$id === savedConversationId,
+    );
+
+    if (conversationExists) {
+      console.log("[ChatContext] Restoring conversation:", savedConversationId);
+      setActiveConversationId(savedConversationId);
+    } else {
+      // Conversation was deleted, clear localStorage
+      console.log("[ChatContext] Saved conversation not found, clearing");
+      localStorage.removeItem("activeConversationId");
+    }
+    setIsRestoringConversation(false);
+  }, [
+    isAuthenticated,
+    user?.$id,
+    conversations,
+    loadingConversations,
+    activeConversationId,
+  ]);
+
+  // Save active conversation to localStorage when it changes
+  useEffect(() => {
+    if (activeConversationId) {
+      localStorage.setItem("activeConversationId", activeConversationId);
+    } else {
+      localStorage.removeItem("activeConversationId");
+    }
+  }, [activeConversationId]);
+
+  // Clear persisted conversation on logout
+  useEffect(() => {
+    if (!isAuthenticated) {
+      localStorage.removeItem("activeConversationId");
+      setActiveConversationId(null);
+      setMessages([]);
+    }
+  }, [isAuthenticated]);
 
   /* ── Load conversations ──────────────────────────────── */
 
@@ -90,13 +170,30 @@ export const ChatProvider = ({ children }) => {
     }
   }, []);
 
+  // Auto-load messages when active conversation changes
+  useEffect(() => {
+    if (activeConversationId && conversations.length > 0) {
+      // Verify the conversation exists before loading messages
+      const conversationExists = conversations.some(
+        (c) => c.$id === activeConversationId,
+      );
+      if (conversationExists) {
+        loadMessages(activeConversationId);
+      } else {
+        // Conversation doesn't exist (maybe deleted), clear it
+        setActiveConversationId(null);
+        localStorage.removeItem("activeConversationId");
+      }
+    }
+  }, [activeConversationId, conversations.length, loadMessages]);
+
   /* ── Open a conversation ─────────────────────────────── */
 
   const openConversation = useCallback(
     async (conversationId) => {
       setActiveConversationId(conversationId);
       setIsChatOpen(true);
-      await loadMessages(conversationId);
+      // Messages will be loaded automatically by the useEffect above
 
       // Mark as read
       try {
@@ -117,7 +214,7 @@ export const ChatProvider = ({ children }) => {
         // Silent fail for mark-as-read
       }
     },
-    [chatRole, loadMessages],
+    [chatRole],
   );
 
   /* ── Start or resume a conversation from property ────── */
@@ -173,8 +270,8 @@ export const ChatProvider = ({ children }) => {
         body: body.trim(),
       });
 
-      // Optimistically add message to local state
-      setMessages((prev) => [...prev, message]);
+      // DO NOT add message to local state here — let the real-time subscription handle it
+      // This prevents race condition duplicates
 
       // Update conversation in list
       setConversations((prev) =>
@@ -220,8 +317,13 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const goBackToList = useCallback(() => {
+    console.log(
+      "[ChatContext] goBackToList called - setting activeConversationId to null",
+    );
     setActiveConversationId(null);
     setMessages([]);
+    // Also clear from localStorage
+    localStorage.removeItem("activeConversationId");
   }, []);
 
   /* ── Real-time: conversations ────────────────────────── */
@@ -288,8 +390,11 @@ export const ChatProvider = ({ children }) => {
             return [...prev, doc];
           });
 
-          // If message is from the other party, auto-mark as read
+          // If message is from the other party, play notification sound and auto-mark as read
           if (doc.senderUserId !== user.$id) {
+            // Play notification sound for incoming message
+            playNotificationSound();
+            
             chatService
               .markAsRead(activeConversationId, chatRole)
               .catch(() => {});
@@ -333,6 +438,7 @@ export const ChatProvider = ({ children }) => {
       totalUnread,
       chatRole,
       isAuthenticated,
+      isRestoringConversation,
 
       // Actions
       loadConversations,
@@ -354,6 +460,7 @@ export const ChatProvider = ({ children }) => {
       totalUnread,
       chatRole,
       isAuthenticated,
+      isRestoringConversation,
       loadConversations,
       openConversation,
       startConversation,

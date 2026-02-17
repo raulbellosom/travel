@@ -147,6 +147,119 @@
         "site": "Public Website"
       }
     },
+    "contact": {
+      "badge": "Let's talk about your project",
+      "title": "Ready to transform your",
+      "highlight": " real estate business?",
+      "subtitle": "Contact our team and discover how Inmobo can help you.",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone",
+      "disclaimer": "By submitting this form you agree to our privacy policy.",
+      "form": {
+        "name": "Name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone",
+        "message": "Message",
+        "submit": "Send Message"
+      }
+    },
+    "cta": {
+      "title": "Ready to find your ideal place?",
+      "subtitle": "Explore exclusive properties and live the experience you deserve.",
+      "getStarted": "Get started",
+      "browseProperties": "Browse properties",
+      "noFees": "No hidden fees",
+      "support24": "24/7 support",
+      "verified": "Verified properties",
+      "contactTitle": "Need help?",
+      "contactSubtitle": "Our team is available to assist you.",
+      "phone": "+52 322 123 4567",
+      "email": "hello@inmobo.com",
+      "availability": "Mon - Fri: 9 AM - 6 PM"
+    },
+    "features": {
+      "sectionTitle": "Why choose Inmobo?",
+      "sectionSubtitle": "We connect you with the best properties",
+      "description": "Inmobo is a complete real estate CRM that centralizes all your business operations: from property publishing to closing sales, including lead management, reservations, and collections.",
+      "trust": {
+        "title": "Trust and transparency",
+        "description": "Every listing is reviewed to ensure accuracy and quality."
+      },
+      "fast": {
+        "title": "Fast and simple",
+        "description": "Find your ideal property in minutes with smart search."
+      },
+      "experience": {
+        "title": "Unique experiences",
+        "description": "From beachfront villas to urban apartments, for every lifestyle."
+      },
+      "quality": {
+        "title": "Premium quality",
+        "description": "Only curated properties that meet our standards."
+      },
+      "investment": {
+        "title": "Investment opportunities",
+        "description": "Properties with high appreciation potential and solid returns."
+      },
+      "support": {
+        "title": "Personalized support",
+        "description": "Expert guidance throughout the entire process."
+      }
+    },
+    "howItWorks": {
+      "sectionTitle": "How it works",
+      "sectionSubtitle": "Find your perfect property in simple steps",
+      "subtitleHighlight": "3 simple steps",
+      "step1": {
+        "title": "Search and explore",
+        "desc": "Browse our catalog and use filters to find properties that match your criteria.",
+        "description": "Browse our catalog and use filters to find properties that match your criteria."
+      },
+      "step2": {
+        "title": "Contact and visit",
+        "desc": "Connect directly with agents and schedule visits at your convenience.",
+        "description": "Connect directly with agents and schedule visits at your convenience."
+      },
+      "step3": {
+        "title": "Close the deal",
+        "desc": "Receive leads, reservations and payments automatically. Analyze your performance and scale your business.",
+        "description": "We support you through the entire closing process with secure documentation."
+      },
+      "step4": {
+        "title": "Enjoy your new home",
+        "description": "Move into your ideal property and enjoy the lifestyle you deserve."
+      },
+      "bottomText": "Simple process, extraordinary results."
+    },
+    "propertyShowcase": {
+      "sectionTitle": "Featured Properties",
+      "sectionSubtitle": "Discover the best options hand-picked for you.",
+      "viewAll": "View all",
+      "loading": "Loading properties...",
+      "noProperties": "No properties available at this time.",
+      "errorLoading": "Could not load properties."
+    },
+    "stats": {
+      "cloud": "Cloud platform",
+      "leads": "Lead capture",
+      "gateways": "Payment gateways",
+      "unlimited": "Unlimited properties",
+      "sectionTitle": "Numbers that speak for us",
+      "sectionSubtitle": "Join thousands of satisfied clients",
+      "properties": "Properties",
+      "clients": "Happy customers",
+      "cities": "Cities",
+      "satisfaction": "Satisfaction"
+    },
+    "socialProof": {
+      "title": "Designed to scale",
+      "subtitle": "Tools designed for the modern real estate professional",
+      "stat1": { "label": "Guaranteed uptime" },
+      "stat2": { "label": "Properties managed" },
+      "stat3": { "label": "Load time" },
+      "stat4": { "label": "More productivity" }
+    },
     "quickCategories": {
       "beachfront": "Beachfront",
       "luxuryVillas": "Luxury villas",
@@ -199,6 +312,8 @@
       "hotelsDesc": "Boutique hotels and resorts",
       "vacationCondos": "Condos",
       "vacationCondosDesc": "Luxury vacation rentals",
+      "condos": "Condominiums",
+      "condosDesc": "Condominiums for short stays",
       "villas": "Villas",
       "villasDesc": "Private villas with service",
       "budget": "Budget",
@@ -2000,7 +2115,17 @@
     "dates": "Dates",
     "datesPlaceholder": "Add dates",
     "guests": "Guests",
-    "guestsPlaceholder": "How many?"
+    "guestsPlaceholder": "How many?",
+    "allOperations": "All",
+    "allTypes": "All types",
+    "anyOption": "Any",
+    "any": "Any",
+    "furnished": "Furnished",
+    "semiFurnished": "Semi-Furnished",
+    "unfurnished": "Unfurnished",
+    "sortRecent": "Most recent",
+    "sortPriceAsc": "Price: Low to High",
+    "sortPriceDesc": "Price: High to Low"
   },
   "tablePagination": {
     "resultsPerPage": "Results per page",
@@ -2089,6 +2214,12 @@
       "loginToChat": "Sign in to chat",
       "loginRequired": "You must sign in to use the chat",
       "verifyRequired": "Verify your email to use the chat"
+    },
+    "presence": {
+      "online": "Online",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     }
   },
   "calendarPage": {
@@ -2180,6 +2311,11 @@
       "total": "Total",
       "active": "Active",
       "unread": "Unread"
+    },
+    "status": {
+      "active": "Active",
+      "archived": "Archived",
+      "closed": "Closed"
     }
   },
   "myConversations": {

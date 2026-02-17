@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { Client, Databases } from "node-appwrite";
+import { Client, Databases, Query } from "node-appwrite";
 
 /* ─── Helpers ──────────────────────────────────────────── */
 
@@ -98,6 +98,23 @@ export default async ({ req, res, log, error }) => {
       config.conversationsCollectionId,
       conversationId,
     );
+
+    /* ── Check if this is the first message in the conversation ── */
+    // Only send notification when conversation is just starting (1 message total)
+    const messagesResult = await db.listDocuments(
+      config.databaseId,
+      config.messagesCollectionId,
+      [
+        Query.equal("conversationId", conversationId),
+        Query.limit(2), // We only need to know if there's more than 1
+      ],
+    );
+
+    // If there's more than 1 message, this is not the first message - skip notification
+    if (messagesResult.total > 1) {
+      log(`Conversation ${conversationId} already has ${messagesResult.total} messages, skipping notification.`);
+      return res.json({ ok: true, skipped: true, reason: "not_first_message" }, 200);
+    }
 
     // Determine who receives the notification (the other party)
     // The sender just sent a message, so we notify the other side.
