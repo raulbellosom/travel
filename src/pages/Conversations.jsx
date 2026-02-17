@@ -20,7 +20,7 @@ import { useChat } from "../contexts/ChatContext";
 import { profileService } from "../services/profileService";
 import { isUserOnline, getLastSeenText } from "../utils/presence";
 import { cn } from "../utils/cn";
-import { Badge, Spinner, StatsCardsRow } from "../components/common";
+import { Badge, Spinner, StatsCardsRow, ImageViewerModal } from "../components/common";
 import ChatMessage from "../components/chat/ChatMessage";
 
 /**
@@ -51,8 +51,10 @@ const Conversations = () => {
   const [sending, setSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [contactProfile, setContactProfile] = useState(null);
+  const [contactProfiles, setContactProfiles] = useState({}); // Profiles for conversation list
   const [presenceRefresh, setPresenceRefresh] = useState(0);
   const [isScrollReady, setIsScrollReady] = useState(false);
+  const [viewerImage, setViewerImage] = useState(null);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -274,6 +276,77 @@ const Conversations = () => {
     return () => clearInterval(interval);
   }, []);
 
+  /** Get contact user ID from a conversation */
+  const getContactUserId = useCallback(
+    (conv) => (chatRole === "client" ? conv.ownerUserId : conv.clientUserId),
+    [chatRole],
+  );
+
+  /** Load contact profiles for conversation list avatars and presence */
+  useEffect(() => {
+    if (conversations.length === 0) return;
+
+    let mounted = true;
+
+    const fetchProfiles = async () => {
+      const contactIds = [
+        ...new Set(conversations.map(getContactUserId).filter(Boolean)),
+      ];
+
+      const profiles = {};
+      // Load profiles in parallel (max 10 at a time)
+      const chunks = [];
+      for (let i = 0; i < contactIds.length; i += 10) {
+        chunks.push(contactIds.slice(i, i + 10));
+      }
+
+      for (const chunk of chunks) {
+        const results = await Promise.allSettled(
+          chunk.map((id) => profileService.getProfile(id)),
+        );
+        results.forEach((result, idx) => {
+          if (result.status === "fulfilled" && result.value) {
+            profiles[chunk[idx]] = result.value;
+          }
+        });
+      }
+
+      if (mounted) setContactProfiles(profiles);
+    };
+
+    fetchProfiles();
+
+    // Refresh profiles every 30s for presence updates
+    const interval = setInterval(fetchProfiles, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [conversations, getContactUserId]);
+
+  /** Check if a contact in the list is online */
+  const isListContactOnline = useCallback(
+    (conv) => {
+      const contactId = getContactUserId(conv);
+      const profile = contactProfiles[contactId];
+      return profile?.lastSeenAt ? isUserOnline(profile.lastSeenAt) : false;
+    },
+    [contactProfiles, getContactUserId],
+  );
+
+  /** Get avatar URL for a contact in the list */
+  const getListContactAvatarUrl = useCallback(
+    (conv) => {
+      const contactId = getContactUserId(conv);
+      const profile = contactProfiles[contactId];
+      return profile?.avatarFileId
+        ? profileService.getAvatarViewUrl(profile.avatarFileId)
+        : "";
+    },
+    [contactProfiles, getContactUserId],
+  );
+
   /* ── Filtered conversations ──────────────────────────── */
 
   const filtered = useMemo(() => {
@@ -386,6 +459,13 @@ const Conversations = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactProfile?.lastSeenAt, t, presenceRefresh]);
 
+  /** Contact avatar URL for active conversation header */
+  const contactAvatarUrl = useMemo(() => {
+    const avatarFileId = contactProfile?.avatarFileId;
+    if (!avatarFileId) return "";
+    return profileService.getAvatarViewUrl(avatarFileId);
+  }, [contactProfile]);
+
   /* ── Render ──────────────────────────────────────────── */
 
   // Show loading while restoring conversation from localStorage
@@ -464,6 +544,8 @@ const Conversations = () => {
                 chatRole === "client"
                   ? conv.clientUnread || 0
                   : conv.ownerUnread || 0;
+              const online = isListContactOnline(conv);
+              const avatarUrl = getListContactAvatarUrl(conv);
 
               return (
                 <button
@@ -479,8 +561,27 @@ const Conversations = () => {
                       "bg-cyan-50/50 dark:bg-cyan-950/20",
                   )}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                    {getInitials(contactName(conv))}
+                  {/* Avatar with online indicator */}
+                  <div className="relative shrink-0">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={contactName(conv) || ""}
+                        className="h-10 w-10 cursor-pointer rounded-full object-cover transition hover:opacity-80"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewerImage({ src: avatarUrl, alt: contactName(conv) });
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
+                        {getInitials(contactName(conv))}
+                      </div>
+                    )}
+                    {/* Online indicator dot */}
+                    {online && (
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -553,8 +654,24 @@ const Conversations = () => {
                 >
                   <ArrowLeft size={18} />
                 </button>
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
-                  {getInitials(contactName(activeConversation || {}))}
+                {/* Avatar with online indicator */}
+                <div className="relative shrink-0">
+                  {contactAvatarUrl ? (
+                    <img
+                      src={contactAvatarUrl}
+                      alt={contactName(activeConversation || {}) || ""}
+                      className="h-8 w-8 cursor-pointer rounded-full object-cover transition hover:opacity-80"
+                      onClick={() => setViewerImage({ src: contactAvatarUrl, alt: contactName(activeConversation || {}) })}
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
+                      {getInitials(contactName(activeConversation || {}))}
+                    </div>
+                  )}
+                  {/* Online indicator dot */}
+                  {contactPresence?.isOnline && (
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
@@ -701,6 +818,15 @@ const Conversations = () => {
           )}
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={!!viewerImage}
+        onClose={() => setViewerImage(null)}
+        src={viewerImage?.src}
+        alt={viewerImage?.alt || "Profile"}
+        showDownload={false}
+      />
     </section>
   );
 };

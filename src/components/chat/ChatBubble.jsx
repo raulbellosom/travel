@@ -107,6 +107,8 @@ const ChatBubble = () => {
           isChatOpen
             ? "bg-slate-700 text-white dark:bg-slate-600"
             : "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
+          // Hide on mobile when chat is open (user uses header X button)
+          isChatOpen && "hidden lg:flex",
         )}
       >
         <AnimatePresence mode="wait">

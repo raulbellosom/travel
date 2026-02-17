@@ -33,6 +33,7 @@ export { default as ListingCard } from "./organisms/ListingCard";
 export { default as Modal, ModalFooter } from "./organisms/Modal";
 export { default as Navbar } from "./organisms/Navbar";
 export { default as Footer } from "./organisms/Footer";
+export { default as ImageViewerModal } from "./organisms/ImageViewerModal";
 
 // TODO: Export remaining components as they are implemented
 // export { default as SearchBar } from './molecules/SearchBar';

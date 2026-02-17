@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Minimize2, Send, Smile } from "lucide-react";
+import { ArrowLeft, Minimize2, Send, Smile, X } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { useChat } from "../../contexts/ChatContext";
 import { profileService } from "../../services/profileService";
 import { isUserOnline, getLastSeenText } from "../../utils/presence";
 import { cn } from "../../utils/cn";
-import { Spinner } from "../common";
+import { Spinner, ImageViewerModal } from "../common";
 import ChatMessage from "./ChatMessage";
 
 /**
@@ -44,6 +44,7 @@ const ConversationView = () => {
   const [contactProfile, setContactProfile] = useState(null);
   const [presenceRefresh, setPresenceRefresh] = useState(0); // Trigger to refresh presence text
   const [isScrollReady, setIsScrollReady] = useState(false);
+  const [viewerImage, setViewerImage] = useState(null);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -304,8 +305,8 @@ const ConversationView = () => {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="flex items-center gap-3 border-b border-slate-200 px-3 py-3 dark:border-slate-700">
+      {/* Header - fixed height for consistent transitions */}
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 px-3 dark:border-slate-700">
         <button
           onClick={() => {
             console.log("[ConversationView] goBackToList clicked");
@@ -317,18 +318,25 @@ const ConversationView = () => {
           <ArrowLeft size={18} />
         </button>
 
-        {/* Contact avatar */}
-        {contactAvatarUrl ? (
-          <img
-            src={contactAvatarUrl}
-            alt={contactName || ""}
-            className="h-8 w-8 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
-            {getInitials(contactName)}
-          </div>
-        )}
+        {/* Contact avatar with online indicator */}
+        <div className="relative shrink-0">
+          {contactAvatarUrl ? (
+            <img
+              src={contactAvatarUrl}
+              alt={contactName || ""}
+              className="h-8 w-8 cursor-pointer rounded-full object-cover transition hover:opacity-80"
+              onClick={() => setViewerImage({ src: contactAvatarUrl, alt: contactName })}
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
+              {getInitials(contactName)}
+            </div>
+          )}
+          {/* Online indicator dot */}
+          {contactPresence?.isOnline && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+          )}
+        </div>
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
@@ -357,7 +365,7 @@ const ConversationView = () => {
           )}
         </div>
 
-        {/* Minimize button - icon on desktop, text on mobile */}
+        {/* Minimize button - icon on desktop, X on mobile */}
         <button
           onClick={toggleChat}
           className="hidden rounded p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 lg:block dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
@@ -367,9 +375,10 @@ const ConversationView = () => {
         </button>
         <button
           onClick={toggleChat}
-          className="text-xs text-slate-500 hover:text-slate-700 lg:hidden dark:text-slate-400 dark:hover:text-slate-200"
+          className="rounded p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          title={t("chat.bubble.close")}
         >
-          {t("chat.actions.close")}
+          <X size={20} />
         </button>
       </header>
 
@@ -488,6 +497,15 @@ const ConversationView = () => {
           </button>
         </form>
       </div>
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={!!viewerImage}
+        onClose={() => setViewerImage(null)}
+        src={viewerImage?.src}
+        alt={viewerImage?.alt || "Profile"}
+        showDownload={false}
+      />
     </div>
   );
 };

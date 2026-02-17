@@ -8,7 +8,7 @@ import { useChat } from "../contexts/ChatContext";
 import { profileService } from "../services/profileService";
 import { isUserOnline, getLastSeenText } from "../utils/presence";
 import { cn } from "../utils/cn";
-import { Spinner } from "../components/common";
+import { Spinner, ImageViewerModal } from "../components/common";
 import ChatMessage from "../components/chat/ChatMessage";
 
 /**
@@ -39,8 +39,10 @@ const MyConversations = () => {
   const [sending, setSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [contactProfile, setContactProfile] = useState(null);
+  const [contactProfiles, setContactProfiles] = useState({});
   const [presenceRefresh, setPresenceRefresh] = useState(0);
   const [isScrollReady, setIsScrollReady] = useState(false);
+  const [viewerImage, setViewerImage] = useState(null);
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -177,6 +179,77 @@ const MyConversations = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  /** Get contact user ID from a conversation */
+  const getContactUserId = useCallback(
+    (conv) => (chatRole === "client" ? conv.ownerUserId : conv.clientUserId),
+    [chatRole],
+  );
+
+  /** Load contact profiles for conversation list avatars and presence */
+  useEffect(() => {
+    if (conversations.length === 0) return;
+
+    let mounted = true;
+
+    const fetchProfiles = async () => {
+      const contactIds = [
+        ...new Set(conversations.map(getContactUserId).filter(Boolean)),
+      ];
+
+      const profiles = {};
+      // Load profiles in parallel (max 10 at a time)
+      const chunks = [];
+      for (let i = 0; i < contactIds.length; i += 10) {
+        chunks.push(contactIds.slice(i, i + 10));
+      }
+
+      for (const chunk of chunks) {
+        const results = await Promise.allSettled(
+          chunk.map((id) => profileService.getProfile(id)),
+        );
+        results.forEach((result, idx) => {
+          if (result.status === "fulfilled" && result.value) {
+            profiles[chunk[idx]] = result.value;
+          }
+        });
+      }
+
+      if (mounted) setContactProfiles(profiles);
+    };
+
+    fetchProfiles();
+
+    // Refresh profiles every 30s for presence updates
+    const interval = setInterval(fetchProfiles, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [conversations, getContactUserId]);
+
+  /** Check if a contact in the list is online */
+  const isListContactOnline = useCallback(
+    (conv) => {
+      const contactId = getContactUserId(conv);
+      const profile = contactProfiles[contactId];
+      return profile?.lastSeenAt ? isUserOnline(profile.lastSeenAt) : false;
+    },
+    [contactProfiles, getContactUserId],
+  );
+
+  /** Get avatar URL for a contact in the list */
+  const getListContactAvatarUrl = useCallback(
+    (conv) => {
+      const contactId = getContactUserId(conv);
+      const profile = contactProfiles[contactId];
+      return profile?.avatarFileId
+        ? profileService.getAvatarViewUrl(profile.avatarFileId)
+        : "";
+    },
+    [contactProfiles, getContactUserId],
+  );
 
   /* ── Filtered conversations ──────────────────────────── */
 

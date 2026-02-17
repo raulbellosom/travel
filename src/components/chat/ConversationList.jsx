@@ -1,12 +1,26 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { ExternalLink, MessageCircle, Search, Minimize2 } from "lucide-react";
+import { ExternalLink, MessageCircle, Search, Minimize2, X } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useChat } from "../../contexts/ChatContext";
 import { profileService } from "../../services/profileService";
 import { isUserOnline } from "../../utils/presence";
 import { cn } from "../../utils/cn";
-import { Spinner } from "../common";
+import { Spinner, ImageViewerModal } from "../common";
+
+/**
+ * Get 2-letter initials from a name.
+ * @param {string} name - Full name
+ * @returns {string} 2 uppercase initials
+ */
+const getInitials = (name) => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+};
 
 /**
  * Lists all conversations for the authenticated user.
@@ -23,6 +37,7 @@ const ConversationList = () => {
   } = useChat();
   const [search, setSearch] = useState("");
   const [contactProfiles, setContactProfiles] = useState({});
+  const [viewerImage, setViewerImage] = useState(null);
 
   /** Get contact user ID from a conversation */
   const getContactUserId = useCallback(
@@ -113,8 +128,8 @@ const ConversationList = () => {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+      {/* Header - fixed height for consistent transitions */}
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 px-3 dark:border-slate-700">
         <div className="flex items-center gap-2">
           <MessageCircle
             size={20}
@@ -135,16 +150,17 @@ const ConversationList = () => {
           </Link>
           <button
             onClick={toggleChat}
-            className="hidden rounded p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:block dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="hidden rounded p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 lg:block dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
             title={t("chat.bubble.close")}
           >
             <Minimize2 size={16} />
           </button>
           <button
             onClick={toggleChat}
-            className="text-sm text-slate-500 hover:text-slate-700 sm:hidden dark:text-slate-400 dark:hover:text-slate-200"
+            className="rounded p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            title={t("chat.bubble.close")}
           >
-            {t("chat.actions.close")}
+            <X size={20} />
           </button>
         </div>
       </header>
@@ -220,11 +236,15 @@ const ConversationList = () => {
                   <img
                     src={avatarUrl}
                     alt={contactName || ""}
-                    className="h-10 w-10 rounded-full object-cover"
+                    className="h-10 w-10 cursor-pointer rounded-full object-cover transition hover:opacity-80"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setViewerImage({ src: avatarUrl, alt: contactName });
+                    }}
                   />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                    {(contactName || "?").charAt(0).toUpperCase()}
+                    {getInitials(contactName)}
                   </div>
                 )}
                 {/* Online indicator dot */}
@@ -278,6 +298,15 @@ const ConversationList = () => {
           );
         })}
       </div>
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={!!viewerImage}
+        onClose={() => setViewerImage(null)}
+        src={viewerImage?.src}
+        alt={viewerImage?.alt || "Profile"}
+        showDownload={false}
+      />
     </div>
   );
 };
