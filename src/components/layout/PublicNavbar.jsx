@@ -36,6 +36,7 @@ import {
 import { cn } from "../../utils/cn";
 import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
+import { getConversationsRoute } from "../../utils/internalRoutes";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
 import PublicSearch from "../navigation/PublicSearch";
@@ -1112,14 +1113,14 @@ const PublicNavbar = () => {
                         </p>
                       </div>
                       <Link
-                        to="/perfil"
+                        to="/profile"
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="w-full rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
                       >
                         {t("client:navbar.userMenu.profile", "Editar Perfil")}
                       </Link>
                       <Link
-                        to="/mis-conversaciones"
+                        to={getConversationsRoute(user)}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="w-full rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
                       >

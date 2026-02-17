@@ -14,7 +14,10 @@ import {
   UserCircle2,
 } from "lucide-react";
 import { isInternalRole } from "../../../../utils/roles";
-import { INTERNAL_ROUTES } from "../../../../utils/internalRoutes";
+import {
+  INTERNAL_ROUTES,
+  getConversationsRoute,
+} from "../../../../utils/internalRoutes";
 
 const UserDropdown = ({ user, onLogout }) => {
   const { t } = useTranslation();
@@ -64,29 +67,31 @@ const UserDropdown = ({ user, onLogout }) => {
 
   const userMenuItems = [
     ...(isInternalUser
-      ? [{
-        to: INTERNAL_ROUTES.dashboard,
-        icon: LayoutDashboard,
-        label: t("nav.dashboard"),
-      }]
+      ? [
+          {
+            to: INTERNAL_ROUTES.dashboard,
+            icon: LayoutDashboard,
+            label: t("nav.dashboard"),
+          },
+        ]
       : []),
     {
-      to: "/perfil",
+      to: "/profile",
       icon: UserCircle2,
       label: t("navbar.userMenu.profile"),
     },
     {
-      to: "/mis-reservas",
+      to: "/my-reservations",
       icon: BookOpen,
       label: t("navbar.userMenu.reservations"),
     },
     {
-      to: "/mis-resenas",
+      to: "/my-reviews",
       icon: Star,
       label: t("navbar.userMenu.reviews"),
     },
     {
-      to: "/mis-conversaciones",
+      to: getConversationsRoute(user),
       icon: MessageCircle,
       label: t("navbar.userMenu.conversations"),
     },
@@ -99,12 +104,12 @@ const UserDropdown = ({ user, onLogout }) => {
 
   const legalMenuItems = [
     {
-      to: "/aviso-privacidad",
+      to: "/privacy-notice",
       icon: ShieldCheck,
       label: t("navbar.userMenu.privacy"),
     },
     {
-      to: "/terminos-condiciones",
+      to: "/terms-conditions",
       icon: FileText,
       label: t("navbar.userMenu.terms"),
     },
@@ -151,7 +156,9 @@ const UserDropdown = ({ user, onLogout }) => {
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {user?.name || t("navbar.userMenu.defaultUser")}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-300">{user?.email}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-300">
+              {user?.email}
+            </p>
           </div>
 
           <div className="p-2">

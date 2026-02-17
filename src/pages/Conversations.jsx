@@ -148,7 +148,7 @@ const Conversations = () => {
       <StatsCardsRow items={stats} />
 
       {/* Split panel */}
-      <div className="flex h-[calc(100vh-320px)] min-h-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex h-[calc(100vh-22rem)] min-h-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 md:h-[calc(100vh-20rem)]">
         {/* ── Left: Conversation list ────────────────── */}
         <div
           className={cn(

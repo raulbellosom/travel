@@ -352,7 +352,7 @@ const PropertyDetail = () => {
   /* ─── Render ─────────────────────────────────────────── */
 
   return (
-    <div className="pb-12 md:pt-20">
+    <div className="pb-12 pt-16 md:pt-20">
       {/* ── Mobile Hero Cover (auto-sliding) ──────────────── */}
       <section className="relative md:hidden">
         <div className="relative aspect-[4/3] w-full overflow-hidden">
@@ -947,7 +947,10 @@ const PropertyDetail = () => {
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
             >
               <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
-                <MessageCircle size={18} className="text-cyan-600 dark:text-cyan-400" />
+                <MessageCircle
+                  size={18}
+                  className="text-cyan-600 dark:text-cyan-400"
+                />
                 {t("client:propertyDetail.chat.title")}
               </h2>
               <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
@@ -968,11 +971,17 @@ const PropertyDetail = () => {
             {/* ── Calendar placeholder ───────────────── */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
-                <Calendar size={18} className="text-cyan-600 dark:text-cyan-400" />
+                <Calendar
+                  size={18}
+                  className="text-cyan-600 dark:text-cyan-400"
+                />
                 {t("client:propertyDetail.calendar.title")}
               </h2>
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
-                <Calendar size={32} className="mb-2 text-slate-300 dark:text-slate-600" />
+                <Calendar
+                  size={32}
+                  className="mb-2 text-slate-300 dark:text-slate-600"
+                />
                 <p className="text-sm text-slate-400 dark:text-slate-500">
                   {t("client:propertyDetail.calendar.placeholder")}
                 </p>

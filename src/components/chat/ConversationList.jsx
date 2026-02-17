@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { ExternalLink, MessageCircle, Search } from "lucide-react";
 import { useState } from "react";
 import { useChat } from "../../contexts/ChatContext";
+import { useAuth } from "../../hooks/useAuth";
+import { getConversationsRoute } from "../../utils/internalRoutes";
 import { cn } from "../../utils/cn";
 import { Spinner } from "../common";
 
@@ -11,6 +13,7 @@ import { Spinner } from "../common";
  */
 const ConversationList = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const {
     conversations,
     loadingConversations,
@@ -58,7 +61,7 @@ const ConversationList = () => {
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             {t("chat.conversations.title")}
           </h2>
-        </div>
+        </div>{getConversationsRoute(user)}
         <div className="flex items-center gap-2">
           <Link
             to="/mis-conversaciones"

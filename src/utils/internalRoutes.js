@@ -35,3 +35,23 @@ export const getLegacyInternalPropertyDetailRoute = (id) =>
 /* ── Public routes ─────────────────────────────────── */
 
 export const getPublicPropertyRoute = (slug) => `/propiedades/${slug}`;
+
+/* ── Conversations routes (role-based) ───────────────── */
+
+/**
+ * Get the appropriate conversations route based on user role
+ * @param {Object} user - The user object (must have role property)
+ * @returns {string} - The conversations route path
+ */
+export const getConversationsRoute = (user) => {
+  if (!user) return "/my-conversations";
+
+  // Internal roles (owner, staff, root) go to dashboard conversations
+  const internalRoles = ["owner", "staff", "root"];
+  if (internalRoles.includes(user.role)) {
+    return INTERNAL_ROUTES.conversations;
+  }
+
+  // Client users go to public conversations
+  return "/my-conversations";
+};

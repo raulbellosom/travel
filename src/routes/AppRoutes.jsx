@@ -125,14 +125,25 @@ const AppRoutes = () => {
                     <Route index element={<Home />} />
                   )}
                   <Route path="buscar" element={<SearchPage />} />
+                  <Route path="search" element={<SearchPage />} />
                   <Route
                     path="propiedades/:slug"
                     element={<PropertyDetail />}
                   />
+                  <Route path="properties/:slug" element={<PropertyDetail />} />
                   <Route path="reservar/:slug" element={<ReserveProperty />} />
+                  <Route path="reserve/:slug" element={<ReserveProperty />} />
                   <Route path="voucher/:code" element={<VoucherLookup />} />
                   <Route
                     path="perfil"
+                    element={
+                      <ClientRoute>
+                        <Profile mode="client" />
+                      </ClientRoute>
+                    }
+                  />
+                  <Route
+                    path="profile"
                     element={
                       <ClientRoute>
                         <Profile mode="client" />
@@ -148,7 +159,23 @@ const AppRoutes = () => {
                     }
                   />
                   <Route
+                    path="my-reservations"
+                    element={
+                      <ProtectedRoute>
+                        <MyReservations />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="mis-resenas"
+                    element={
+                      <ProtectedRoute>
+                        <MyReviews />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="my-reviews"
                     element={
                       <ProtectedRoute>
                         <MyReviews />
@@ -163,9 +190,22 @@ const AppRoutes = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="my-conversations"
+                    element={
+                      <ProtectedRoute>
+                        <MyConversations />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="aviso-privacidad" element={<PrivacyNotice />} />
+                  <Route path="privacy-notice" element={<PrivacyNotice />} />
                   <Route
                     path="terminos-condiciones"
+                    element={<TermsConditions />}
+                  />
+                  <Route
+                    path="terms-conditions"
                     element={<TermsConditions />}
                   />
                   <Route path="ui-docs" element={<UIDocsPage />} />

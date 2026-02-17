@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import {
-  MessageCircle,
-  Search,
-  ArrowLeft,
-  Send,
-} from "lucide-react";
+import { MessageCircle, Search, ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useChat } from "../contexts/ChatContext";
 import { cn } from "../utils/cn";
@@ -15,7 +10,7 @@ import ChatMessage from "../components/chat/ChatMessage";
 
 /**
  * Client-facing full-page conversations view.
- * Rendered inside MainLayout at /mis-conversaciones.
+ * Rendered inside MainLayout at /my-conversations (legacy: /mis-conversaciones).
  * Provides a split-panel (desktop) or stacked (mobile) experience.
  */
 const MyConversations = () => {
@@ -112,7 +107,10 @@ const MyConversations = () => {
       {/* Page header */}
       <header className="mb-5">
         <h1 className="flex items-center gap-2.5 text-2xl font-bold text-slate-900 dark:text-white">
-          <MessageCircle size={24} className="text-cyan-600 dark:text-cyan-400" />
+          <MessageCircle
+            size={24}
+            className="text-cyan-600 dark:text-cyan-400"
+          />
           {t("myConversations.title")}
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -121,7 +119,7 @@ const MyConversations = () => {
       </header>
 
       {/* Split panel */}
-      <div className="flex h-[calc(100vh-220px)] min-h-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex h-[calc(100vh-16rem)] min-h-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 md:h-[calc(100vh-14rem)]">
         {/* ── Left: Conversation list ────────────────── */}
         <div
           className={cn(
