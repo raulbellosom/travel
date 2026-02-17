@@ -51,8 +51,8 @@ const env = {
       analyticsDaily: get("APPWRITE_COLLECTION_ANALYTICS_DAILY_ID"),
       activityLogs: get("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID"),
       emailVerifications: get("APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID"),
-      conversations: get("APPWRITE_COLLECTION_CONVERSATIONS_ID"),
-      messages: get("APPWRITE_COLLECTION_MESSAGES_ID"),
+      conversations: get("APPWRITE_COLLECTION_CONVERSATIONS_ID", "conversations"),
+      messages: get("APPWRITE_COLLECTION_MESSAGES_ID", "messages"),
     },
     buckets: {
       propertyImages: get("APPWRITE_BUCKET_PROPERTY_IMAGES_ID"),
