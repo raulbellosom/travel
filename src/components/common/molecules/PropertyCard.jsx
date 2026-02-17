@@ -15,7 +15,7 @@ import {
   Star,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "../../../utils/cn";
 import { storage } from "../../../api/appwriteClient";
 import env from "../../../env";
@@ -168,26 +168,28 @@ const PropertyCard = ({ property, className }) => {
         >
           {hasImages ? (
             <>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentImageIndex}
-                  initial={{ opacity: 0, scale: 1.1 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="h-full w-full"
-                >
-                  <LazyImage
-                    src={images[currentImageIndex]}
-                    alt={property.title}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={() => setImageError(true)}
-                  />
-                </motion.div>
-              </AnimatePresence>
+              {/* Sliding container */}
+              <div
+                className="flex h-full transition-transform duration-500 ease-out"
+                style={{
+                  transform: `translateX(-${currentImageIndex * 100}%)`,
+                }}
+              >
+                {images.map((imgSrc, idx) => (
+                  <div key={idx} className="h-full w-full shrink-0">
+                    <LazyImage
+                      src={imgSrc}
+                      alt={`${property.title} ${idx + 1}`}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      onError={() => setImageError(true)}
+                      eager={idx === 0}
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* Overlay Gradient */}
-              <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40" />
+              <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40 pointer-events-none" />
             </>
           ) : (
             /* Beautiful placeholder with pattern */

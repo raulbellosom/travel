@@ -400,24 +400,28 @@ const PropertyDetail = () => {
       {/* ── Mobile Hero Cover (auto-sliding) ──────────────── */}
       <section className="relative md:hidden">
         <div className="relative aspect-4/3 w-full overflow-hidden">
-          {/* Slides */}
-          {gallery.slice(0, 6).map((url, i) => (
-            <LazyImage
-              key={url + i}
-              src={url || FALLBACK_BANNERS[0]}
-              alt={`${property.title} ${i + 1}`}
-              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
-                i === heroSlide ? "opacity-100" : "opacity-0"
-              }`}
-              eager={i === 0}
-            />
-          ))}
+          {/* Sliding container */}
+          <div
+            className="flex h-full transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${heroSlide * 100}%)` }}
+          >
+            {gallery.slice(0, 6).map((url, i) => (
+              <div key={url + i} className="h-full w-full shrink-0">
+                <LazyImage
+                  src={url || FALLBACK_BANNERS[0]}
+                  alt={`${property.title} ${i + 1}`}
+                  className="h-full w-full object-cover"
+                  eager
+                />
+              </div>
+            ))}
+          </div>
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
+          <div className="absolute inset-0 z-20 bg-linear-to-t from-black/70 via-black/30 to-transparent pointer-events-none" />
 
           {/* Bottom overlay content */}
-          <div className="absolute right-0 bottom-0 left-0 flex flex-col gap-3 px-4 pb-4">
+          <div className="absolute right-0 bottom-0 left-0 z-30 flex flex-col gap-3 px-4 pb-4">
             {/* Title row: badge + title */}
             <div>
               <span
@@ -449,7 +453,7 @@ const PropertyDetail = () => {
 
           {/* Slide indicators */}
           {gallery.length > 1 && (
-            <div className="absolute right-0 bottom-1.5 left-0 flex justify-center gap-1.5">
+            <div className="absolute right-0 bottom-1.5 left-0 z-30 flex justify-center gap-1.5">
               {gallery.slice(0, 6).map((_, i) => (
                 <span
                   key={i}

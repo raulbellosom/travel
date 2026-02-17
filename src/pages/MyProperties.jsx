@@ -637,11 +637,11 @@ const MyProperties = () => {
                             onClick={() => openImageViewer(item, 0)}
                             className="group relative h-16 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition hover:border-cyan-500 dark:border-slate-700 dark:bg-slate-800"
                           >
-                            LazyImage
                             <LazyImage
                               src={getPropertyThumbnail(item)}
                               alt={item.title}
                               className="h-full w-full object-cover transition group-hover:scale-105"
+                              eager
                             />
                             <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
                               <ImageIcon
