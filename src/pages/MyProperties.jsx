@@ -20,6 +20,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
+import { hasRoleAtLeast } from "../utils/roles";
 import { TablePagination } from "../components/common";
 import LazyImage from "../components/common/atoms/LazyImage";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
@@ -56,6 +57,8 @@ const MyProperties = () => {
     images: [],
     initialIndex: 0,
   });
+  // For root/owner: toggle between showing all properties or only assigned
+  const [showAllProperties, setShowAllProperties] = useState(true);
   const focusId = String(searchParams.get("focus") || "").trim();
   const rowActionMenuRef = useRef(null);
   const rowActionTriggerRefs = useRef({});
@@ -89,19 +92,34 @@ const MyProperties = () => {
     setSearchText((prev) => (prev === nextSearch ? prev : nextSearch));
   }, [searchParams]);
 
+  // Check if user can view all properties (root or owner)
+  const canViewAllProperties = useMemo(
+    () => hasRoleAtLeast(user?.role, "owner"),
+    [user?.role],
+  );
+
   const loadData = useCallback(async () => {
     if (!user?.$id) return;
     setLoading(true);
     setError("");
     try {
-      const response = await propertiesService.listMine(user.$id);
+      let response;
+
+      if (canViewAllProperties && showAllProperties) {
+        // Root/owner with "show all" enabled: load all properties
+        response = await propertiesService.listMine(user.$id);
+      } else {
+        // Staff users OR root/owner with filter: only load properties where they are the responsible agent
+        response = await propertiesService.listByResponsible(user.$id);
+      }
+
       setItems(response.documents || []);
     } catch (err) {
       setError(getErrorMessage(err, i18n.t("myPropertiesPage.errors.load")));
     } finally {
       setLoading(false);
     }
-  }, [user?.$id]);
+  }, [user?.$id, canViewAllProperties, showAllProperties, i18n]);
 
   useEffect(() => {
     loadData();
@@ -480,23 +498,42 @@ const MyProperties = () => {
         </div>
       </header>
 
-      <div className="max-w-md">
-        <label className="grid gap-1 text-sm">
-          <span className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-200">
-            <Search size={14} />
-            {t("client:myProperties.filters.search", {
-              defaultValue: "Buscar",
-            })}
-          </span>
-          <input
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-            placeholder={t("client:myProperties.filters.searchPlaceholder", {
-              defaultValue: "Titulo, slug, ciudad o estado",
-            })}
-            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
-          />
-        </label>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-md flex-1">
+          <label className="grid gap-1 text-sm">
+            <span className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-200">
+              <Search size={14} />
+              {t("client:myProperties.filters.search", {
+                defaultValue: "Buscar",
+              })}
+            </span>
+            <input
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder={t("client:myProperties.filters.searchPlaceholder", {
+                defaultValue: "Titulo, slug, ciudad o estado",
+              })}
+              className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+        </div>
+
+        {/* Show "View all properties" checkbox only for root/owner */}
+        {canViewAllProperties && (
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+            <input
+              type="checkbox"
+              checked={showAllProperties}
+              onChange={(e) => setShowAllProperties(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800"
+            />
+            <span>
+              {t("myPropertiesPage.filters.showAllProperties", {
+                defaultValue: "Ver todas las propiedades",
+              })}
+            </span>
+          </label>
+        )}
       </div>
 
       {loading ? (

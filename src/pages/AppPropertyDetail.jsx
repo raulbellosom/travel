@@ -42,6 +42,9 @@ import LazyImage from "../components/common/atoms/LazyImage";
 import { ImageViewerModal } from "../components/common/organisms/ImageViewerModal/ImageViewerModal";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
+import { staffService } from "../services/staffService";
+import { useAuth } from "../hooks/useAuth";
+import { hasRoleAtLeast } from "../utils/roles";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
 import { getErrorMessage } from "../utils/errors";
 import {
@@ -104,6 +107,7 @@ const AppPropertyDetail = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
 
   const [property, setProperty] = useState(null);
   const [images, setImages] = useState([]);
@@ -114,6 +118,18 @@ const AppPropertyDetail = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+
+  // Staff assignment state (only visible for root/owner)
+  const [staffList, setStaffList] = useState([]);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [staffSaving, setStaffSaving] = useState(false);
+  const [selectedResponsibleId, setSelectedResponsibleId] = useState("");
+
+  // Check if user can reassign the responsible agent (root or owner only)
+  const canAssignStaff = useMemo(
+    () => hasRoleAtLeast(user?.role, "owner"),
+    [user?.role],
+  );
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
 
@@ -154,6 +170,68 @@ const AppPropertyDetail = () => {
   useEffect(() => {
     loadProperty();
   }, [loadProperty]);
+
+  // Load staff list for assignment (only for root/owner)
+  const loadStaffList = useCallback(async () => {
+    if (!canAssignStaff) return;
+    setStaffLoading(true);
+    try {
+      const staffMembers = await staffService.listStaff();
+      setStaffList(staffMembers || []);
+    } catch {
+      setStaffList([]);
+    } finally {
+      setStaffLoading(false);
+    }
+  }, [canAssignStaff]);
+
+  useEffect(() => {
+    if (canAssignStaff) {
+      loadStaffList();
+    }
+  }, [canAssignStaff, loadStaffList]);
+
+  // Sync selected responsible ID when property loads
+  useEffect(() => {
+    if (property?.ownerUserId) {
+      setSelectedResponsibleId(property.ownerUserId);
+    } else {
+      setSelectedResponsibleId("");
+    }
+  }, [property?.ownerUserId]);
+
+  // Save responsible agent change
+  const handleSaveResponsibleAgent = async () => {
+    if (!property?.$id || staffSaving || !selectedResponsibleId) return;
+    setStaffSaving(true);
+    try {
+      await propertiesService.updateResponsibleAgent(
+        property.$id,
+        selectedResponsibleId,
+      );
+      // Update local property state
+      setProperty((prev) =>
+        prev ? { ...prev, ownerUserId: selectedResponsibleId } : prev,
+      );
+    } catch (err) {
+      setError(
+        getErrorMessage(
+          err,
+          t("appPropertyDetailPage.errors.saveResponsible", {
+            defaultValue: "No se pudo cambiar el agente responsable.",
+          }),
+        ),
+      );
+    } finally {
+      setStaffSaving(false);
+    }
+  };
+
+  // Check if responsible agent has changed
+  const hasResponsibleChanges = useMemo(() => {
+    const current = property?.ownerUserId || "";
+    return current !== selectedResponsibleId;
+  }, [property?.ownerUserId, selectedResponsibleId]);
 
   const formattedPrice = useMemo(() => {
     if (!property) return "-";
@@ -777,6 +855,92 @@ const AppPropertyDetail = () => {
           />
         </div>
       </DetailSection>
+
+      {/* Responsible Agent Assignment - Only visible for root/owner */}
+      {canAssignStaff && (
+        <DetailSection
+          title={t("appPropertyDetailPage.sections.responsibleAgent", {
+            defaultValue: "Agente Responsable",
+          })}
+          icon={Users}
+        >
+          <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
+            {t("appPropertyDetailPage.responsibleAgent.description", {
+              defaultValue:
+                "Selecciona el usuario responsable de gestionar esta propiedad. Los clientes se comunicarán directamente con este agente.",
+            })}
+          </p>
+
+          {staffLoading ? (
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Loader2 size={14} className="animate-spin" />
+              {t("common.loading", { defaultValue: "Cargando..." })}
+            </div>
+          ) : staffList.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t("appPropertyDetailPage.responsibleAgent.noStaff", {
+                defaultValue: "No hay usuarios staff registrados.",
+              })}
+            </p>
+          ) : (
+            <>
+              <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+                {staffList.map((staff) => (
+                  <label
+                    key={staff.$id}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                  >
+                    <input
+                      type="radio"
+                      name="responsibleAgent"
+                      checked={selectedResponsibleId === staff.$id}
+                      onChange={() => setSelectedResponsibleId(staff.$id)}
+                      disabled={staffSaving}
+                      className="h-4 w-4 border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {staff.firstName} {staff.lastName}
+                        {staff.$id === property?.ownerUserId && (
+                          <span className="ml-2 inline-flex items-center rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
+                            {t(
+                              "appPropertyDetailPage.responsibleAgent.current",
+                              {
+                                defaultValue: "Actual",
+                              },
+                            )}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {staff.email} • {staff.role}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {hasResponsibleChanges && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSaveResponsibleAgent}
+                    disabled={staffSaving || !selectedResponsibleId}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {staffSaving && (
+                      <Loader2 size={14} className="animate-spin" />
+                    )}
+                    {t("appPropertyDetailPage.responsibleAgent.save", {
+                      defaultValue: "Cambiar responsable",
+                    })}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </DetailSection>
+      )}
 
       {/* Delete Modal */}
       <Modal

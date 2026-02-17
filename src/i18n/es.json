@@ -830,7 +830,8 @@
     "confirmDeactivate": "Seguro que deseas desactivar esta propiedad?",
     "filters": {
       "search": "Buscar",
-      "searchPlaceholder": "Titulo, slug, ciudad o estado"
+      "searchPlaceholder": "Titulo, slug, ciudad o estado",
+      "showAllProperties": "Ver todas las propiedades"
     },
     "table": {
       "image": "Imagen",
@@ -1060,7 +1061,14 @@
       "vacationRules": "Reglas de Renta Vacacional",
       "amenities": "Amenidades",
       "multimedia": "Multimedia",
-      "statistics": "Estadísticas"
+      "statistics": "Estadísticas",
+      "responsibleAgent": "Agente Responsable"
+    },
+    "responsibleAgent": {
+      "description": "Selecciona el usuario responsable de gestionar esta propiedad. Los clientes se comunicarán directamente con este agente.",
+      "noStaff": "No hay usuarios staff registrados.",
+      "save": "Cambiar responsable",
+      "current": "Actual"
     },
     "actions": {
       "backToList": "Volver al listado",
@@ -1068,7 +1076,8 @@
     },
     "errors": {
       "notFound": "Propiedad no encontrada.",
-      "load": "No se pudo cargar la propiedad."
+      "load": "No se pudo cargar la propiedad.",
+      "saveResponsible": "No se pudo cambiar el agente responsable."
     }
   },
   "propertyStatus": {

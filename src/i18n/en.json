@@ -865,7 +865,8 @@
     "confirmDeactivate": "Are you sure you want to deactivate this property?",
     "filters": {
       "search": "Search",
-      "searchPlaceholder": "Title, slug, city, or state"
+      "searchPlaceholder": "Title, slug, city, or state",
+      "showAllProperties": "Show all properties"
     },
     "table": {
       "image": "Image",
@@ -1095,7 +1096,14 @@
       "vacationRules": "Vacation Rental Rules",
       "amenities": "Amenities",
       "multimedia": "Multimedia",
-      "statistics": "Statistics"
+      "statistics": "Statistics",
+      "responsibleAgent": "Responsible Agent"
+    },
+    "responsibleAgent": {
+      "description": "Select the user responsible for managing this property. Clients will communicate directly with this agent.",
+      "noStaff": "No staff users registered.",
+      "save": "Change responsible",
+      "current": "Current"
     },
     "actions": {
       "backToList": "Back to list",
@@ -1103,7 +1111,8 @@
     },
     "errors": {
       "notFound": "Property not found.",
-      "load": "Could not load the property."
+      "load": "Could not load the property.",
+      "saveResponsible": "Could not change responsible agent."
     }
   },
   "propertyStatus": {

@@ -113,6 +113,16 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
       : [];
   }
 
+  // assignedStaffIds: array of user IDs assigned to manage this property
+  if (!forUpdate || hasOwn(source, "assignedStaffIds")) {
+    data.assignedStaffIds = Array.isArray(source.assignedStaffIds)
+      ? source.assignedStaffIds
+          .map((id) => String(id || "").trim())
+          .filter(Boolean)
+          .slice(0, 20) // max 20 assigned staff
+      : [];
+  }
+
   return data;
 };
 
@@ -297,7 +307,7 @@ export const propertiesService = {
       Query.limit(200),
     ];
 
-    // Optional owner filter for explicit per-user analysis screens.
+    // Optional owner filter - used for staff to see only their assigned properties
     if (ownerUserId) queries.push(Query.equal("ownerUserId", ownerUserId));
     if (status) queries.push(Query.equal("status", status));
 
@@ -305,6 +315,47 @@ export const propertiesService = {
       databaseId: env.appwrite.databaseId,
       collectionId: env.appwrite.collections.properties,
       queries,
+    });
+  },
+
+  /**
+   * List properties where the user is the responsible agent (ownerUserId).
+   * For staff users who should only see their assigned properties.
+   */
+  async listByResponsible(responsibleUserId) {
+    ensureAppwriteConfigured();
+    if (!responsibleUserId) return { documents: [], total: 0 };
+
+    const queries = [
+      Query.equal("enabled", true),
+      Query.equal("ownerUserId", responsibleUserId),
+      Query.orderDesc("$createdAt"),
+      Query.limit(200),
+    ];
+
+    return databases.listDocuments({
+      databaseId: env.appwrite.databaseId,
+      collectionId: env.appwrite.collections.properties,
+      queries,
+    });
+  },
+
+  /**
+   * Update the responsible agent (ownerUserId) for a property.
+   * Only root/owner should call this.
+   */
+  async updateResponsibleAgent(propertyId, newOwnerUserId) {
+    ensureAppwriteConfigured();
+    const normalizedId = String(newOwnerUserId || "").trim();
+    if (!normalizedId) {
+      throw new Error("Se requiere un usuario responsable válido.");
+    }
+
+    return databases.updateDocument({
+      databaseId: env.appwrite.databaseId,
+      collectionId: env.appwrite.collections.properties,
+      documentId: propertyId,
+      data: { ownerUserId: normalizedId },
     });
   },
 
