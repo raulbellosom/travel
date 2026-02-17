@@ -228,32 +228,42 @@ export const chatService = {
 
   /**
    * Subscribe to new messages in a specific conversation.
-   * Returns an unsubscribe function.
+   * Returns an unsubscribe function (no-op if Realtime unavailable).
    */
   subscribeToMessages(conversationId, callback) {
-    const channel = `databases.${DB()}.collections.${COL_MESSAGES()}.documents`;
-    return client.subscribe(channel, (response) => {
-      const payload = response.payload;
-      if (
-        payload?.conversationId === conversationId &&
-        payload?.enabled !== false
-      ) {
-        callback(response);
-      }
-    });
+    try {
+      const channel = `databases.${DB()}.collections.${COL_MESSAGES()}.documents`;
+      return client.subscribe(channel, (response) => {
+        const payload = response.payload;
+        if (
+          payload?.conversationId === conversationId &&
+          payload?.enabled !== false
+        ) {
+          callback(response);
+        }
+      });
+    } catch (err) {
+      console.warn("[Chat] Realtime messages subscription unavailable:", err.message);
+      return () => {}; // no-op unsubscribe
+    }
   },
 
   /**
    * Subscribe to conversation updates (new messages, unread count changes).
-   * Returns an unsubscribe function.
+   * Returns an unsubscribe function (no-op if Realtime unavailable).
    */
   subscribeToConversations(callback) {
-    const channel = `databases.${DB()}.collections.${COL_CONVERSATIONS()}.documents`;
-    return client.subscribe(channel, (response) => {
-      if (response.payload?.enabled !== false) {
-        callback(response);
-      }
-    });
+    try {
+      const channel = `databases.${DB()}.collections.${COL_CONVERSATIONS()}.documents`;
+      return client.subscribe(channel, (response) => {
+        if (response.payload?.enabled !== false) {
+          callback(response);
+        }
+      });
+    } catch (err) {
+      console.warn("[Chat] Realtime conversations subscription unavailable:", err.message);
+      return () => {}; // no-op unsubscribe
+    }
   },
 
   /* ─── Notifications (server-side) ──────────────────── */
