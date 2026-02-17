@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ExternalLink, MessageCircle, Search, Minimize2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useChat } from "../../contexts/ChatContext";
+import { profileService } from "../../services/profileService";
+import { isUserOnline } from "../../utils/presence";
 import { cn } from "../../utils/cn";
 import { Spinner } from "../common";
 
@@ -20,17 +22,79 @@ const ConversationList = () => {
     toggleChat,
   } = useChat();
   const [search, setSearch] = useState("");
+  const [contactProfiles, setContactProfiles] = useState({});
 
-  const filtered = conversations.filter((c) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      (c.propertyTitle || "").toLowerCase().includes(q) ||
-      (c.clientName || "").toLowerCase().includes(q) ||
-      (c.ownerName || "").toLowerCase().includes(q) ||
-      (c.lastMessage || "").toLowerCase().includes(q)
-    );
-  });
+  /** Get contact user ID from a conversation */
+  const getContactUserId = useCallback(
+    (conv) => (chatRole === "client" ? conv.ownerUserId : conv.clientUserId),
+    [chatRole],
+  );
+
+  /** Load contact profiles for presence indicators */
+  useEffect(() => {
+    if (conversations.length === 0) return;
+
+    let mounted = true;
+
+    const fetchProfiles = async () => {
+      const contactIds = [
+        ...new Set(conversations.map(getContactUserId).filter(Boolean)),
+      ];
+
+      const profiles = {};
+      // Load profiles in parallel (max 10 at a time to avoid overwhelming)
+      const chunks = [];
+      for (let i = 0; i < contactIds.length; i += 10) {
+        chunks.push(contactIds.slice(i, i + 10));
+      }
+
+      for (const chunk of chunks) {
+        const results = await Promise.allSettled(
+          chunk.map((id) => profileService.getProfile(id)),
+        );
+        results.forEach((result, idx) => {
+          if (result.status === "fulfilled" && result.value) {
+            profiles[chunk[idx]] = result.value;
+          }
+        });
+      }
+
+      if (mounted) setContactProfiles(profiles);
+    };
+
+    fetchProfiles();
+
+    // Refresh profiles every 30s for presence updates
+    const interval = setInterval(fetchProfiles, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [conversations, getContactUserId]);
+
+  /** Check if a contact is online */
+  const isContactOnline = useCallback(
+    (conv) => {
+      const contactId = getContactUserId(conv);
+      const profile = contactProfiles[contactId];
+      return profile?.lastSeenAt ? isUserOnline(profile.lastSeenAt) : false;
+    },
+    [contactProfiles, getContactUserId],
+  );
+
+  const filtered = useMemo(() => {
+    return conversations.filter((c) => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        (c.propertyTitle || "").toLowerCase().includes(q) ||
+        (c.clientName || "").toLowerCase().includes(q) ||
+        (c.ownerName || "").toLowerCase().includes(q) ||
+        (c.lastMessage || "").toLowerCase().includes(q)
+      );
+    });
+  }, [conversations, search]);
 
   const formatTime = (dateStr) => {
     if (!dateStr) return "";
@@ -103,7 +167,7 @@ const ConversationList = () => {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-contain">
         {loadingConversations && (
           <div className="flex items-center justify-center py-12">
             <Spinner size="md" />
@@ -131,10 +195,14 @@ const ConversationList = () => {
               : conv.ownerUnread || 0;
           const contactName =
             chatRole === "client" ? conv.ownerName : conv.clientName;
+          const online = isContactOnline(conv);
 
-          // TODO: Load user profiles in batch for avatars
-          // For now, show initials only
-          const avatarUrl = "";
+          // Get avatar URL from profile if available
+          const contactId = getContactUserId(conv);
+          const profile = contactProfiles[contactId];
+          const avatarUrl = profile?.avatarFileId
+            ? profileService.getAvatarViewUrl(profile.avatarFileId)
+            : "";
 
           return (
             <button
@@ -146,18 +214,24 @@ const ConversationList = () => {
                 unread > 0 && "bg-cyan-50/50 dark:bg-cyan-950/20",
               )}
             >
-              {/* Avatar - shows initials until batch profile loading is implemented */}
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={contactName || ""}
-                  className="h-10 w-10 shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                  {(contactName || "?").charAt(0).toUpperCase()}
-                </div>
-              )}
+              {/* Avatar with online indicator */}
+              <div className="relative shrink-0">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={contactName || ""}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
+                    {(contactName || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {/* Online indicator dot */}
+                {online && (
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+                )}
+              </div>
 
               {/* Content */}
               <div className="min-w-0 flex-1">

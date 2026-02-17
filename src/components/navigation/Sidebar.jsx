@@ -50,6 +50,25 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
     };
   }, []);
 
+  // Lock body scroll on mobile when sidebar is open
+  useEffect(() => {
+    // Only lock scroll on mobile (< 1024px) when sidebar is open
+    if (!isOpen || isDesktopViewport) return;
+
+    // Store original values
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    // Lock scroll on both html and body
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, [isOpen, isDesktopViewport]);
+
   const isDesktopCollapsed = Boolean(isCollapsed);
 
   const navigation = [
@@ -223,7 +242,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
           </button>
         </div>
 
-        <nav className="mt-3 flex-1 overflow-y-auto px-2 pb-4">
+        <nav className="mt-3 flex-1 overflow-y-auto overscroll-contain px-2 pb-4">
           <div className="px-2 pb-2">
             <p
               className={`max-w-[220px] overflow-hidden whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-slate-500 transition-[max-width,opacity] duration-300 dark:text-slate-400 ${textCollapseClass}`}

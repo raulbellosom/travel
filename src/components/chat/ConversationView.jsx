@@ -59,7 +59,7 @@ const ConversationView = () => {
       ? activeConversation?.ownerUserId
       : activeConversation?.clientUserId;
 
-  /** Load contact user profile for avatar */
+  /** Load contact user profile for avatar and presence */
   useEffect(() => {
     if (!contactUserId) {
       setContactProfile(null);
@@ -67,17 +67,27 @@ const ConversationView = () => {
     }
 
     let mounted = true;
-    profileService
-      .getProfile(contactUserId)
-      .then((profile) => {
-        if (mounted) setContactProfile(profile);
-      })
-      .catch(() => {
-        if (mounted) setContactProfile(null);
-      });
+
+    const fetchProfile = () => {
+      profileService
+        .getProfile(contactUserId)
+        .then((profile) => {
+          if (mounted) setContactProfile(profile);
+        })
+        .catch(() => {
+          if (mounted) setContactProfile(null);
+        });
+    };
+
+    // Initial load
+    fetchProfile();
+
+    // Refresh profile every 30s to get updated lastSeenAt for presence
+    const interval = setInterval(fetchProfile, 30000);
 
     return () => {
       mounted = false;
+      clearInterval(interval);
     };
   }, [contactUserId]);
 
@@ -97,14 +107,14 @@ const ConversationView = () => {
       isOnline: isUserOnline(lastSeenAt),
       text: getLastSeenText(lastSeenAt, t),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contactProfile?.lastSeenAt, t, presenceRefresh]);
+  }, [contactProfile?.lastSeenAt, t]);
 
-  /** Refresh presence text every minute */
+  /** Refresh presence calculation periodically in addition to profile polling */
   useEffect(() => {
+    // This ensures UI updates even between profile fetches
     const interval = setInterval(() => {
       setPresenceRefresh((prev) => prev + 1);
-    }, 60000); // 60 seconds
+    }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -366,7 +376,7 @@ const ConversationView = () => {
       {/* Messages area */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-3 py-3"
+        className="flex-1 overflow-y-auto overscroll-contain px-3 py-3"
       >
         {loadingMessages && (
           <div className="flex items-center justify-center py-8">

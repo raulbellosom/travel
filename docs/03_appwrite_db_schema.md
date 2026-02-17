@@ -126,7 +126,7 @@ Purpose: perfiles de usuarios de la instancia (internos + clientes finales).
 | `whatsappCountryCode` | string   | 5    | no       | -       | regex `^\\+[1-9][0-9]{0,3}$`                                           |
 | `whatsappNumber`      | string   | 15   | no       | -       | regex `^[0-9]{6,15}$` (numero local, sin lada)                         |
 | `birthDate`           | string   | 10   | no       | -       | regex `^\\d{4}-\\d{2}-\\d{2}$`                                         |
-| `lastSeenAt`          | datetime | -    | no       | -       | ISO 8601 UTC. Timestamp de ultima actividad para presencia online      |
+| `lastSeenAt`          | datetime | -    | no       | -       | ISO 8601 UTC. Heartbeat cada 30s, online si < 30s                      |
 | `role`                | enum     | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
 | `scopesJson`          | string   | 4000 | no       | -       | JSON array serializado                                                 |
 | `isHidden`            | boolean  | -    | no       | false   | -                                                                      |
@@ -140,7 +140,7 @@ Notas:
 - `phoneCountryCode` + `phone`: Telefono principal separado en lada y numero local
 - `whatsappCountryCode` + `whatsappNumber`: WhatsApp separado en lada y numero local
 - `birthDate`: Fecha de nacimiento en formato `YYYY-MM-DD`
-- `lastSeenAt`: Se actualiza cada 30s mediante heartbeat desde el cliente. Si (now - lastSeenAt) < 60s, el usuario se considera "online".
+- `lastSeenAt`: Se actualiza cada 30s mediante heartbeat desde el cliente. Si (now - lastSeenAt) < 30s, el usuario se considera "online".
 - `role`: Rol de aplicacion
 - `scopesJson`: Permisos finos
 - `isHidden`: `true` para root
@@ -1061,7 +1061,7 @@ Formato obligatorio:
 - **users**: Se agregó campo `lastSeenAt` para sistema de presencia online en tiempo real.
 - Purpose: Permitir indicar si un usuario está "online" en el chat mediante heartbeat cada 30s.
 - Tipo: datetime, opcional, default vacío
-- Lógica: Si `(now - lastSeenAt) < 60s` → usuario está online. Frontend actualiza mediante heartbeat cada 30s.
+- Lógica: Si `(now - lastSeenAt) < 30s` → usuario está online. Frontend actualiza mediante heartbeat cada 30s.
 
 ### Manual Steps to Fix
 

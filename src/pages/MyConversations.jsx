@@ -145,25 +145,35 @@ const MyConversations = () => {
     }
 
     let mounted = true;
-    profileService
-      .getProfile(contactUserId)
-      .then((profile) => {
-        if (mounted) setContactProfile(profile);
-      })
-      .catch(() => {
-        if (mounted) setContactProfile(null);
-      });
+
+    const fetchProfile = () => {
+      profileService
+        .getProfile(contactUserId)
+        .then((profile) => {
+          if (mounted) setContactProfile(profile);
+        })
+        .catch(() => {
+          if (mounted) setContactProfile(null);
+        });
+    };
+
+    // Initial load
+    fetchProfile();
+
+    // Refresh profile every 30s for presence updates
+    const interval = setInterval(fetchProfile, 30000);
 
     return () => {
       mounted = false;
+      clearInterval(interval);
     };
   }, [chatRole, activeConversation]);
 
-  /** Refresh presence text every minute */
+  /** Refresh presence calculation periodically */
   useEffect(() => {
     const interval = setInterval(() => {
       setPresenceRefresh((prev) => prev + 1);
-    }, 60000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);

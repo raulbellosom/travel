@@ -45,6 +45,28 @@ const ChatBubble = () => {
     return () => window.removeEventListener("keydown", handleKey);
   }, [isChatOpen, hasFocus, closeChat]);
 
+  // Lock body scroll on mobile when chat is open (full-screen mode)
+  useEffect(() => {
+    if (!isChatOpen) return;
+
+    // Only lock scroll on mobile (< 1024px)
+    const isMobile = window.innerWidth < 1024;
+    if (!isMobile) return;
+
+    // Store original values
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    // Lock scroll on both html and body
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, [isChatOpen]);
+
   if (!isAuthenticated || isOnConversationsPage) return null;
 
   return (

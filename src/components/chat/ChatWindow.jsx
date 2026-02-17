@@ -10,7 +10,7 @@ const ChatWindow = () => {
   const { activeConversationId } = useChat();
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white sm:rounded-2xl dark:bg-slate-900">
+    <div className="flex h-full flex-col overflow-hidden overscroll-contain bg-white sm:rounded-2xl dark:bg-slate-900">
       {activeConversationId ? <ConversationView /> : <ConversationList />}
     </div>
   );

@@ -5,7 +5,7 @@
 /**
  * Check if a user is currently online based on their lastSeenAt timestamp
  * @param {string} lastSeenAt - ISO 8601 datetime string
- * @returns {boolean} - True if user was seen within the last 60 seconds
+ * @returns {boolean} - True if user was seen within the last 30 seconds
  */
 export const isUserOnline = (lastSeenAt) => {
   if (!lastSeenAt) return false;
@@ -15,8 +15,8 @@ export const isUserOnline = (lastSeenAt) => {
     const now = new Date();
     const diffInSeconds = (now - lastSeen) / 1000;
 
-    // User is considered online if last seen within 60 seconds
-    return diffInSeconds < 60;
+    // User is considered online if last seen within 30 seconds
+    return diffInSeconds < 30;
   } catch (error) {
     console.warn("Invalid lastSeenAt date:", lastSeenAt);
     return false;
