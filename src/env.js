@@ -51,6 +51,8 @@ const env = {
       analyticsDaily: get("APPWRITE_COLLECTION_ANALYTICS_DAILY_ID"),
       activityLogs: get("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID"),
       emailVerifications: get("APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID"),
+      conversations: get("APPWRITE_COLLECTION_CONVERSATIONS_ID"),
+      messages: get("APPWRITE_COLLECTION_MESSAGES_ID"),
     },
     buckets: {
       propertyImages: get("APPWRITE_BUCKET_PROPERTY_IMAGES_ID"),
@@ -83,6 +85,7 @@ const env = {
       activityLogQuery: get("APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID"),
       rootDiagnostics: get("APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID"),
       deepSearchQuery: get("APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID"),
+      sendChatNotification: get("APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID"),
     },
   },
   app: {

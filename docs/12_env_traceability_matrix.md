@@ -24,6 +24,8 @@ misconfiguracion entre frontend, functions y despliegue.
 | `APPWRITE_COLLECTION_REVIEWS_ID`                 | `src/env.js`, `src/services/reviewsService.js`, `functions/create-review-public/src/index.js`, `functions/moderate-review/src/index.js`             | Reseñas                                                                  |
 | `APPWRITE_COLLECTION_ANALYTICS_DAILY_ID`         | `src/env.js`, `functions/dashboard-metrics-aggregator/src/index.js`                                                                                 | KPIs diarios                                                             |
 | `APPWRITE_COLLECTION_ACTIVITY_LOGS_ID`           | `src/env.js`, `src/services/activityLogsService.js`, `functions/*/src/index.js`                                                                     | Auditoria forense                                                        |
+| `APPWRITE_COLLECTION_CONVERSATIONS_ID`           | `src/env.js`, `src/services/chatService.js`, `functions/send-chat-notification/src/index.js`                                                        | Hilos de chat cliente-propietario                                        |
+| `APPWRITE_COLLECTION_MESSAGES_ID`                | `src/env.js`, `src/services/chatService.js`                                                                                                         | Mensajes individuales por conversacion                                   |
 | `APPWRITE_FUNCTION_CREATE_LEAD_ID`               | `src/env.js`, `src/services/leadsService.js`                                                                                                        | Alta de lead publico                                                     |
 | `APPWRITE_FUNCTION_CREATE_RESERVATION_ID`        | `src/env.js`, `src/services/reservationsService.js`                                                                                                 | Crear reserva publica                                                    |
 | `APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID`    | `src/env.js`, `src/services/reservationsService.js`                                                                                                 | Iniciar checkout                                                         |
@@ -31,6 +33,7 @@ misconfiguracion entre frontend, functions y despliegue.
 | `APPWRITE_FUNCTION_MODERATE_REVIEW_ID`           | `src/env.js`, `src/services/reviewsService.js`                                                                                                      | Moderación de reseñas                                                    |
 | `APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID`     | `src/env.js`, `src/services/staffService.js`                                                                                                        | Alta/gestion staff                                                       |
 | `APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID`        | `src/env.js`, `src/services/activityLogsService.js`                                                                                                 | Consulta root activity logs                                              |
+| `APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID`    | `src/env.js`, `src/services/chatService.js`                                                                                                         | Notificacion email chat offline                                          |
 | `APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID` | `.env.example`, `functions/payment-webhook-*/src/index.js`                                                                                          | Emision de voucher tras pago aprobado                                    |
 | `APPWRITE_API_KEY` / `APPWRITE_FUNCTION_API_KEY` | `functions/*/src/index.js`                                                                                                                          | Credenciales server-side                                                 |
 | `STRIPE_SECRET_KEY`                              | `functions/create-payment-session/src/index.js`                                                                                                     | Sesion de pago Stripe                                                    |
@@ -40,6 +43,7 @@ misconfiguracion entre frontend, functions y despliegue.
 | `PAYMENT_DEFAULT_PROVIDER`                       | `functions/create-payment-session/src/index.js`                                                                                                     | Fallback de proveedor                                                    |
 | `PAYMENT_SUCCESS_URL` / `PAYMENT_CANCEL_URL`     | `functions/create-payment-session/src/index.js`                                                                                                     | Redirect post pago                                                       |
 | `FEATURE_MARKETING_SITE`                         | `vite.config.js`, `src/env.js`, `src/pages/Home.jsx`                                                                                                | Toggle landing: CRM marketing (`true`) vs catálogo propiedades (`false`) |
+| `PLATFORM_OWNER_EMAIL`                           | `functions/send-chat-notification/src/index.js`                                                                                                     | CC en notificaciones de chat al propietario de plataforma                |
 
 ---
 
@@ -51,5 +55,5 @@ misconfiguracion entre frontend, functions y despliegue.
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 1.0.0
+Ultima actualizacion: 2026-02-16
+Version: 1.1.0

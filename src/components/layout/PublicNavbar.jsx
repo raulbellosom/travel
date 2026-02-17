@@ -1119,6 +1119,13 @@ const PublicNavbar = () => {
                         {t("client:navbar.userMenu.profile", "Editar Perfil")}
                       </Link>
                       <Link
+                        to="/mis-conversaciones"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
+                      >
+                        {t("navbar.userMenu.conversations", "Mis conversaciones")}
+                      </Link>
+                      <Link
                         to="/dashboard"
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="w-full rounded-xl bg-cyan-500 py-3 text-center font-bold text-white"

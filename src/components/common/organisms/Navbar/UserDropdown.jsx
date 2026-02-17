@@ -8,6 +8,7 @@ import {
   KeyRound,
   LayoutDashboard,
   LogOut,
+  MessageCircle,
   ShieldCheck,
   Star,
   UserCircle2,
@@ -83,6 +84,11 @@ const UserDropdown = ({ user, onLogout }) => {
       to: "/mis-resenas",
       icon: Star,
       label: t("navbar.userMenu.reviews"),
+    },
+    {
+      to: "/mis-conversaciones",
+      icon: MessageCircle,
+      label: t("navbar.userMenu.conversations"),
     },
     {
       to: "/recuperar-password",

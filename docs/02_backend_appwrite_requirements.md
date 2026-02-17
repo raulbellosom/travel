@@ -48,7 +48,6 @@ Colecciones minimas:
 - `properties`
 - `property_images`
 - `amenities`
-- `property_amenities`
 - `leads`
 - `reservations`
 - `reservation_payments`

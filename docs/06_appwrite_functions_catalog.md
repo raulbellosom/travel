@@ -170,7 +170,18 @@ functions/
 - Permite smoke tests no destructivos para validar ejecucion en ambiente real.
 - Disenada para usarse desde tab interna root del panel administrativo.
 
-## 4.17 Permiso Execute y Scope de Actor (Definitivo)
+## 4.17 `send-chat-notification`
+
+- Tipo: HTTP POST.
+- Envia notificacion por email cuando un participante del chat recibe un mensaje y esta offline.
+- Recibe `conversationId`, `senderUserId`, `recipientUserId`, `messagePreview`.
+- Consulta datos del destinatario y conversacion.
+- Genera email HTML estilizado con link directo a la conversacion (`/app/conversations?focus={id}`).
+- CC automatico al email del propietario de la plataforma (`PLATFORM_OWNER_EMAIL`).
+- Variables requeridas: `APPWRITE_COLLECTION_CONVERSATIONS_ID`, `APPWRITE_COLLECTION_USERS_ID`, SMTP, `PLATFORM_OWNER_EMAIL`, `APP_BASE_URL`.
+- Execute permission: `any`.
+
+## 4.18 Permiso Execute y Scope de Actor (Definitivo)
 
 | Function                           | Execute Appwrite | Scope de actor                                                         |
 | ---------------------------------- | ---------------- | ---------------------------------------------------------------------- |
@@ -192,6 +203,7 @@ functions/
 | `activity-log-query`               | `users`          | Solo `role=root`                                                       |
 | `dashboard-metrics-aggregator`     | `[]`             | No aplica (cron)                                                       |
 | `root-functions-diagnostics`       | `users`          | Solo `role=root`                                                       |
+| `send-chat-notification`           | `any`            | No requiere auth; invocado desde frontend al enviar mensaje            |
 
 ---
 
@@ -220,6 +232,7 @@ Variables adicionales por dominio:
 
 - Leads: IDs de `properties`, `leads`, SMTP.
 - Reservas/pagos: IDs de `reservations`, `reservation_payments`, claves Stripe/Mercado Pago.
+- Chat: IDs de `conversations`, `users`, SMTP, `PLATFORM_OWNER_EMAIL`, `APP_BASE_URL`.
 - Auditoria: ID `activity_logs`.
 
 ---
@@ -288,10 +301,10 @@ Errores:
 
 ## 12. Estado del Documento
 
-- Definitivo para MVP con reservas, pagos y auditoria root.
+- Definitivo para MVP con reservas, pagos, chat en tiempo real y auditoria root.
 - Listo para implementacion incremental por cliente.
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 2.3.0
+Ultima actualizacion: 2026-02-16
+Version: 2.4.0

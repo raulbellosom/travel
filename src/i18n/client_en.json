@@ -325,6 +325,7 @@
     "contact": {
       "title": "Contact agent",
       "success": "Message sent successfully. You will be contacted soon.",
+      "or": "or",
       "fields": {
         "name": "Full Name",
         "email": "Email",
@@ -338,6 +339,14 @@
       "errors": {
         "send": "Could not send your message. Please try again."
       }
+    },
+    "chat": {
+      "title": "Live chat",
+      "description": "Send a direct message to the agent and get a real-time response."
+    },
+    "calendar": {
+      "title": "Availability",
+      "placeholder": "Coming soon: availability calendar."
     },
     "breadcrumb": {
       "home": "Home",

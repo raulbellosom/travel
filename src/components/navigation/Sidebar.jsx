@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarDays,
+  CalendarRange,
   ChevronLeft,
   ChevronRight,
   CreditCard,
   Home,
   Inbox,
   List,
+  MessageCircle,
   MessageSquareText,
   ShieldAlert,
   Sparkles,
@@ -51,24 +53,68 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const isDesktopCollapsed = Boolean(isCollapsed);
 
   const navigation = [
-    { name: t("sidebar.overview"), href: INTERNAL_ROUTES.dashboard, icon: Home },
+    {
+      name: t("sidebar.overview"),
+      href: INTERNAL_ROUTES.dashboard,
+      icon: Home,
+    },
     ...(hasScope(user, "properties.read")
-      ? [{ name: t("sidebar.listings"), href: INTERNAL_ROUTES.myProperties, icon: List }]
+      ? [
+          {
+            name: t("sidebar.listings"),
+            href: INTERNAL_ROUTES.myProperties,
+            icon: List,
+          },
+        ]
       : []),
     ...(hasScope(user, "leads.read")
       ? [{ name: t("sidebar.leads"), href: INTERNAL_ROUTES.leads, icon: Inbox }]
       : []),
+    {
+      name: t("sidebar.conversations"),
+      href: INTERNAL_ROUTES.conversations,
+      icon: MessageCircle,
+    },
     ...(hasScope(user, "reservations.read")
-      ? [{ name: t("sidebar.reservations"), href: INTERNAL_ROUTES.reservations, icon: CalendarDays }]
+      ? [
+          {
+            name: t("sidebar.reservations"),
+            href: INTERNAL_ROUTES.reservations,
+            icon: CalendarDays,
+          },
+          {
+            name: t("sidebar.calendar"),
+            href: INTERNAL_ROUTES.calendar,
+            icon: CalendarRange,
+          },
+        ]
       : []),
     ...(hasScope(user, "payments.read")
-      ? [{ name: t("sidebar.payments"), href: INTERNAL_ROUTES.payments, icon: CreditCard }]
+      ? [
+          {
+            name: t("sidebar.payments"),
+            href: INTERNAL_ROUTES.payments,
+            icon: CreditCard,
+          },
+        ]
       : []),
     ...(hasScope(user, "reviews.moderate")
-      ? [{ name: t("sidebar.reviews"), href: INTERNAL_ROUTES.reviews, icon: MessageSquareText }]
+      ? [
+          {
+            name: t("sidebar.reviews"),
+            href: INTERNAL_ROUTES.reviews,
+            icon: MessageSquareText,
+          },
+        ]
       : []),
     ...(user?.role === "owner"
-      ? [{ name: t("sidebar.clients"), href: INTERNAL_ROUTES.clients, icon: Users }]
+      ? [
+          {
+            name: t("sidebar.clients"),
+            href: INTERNAL_ROUTES.clients,
+            icon: Users,
+          },
+        ]
       : []),
     ...(hasScope(user, "staff.manage")
       ? [{ name: t("sidebar.team"), href: INTERNAL_ROUTES.team, icon: Users }]
@@ -95,7 +141,9 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   ];
 
   const isActive = (href) => {
-    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+    return (
+      location.pathname === href || location.pathname.startsWith(`${href}/`)
+    );
   };
 
   const handleItemMouseEnter = (event, name) => {
@@ -146,7 +194,12 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
             onClick={onClose}
             className="grid min-w-0 flex-1 grid-cols-[2rem_minmax(0,1fr)] items-center gap-2"
           >
-            <BrandLogo size="sm" mode="adaptive" alt={t("navbar.brand")} className="rounded-lg" />
+            <BrandLogo
+              size="sm"
+              mode="adaptive"
+              alt={t("navbar.brand")}
+              className="rounded-lg"
+            />
             <div className="overflow-hidden">
               <div
                 className={`max-w-[220px] overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ${textCollapseClass}`}
@@ -189,7 +242,9 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
                   key={item.href}
                   to={item.href}
                   onClick={onClose}
-                  onMouseEnter={(event) => handleItemMouseEnter(event, item.name)}
+                  onMouseEnter={(event) =>
+                    handleItemMouseEnter(event, item.name)
+                  }
                   onMouseLeave={handleItemMouseLeave}
                   onFocus={(event) => handleItemMouseEnter(event, item.name)}
                   onBlur={handleItemMouseLeave}
@@ -228,12 +283,20 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
         <button
           onClick={onToggleCollapse}
           className="hidden h-14 w-full grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 border-t border-slate-200 bg-gradient-to-r from-cyan-50 via-sky-50 to-cyan-100 px-5 text-sm font-semibold text-slate-700 transition hover:from-cyan-100 hover:via-sky-100 hover:to-cyan-200 dark:border-slate-800/80 dark:bg-[radial-gradient(circle_at_0%_100%,rgba(34,211,238,0.12),transparent_34%),radial-gradient(circle_at_100%_0%,rgba(16,185,129,0.1),transparent_36%),linear-gradient(135deg,rgba(10,23,53,0.92)_0%,rgba(15,30,63,0.9)_45%,rgba(10,23,53,0.92)_100%)] dark:text-slate-200 dark:hover:bg-[radial-gradient(circle_at_0%_100%,rgba(34,211,238,0.16),transparent_34%),radial-gradient(circle_at_100%_0%,rgba(16,185,129,0.14),transparent_36%),linear-gradient(135deg,rgba(13,28,62,0.95)_0%,rgba(21,39,78,0.93)_45%,rgba(13,28,62,0.95)_100%)] lg:grid"
-          aria-label={isDesktopCollapsed ? t("sidebar.expand") : t("sidebar.collapse")}
+          aria-label={
+            isDesktopCollapsed ? t("sidebar.expand") : t("sidebar.collapse")
+          }
         >
           {isDesktopCollapsed ? (
-            <ChevronRight size={18} className="text-slate-600 dark:text-slate-300" />
+            <ChevronRight
+              size={18}
+              className="text-slate-600 dark:text-slate-300"
+            />
           ) : (
-            <ChevronLeft size={18} className="text-slate-600 dark:text-slate-300" />
+            <ChevronLeft
+              size={18}
+              className="text-slate-600 dark:text-slate-300"
+            />
           )}
           <span
             className={`max-w-[160px] overflow-hidden whitespace-nowrap text-left transition-[max-width,opacity] duration-300 ${textCollapseClass}`}

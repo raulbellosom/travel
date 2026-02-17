@@ -128,6 +128,7 @@ Enums canonicos:
 
 - [x] Existen pantallas base: dashboard, propiedades, leads, perfil, configuracion.
 - [x] Implementar modulo `/app/reservations`.
+- [x] Implementar modulo `/app/calendar` (agenda con vistas dia/semana/mes/año).
 - [x] Implementar modulo `/app/payments`.
 - [x] Implementar modulo `/app/reviews` (moderacion).
 - [x] Implementar modulo `/app/team` (staff management).
@@ -135,6 +136,18 @@ Enums canonicos:
 - [x] Renderizar menu sidebar por scopes reales de usuario.
 - [x] Agregar `RoleRoute` y `ScopeRoute` efectivos en rutas privadas.
 - [x] Separar perfil interno (`/app/profile`) del perfil cliente (`/perfil`) con restriccion bidireccional.
+
+---
+
+## Fase 4.1 - Calendario y disponibilidad
+
+- [x] Implementar calendario administrativo con vistas de dia, semana, mes y año.
+- [x] Implementar filtros de calendario por propiedad, estado y estado de pago.
+- [x] Implementar modal de detalle de reservacion desde calendario.
+- [x] Implementar calendario publico de disponibilidad con precios por noche.
+- [x] Implementar resumen de reserva con desglose de precio.
+- [ ] Integrar calendario de disponibilidad en pagina de detalle de propiedad (`vacation_rental`).
+- [ ] Conectar resumen de reserva con flujo de pago existente.
 
 ---
 
@@ -243,8 +256,10 @@ Enums canonicos:
 - [x] Owner puede gestionar staff sin exponer root.
 - [x] Auditoria root operativa con `before/after`.
 - [x] Documentacion y `.env.example` sincronizados.
+- [x] Chat schema documentado (`docs/03`, `docs/13`) y variables en `.env.example`.
+- [x] Calendario implementado y documentado en `docs/07`.
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 1.2.6
+Ultima actualizacion: 2026-02-16
+Version: 1.3.0

@@ -9,7 +9,6 @@ import {
   Building2,
   Phone,
   Mail,
-  Send,
   Star,
   ShieldCheck,
   Car,
@@ -31,9 +30,9 @@ import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
 import { amenitiesService } from "../services/amenitiesService";
 import { propertiesService } from "../services/propertiesService";
-import { leadsService } from "../services/leadsService";
 import { executeJsonFunction } from "../utils/functions";
 import { getErrorMessage } from "../utils/errors";
+import PropertyChatButton from "../components/chat/PropertyChatButton";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import { usePageSeo } from "../hooks/usePageSeo";
@@ -77,18 +76,9 @@ const PropertyDetail = () => {
   const [amenities, setAmenities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sending, setSending] = useState(false);
-  const [leadMessage, setLeadMessage] = useState("");
-  const [leadError, setLeadError] = useState("");
   const [imageViewer, setImageViewer] = useState({
     isOpen: false,
     initialIndex: 0,
-  });
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
   });
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
@@ -229,32 +219,6 @@ const PropertyDetail = () => {
 
   const scrollToContact = () =>
     contactRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  const onSubmitLead = async (event) => {
-    event.preventDefault();
-    if (!property) return;
-    setSending(true);
-    setLeadMessage("");
-    setLeadError("");
-
-    try {
-      await leadsService.createPublicLead({
-        propertyId: property.$id,
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        message: form.message,
-      });
-      setLeadMessage(t("client:propertyDetail.contact.success"));
-      setForm({ name: "", email: "", phone: "", message: "" });
-    } catch (err) {
-      setLeadError(
-        getErrorMessage(err, t("client:propertyDetail.contact.errors.send")),
-      );
-    } finally {
-      setSending(false);
-    }
-  };
 
   /* ─── Loading / Error states ─────────────────────────── */
 
@@ -977,75 +941,43 @@ const PropertyDetail = () => {
               </div>
             </article>
 
-            {/* ── Contact Form ──────────────────────────── */}
-            <form
+            {/* ── Chat ───────────────────────────────── */}
+            <div
               ref={contactRef}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-              onSubmit={onSubmitLead}
             >
-              <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">
-                {t("client:propertyDetail.contact.title")}
+              <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+                <MessageCircle size={18} className="text-cyan-600 dark:text-cyan-400" />
+                {t("client:propertyDetail.chat.title")}
               </h2>
+              <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                {t("client:propertyDetail.chat.description")}
+              </p>
+              <PropertyChatButton
+                propertyId={property.$id}
+                propertyTitle={property.title}
+                ownerUserId={property.ownerUserId}
+                ownerName={
+                  owner?.firstName
+                    ? `${owner.firstName} ${owner.lastName || ""}`.trim()
+                    : owner?.email || ""
+                }
+              />
+            </div>
 
-              <div className="space-y-3">
-                <InputField
-                  label={t("client:propertyDetail.contact.fields.name")}
-                  required
-                  value={form.name}
-                  onChange={(v) => setForm((p) => ({ ...p, name: v }))}
-                />
-                <InputField
-                  label={t("client:propertyDetail.contact.fields.email")}
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(v) => setForm((p) => ({ ...p, email: v }))}
-                />
-                <InputField
-                  label={t(
-                    "client:propertyDetail.contact.fields.phoneOptional",
-                  )}
-                  value={form.phone}
-                  onChange={(v) => setForm((p) => ({ ...p, phone: v }))}
-                />
-                <label className="grid gap-1.5 text-sm">
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
-                    {t("client:propertyDetail.contact.fields.message")}
-                  </span>
-                  <textarea
-                    required
-                    rows={4}
-                    value={form.message}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, message: e.target.value }))
-                    }
-                    className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400"
-                  />
-                </label>
+            {/* ── Calendar placeholder ───────────────── */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+                <Calendar size={18} className="text-cyan-600 dark:text-cyan-400" />
+                {t("client:propertyDetail.calendar.title")}
+              </h2>
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
+                <Calendar size={32} className="mb-2 text-slate-300 dark:text-slate-600" />
+                <p className="text-sm text-slate-400 dark:text-slate-500">
+                  {t("client:propertyDetail.calendar.placeholder")}
+                </p>
               </div>
-
-              {leadError && (
-                <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-                  {leadError}
-                </p>
-              )}
-              {leadMessage && (
-                <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                  {leadMessage}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={sending}
-                className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-              >
-                <Send size={15} />
-                {sending
-                  ? t("client:propertyDetail.contact.actions.sending")
-                  : t("client:propertyDetail.contact.actions.send")}
-              </button>
-            </form>
+            </div>
           </aside>
         </div>
       </div>
@@ -1109,30 +1041,6 @@ function DetailRow({ icon: Icon, label, value }) {
         </p>
       </div>
     </div>
-  );
-}
-
-/** Reusable input field */
-function InputField({
-  label,
-  type = "text",
-  required = false,
-  value,
-  onChange,
-}) {
-  return (
-    <label className="grid gap-1.5 text-sm">
-      <span className="font-medium text-slate-700 dark:text-slate-300">
-        {label}
-      </span>
-      <input
-        type={type}
-        required={required}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="min-h-11 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400"
-      />
-    </label>
   );
 }
 

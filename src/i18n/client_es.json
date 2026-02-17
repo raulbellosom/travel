@@ -325,6 +325,7 @@
     "contact": {
       "title": "Contactar al agente",
       "success": "Mensaje enviado con éxito. Pronto te contactarán.",
+      "or": "o",
       "fields": {
         "name": "Nombre completo",
         "email": "Correo electrónico",
@@ -338,6 +339,14 @@
       "errors": {
         "send": "No pudimos enviar tu mensaje. Intenta de nuevo."
       }
+    },
+    "chat": {
+      "title": "Chat en vivo",
+      "description": "Envía un mensaje directo al agente y recibe respuesta en tiempo real."
+    },
+    "calendar": {
+      "title": "Disponibilidad",
+      "placeholder": "Próximamente: calendario de disponibilidad."
     },
     "breadcrumb": {
       "home": "Inicio",

@@ -73,11 +73,13 @@
     "profile": "Perfil",
     "settings": "Configuración",
     "leads": "Leads",
+    "conversations": "Mensajes",
     "dashboardTitle": "Dashboard",
     "defaultUser": "Usuario",
     "clients": "Clientes",
     "team": "Equipo",
     "reservations": "Reservas",
+    "calendar": "Calendario",
     "payments": "Pagos",
     "reviews": "Reseñas",
     "rootActivity": "Root: Auditoria",
@@ -283,6 +285,7 @@
       "profile": "Editar perfil",
       "reservations": "Mis reservas",
       "reviews": "Mis reseñas",
+      "conversations": "Mis conversaciones",
       "password": "Cambiar contrasena",
       "privacy": "Aviso de privacidad",
       "terms": "Terminos y condiciones"
@@ -1914,5 +1917,138 @@
     "geoError": "No se pudo obtener tu ubicación. Verifica los permisos.",
     "locationTitle": "Ubicación",
     "searchPlaceholder": "Buscar dirección, ciudad o lugar..."
+  },
+  "chat": {
+    "bubble": {
+      "open": "Abrir chat",
+      "close": "Cerrar chat"
+    },
+    "actions": {
+      "close": "Cerrar",
+      "back": "Volver"
+    },
+    "conversations": {
+      "title": "Mensajes",
+      "searchPlaceholder": "Buscar conversación...",
+      "empty": "Aún no tienes conversaciones.",
+      "noResults": "No se encontraron conversaciones.",
+      "unknownUser": "Usuario desconocido",
+      "noMessages": "Sin mensajes aún",
+      "viewAll": "Ver todas"
+    },
+    "messages": {
+      "empty": "Envía el primer mensaje para iniciar la conversación.",
+      "inputPlaceholder": "Escribe un mensaje..."
+    },
+    "time": {
+      "now": "ahora",
+      "minutesAgo": "hace {{count}} min",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d"
+    },
+    "propertyButton": {
+      "startChat": "Iniciar chat en vivo",
+      "loginToChat": "Inicia sesión para chatear",
+      "loginRequired": "Debes iniciar sesión para usar el chat",
+      "verifyRequired": "Verifica tu email para usar el chat"
+    }
+  },
+  "calendarPage": {
+    "title": "Calendario",
+    "subtitle": "Visualiza reservas, citas y disponibilidad en tu agenda."
+  },
+  "calendar": {
+    "today": "Hoy",
+    "more": "más",
+    "event": "evento",
+    "events": "eventos",
+    "noEvents": "Sin eventos para este día.",
+    "nights": "noches",
+    "reservationsInView": "reservas en esta vista",
+    "retry": "Reintentar",
+    "selectDates": "Selecciona fechas",
+    "clearDates": "Limpiar fechas",
+    "minStay": "Estancia mínima: {{nights}} noches",
+    "maxStay": "Estancia máxima: {{nights}} noches",
+    "views": {
+      "day": "Día",
+      "week": "Semana",
+      "month": "Mes",
+      "year": "Año"
+    },
+    "aria": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "close": "Cerrar"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmada",
+      "completed": "Completada",
+      "cancelled": "Cancelada",
+      "expired": "Expirada"
+    },
+    "paymentStatus": {
+      "unpaid": "Sin pago",
+      "pending": "Pago pendiente",
+      "paid": "Pagada",
+      "failed": "Pago fallido",
+      "refunded": "Reembolsada"
+    },
+    "filters": {
+      "title": "Filtros",
+      "property": "Propiedad",
+      "allProperties": "Todas las propiedades",
+      "status": "Estado",
+      "allStatuses": "Todos los estados",
+      "paymentStatus": "Estado de pago",
+      "allPaymentStatuses": "Todos",
+      "clear": "Limpiar filtros"
+    },
+    "eventDetail": {
+      "title": "Detalle de reserva",
+      "guest": "Huésped",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "property": "Propiedad",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "nights": "Noches",
+      "guests": "Huéspedes",
+      "total": "Total",
+      "baseAmount": "Monto base",
+      "paymentStatus": "Estado de pago",
+      "provider": "Proveedor de pago",
+      "specialRequests": "Solicitudes especiales",
+      "createdAt": "Creada"
+    },
+    "booking": {
+      "summary": "Resumen de reserva",
+      "night": "noche",
+      "nights": "noches",
+      "maxGuests": "Hasta {{count}} huéspedes",
+      "fees": "Cargos por servicio",
+      "taxes": "Impuestos",
+      "total": "Total",
+      "reserve": "Reservar ahora",
+      "noChargeYet": "No se realizará ningún cargo todavía"
+    }
+  },
+  "conversationsPage": {
+    "title": "Mensajes",
+    "subtitle": "Gestiona tus conversaciones con clientes e inquilinos.",
+    "selectConversation": "Selecciona una conversación para ver los mensajes.",
+    "metrics": {
+      "total": "Total",
+      "active": "Activas",
+      "unread": "Sin leer"
+    }
+  },
+  "myConversations": {
+    "title": "Mis conversaciones",
+    "subtitle": "Revisa y responde tus mensajes con agentes de propiedades.",
+    "selectConversation": "Selecciona una conversación para ver los mensajes.",
+    "empty": "Aún no tienes conversaciones",
+    "emptyHint": "Inicia una conversación desde la página de cualquier propiedad."
   }
 }

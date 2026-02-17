@@ -104,7 +104,7 @@ Regla:
 - Filtrado obligatorio para ocultar `isHidden=true` en vistas no root.
 - Owner puede listar `client` en modo solo lectura via Function dedicada.
 
-## 5.2 properties / property_images / property_amenities
+## 5.2 properties / property_images
 
 - Publico puede leer solo contenido publicado.
 - Owner y staff autorizado pueden crear/editar/eliminar.

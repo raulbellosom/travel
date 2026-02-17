@@ -13,18 +13,22 @@ Regla:
 
 ## Matriz de mapeo
 
-| Modulo | Antes (legacy/no canonico) | Canonico (docs/03) | Estado | Referencia de implementacion |
-| ------ | -------------------------- | ------------------ | ------ | ---------------------------- |
-| Propiedades (frontend/services) | `userId` | `ownerUserId` | Migrado | `src/services/propertiesService.js` |
-| Propiedades (frontend/pages) | `property.userId` | `property.ownerUserId` | Migrado | `src/pages/PropertyDetail.jsx`, `src/pages/EditProperty.jsx` |
-| Imagenes de propiedad | `order` | `sortOrder` | Migrado | `src/services/propertiesService.js` |
-| Listados temporales | `createdAt` custom | `$createdAt` / `$updatedAt` | Migrado | `src/services/propertiesService.js`, `src/services/reservationsService.js`, `src/services/reviewsService.js` |
-| Lead publico (function) | `property.userId` | `property.ownerUserId` | Migrado | `functions/create-lead-public/src/index.js` |
-| Perfil inicial de usuario | rol legacy no permitido | `owner` / `client` segun flujo | Migrado | `functions/user-create-profile/src/index.js` |
-| Sync perfil (function) | escritura de campos no declarados | solo campos `users` declarados | Migrado | `functions/sync-user-profile/src/index.js` |
-| Email verification (function) | dependencia en campos fuera de schema `users` | solo campos declarados + coleccion `email_verifications` | Migrado | `functions/email-verification/src/index.js` |
-| Staff management (function) | solo alta parcial | alta/listado/update/enable sobre `users` canonico | Migrado | `functions/staff-user-management/src/index.js` |
-| Root audit query | sin rango por fecha | filtros por `$createdAt` con `fromDate/toDate` | Migrado | `functions/activity-log-query/src/index.js`, `src/services/activityLogsService.js` |
+| Modulo                               | Antes (legacy/no canonico)                    | Canonico (docs/03)                                                         | Estado       | Referencia de implementacion                                                                                 |
+| ------------------------------------ | --------------------------------------------- | -------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------ |
+| Propiedades (frontend/services)      | `userId`                                      | `ownerUserId`                                                              | Migrado      | `src/services/propertiesService.js`                                                                          |
+| Propiedades (frontend/pages)         | `property.userId`                             | `property.ownerUserId`                                                     | Migrado      | `src/pages/PropertyDetail.jsx`, `src/pages/EditProperty.jsx`                                                 |
+| Imagenes de propiedad                | `order`                                       | `sortOrder`                                                                | Migrado      | `src/services/propertiesService.js`                                                                          |
+| Listados temporales                  | `createdAt` custom                            | `$createdAt` / `$updatedAt`                                                | Migrado      | `src/services/propertiesService.js`, `src/services/reservationsService.js`, `src/services/reviewsService.js` |
+| Lead publico (function)              | `property.userId`                             | `property.ownerUserId`                                                     | Migrado      | `functions/create-lead-public/src/index.js`                                                                  |
+| Perfil inicial de usuario            | rol legacy no permitido                       | `owner` / `client` segun flujo                                             | Migrado      | `functions/user-create-profile/src/index.js`                                                                 |
+| Sync perfil (function)               | escritura de campos no declarados             | solo campos `users` declarados                                             | Migrado      | `functions/sync-user-profile/src/index.js`                                                                   |
+| Email verification (function)        | dependencia en campos fuera de schema `users` | solo campos declarados + coleccion `email_verifications`                   | Migrado      | `functions/email-verification/src/index.js`                                                                  |
+| Staff management (function)          | solo alta parcial                             | alta/listado/update/enable sobre `users` canonico                          | Migrado      | `functions/staff-user-management/src/index.js`                                                               |
+| Root audit query                     | sin rango por fecha                           | filtros por `$createdAt` con `fromDate/toDate`                             | Migrado      | `functions/activity-log-query/src/index.js`, `src/services/activityLogsService.js`                           |
+| Calendario admin (frontend)          | N/A (nuevo modulo)                            | `reservations.*` via `reservationsService.listForOwner()`                  | Implementado | `src/features/calendar/hooks/useCalendarReservations.js`                                                     |
+| Calendario disponibilidad (frontend) | N/A (nuevo modulo)                            | `reservations.status`, `reservations.checkIn/checkOut`, `properties.price` | Implementado | `src/features/calendar/components/PropertyAvailabilityCalendar.jsx`                                          |
+| Conversaciones (backend/schema)      | N/A (nuevo modulo)                            | `conversations.*` segun `docs/03` y `docs/13`                              | Documentado  | `docs/13_chat_messaging_schema.md`                                                                           |
+| Mensajes (backend/schema)            | N/A (nuevo modulo)                            | `messages.*` segun `docs/03` y `docs/13`                                   | Documentado  | `docs/13_chat_messaging_schema.md`                                                                           |
 
 ---
 
@@ -42,6 +46,8 @@ Regla:
 - `reservation_payments.status`: `pending`, `approved`, `rejected`, `refunded`.
 - `reviews.status`: `pending`, `published`, `rejected`.
 - `activity_logs.severity`: `info`, `warning`, `critical`.
+- `conversations.status`: `active`, `archived`, `closed`.
+- `messages.senderRole`: `client`, `owner`, `staff`, `root`.
 
 ---
 
@@ -52,5 +58,5 @@ Regla:
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 1.0.0
+Ultima actualizacion: 2026-02-16
+Version: 1.1.0

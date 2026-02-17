@@ -158,6 +158,21 @@ Root oculta:
 - Filtros por actor, entidad, fecha, accion.
 - Diff before/after.
 
+## 8.8 Calendar
+
+- Agenda administrativa con vistas de día, semana, mes y año.
+- Filtros por propiedad, estado de reservación y estado de pago.
+- Modal de detalle de reservación.
+- Feature module en `src/features/calendar/`.
+
+## 8.9 Disponibilidad Pública
+
+- Calendario de disponibilidad en detalle de propiedad (`vacation_rental`).
+- Precio por noche visible en cada día disponible.
+- Selección de rango de fechas (check-in / check-out).
+- Resumen de reserva con desglose de precio.
+- CTA hacia flujo de pago.
+
 ---
 
 ## 9. UX y UI
@@ -203,8 +218,9 @@ Root oculta:
 
 - Definitivo para frontend MVP de instancia dedicada.
 - Alineado con reservas, pagos, staff restringido y auditoria root.
+- Calendario y disponibilidad publica documentados.
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 2.0.1
+Ultima actualizacion: 2026-02-16
+Version: 2.1.0

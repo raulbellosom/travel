@@ -41,7 +41,6 @@ APPWRITE_COLLECTION_USER_PREFERENCES_ID=user_preferences
 APPWRITE_COLLECTION_PROPERTIES_ID=properties
 APPWRITE_COLLECTION_PROPERTY_IMAGES_ID=property_images
 APPWRITE_COLLECTION_AMENITIES_ID=amenities
-APPWRITE_COLLECTION_PROPERTY_AMENITIES_ID=property_amenities
 APPWRITE_COLLECTION_LEADS_ID=leads
 APPWRITE_COLLECTION_RESERVATIONS_ID=reservations
 APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID=reservation_payments
@@ -50,6 +49,8 @@ APPWRITE_COLLECTION_REVIEWS_ID=reviews
 APPWRITE_COLLECTION_ANALYTICS_DAILY_ID=analytics_daily
 APPWRITE_COLLECTION_ACTIVITY_LOGS_ID=activity_logs
 APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID=email_verifications
+APPWRITE_COLLECTION_CONVERSATIONS_ID=conversations
+APPWRITE_COLLECTION_MESSAGES_ID=messages
 
 APPWRITE_BUCKET_PROPERTY_IMAGES_ID=property-images
 APPWRITE_BUCKET_AVATARS_ID=avatars
@@ -79,6 +80,8 @@ APPWRITE_FUNCTION_DASHBOARD_METRICS_ID=dashboard-metrics-aggregator
 APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID=staff-user-management
 APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID=activity-log-query
 APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID=root-functions-diagnostics
+APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID=deep-search-query
+APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID=send-chat-notification
 ```
 
 ---
@@ -107,6 +110,7 @@ EMAIL_SMTP_USER=
 EMAIL_SMTP_PASS=
 EMAIL_FROM_NAME="Real Estate SaaS"
 EMAIL_FROM_ADDRESS=
+PLATFORM_OWNER_EMAIL=admin@yourdomain.com
 ```
 
 ---
@@ -219,8 +223,10 @@ Buenas practicas:
 - Definitivo para nomenclatura unificada de variables.
 - Alineado con el catalogo de functions y esquema Appwrite actual.
 - Eliminadas variables obsoletas de instance/owner (se gestionan vía BD).
+- Agregadas variables de chat (`conversations`, `messages`, `send-chat-notification`, `PLATFORM_OWNER_EMAIL`).
+- Agregada function `deep-search-query`.
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 2.2.0
+Ultima actualizacion: 2026-02-16
+Version: 2.3.0

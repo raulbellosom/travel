@@ -104,6 +104,8 @@ Regla:
 | `analytics_daily`      | Agregados diarios para dashboard        | 0     |
 | `activity_logs`        | Auditoria detallada (panel oculto root) | 0     |
 | `email_verifications`  | Tokens de verificacion de correo        | 0     |
+| `conversations`        | Hilos de chat cliente-propietario       | 0     |
+| `messages`             | Mensajes individuales por conversacion  | 0     |
 
 ---
 
@@ -165,12 +167,12 @@ Purpose: preferencias de UI por usuario.
 
 ### Attributes
 
-| Attribute | Type    | Size | Required | Default  | Constraint              |
-| --------- | ------- | ---- | -------- | -------- | ----------------------- |
+| Attribute | Type    | Size | Required | Default  | Constraint               |
+| --------- | ------- | ---- | -------- | -------- | ------------------------ |
 | `userId`  | string  | 64   | yes      | -        | FK logical a `users.$id` |
-| `theme`   | enum    | -    | no       | `system` | `light`,`dark`,`system` |
-| `locale`  | enum    | -    | no       | `es`     | `es`,`en`               |
-| `enabled` | boolean | -    | no       | true     | -                       |
+| `theme`   | enum    | -    | no       | `system` | `light`,`dark`,`system`  |
+| `locale`  | enum    | -    | no       | `es`     | `es`,`en`                |
+| `enabled` | boolean | -    | no       | true     | -                        |
 
 Notas:
 
@@ -235,7 +237,7 @@ Purpose: catalogo de propiedades del cliente.
 | `videoUrl`         | URL      | -    | no       | -       | URL valida                                                   |
 | `virtualTourUrl`   | URL      | -    | no       | -       | URL valida                                                   |
 | `galleryImageIds`  | string[] | 64   | no       | -       | max 50 elementos, cada elemento size 64                      |
-| `amenities`        | string[] | 64   | no       | -       | Slugs de amenidades (denormalizado de property_amenities)    |
+| `amenities`        | string[] | 64   | no       | -       | Slugs de amenidades del catalogo `amenities`                |
 | `status`           | enum     | -    | no       | `draft` | `draft`,`published`,`inactive`,`archived`                    |
 | `featured`         | boolean  | -    | no       | false   | -                                                            |
 | `views`            | integer  | -    | no       | 0       | min `0`, max `2147483647`                                    |
@@ -269,7 +271,7 @@ Notas:
 - `videoUrl`: URL de video (YouTube, Vimeo, etc.)
 - `virtualTourUrl`: URL de tour virtual 360
 - `galleryImageIds`: `string[]` para lista rapida de file IDs
-- `amenities`: Array de slugs de amenidades (campo denormalizado). Se sincroniza desde `property_amenities` para permitir filtros eficientes con `Query.contains()`. Appwrite no soporta JOINs, por lo que este campo cache es necesario para búsquedas.
+- `amenities`: Array de slugs de amenidades. Permite filtros eficientes con `Query.contains()`. Se guarda directamente en el array al crear/editar propiedad.
 - `views`: Contador
 - `contactCount`: Contador
 - `reservationCount`: Contador
@@ -750,6 +752,94 @@ Notas:
 
 ---
 
+## Collection: conversations
+
+Purpose: hilos de chat en tiempo real entre clientes y propietarios/staff.
+
+### Attributes
+
+| Attribute       | Type     | Size | Required | Default  | Constraint                                                     |
+| --------------- | -------- | ---- | -------- | -------- | -------------------------------------------------------------- |
+| `propertyId`    | string   | 64   | yes      | -        | FK logical a `properties.$id`                                  |
+| `propertyTitle` | string   | 200  | yes      | -        | Denormalizado para display                                     |
+| `clientUserId`  | string   | 64   | yes      | -        | FK logical a `users.$id` (cliente que inicio)                  |
+| `clientName`    | string   | 120  | yes      | -        | Denormalizado                                                  |
+| `ownerUserId`   | string   | 64   | yes      | -        | FK logical a `users.$id` (propietario/manager de la propiedad) |
+| `ownerName`     | string   | 120  | yes      | -        | Denormalizado                                                  |
+| `lastMessage`   | string   | 200  | no       | `""`     | Preview truncado del ultimo mensaje                            |
+| `lastMessageAt` | datetime | -    | no       | -        | ISO 8601 UTC, timestamp del ultimo mensaje                     |
+| `clientUnread`  | integer  | -    | no       | 0        | min 0, max 9999. Contador no leidos para el cliente            |
+| `ownerUnread`   | integer  | -    | no       | 0        | min 0, max 9999. Contador no leidos para el propietario        |
+| `status`        | enum     | -    | no       | `active` | `active`, `archived`, `closed`                                 |
+| `enabled`       | boolean  | -    | no       | true     | Soft delete                                                    |
+
+Notas:
+
+- Un hilo por combinacion unica `clientUserId` + `propertyId` (indice unique).
+- `lastMessage` y `lastMessageAt` se actualizan al enviar cada mensaje para optimizar listados sin queries adicionales.
+- `clientUnread`/`ownerUnread` se incrementan al recibir mensaje y se resetean al leer.
+- Campos denormalizados (`propertyTitle`, `clientName`, `ownerName`) evitan lookups en listados.
+
+### Indexes
+
+| Index Name                | Type | Attributes                     | Notes                            |
+| ------------------------- | ---- | ------------------------------ | -------------------------------- |
+| `idx_conv_client`         | idx  | `clientUserId ↑, enabled ↑`    | Conversaciones de un cliente     |
+| `idx_conv_owner`          | idx  | `ownerUserId ↑, enabled ↑`     | Conversaciones de un propietario |
+| `idx_conv_property`       | idx  | `propertyId ↑, enabled ↑`      | Conversaciones por propiedad     |
+| `idx_conv_lastmsg`        | idx  | `lastMessageAt ↓`              | Orden por ultimo mensaje         |
+| `uq_conv_client_property` | uq   | `clientUserId ↑, propertyId ↑` | Un hilo por cliente-propiedad    |
+
+### Permissions
+
+- `Role.user(clientUserId)`: read, update.
+- `Role.user(ownerUserId)`: read, update.
+- `Role.label(root)`: read, update, delete.
+
+---
+
+## Collection: messages
+
+Purpose: mensajes individuales dentro de una conversacion.
+
+### Attributes
+
+| Attribute         | Type    | Size | Required | Default | Constraint                         |
+| ----------------- | ------- | ---- | -------- | ------- | ---------------------------------- |
+| `conversationId`  | string  | 64   | yes      | -       | FK logical a `conversations.$id`   |
+| `senderUserId`    | string  | 64   | yes      | -       | FK logical a `users.$id`           |
+| `senderName`      | string  | 120  | yes      | -       | Denormalizado                      |
+| `senderRole`      | enum    | -    | yes      | -       | `client`, `owner`, `staff`, `root` |
+| `body`            | string  | 4000 | yes      | -       | Contenido del mensaje              |
+| `readBySender`    | boolean | -    | no       | true    | -                                  |
+| `readByRecipient` | boolean | -    | no       | false   | -                                  |
+| `enabled`         | boolean | -    | no       | true    | Soft delete                        |
+
+Notas:
+
+- Los mensajes heredan permisos de la conversacion padre.
+- `senderRole` se determina al momento de enviar segun el rol del usuario en `users.role`.
+- `readByRecipient` se marca `true` cuando el destinatario abre la conversacion.
+- `body` soporta hasta 4000 caracteres de texto plano.
+
+### Indexes
+
+| Index Name             | Type | Attributes                                  | Notes                  |
+| ---------------------- | ---- | ------------------------------------------- | ---------------------- |
+| `idx_msg_conversation` | idx  | `conversationId ↑, enabled ↑, $createdAt ↑` | Mensajes por hilo      |
+| `idx_msg_sender`       | idx  | `senderUserId ↑`                            | Mensajes por remitente |
+
+### Permissions
+
+Permisos a nivel de documento (se asignan al crear):
+
+- `Role.user(clientUserId)`: read (del hilo padre).
+- `Role.user(ownerUserId)`: read (del hilo padre).
+- `Role.user(senderUserId)`: update.
+- `Role.label(root)`: read, delete.
+
+---
+
 ## Relationships Summary
 
 - `users (1) -> (N) properties`
@@ -762,6 +852,10 @@ Notas:
 - `reservations (1) -> (N) reservation_payments`
 - `reservations (1) -> (1) reservation_vouchers`
 - `properties (1) -> (N) reviews`
+- `users (1) -> (N) conversations` (como `clientUserId`)
+- `users (1) -> (N) conversations` (como `ownerUserId`)
+- `properties (1) -> (N) conversations`
+- `conversations (1) -> (N) messages`
 
 ---
 
@@ -864,14 +958,27 @@ Formato obligatorio:
 
 ---
 
+## Migration: 2026-02-16-chat-messaging-collections
+
+### Added
+
+- Coleccion `conversations`: hilos de chat entre clientes y propietarios con contadores de no leidos, preview de ultimo mensaje y estado.
+- Coleccion `messages`: mensajes individuales dentro de una conversacion con roles de remitente y estados de lectura.
+- Indices: `idx_conv_client`, `idx_conv_owner`, `idx_conv_property`, `idx_conv_lastmsg`, `uq_conv_client_property`, `idx_msg_conversation`, `idx_msg_sender`.
+- Variables de entorno: `APPWRITE_COLLECTION_CONVERSATIONS_ID`, `APPWRITE_COLLECTION_MESSAGES_ID`.
+- Function: `send-chat-notification` para notificaciones por email cuando el destinatario esta offline.
+- Relaciones: `users -> conversations`, `properties -> conversations`, `conversations -> messages`.
+
+---
+
 ## Estado del Documento
 
 - Definitivo para el schema Appwrite de cada instancia cliente.
-- Alineado con reservas, pagos, vouchers, staff, clientes autenticados y auditoria root.
+- Alineado con reservas, pagos, vouchers, staff, clientes autenticados, auditoria root y chat en tiempo real.
 - Debe mantenerse sincronizado con Appwrite en cada cambio.
 
 ---
 
-Ultima actualizacion: 2026-02-15
-Version: 2.3.0
-Schema Version: 2.5
+Ultima actualizacion: 2026-02-16
+Version: 2.4.0
+Schema Version: 2.6

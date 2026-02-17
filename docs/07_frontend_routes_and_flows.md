@@ -108,6 +108,7 @@ La ruta `/` muestra contenido diferente dependiendo de `FEATURE_MARKETING_SITE`:
 | `/app/leads`               | ScopeRoute     | `leads.read`              |
 | `/app/clients`             | OwnerRoute     | `owner`                   |
 | `/app/reservations`        | ScopeRoute     | `reservations.read`       |
+| `/app/calendar`            | ScopeRoute     | `reservations.read`       |
 | `/app/payments`            | ScopeRoute     | `payments.read`           |
 | `/app/reviews`             | ScopeRoute     | `reviews.moderate`        |
 | `/app/team`                | ScopeRoute     | `staff.manage`            |
@@ -196,6 +197,22 @@ Regla:
 1. Root accede al modulo interno `/app/activity`.
 2. Filtra por entidad (ej. `reservations`).
 3. Revisa before/after de cambios.
+
+## 7.6 Calendario de reservaciones
+
+1. Owner/staff accede a `/app/calendar`.
+2. Visualiza reservaciones en vistas de día, semana, mes o año.
+3. Filtra por propiedad, estado de reservación o estado de pago.
+4. Hace clic en una reservación para ver detalle en modal.
+5. Navega entre fechas con controles de navegación.
+
+## 7.7 Calendario de disponibilidad (público)
+
+1. Cliente visita `/propiedades/:slug` de tipo `vacation_rental`.
+2. Ve calendario de disponibilidad con precio por noche en cada día.
+3. Selecciona rango de fechas (check-in → check-out).
+4. Ve resumen de reserva: noches, desglose de precio, total.
+5. Confirma con CTA "Continuar al pago" → redirige a `/reservar/:slug`.
 
 ---
 
@@ -304,6 +321,14 @@ Flujo completo de reservación online con pago y voucher digital.
 **Etiqueta de precio:** "Precio por noche" o "Desde $X /noche".
 **Secciones adicionales:** Reglas de la casa (check-in, check-out, estancia mín/máx, huéspedes máx).
 
+**Calendario de disponibilidad:**
+
+- Se muestra un calendario interactivo con precio por noche en cada día disponible.
+- Días con reservas confirmadas aparecen deshabilitados.
+- El usuario selecciona rango de fechas (check-in → check-out).
+- Se muestra un resumen de reserva con desglose: noches × precio, impuestos, total.
+- CTA "Continuar al pago" redirige a `/reservar/:slug` con fechas preseleccionadas.
+
 ### 10.4 Resumen de CTAs por tipo
 
 | `operationType`   | CTA Principal         | Destino                         | Flujo de pago |
@@ -332,5 +357,5 @@ Flujo completo de reservación online con pago y voucher digital.
 
 ---
 
-Ultima actualizacion: 2026-02-15
-Version: 2.2.0
+Ultima actualizacion: 2026-02-16
+Version: 2.3.0

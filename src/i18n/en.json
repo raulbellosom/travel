@@ -211,11 +211,13 @@
     "profile": "Profile",
     "settings": "Settings",
     "leads": "Leads",
+    "conversations": "Messages",
     "dashboardTitle": "Dashboard",
     "defaultUser": "User",
     "clients": "Clients",
     "team": "Team",
     "reservations": "Reservations",
+    "calendar": "Calendar",
     "payments": "Payments",
     "reviews": "Reviews",
     "rootActivity": "Root: Audit",
@@ -421,6 +423,7 @@
       "profile": "Edit profile",
       "reservations": "My reservations",
       "reviews": "My reviews",
+      "conversations": "My conversations",
       "password": "Change password",
       "privacy": "Privacy notice",
       "terms": "Terms and conditions"
@@ -2052,5 +2055,138 @@
     "geoError": "Could not get your location. Check permissions.",
     "locationTitle": "Location",
     "searchPlaceholder": "Search address, city or place..."
+  },
+  "chat": {
+    "bubble": {
+      "open": "Open chat",
+      "close": "Close chat"
+    },
+    "actions": {
+      "close": "Close",
+      "back": "Back"
+    },
+    "conversations": {
+      "title": "Messages",
+      "searchPlaceholder": "Search conversation...",
+      "empty": "No conversations yet.",
+      "noResults": "No conversations found.",
+      "unknownUser": "Unknown user",
+      "noMessages": "No messages yet",
+      "viewAll": "View all"
+    },
+    "messages": {
+      "empty": "Send the first message to start the conversation.",
+      "inputPlaceholder": "Type a message..."
+    },
+    "time": {
+      "now": "now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "propertyButton": {
+      "startChat": "Start live chat",
+      "loginToChat": "Sign in to chat",
+      "loginRequired": "You must sign in to use the chat",
+      "verifyRequired": "Verify your email to use the chat"
+    }
+  },
+  "calendarPage": {
+    "title": "Calendar",
+    "subtitle": "View reservations, appointments, and availability at a glance."
+  },
+  "calendar": {
+    "today": "Today",
+    "more": "more",
+    "event": "event",
+    "events": "events",
+    "noEvents": "No events for this day.",
+    "nights": "nights",
+    "reservationsInView": "reservations in view",
+    "retry": "Retry",
+    "selectDates": "Select dates",
+    "clearDates": "Clear dates",
+    "minStay": "Minimum stay: {{nights}} nights",
+    "maxStay": "Maximum stay: {{nights}} nights",
+    "views": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "year": "Year"
+    },
+    "aria": {
+      "previous": "Previous",
+      "next": "Next",
+      "close": "Close"
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    },
+    "paymentStatus": {
+      "unpaid": "Unpaid",
+      "pending": "Payment pending",
+      "paid": "Paid",
+      "failed": "Payment failed",
+      "refunded": "Refunded"
+    },
+    "filters": {
+      "title": "Filters",
+      "property": "Property",
+      "allProperties": "All properties",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "paymentStatus": "Payment status",
+      "allPaymentStatuses": "All",
+      "clear": "Clear filters"
+    },
+    "eventDetail": {
+      "title": "Reservation detail",
+      "guest": "Guest",
+      "email": "Email",
+      "phone": "Phone",
+      "property": "Property",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "nights": "Nights",
+      "guests": "Guests",
+      "total": "Total",
+      "baseAmount": "Base amount",
+      "paymentStatus": "Payment status",
+      "provider": "Payment provider",
+      "specialRequests": "Special requests",
+      "createdAt": "Created"
+    },
+    "booking": {
+      "summary": "Booking summary",
+      "night": "night",
+      "nights": "nights",
+      "maxGuests": "Up to {{count}} guests",
+      "fees": "Service fees",
+      "taxes": "Taxes",
+      "total": "Total",
+      "reserve": "Reserve now",
+      "noChargeYet": "You won't be charged yet"
+    }
+  },
+  "conversationsPage": {
+    "title": "Messages",
+    "subtitle": "Manage your conversations with clients and tenants.",
+    "selectConversation": "Select a conversation to view messages.",
+    "metrics": {
+      "total": "Total",
+      "active": "Active",
+      "unread": "Unread"
+    }
+  },
+  "myConversations": {
+    "title": "My conversations",
+    "subtitle": "Review and reply to your messages with property agents.",
+    "selectConversation": "Select a conversation to view messages.",
+    "empty": "You don't have any conversations yet",
+    "emptyHint": "Start a conversation from any property page."
   }
 }
