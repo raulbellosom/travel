@@ -1,6 +1,6 @@
-# property-view-counter
+﻿# property-view-counter
 
-Increments `properties.views` for a public property detail view.
+Increments `resources.views` for a public resource detail view.
 
 ## Execution Contract
 
@@ -19,6 +19,7 @@ Increments `properties.views` for a public property detail view.
 
 ```json
 {
-  "propertyId": "PROPERTY_DOCUMENT_ID"
+  "resourceId": "RESOURCE_DOCUMENT_ID"
 }
 ```
+

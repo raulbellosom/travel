@@ -16,6 +16,12 @@ import {
 /** Default form values for property creation wizard */
 export const WIZARD_DEFAULTS = {
   // Step 1: Type & Info
+  resourceType: "property",
+  category: "house",
+  commercialMode: "sale",
+  pricingModel: "total",
+  bookingType: "manual_contact",
+  attributes: "{}",
   propertyType: "house",
   operationType: "sale",
   title: "",
@@ -78,8 +84,17 @@ export const WIZARD_STEPS = [
     titleKey: "propertyForm.wizard.steps.typeAndInfo",
     descriptionKey: "propertyForm.wizard.steps.typeAndInfoDesc",
     icon: Home,
-    fields: ["propertyType", "operationType", "title", "slug", "description"],
-    appliesTo: ["sale", "rent", "vacation_rental"],
+    fields: [
+      "resourceType",
+      "category",
+      "commercialMode",
+      "propertyType",
+      "operationType",
+      "title",
+      "slug",
+      "description",
+    ],
+    appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
   },
   {
     id: "location",
@@ -96,7 +111,7 @@ export const WIZARD_STEPS = [
       "latitude",
       "longitude",
     ],
-    appliesTo: ["sale", "rent", "vacation_rental"],
+    appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
   },
   {
     id: "features",
@@ -112,7 +127,7 @@ export const WIZARD_STEPS = [
       "floors",
       "yearBuilt",
     ],
-    appliesTo: ["sale", "rent", "vacation_rental"],
+    appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
   },
   {
     id: "rentalTerms",
@@ -136,7 +151,7 @@ export const WIZARD_STEPS = [
       "furnished",
       "petsAllowed",
     ],
-    appliesTo: ["vacation_rental"],
+    appliesTo: ["vacation_rental", "rent_hourly"],
   },
   {
     id: "pricing",
@@ -144,7 +159,7 @@ export const WIZARD_STEPS = [
     descriptionKey: "propertyForm.wizard.steps.pricingDesc",
     icon: DollarSign,
     fields: ["price", "currency", "pricePerUnit", "priceNegotiable"],
-    appliesTo: ["sale", "rent", "vacation_rental"],
+    appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
   },
   {
     id: "amenities",
@@ -152,7 +167,7 @@ export const WIZARD_STEPS = [
     descriptionKey: "propertyForm.wizard.steps.amenitiesDesc",
     icon: Sparkles,
     fields: ["amenityIds"],
-    appliesTo: ["sale", "rent", "vacation_rental"],
+    appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
   },
   {
     id: "images",
@@ -160,7 +175,7 @@ export const WIZARD_STEPS = [
     descriptionKey: "propertyForm.wizard.steps.imagesDesc",
     icon: Camera,
     fields: ["videoUrl", "virtualTourUrl", "imageFiles"],
-    appliesTo: ["sale", "rent", "vacation_rental"],
+    appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
   },
 ];
 
@@ -171,16 +186,34 @@ export const SUMMARY_STEP = {
   descriptionKey: "propertyForm.wizard.steps.summaryDesc",
   icon: ClipboardList,
   fields: [],
-  appliesTo: ["sale", "rent", "vacation_rental"],
+  appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
 };
 
 /**
  * Get the active wizard steps for a given operation type.
  * Includes the summary step at the end.
  */
-export const getActiveSteps = (operationType = "sale") => {
+const resolveAllowedOperationTypes = (modulesApi = {}) => {
+  const isEnabled =
+    typeof modulesApi.isEnabled === "function"
+      ? modulesApi.isEnabled
+      : () => true;
+
+  return [
+    "sale",
+    "rent",
+    ...(isEnabled("module.booking.short_term") ? ["vacation_rental"] : []),
+    ...(isEnabled("module.booking.hourly") ? ["rent_hourly"] : []),
+  ];
+};
+
+export const getActiveSteps = (operationType = "sale", modulesApi = {}) => {
+  const allowedOperations = resolveAllowedOperationTypes(modulesApi);
+  const effectiveOperation = allowedOperations.includes(operationType)
+    ? operationType
+    : "sale";
   const steps = WIZARD_STEPS.filter((step) =>
-    step.appliesTo.includes(operationType),
+    step.appliesTo.includes(effectiveOperation),
   );
   return [...steps, SUMMARY_STEP];
 };
@@ -197,11 +230,27 @@ export const PROPERTY_TYPES = [
 
 /** Operation type options */
 export const OPERATION_TYPES = [
-  { value: "sale", key: "propertyForm.options.operationType.sale" },
-  { value: "rent", key: "propertyForm.options.operationType.rent" },
+  {
+    value: "sale",
+    commercialMode: "sale",
+    key: "propertyForm.options.operationType.sale",
+  },
+  {
+    value: "rent",
+    commercialMode: "rent_long_term",
+    key: "propertyForm.options.operationType.rent",
+  },
   {
     value: "vacation_rental",
+    commercialMode: "rent_short_term",
+    moduleKey: "module.booking.short_term",
     key: "propertyForm.options.operationType.vacationRental",
+  },
+  {
+    value: "rent_hourly",
+    commercialMode: "rent_hourly",
+    moduleKey: "module.booking.hourly",
+    key: "propertyForm.options.operationType.hourly",
   },
 ];
 
@@ -217,6 +266,18 @@ export const PRICE_PER_UNIT_OPTIONS = [
   { value: "total", key: "propertyForm.options.pricePer.total" },
   { value: "sqm", key: "propertyForm.options.pricePer.sqm" },
   { value: "sqft", key: "propertyForm.options.pricePer.sqft" },
+];
+
+/** Canonical pricing model options */
+export const PRICING_MODEL_OPTIONS = [
+  { value: "total", key: "propertyForm.options.pricingModel.total" },
+  { value: "per_month", key: "propertyForm.options.pricingModel.perMonth" },
+  { value: "per_night", key: "propertyForm.options.pricingModel.perNight" },
+  { value: "per_day", key: "propertyForm.options.pricingModel.perDay" },
+  { value: "per_hour", key: "propertyForm.options.pricingModel.perHour" },
+  { value: "per_person", key: "propertyForm.options.pricingModel.perPerson" },
+  { value: "per_event", key: "propertyForm.options.pricingModel.perEvent" },
+  { value: "per_m2", key: "propertyForm.options.pricingModel.perM2" },
 ];
 
 /** Furnished options */

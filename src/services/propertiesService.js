@@ -7,6 +7,16 @@ import {
   storage,
 } from "../api/appwriteClient";
 import { normalizeSlug } from "../utils/slug";
+import {
+  normalizeAttributes,
+  normalizeBookingType,
+  normalizeCommercialMode,
+  normalizePricingModel,
+  normalizeResourceDocument,
+  normalizeResourceType,
+  toLegacyOperationType,
+  toLegacyPricePerUnit,
+} from "../utils/resourceModel";
 
 const hasOwn = (input, key) =>
   Object.prototype.hasOwnProperty.call(input || {}, key);
@@ -19,10 +29,36 @@ const toNumber = (value, fallback = 0) => {
 
 const normalizeOperationType = (value = "") => {
   if (value === "vacationRental") return "vacation_rental";
-  return value;
+  return String(value || "").trim();
 };
 
-const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
+const getCollectionConfig = () => {
+  const resourcesCollectionId =
+    env.appwrite.collections.resources || env.appwrite.collections.properties;
+  const legacyPropertiesCollectionId =
+    env.appwrite.collections.properties || resourcesCollectionId;
+  const resourceImagesCollectionId =
+    env.appwrite.collections.resourceImages ||
+    env.appwrite.collections.propertyImages;
+  const resourceImagesBucketId =
+    env.appwrite.buckets.resourceImages || env.appwrite.buckets.propertyImages;
+
+  return {
+    resourcesCollectionId,
+    legacyPropertiesCollectionId,
+    resourceImagesCollectionId,
+    resourceImagesBucketId,
+    useCanonicalResources:
+      Boolean(resourcesCollectionId) &&
+      Boolean(legacyPropertiesCollectionId) &&
+      resourcesCollectionId !== legacyPropertiesCollectionId,
+  };
+};
+
+const normalizeResourceInput = (
+  input = {},
+  { forUpdate = false, target = "legacy" } = {},
+) => {
   const source = input || {};
   const data = {};
   const assign = (key, value) => {
@@ -31,14 +67,32 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
     }
   };
 
+  const normalizedCategory = String(
+    source.category || source.propertyType || "house",
+  )
+    .trim()
+    .toLowerCase();
+  const normalizedCommercialMode = normalizeCommercialMode(
+    source.commercialMode || source.operationType || "sale",
+  );
+  const normalizedPricingModel = normalizePricingModel(
+    source.pricingModel || source.pricePerUnit || "total",
+    normalizedCommercialMode,
+  );
+  const normalizedBookingType = normalizeBookingType(
+    source.bookingType,
+    normalizedCommercialMode,
+  );
+  const normalizedLegacyOperation = toLegacyOperationType(
+    normalizedCommercialMode,
+  );
+  const normalizedLegacyPricePerUnit = toLegacyPricePerUnit(
+    normalizedPricingModel,
+  );
+
   assign("slug", normalizeSlug(source.slug));
   assign("title", String(source.title || "").trim());
   assign("description", String(source.description || "").trim());
-  assign("propertyType", String(source.propertyType || "house").trim());
-  assign(
-    "operationType",
-    normalizeOperationType(String(source.operationType || "sale").trim()),
-  );
   assign("price", toNumber(source.price, 0));
   assign(
     "currency",
@@ -46,8 +100,21 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
       .trim()
       .toUpperCase(),
   );
-  assign("pricePerUnit", String(source.pricePerUnit || "total").trim());
   assign("priceNegotiable", Boolean(source.priceNegotiable));
+
+  if (target === "canonical") {
+    assign("resourceType", normalizeResourceType(source.resourceType));
+    assign("category", normalizedCategory);
+    assign("commercialMode", normalizedCommercialMode);
+    assign("pricingModel", normalizedPricingModel);
+    assign("bookingType", normalizedBookingType);
+    assign("attributes", normalizeAttributes(source.attributes));
+  } else {
+    assign("propertyType", normalizedCategory);
+    assign("operationType", normalizeOperationType(normalizedLegacyOperation));
+    assign("pricePerUnit", normalizedLegacyPricePerUnit);
+  }
+
   assign("bedrooms", toNumber(source.bedrooms, 0));
   assign("bathrooms", toNumber(source.bathrooms, 0));
   assign("parkingSpaces", toNumber(source.parkingSpaces, 0));
@@ -70,7 +137,6 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
   assign("latitude", toNumber(source.latitude, null));
   assign("longitude", toNumber(source.longitude, null));
 
-  // Only include optional enum/string fields if they have valid non-empty values
   const furnished = String(source.furnished || "").trim();
   if (furnished) assign("furnished", furnished);
 
@@ -88,7 +154,6 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
   const checkOutTime = String(source.checkOutTime || "").trim();
   if (checkOutTime) assign("checkOutTime", checkOutTime);
 
-  // Only include URL fields if they have valid non-empty values
   const videoUrl = String(source.videoUrl || "").trim();
   const virtualTourUrl = String(source.virtualTourUrl || "").trim();
   if (videoUrl) assign("videoUrl", videoUrl);
@@ -104,7 +169,6 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
       : [];
   }
 
-  // amenities: array of slugs
   if (!forUpdate || hasOwn(source, "amenities")) {
     data.amenities = Array.isArray(source.amenities)
       ? source.amenities
@@ -113,13 +177,12 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
       : [];
   }
 
-  // assignedStaffIds: array of user IDs assigned to manage this property
   if (!forUpdate || hasOwn(source, "assignedStaffIds")) {
     data.assignedStaffIds = Array.isArray(source.assignedStaffIds)
       ? source.assignedStaffIds
           .map((id) => String(id || "").trim())
           .filter(Boolean)
-          .slice(0, 20) // max 20 assigned staff
+          .slice(0, 20)
       : [];
   }
 
@@ -127,10 +190,11 @@ const normalizePropertyInput = (input = {}, { forUpdate = false } = {}) => {
 };
 
 const toPreviewUrl = (fileId) => {
-  if (!fileId || !env.appwrite.buckets.propertyImages) return "";
+  const { resourceImagesBucketId } = getCollectionConfig();
+  if (!fileId || !resourceImagesBucketId) return "";
 
   return storage.getFileView({
-    bucketId: env.appwrite.buckets.propertyImages,
+    bucketId: resourceImagesBucketId,
     fileId,
   });
 };
@@ -149,6 +213,64 @@ const areStringArraysEqual = (left = [], right = []) => {
   return left.every((value, index) => value === right[index]);
 };
 
+const resolveCommercialFilter = (filters = {}) =>
+  normalizeCommercialMode(
+    filters.commercialMode || filters.operationType || "sale",
+  );
+
+const resolveCategoryFilter = (filters = {}) =>
+  String(filters.category || filters.propertyType || "").trim().toLowerCase();
+
+const listImagesWithFallbackField = async ({
+  databaseId,
+  collectionId,
+  resourceId,
+  idField,
+}) =>
+  databases.listDocuments({
+    databaseId,
+    collectionId,
+    queries: [
+      Query.equal(idField, resourceId),
+      Query.equal("enabled", true),
+      Query.orderAsc("sortOrder"),
+      Query.limit(50),
+    ],
+  });
+
+const createImageDocWithFallbackField = async ({
+  databaseId,
+  collectionId,
+  resourceId,
+  data,
+  preferredIdField,
+}) => {
+  const firstPayload = {
+    ...data,
+    [preferredIdField]: resourceId,
+  };
+
+  try {
+    return await databases.createDocument({
+      databaseId,
+      collectionId,
+      documentId: ID.unique(),
+      data: firstPayload,
+    });
+  } catch (firstError) {
+    const fallbackField = preferredIdField === "resourceId" ? "propertyId" : "resourceId";
+    return databases.createDocument({
+      databaseId,
+      collectionId,
+      documentId: ID.unique(),
+      data: {
+        ...data,
+        [fallbackField]: resourceId,
+      },
+    });
+  }
+};
+
 export const propertiesService = {
   async checkSlugAvailability(slug, { excludePropertyId = "" } = {}) {
     ensureAppwriteConfigured();
@@ -161,9 +283,10 @@ export const propertiesService = {
       };
     }
 
+    const { resourcesCollectionId } = getCollectionConfig();
     const response = await databases.listDocuments({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
+      collectionId: resourcesCollectionId,
       queries: [Query.equal("slug", normalizedSlug), Query.limit(5)],
     });
 
@@ -180,6 +303,7 @@ export const propertiesService = {
 
   async listPublic({ page = 1, limit = 20, filters = {} } = {}) {
     ensureAppwriteConfigured();
+    const { resourcesCollectionId, useCanonicalResources } = getCollectionConfig();
 
     const offset = (Math.max(1, Number(page)) - 1) * Number(limit);
     const queries = [
@@ -189,35 +313,38 @@ export const propertiesService = {
       Query.offset(offset),
     ];
 
-    // ── General text search ──
-    // Uses individual fulltext indexes: `full_title_search` on [title] and
-    // `full_description_search` on [description]. Appwrite 1.8.x does NOT
-    // support Query.search() on composite fulltext indexes, so each attribute
-    // needs its own fulltext index. We search by title here; the description
-    // index is available for future use or a server-side deep-search function.
-    // NOTE: Properties store content in a single language per field, so search
-    // will only match the language the content was written in.
     if (filters.search) {
       queries.push(Query.search("title", filters.search));
     }
 
-    // ── Location filters (exact match) ──
     if (filters.city) queries.push(Query.equal("city", filters.city));
     if (filters.state) queries.push(Query.equal("state", filters.state));
 
-    // ── Property classification ──
-    if (filters.propertyType)
-      queries.push(Query.equal("propertyType", filters.propertyType));
-    if (filters.operationType)
-      queries.push(Query.equal("operationType", filters.operationType));
+    const categoryFilter = resolveCategoryFilter(filters);
+    if (categoryFilter) {
+      queries.push(
+        Query.equal(useCanonicalResources ? "category" : "propertyType", categoryFilter),
+      );
+    }
 
-    // ── Price range ──
+    const hasCommercialFilter =
+      String(filters.commercialMode || "").trim() ||
+      String(filters.operationType || "").trim();
+    if (hasCommercialFilter) {
+      const commercial = resolveCommercialFilter(filters);
+      queries.push(
+        Query.equal(
+          useCanonicalResources ? "commercialMode" : "operationType",
+          useCanonicalResources ? commercial : toLegacyOperationType(commercial),
+        ),
+      );
+    }
+
     if (filters.minPrice)
       queries.push(Query.greaterThanEqual("price", Number(filters.minPrice)));
     if (filters.maxPrice)
       queries.push(Query.lessThanEqual("price", Number(filters.maxPrice)));
 
-    // ── Property features ──
     if (filters.bedrooms)
       queries.push(
         Query.greaterThanEqual("bedrooms", Number(filters.bedrooms)),
@@ -234,9 +361,6 @@ export const propertiesService = {
       queries.push(Query.equal("furnished", filters.furnished));
     if (filters.petsAllowed) queries.push(Query.equal("petsAllowed", true));
 
-    // ── Amenities ──
-    // Amenities are stored as an array. Appwrite uses Query.contains() to check
-    // if an array attribute contains specific values.
     if (filters.amenities && Array.isArray(filters.amenities)) {
       filters.amenities.forEach((amenity) => {
         if (amenity && String(amenity).trim()) {
@@ -245,13 +369,8 @@ export const propertiesService = {
       });
     }
 
-    // ── Featured ──
     if (filters.featured) queries.push(Query.equal("featured", true));
 
-    // ── Sorting ──
-    // Appwrite does NOT allow combining Query.search() with orderAsc/orderDesc.
-    // When fulltext search is active, skip explicit sorting — results are
-    // returned ordered by relevance automatically.
     if (!filters.search) {
       switch (filters.sort) {
         case "price-asc":
@@ -267,18 +386,26 @@ export const propertiesService = {
       }
     }
 
-    return databases.listDocuments({
+    const response = await databases.listDocuments({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
+      collectionId: resourcesCollectionId,
       queries,
     });
+
+    return {
+      ...response,
+      documents: (response.documents || []).map((doc) =>
+        normalizeResourceDocument(doc),
+      ),
+    };
   },
 
   async getPublicBySlug(slug) {
     ensureAppwriteConfigured();
+    const { resourcesCollectionId } = getCollectionConfig();
     const response = await databases.listDocuments({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
+      collectionId: resourcesCollectionId,
       queries: [
         Query.equal("slug", slug),
         Query.equal("status", "published"),
@@ -287,81 +414,96 @@ export const propertiesService = {
       ],
     });
 
-    return response.documents?.[0] || null;
+    return response.documents?.[0]
+      ? normalizeResourceDocument(response.documents[0])
+      : null;
   },
 
-  async getById(propertyId) {
+  async getById(resourceId) {
     ensureAppwriteConfigured();
-    return databases.getDocument({
+    const { resourcesCollectionId } = getCollectionConfig();
+    const doc = await databases.getDocument({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
-      documentId: propertyId,
+      collectionId: resourcesCollectionId,
+      documentId: resourceId,
     });
+    return normalizeResourceDocument(doc);
   },
 
   async listMine(_userId, { ownerUserId = "", status = "" } = {}) {
     ensureAppwriteConfigured();
+    const { resourcesCollectionId } = getCollectionConfig();
     const queries = [
       Query.equal("enabled", true),
       Query.orderDesc("$createdAt"),
       Query.limit(200),
     ];
 
-    // Optional owner filter - used for staff to see only their assigned properties
     if (ownerUserId) queries.push(Query.equal("ownerUserId", ownerUserId));
     if (status) queries.push(Query.equal("status", status));
 
-    return databases.listDocuments({
+    const response = await databases.listDocuments({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
+      collectionId: resourcesCollectionId,
       queries,
     });
+
+    return {
+      ...response,
+      documents: (response.documents || []).map((doc) =>
+        normalizeResourceDocument(doc),
+      ),
+    };
   },
 
-  /**
-   * List properties where the user is the responsible agent (ownerUserId).
-   * For staff users who should only see their assigned properties.
-   */
   async listByResponsible(responsibleUserId) {
     ensureAppwriteConfigured();
     if (!responsibleUserId) return { documents: [], total: 0 };
 
-    const queries = [
-      Query.equal("enabled", true),
-      Query.equal("ownerUserId", responsibleUserId),
-      Query.orderDesc("$createdAt"),
-      Query.limit(200),
-    ];
-
-    return databases.listDocuments({
+    const { resourcesCollectionId } = getCollectionConfig();
+    const response = await databases.listDocuments({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
-      queries,
+      collectionId: resourcesCollectionId,
+      queries: [
+        Query.equal("enabled", true),
+        Query.equal("ownerUserId", responsibleUserId),
+        Query.orderDesc("$createdAt"),
+        Query.limit(200),
+      ],
     });
+
+    return {
+      ...response,
+      documents: (response.documents || []).map((doc) =>
+        normalizeResourceDocument(doc),
+      ),
+    };
   },
 
-  /**
-   * Update the responsible agent (ownerUserId) for a property.
-   * Only root/owner should call this.
-   */
-  async updateResponsibleAgent(propertyId, newOwnerUserId) {
+  async updateResponsibleAgent(resourceId, newOwnerUserId) {
     ensureAppwriteConfigured();
     const normalizedId = String(newOwnerUserId || "").trim();
     if (!normalizedId) {
-      throw new Error("Se requiere un usuario responsable válido.");
+      throw new Error("Se requiere un usuario responsable valido.");
     }
 
+    const { resourcesCollectionId } = getCollectionConfig();
     return databases.updateDocument({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
-      documentId: propertyId,
+      collectionId: resourcesCollectionId,
+      documentId: resourceId,
       data: { ownerUserId: normalizedId },
     });
   },
 
   async create(userId, payload) {
     ensureAppwriteConfigured();
-    const normalized = normalizePropertyInput(payload, { forUpdate: false });
+    const { resourcesCollectionId, useCanonicalResources } = getCollectionConfig();
+    const normalized = normalizeResourceInput(payload, {
+      forUpdate: false,
+      target: useCanonicalResources ? "canonical" : "legacy",
+    });
+
     const data = {
       ...normalized,
       ownerUserId: userId,
@@ -370,32 +512,41 @@ export const propertiesService = {
       reservationCount: 0,
     };
 
-    return databases.createDocument({
+    const created = await databases.createDocument({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
+      collectionId: resourcesCollectionId,
       documentId: ID.unique(),
       data,
     });
+
+    return normalizeResourceDocument(created);
   },
 
-  async update(propertyId, _userId, payload) {
+  async update(resourceId, _userId, payload) {
     ensureAppwriteConfigured();
-    const normalized = normalizePropertyInput(payload, { forUpdate: true });
+    const { resourcesCollectionId, useCanonicalResources } = getCollectionConfig();
+    const normalized = normalizeResourceInput(payload, {
+      forUpdate: true,
+      target: useCanonicalResources ? "canonical" : "legacy",
+    });
 
-    return databases.updateDocument({
+    const updated = await databases.updateDocument({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
-      documentId: propertyId,
+      collectionId: resourcesCollectionId,
+      documentId: resourceId,
       data: normalized,
     });
+
+    return normalizeResourceDocument(updated);
   },
 
-  async softDelete(propertyId) {
+  async softDelete(resourceId) {
     ensureAppwriteConfigured();
+    const { resourcesCollectionId } = getCollectionConfig();
     return databases.updateDocument({
       databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.properties,
-      documentId: propertyId,
+      collectionId: resourcesCollectionId,
+      documentId: resourceId,
       data: {
         enabled: false,
         status: "inactive",
@@ -403,45 +554,67 @@ export const propertiesService = {
     });
   },
 
-  async listImages(propertyId) {
+  async listImages(resourceId) {
     ensureAppwriteConfigured();
-    const response = await databases.listDocuments({
-      databaseId: env.appwrite.databaseId,
-      collectionId: env.appwrite.collections.propertyImages,
-      queries: [
-        Query.equal("propertyId", propertyId),
-        Query.equal("enabled", true),
-        Query.orderAsc("sortOrder"),
-        Query.limit(50),
-      ],
-    });
+    const {
+      resourceImagesCollectionId,
+      useCanonicalResources,
+    } = getCollectionConfig();
+    const normalizedId = String(resourceId || "").trim();
+    if (!normalizedId) return [];
 
-    return response.documents.map((doc) => ({
+    let response;
+    try {
+      response = await listImagesWithFallbackField({
+        databaseId: env.appwrite.databaseId,
+        collectionId: resourceImagesCollectionId,
+        resourceId: normalizedId,
+        idField: useCanonicalResources ? "resourceId" : "propertyId",
+      });
+    } catch {
+      response = await listImagesWithFallbackField({
+        databaseId: env.appwrite.databaseId,
+        collectionId: resourceImagesCollectionId,
+        resourceId: normalizedId,
+        idField: useCanonicalResources ? "propertyId" : "resourceId",
+      });
+    }
+
+    return (response.documents || []).map((doc) => ({
       ...doc,
+      resourceId: String(doc.resourceId || doc.propertyId || normalizedId),
+      propertyId: String(doc.propertyId || doc.resourceId || normalizedId),
       url: toPreviewUrl(doc.fileId),
     }));
   },
 
   async uploadPropertyImages(
-    propertyId,
+    resourceId,
     files,
     { title = "", startingSortOrder = 0, existingFileIds = [] } = {},
   ) {
     ensureAppwriteConfigured();
-    if (!env.appwrite.buckets.propertyImages) {
+    const {
+      resourceImagesBucketId,
+      resourceImagesCollectionId,
+      resourcesCollectionId,
+      useCanonicalResources,
+    } = getCollectionConfig();
+
+    if (!resourceImagesBucketId) {
       throw new Error(
-        "No esta configurada APPWRITE_BUCKET_PROPERTY_IMAGES_ID.",
+        "No esta configurada APPWRITE_BUCKET_RESOURCE_IMAGES_ID/PROPERTY_IMAGES_ID.",
       );
     }
-    if (!env.appwrite.collections.propertyImages) {
+    if (!resourceImagesCollectionId) {
       throw new Error(
-        "No esta configurada APPWRITE_COLLECTION_PROPERTY_IMAGES_ID.",
+        "No esta configurada APPWRITE_COLLECTION_RESOURCE_IMAGES_ID/PROPERTY_IMAGES_ID.",
       );
     }
 
-    const normalizedPropertyId = String(propertyId || "").trim();
-    if (!normalizedPropertyId) {
-      throw new Error("Property ID invalido para subir imagenes.");
+    const normalizedResourceId = String(resourceId || "").trim();
+    if (!normalizedResourceId) {
+      throw new Error("Resource ID invalido para subir imagenes.");
     }
 
     const filesToUpload = Array.from(files || []).filter(Boolean);
@@ -460,14 +633,13 @@ export const propertiesService = {
     for (let index = 0; index < filesToUpload.length; index += 1) {
       const file = filesToUpload[index];
       const uploadedFile = await storage.createFile({
-        bucketId: env.appwrite.buckets.propertyImages,
+        bucketId: resourceImagesBucketId,
         fileId: ID.unique(),
         file,
       });
 
       try {
         const imageData = {
-          propertyId: normalizedPropertyId,
           fileId: uploadedFile.$id,
           sortOrder: baseSortOrder + index,
           isMain: baseGalleryImageIds.length === 0 && index === 0,
@@ -485,21 +657,28 @@ export const propertiesService = {
           imageData.fileSize = resolvedFileSize;
         }
 
-        const imageDoc = await databases.createDocument({
+        const imageDoc = await createImageDocWithFallbackField({
           databaseId: env.appwrite.databaseId,
-          collectionId: env.appwrite.collections.propertyImages,
-          documentId: ID.unique(),
+          collectionId: resourceImagesCollectionId,
+          resourceId: normalizedResourceId,
           data: imageData,
+          preferredIdField: useCanonicalResources ? "resourceId" : "propertyId",
         });
 
         uploadedImages.push({
           ...imageDoc,
+          resourceId: String(
+            imageDoc.resourceId || imageDoc.propertyId || normalizedResourceId,
+          ),
+          propertyId: String(
+            imageDoc.propertyId || imageDoc.resourceId || normalizedResourceId,
+          ),
           url: toPreviewUrl(uploadedFile.$id),
         });
       } catch (error) {
         await storage
           .deleteFile({
-            bucketId: env.appwrite.buckets.propertyImages,
+            bucketId: resourceImagesBucketId,
             fileId: uploadedFile.$id,
           })
           .catch(() => {});
@@ -515,8 +694,8 @@ export const propertiesService = {
     if (!areStringArraysEqual(baseGalleryImageIds, nextGalleryImageIds)) {
       await databases.updateDocument({
         databaseId: env.appwrite.databaseId,
-        collectionId: env.appwrite.collections.properties,
-        documentId: normalizedPropertyId,
+        collectionId: resourcesCollectionId,
+        documentId: normalizedResourceId,
         data: {
           galleryImageIds: nextGalleryImageIds,
         },
@@ -538,3 +717,4 @@ export const propertiesService = {
     });
   },
 };
+

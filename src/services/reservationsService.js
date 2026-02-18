@@ -20,7 +20,10 @@ export const reservationsService = {
     });
   },
 
-  async listForOwner(_ownerUserId, { status = "", paymentStatus = "", propertyOwnerId = "" } = {}) {
+  async listForOwner(
+    _ownerUserId,
+    { status = "", paymentStatus = "", propertyOwnerId = "", resourceId = "" } = {},
+  ) {
     ensureAppwriteConfigured();
 
     const queries = [
@@ -32,6 +35,13 @@ export const reservationsService = {
     if (status) queries.push(Query.equal("status", status));
     if (paymentStatus) queries.push(Query.equal("paymentStatus", paymentStatus));
     if (propertyOwnerId) queries.push(Query.equal("propertyOwnerId", propertyOwnerId));
+    if (resourceId) {
+      try {
+        queries.push(Query.equal("resourceId", resourceId));
+      } catch {
+        queries.push(Query.equal("propertyId", resourceId));
+      }
+    }
 
     return databases.listDocuments({
       databaseId: env.appwrite.databaseId,
@@ -61,7 +71,14 @@ export const reservationsService = {
       throw new Error("No esta configurada APPWRITE_FUNCTION_CREATE_RESERVATION_ID.");
     }
 
-    return executeJsonFunction(functionId, payload);
+    const resolvedResourceId = String(
+      payload.resourceId || payload.propertyId || "",
+    ).trim();
+    return executeJsonFunction(functionId, {
+      ...payload,
+      resourceId: resolvedResourceId || undefined,
+      propertyId: resolvedResourceId || payload.propertyId,
+    });
   },
 
   async createPaymentSession(payload) {

@@ -2,8 +2,13 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ExternalLink, MessageCircle, Search, Minimize2, X } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useAuth } from "../../hooks/useAuth";
 import { useChat } from "../../contexts/ChatContext";
 import { profileService } from "../../services/profileService";
+import {
+  getConversationCounterparty,
+  getConversationUnreadCount,
+} from "../../utils/chatParticipants";
 import { isUserOnline } from "../../utils/presence";
 import { cn } from "../../utils/cn";
 import { Spinner, ImageViewerModal } from "../common";
@@ -27,6 +32,7 @@ const getInitials = (name) => {
  */
 const ConversationList = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const {
     conversations,
     loadingConversations,
@@ -40,9 +46,26 @@ const ConversationList = () => {
   const [viewerImage, setViewerImage] = useState(null);
 
   /** Get contact user ID from a conversation */
+  const getConversationContact = useCallback(
+    (conversation) =>
+      getConversationCounterparty(conversation, user?.$id, chatRole),
+    [chatRole, user?.$id],
+  );
+
   const getContactUserId = useCallback(
-    (conv) => (chatRole === "client" ? conv.ownerUserId : conv.clientUserId),
-    [chatRole],
+    (conversation) => getConversationContact(conversation).userId,
+    [getConversationContact],
+  );
+
+  const getContactName = useCallback(
+    (conversation) => getConversationContact(conversation).name,
+    [getConversationContact],
+  );
+
+  const getConversationUnread = useCallback(
+    (conversation) =>
+      getConversationUnreadCount(conversation, user?.$id, chatRole),
+    [chatRole, user?.$id],
   );
 
   /** Load contact profiles for presence indicators */
@@ -205,12 +228,8 @@ const ConversationList = () => {
         )}
 
         {filtered.map((conv) => {
-          const unread =
-            chatRole === "client"
-              ? conv.clientUnread || 0
-              : conv.ownerUnread || 0;
-          const contactName =
-            chatRole === "client" ? conv.ownerName : conv.clientName;
+          const unread = getConversationUnread(conv);
+          const contactName = getContactName(conv);
           const online = isContactOnline(conv);
 
           // Get avatar URL from profile if available

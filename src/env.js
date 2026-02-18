@@ -40,8 +40,16 @@ const env = {
     collections: {
       users: get("APPWRITE_COLLECTION_USERS_ID"),
       userPreferences: get("APPWRITE_COLLECTION_USER_PREFERENCES_ID"),
-      properties: get("APPWRITE_COLLECTION_PROPERTIES_ID"),
-      propertyImages: get("APPWRITE_COLLECTION_PROPERTY_IMAGES_ID"),
+      resources: get("APPWRITE_COLLECTION_RESOURCES_ID"),
+      resourceImages: get("APPWRITE_COLLECTION_RESOURCE_IMAGES_ID"),
+      // Backward-compatible aliases in code, sourced from canonical resource env keys.
+      properties: get("APPWRITE_COLLECTION_RESOURCES_ID"),
+      propertyImages: get("APPWRITE_COLLECTION_RESOURCE_IMAGES_ID"),
+      ratePlans: get("APPWRITE_COLLECTION_RATE_PLANS_ID", "rate_plans"),
+      instanceSettings: get(
+        "APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID",
+        "instance_settings",
+      ),
       amenities: get("APPWRITE_COLLECTION_AMENITIES_ID"),
       leads: get("APPWRITE_COLLECTION_LEADS_ID"),
       reservations: get("APPWRITE_COLLECTION_RESERVATIONS_ID"),
@@ -55,7 +63,9 @@ const env = {
       messages: get("APPWRITE_COLLECTION_MESSAGES_ID", "messages"),
     },
     buckets: {
-      propertyImages: get("APPWRITE_BUCKET_PROPERTY_IMAGES_ID"),
+      resourceImages: get("APPWRITE_BUCKET_RESOURCE_IMAGES_ID"),
+      // Backward-compatible alias in code, sourced from canonical resource bucket env key.
+      propertyImages: get("APPWRITE_BUCKET_RESOURCE_IMAGES_ID"),
       avatars: get("APPWRITE_BUCKET_AVATARS_ID"),
       documents: get("APPWRITE_BUCKET_DOCUMENTS_ID"),
     },
@@ -125,7 +135,7 @@ export const getMissingCriticalEnv = () => {
     "APPWRITE_PROJECT_ID",
     "APPWRITE_DATABASE_ID",
     "APPWRITE_COLLECTION_USERS_ID",
-    "APPWRITE_COLLECTION_PROPERTIES_ID",
+    "APPWRITE_COLLECTION_RESOURCES_ID",
     "APPWRITE_COLLECTION_LEADS_ID",
     "APPWRITE_COLLECTION_RESERVATIONS_ID",
     "APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID",

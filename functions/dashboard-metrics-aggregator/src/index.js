@@ -23,8 +23,8 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  propertiesCollectionId:
-    getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+  resourcesCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   leadsCollectionId: getEnv("APPWRITE_COLLECTION_LEADS_ID") || "leads",
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
@@ -186,12 +186,12 @@ export default async ({ req, res, log, error }) => {
   const db = new Databases(client);
 
   try {
-    const [propertiesPublished, leadsCreated, reservationsCreated] =
+    const [resourcesPublished, leadsCreated, reservationsCreated] =
       await Promise.all([
         countDocuments({
           db,
           databaseId: config.databaseId,
-          collectionId: config.propertiesCollectionId,
+          collectionId: config.resourcesCollectionId,
           queries: [
             Query.equal("status", "published"),
             Query.equal("enabled", true),
@@ -264,7 +264,7 @@ export default async ({ req, res, log, error }) => {
         endIso,
       },
       totals: {
-        propertiesPublished,
+        resourcesPublished,
         leadsCreated,
         reservationsCreated,
         paymentsApproved,
@@ -281,7 +281,7 @@ export default async ({ req, res, log, error }) => {
 
     const analyticsData = {
       metricDate: metricDateIso,
-      propertiesPublished,
+      resourcesPublished,
       leadsCreated,
       reservationsCreated,
       paymentsApproved,
@@ -320,7 +320,7 @@ export default async ({ req, res, log, error }) => {
         afterData: safeJsonString(
           {
             metricDate: metricDateIso,
-            propertiesPublished,
+            resourcesPublished,
             leadsCreated,
             reservationsCreated,
             paymentsApproved,
@@ -341,7 +341,7 @@ export default async ({ req, res, log, error }) => {
       data: {
         analyticsId: analyticsDoc.$id,
         metricDate: metricDateIso,
-        propertiesPublished,
+        resourcesPublished,
         leadsCreated,
         reservationsCreated,
         paymentsApproved,

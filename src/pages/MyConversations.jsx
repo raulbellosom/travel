@@ -6,9 +6,13 @@ import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../hooks/useAuth";
 import { useChat } from "../contexts/ChatContext";
 import { profileService } from "../services/profileService";
+import {
+  getConversationCounterparty,
+  getConversationUnreadCount,
+} from "../utils/chatParticipants";
 import { isUserOnline, getLastSeenText } from "../utils/presence";
 import { cn } from "../utils/cn";
-import { Spinner, ImageViewerModal } from "../components/common";
+import { Spinner } from "../components/common";
 import ChatMessage from "../components/chat/ChatMessage";
 
 /**
@@ -42,8 +46,8 @@ const MyConversations = () => {
   const [contactProfiles, setContactProfiles] = useState({});
   const [presenceRefresh, setPresenceRefresh] = useState(0);
   const [isScrollReady, setIsScrollReady] = useState(false);
-  const [viewerImage, setViewerImage] = useState(null);
   const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const scrolledConversationRef = useRef(null);
@@ -57,6 +61,28 @@ const MyConversations = () => {
       .map((word) => word.charAt(0).toUpperCase())
       .join("");
   }, []);
+
+  const getConversationContact = useCallback(
+    (conversation) =>
+      getConversationCounterparty(conversation, user?.$id, chatRole),
+    [chatRole, user?.$id],
+  );
+
+  const getContactUserId = useCallback(
+    (conversation) => getConversationContact(conversation).userId,
+    [getConversationContact],
+  );
+
+  const getContactName = useCallback(
+    (conversation) => getConversationContact(conversation).name,
+    [getConversationContact],
+  );
+
+  const getConversationUnread = useCallback(
+    (conversation) =>
+      getConversationUnreadCount(conversation, user?.$id, chatRole),
+    [chatRole, user?.$id],
+  );
 
   // Auto-focus a conversation from URL ?focus=
   useEffect(() => {
@@ -98,7 +124,10 @@ const MyConversations = () => {
     const doScroll = () => {
       frameId = requestAnimationFrame(() => {
         const container = messagesContainerRef.current;
-        if (container) {
+        const endElement = messagesEndRef.current;
+        if (endElement) {
+          endElement.scrollIntoView({ behavior: "instant", block: "end" });
+        } else if (container) {
           container.scrollTop = container.scrollHeight;
         }
         setIsScrollReady(true);
@@ -121,25 +150,30 @@ const MyConversations = () => {
 
     const container = messagesContainerRef.current;
     if (container) {
-      // Only scroll if near bottom (user hasn't scrolled up)
+      const lastMessage = messages[messages.length - 1];
+      const isOwnLast = lastMessage?.senderUserId === user?.$id;
+
+      // Keep auto-follow for own sends; for incoming only if user is near bottom.
       const isNearBottom =
         container.scrollHeight - container.scrollTop - container.clientHeight <
         100;
-      if (isNearBottom) {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: "smooth",
-        });
+      if (isNearBottom || isOwnLast) {
+        const endElement = messagesEndRef.current;
+        if (endElement) {
+          endElement.scrollIntoView({ behavior: "smooth", block: "end" });
+        } else {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: "smooth",
+          });
+        }
       }
     }
-  }, [messages, activeConversationId, loadingMessages]);
+  }, [messages, activeConversationId, loadingMessages, user?.$id]);
 
   /** Load contact user profile for presence */
   useEffect(() => {
-    const contactUserId =
-      chatRole === "client"
-        ? activeConversation?.ownerUserId
-        : activeConversation?.clientUserId;
+    const contactUserId = getContactUserId(activeConversation);
 
     if (!contactUserId) {
       setContactProfile(null);
@@ -169,7 +203,7 @@ const MyConversations = () => {
       mounted = false;
       clearInterval(interval);
     };
-  }, [chatRole, activeConversation]);
+  }, [activeConversation, getContactUserId]);
 
   /** Refresh presence calculation periodically */
   useEffect(() => {
@@ -179,12 +213,6 @@ const MyConversations = () => {
 
     return () => clearInterval(interval);
   }, []);
-
-  /** Get contact user ID from a conversation */
-  const getContactUserId = useCallback(
-    (conv) => (chatRole === "client" ? conv.ownerUserId : conv.clientUserId),
-    [chatRole],
-  );
 
   /** Load contact profiles for conversation list avatars and presence */
   useEffect(() => {
@@ -259,6 +287,7 @@ const MyConversations = () => {
     return conversations.filter(
       (c) =>
         (c.propertyTitle || "").toLowerCase().includes(q) ||
+        (c.resourceTitle || "").toLowerCase().includes(q) ||
         (c.clientName || "").toLowerCase().includes(q) ||
         (c.ownerName || "").toLowerCase().includes(q) ||
         (c.lastMessage || "").toLowerCase().includes(q),
@@ -269,12 +298,16 @@ const MyConversations = () => {
 
   const handleSend = async (e) => {
     e?.preventDefault();
-    if (!input.trim() || sending) return;
+    const text = input.trim();
+    if (!text || sending) return;
+    setInput("");
+    setShowEmojiPicker(false);
     setSending(true);
     try {
-      await sendMessage(input);
-      setInput("");
+      await sendMessage(text);
+      inputRef.current?.focus();
     } catch {
+      setInput(text);
       // handled in context
     } finally {
       setSending(false);
@@ -290,7 +323,14 @@ const MyConversations = () => {
 
   const handleEmojiClick = (emojiObject) => {
     setInput((prev) => prev + emojiObject.emoji);
-    inputRef.current?.focus();
+  };
+
+  const toggleEmojiPicker = () => {
+    setShowEmojiPicker((prev) => {
+      const next = !prev;
+      if (next) inputRef.current?.blur();
+      return next;
+    });
   };
 
   /* ── Close emoji picker when clicking outside ─────────── */
@@ -324,8 +364,7 @@ const MyConversations = () => {
     return d.toLocaleDateString();
   };
 
-  const contactName = (conv) =>
-    chatRole === "client" ? conv.ownerName : conv.clientName;
+  const contactName = getContactName;
 
   /** Contact presence status */
   const contactPresence = useMemo(() => {
@@ -338,6 +377,28 @@ const MyConversations = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactProfile?.lastSeenAt, t, presenceRefresh]);
+
+  const contactAvatarUrl = useMemo(() => {
+    const avatarFileId = contactProfile?.avatarFileId;
+    if (!avatarFileId) return "";
+    return profileService.getAvatarViewUrl(avatarFileId);
+  }, [contactProfile]);
+
+  const ownAvatarUrl = useMemo(() => {
+    const avatarFileId = user?.avatarFileId;
+    if (!avatarFileId) return "";
+    return profileService.getAvatarViewUrl(avatarFileId);
+  }, [user?.avatarFileId]);
+
+  const lastOwnMessageId = useMemo(() => {
+    if (!user?.$id) return null;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].senderUserId === user.$id) {
+        return messages[i].$id;
+      }
+    }
+    return null;
+  }, [messages, user?.$id]);
 
   /* ── Render ──────────────────────────────────────────── */
 
@@ -420,10 +481,9 @@ const MyConversations = () => {
             )}
 
             {filtered.map((conv) => {
-              const unread =
-                chatRole === "client"
-                  ? conv.clientUnread || 0
-                  : conv.ownerUnread || 0;
+              const unread = getConversationUnread(conv);
+              const online = isListContactOnline(conv);
+              const avatarUrl = getListContactAvatarUrl(conv);
 
               return (
                 <button
@@ -439,8 +499,21 @@ const MyConversations = () => {
                       "bg-cyan-50/50 dark:bg-cyan-950/20",
                   )}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
-                    {getInitials(contactName(conv))}
+                  <div className="relative shrink-0">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={contactName(conv) || ""}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
+                        {getInitials(contactName(conv))}
+                      </div>
+                    )}
+                    {online && (
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -460,7 +533,7 @@ const MyConversations = () => {
                       </span>
                     </div>
                     <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                      {conv.propertyTitle}
+                      {conv.resourceTitle || conv.propertyTitle}
                     </p>
                     <div className="mt-1 flex items-center justify-between gap-2">
                       <p
@@ -513,8 +586,21 @@ const MyConversations = () => {
                 >
                   <ArrowLeft size={18} />
                 </button>
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
-                  {getInitials(contactName(activeConversation || {}))}
+                <div className="relative shrink-0">
+                  {contactAvatarUrl ? (
+                    <img
+                      src={contactAvatarUrl}
+                      alt={contactName(activeConversation || {}) || ""}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
+                      {getInitials(contactName(activeConversation || {}))}
+                    </div>
+                  )}
+                  {contactPresence?.isOnline && (
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
@@ -537,9 +623,12 @@ const MyConversations = () => {
                       </span>
                     </div>
                   )}
-                  {!contactPresence && activeConversation?.propertyTitle && (
+                  {!contactPresence &&
+                    (activeConversation?.resourceTitle ||
+                      activeConversation?.propertyTitle) && (
                     <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                      {activeConversation.propertyTitle}
+                      {activeConversation.resourceTitle ||
+                        activeConversation.propertyTitle}
                     </p>
                   )}
                 </div>
@@ -570,8 +659,12 @@ const MyConversations = () => {
                       key={msg.$id}
                       message={msg}
                       isOwn={msg.senderUserId === user?.$id}
+                      showOwnAvatar={msg.$id === lastOwnMessageId}
+                      ownAvatarUrl={ownAvatarUrl}
+                      ownAvatarLabel={user?.name || user?.email || "Me"}
                     />
                   ))}
+                  <div ref={messagesEndRef} aria-hidden="true" />
                 </div>
               </div>
 
@@ -587,6 +680,7 @@ const MyConversations = () => {
                       onEmojiClick={handleEmojiClick}
                       theme="auto"
                       searchDisabled={false}
+                      autoFocusSearch={false}
                       skinTonesDisabled
                       previewConfig={{ showPreview: false }}
                       height={350}
@@ -602,7 +696,7 @@ const MyConversations = () => {
                   {/* Emoji Button */}
                   <button
                     type="button"
-                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    onClick={toggleEmojiPicker}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                     aria-label={t("chat.actions.emoji")}
                   >

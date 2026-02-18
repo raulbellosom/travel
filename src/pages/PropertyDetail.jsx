@@ -48,6 +48,8 @@ import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import LazyImage from "../components/common/atoms/LazyImage";
 import { usePageSeo } from "../hooks/usePageSeo";
+import { getResourceBehavior } from "../utils/resourceModel";
+import { useInstanceModules } from "../hooks/useInstanceModules";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -64,6 +66,7 @@ const FALLBACK_BANNERS = [
 const isSale = (op) => op === "sale";
 const isRent = (op) => op === "rent";
 const isVacation = (op) => op === "vacation_rental";
+const isHourly = (op) => op === "rent_hourly";
 
 const getRentPeriodSuffix = (period, t) => {
   const map = {
@@ -81,6 +84,7 @@ const PropertyDetail = () => {
   const { slug } = useParams();
   const { user } = useAuth();
   const { startConversation, isAuthenticated: isChatAuth } = useChat();
+  const modulesApi = useInstanceModules();
   const [heroSlide, setHeroSlide] = useState(0);
 
   const [property, setProperty] = useState(null);
@@ -97,6 +101,13 @@ const PropertyDetail = () => {
   });
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
+  const resourceBehavior = useMemo(
+    () =>
+      getResourceBehavior(property || {}, {
+        isEnabled: modulesApi.isEnabled,
+      }),
+    [property, modulesApi.isEnabled],
+  );
 
   usePageSeo({
     title: property?.title
@@ -149,13 +160,14 @@ const PropertyDetail = () => {
   useEffect(() => {
     if (!property || !env.appwrite.functions.propertyViewCounter) return;
     executeJsonFunction(env.appwrite.functions.propertyViewCounter, {
+      resourceId: property.$id,
       propertyId: property.$id,
     }).catch(() => {});
   }, [property]);
 
   /* ─── Computed values ────────────────────────────────── */
 
-  const opType = property?.operationType;
+  const opType = resourceBehavior.operationType;
 
   const amount = useMemo(() => {
     if (!property) return "";
@@ -168,14 +180,20 @@ const PropertyDetail = () => {
 
   const priceSuffix = useMemo(() => {
     if (!property) return "";
-    if (isVacation(opType)) return t("client:propertyDetail.price.perNight");
-    if (isRent(opType)) return getRentPeriodSuffix(property.rentPeriod, t);
+    if (resourceBehavior.priceLabel === "night")
+      return t("client:propertyDetail.price.perNight");
+    if (resourceBehavior.priceLabel === "hour")
+      return t("client:pricing.perHour", { defaultValue: " /hora" });
+    if (isRent(opType))
+      return getRentPeriodSuffix(property.rentPeriod, t);
     return "";
-  }, [opType, property, t]);
+  }, [opType, property, resourceBehavior.priceLabel, t]);
 
   const priceLabel = useMemo(() => {
     if (!property) return "";
     if (isSale(opType)) return t("client:propertyDetail.price.sale");
+    if (isHourly(opType))
+      return t("client:pricing.perHour", { defaultValue: "Precio por hora" });
     if (isRent(opType)) return t("client:propertyDetail.price.rent");
     return t("client:propertyDetail.price.vacationRental");
   }, [opType, property, t]);
@@ -213,6 +231,13 @@ const PropertyDetail = () => {
         color: "bg-emerald-500",
         label: t("client:common.enums.operation.sale"),
       };
+    if (isHourly(opType))
+      return {
+        color: "bg-indigo-500",
+        label: t("client:common.enums.operation.rent_hourly", {
+          defaultValue: "Renta por hora",
+        }),
+      };
     if (isRent(opType))
       return {
         color: "bg-blue-500",
@@ -223,6 +248,25 @@ const PropertyDetail = () => {
       label: t("client:common.enums.operation.vacation_rental"),
     };
   }, [opType, property, t]);
+
+  const ctaBlockedMessage = useMemo(() => {
+    if (!resourceBehavior.canOperateMode) {
+      return t("client:propertyDetail.moduleDisabled", {
+        defaultValue: "Este tipo de publicacion no esta habilitado.",
+      });
+    }
+    if (resourceBehavior.requiresPayments && !resourceBehavior.canUsePayments) {
+      return t("client:propertyDetail.paymentsDisabled", {
+        defaultValue: "Pagos en linea no disponibles para esta instancia.",
+      });
+    }
+    return "";
+  }, [
+    resourceBehavior.canOperateMode,
+    resourceBehavior.canUsePayments,
+    resourceBehavior.requiresPayments,
+    t,
+  ]);
 
   /* ─── Handlers ───────────────────────────────────────── */
 
@@ -249,7 +293,9 @@ const PropertyDetail = () => {
     setChatLoading(true);
     try {
       await startConversation({
+        resourceId: property.$id,
         propertyId: property.$id,
+        resourceTitle: property.title,
         propertyTitle: property.title,
         ownerUserId: property.ownerUserId,
         ownerName: owner?.firstName
@@ -740,6 +786,8 @@ const PropertyDetail = () => {
                 priceLabel={priceLabel}
                 property={property}
                 opType={opType}
+                bookingType={resourceBehavior.bookingType}
+                ctaBlockedMessage={ctaBlockedMessage}
                 onContactAgent={handleOpenChat}
                 canChat={
                   isChatAuth &&
@@ -1055,6 +1103,8 @@ const PropertyDetail = () => {
                 priceLabel={priceLabel}
                 property={property}
                 opType={opType}
+                bookingType={resourceBehavior.bookingType}
+                ctaBlockedMessage={ctaBlockedMessage}
                 onContactAgent={handleOpenChat}
                 canChat={
                   isChatAuth &&
@@ -1310,15 +1360,19 @@ function PriceCard({
   priceLabel,
   property,
   opType,
+  bookingType,
+  ctaBlockedMessage,
   onContactAgent,
   canChat,
   chatLoading,
 }) {
   const ctaKey = isSale(opType)
     ? "sale"
-    : isRent(opType)
-      ? "rent"
-      : "vacationRental";
+    : isHourly(opType)
+      ? "hourly"
+      : isRent(opType)
+        ? "rent"
+        : "vacationRental";
 
   // Background and accent colors per type
   const styles = {
@@ -1337,9 +1391,28 @@ function PriceCard({
       btn: "bg-linear-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500",
       priceColor: "text-amber-700 dark:text-amber-300",
     },
+    hourly: {
+      bg: "border-indigo-200 bg-linear-to-br from-indigo-50 to-white dark:border-indigo-900/50 dark:from-indigo-950/30 dark:to-slate-900",
+      btn: "bg-linear-to-r from-indigo-500 to-cyan-600 hover:from-indigo-400 hover:to-cyan-500",
+      priceColor: "text-indigo-700 dark:text-indigo-300",
+    },
   };
 
-  const s = styles[ctaKey];
+  const s = styles[ctaKey] || styles.sale;
+  const isBookFlow = bookingType && bookingType !== "manual_contact";
+  const ctaLabel =
+    ctaKey === "hourly"
+      ? t("client:propertyDetail.cta.hourly.button", {
+          defaultValue: "Reservar horario",
+        })
+      : t(`client:propertyDetail.cta.${ctaKey}.button`);
+  const ctaHint =
+    ctaKey === "hourly"
+      ? t("client:propertyDetail.cta.hourly.hint", {
+          defaultValue: "Confirma disponibilidad por bloques de tiempo.",
+        })
+      : t(`client:propertyDetail.cta.${ctaKey}.hint`);
+  const isBlocked = Boolean(ctaBlockedMessage);
 
   return (
     <article className={`rounded-2xl border p-5 shadow-sm ${s.bg}`}>
@@ -1365,16 +1438,24 @@ function PriceCard({
 
       {/* Hint */}
       <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-        {t(`client:propertyDetail.cta.${ctaKey}.hint`)}
+        {ctaHint}
       </p>
 
       {/* CTA Button */}
-      {isVacation(opType) ? (
+      {isBlocked ? (
+        <button
+          type="button"
+          disabled
+          className="mt-4 inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+        >
+          {ctaBlockedMessage}
+        </button>
+      ) : isBookFlow ? (
         <Link
           to={`/reservar/${property.slug}`}
           className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition ${s.btn}`}
         >
-          {t(`client:propertyDetail.cta.${ctaKey}.button`)}
+          {ctaLabel}
           <ArrowRight size={16} />
         </Link>
       ) : (
@@ -1385,7 +1466,7 @@ function PriceCard({
           className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
         >
           {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
-          {t(`client:propertyDetail.cta.${ctaKey}.button`)}
+          {ctaLabel}
         </button>
       )}
     </article>

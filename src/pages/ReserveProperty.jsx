@@ -11,6 +11,8 @@ import { reservationsService } from "../services/reservationsService";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
+import { getResourceBehavior } from "../utils/resourceModel";
+import { useInstanceModules } from "../hooks/useInstanceModules";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80";
@@ -26,6 +28,7 @@ const ReserveProperty = () => {
   const { t, i18n } = useTranslation();
   const { slug } = useParams();
   const { user } = useAuth();
+  const modulesApi = useInstanceModules();
   const navigate = useNavigate();
   const location = useLocation();
   const [property, setProperty] = useState(null);
@@ -47,6 +50,13 @@ const ReserveProperty = () => {
   });
 
   const locale = i18n.language === "en" ? "en-US" : "es-MX";
+  const behavior = useMemo(
+    () =>
+      getResourceBehavior(property || {}, {
+        isEnabled: modulesApi.isEnabled,
+      }),
+    [property, modulesApi.isEnabled],
+  );
   usePageSeo({
     title: property?.title
       ? `${property.title} | Reservar`
@@ -145,6 +155,24 @@ const ReserveProperty = () => {
     setError("");
     setSuccess("");
 
+    if (!behavior.canOperateMode) {
+      setError(
+        t("reservePropertyPage.errors.moduleDisabled", {
+          defaultValue: "El modulo de reservaciones para este recurso no esta habilitado.",
+        }),
+      );
+      return;
+    }
+
+    if (behavior.requiresPayments && !behavior.canUsePayments) {
+      setError(
+        t("reservePropertyPage.errors.paymentsDisabled", {
+          defaultValue: "Los pagos en linea no estan habilitados para esta instancia.",
+        }),
+      );
+      return;
+    }
+
     if (!user) {
       navigate("/login", { replace: true, state: { from: location } });
       return;
@@ -169,6 +197,7 @@ const ReserveProperty = () => {
     try {
       const reservationResult =
         await reservationsService.createReservationPublic({
+          resourceId: property.$id,
           propertyId: property.$id,
           checkInDate: new Date(form.dateRange.startDate).toISOString(),
           checkOutDate: new Date(form.dateRange.endDate).toISOString(),
@@ -185,6 +214,7 @@ const ReserveProperty = () => {
 
       const paymentResult = await reservationsService.createPaymentSession({
         reservationId,
+        resourceId: property.$id,
         provider: form.provider,
         guestEmail: user.email,
       });
@@ -260,8 +290,8 @@ const ReserveProperty = () => {
                 {t("client:reserveProperty.labels.operation")}
               </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
-                {t(`client:common.enums.operation.${property.operationType}`, {
-                  defaultValue: property.operationType,
+                {t(`client:common.enums.operation.${behavior.operationType}`, {
+                  defaultValue: behavior.operationType,
                 })}
               </p>
             </div>
@@ -342,6 +372,7 @@ const ReserveProperty = () => {
               onChange={(value) => updateForm({ provider: value })}
               options={providerOptions}
               size="md"
+              disabled={behavior.requiresPayments && !behavior.canUsePayments}
             />
           </label>
 

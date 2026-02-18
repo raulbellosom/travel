@@ -1,4 +1,12 @@
 ﻿import { Client, Databases, ID, Query, Users } from "node-appwrite";
+import {
+  createModulesService,
+  getBookingType,
+  getCommercialMode,
+  getRequiredBookingModule,
+  requiresOnlinePayments,
+  toModuleErrorResponse,
+} from "./lib/modulesService.js";
 
 const SUPPORTED_PROVIDERS = ["stripe", "mercadopago"];
 const SUPPORTED_CURRENCIES = ["MXN", "USD", "EUR"];
@@ -19,11 +27,15 @@ const cfg = () => ({
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
   appBaseUrl: getEnv("APP_BASE_URL") || "http://localhost:5173",
+  resourcesCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   reservationPaymentsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") || "reservation_payments",
   activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  instanceSettingsCollectionId:
+    getEnv("APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID") || "instance_settings",
   paymentDefaultProvider: getEnv("PAYMENT_DEFAULT_PROVIDER") || "stripe",
   paymentSuccessUrl: getEnv("PAYMENT_SUCCESS_URL") || "",
   paymentCancelUrl: getEnv("PAYMENT_CANCEL_URL") || "",
@@ -50,11 +62,7 @@ const normalizeText = (value, maxLength = 0) => {
 
 const getAuthenticatedUserId = (req) => {
   const headers = req.headers || {};
-  return (
-    headers["x-appwrite-user-id"] ||
-    headers["x-appwrite-userid"] ||
-    ""
-  );
+  return headers["x-appwrite-user-id"] || headers["x-appwrite-userid"] || "";
 };
 
 const toMoney = (value) => {
@@ -87,6 +95,9 @@ const getCheckoutFromRaw = (rawPayload) => {
   return parsed.checkoutUrl || "";
 };
 
+const resolveReservationResourceId = (reservation = {}) =>
+  normalizeText(reservation.resourceId, 64);
+
 const buildReturnUrl = ({ cfg, reservation, provider, status }) => {
   const candidate =
     status === "success" && cfg.paymentSuccessUrl
@@ -97,13 +108,14 @@ const buildReturnUrl = ({ cfg, reservation, provider, status }) => {
 
   if (candidate) return candidate;
 
+  const resourceId = resolveReservationResourceId(reservation);
   const base = String(cfg.appBaseUrl || "http://localhost:5173").replace(/\/$/, "");
   const params = new URLSearchParams({
     reservationId: reservation.$id,
     provider,
     status,
   });
-  return `${base}/reservar/${encodeURIComponent(reservation.propertyId)}?${params.toString()}`;
+  return `${base}/reservar/${encodeURIComponent(resourceId)}?${params.toString()}`;
 };
 
 const buildMockSession = ({ cfg, reservation, provider }) => {
@@ -134,6 +146,7 @@ const createStripeSession = async ({ cfg, reservation, amount, currency }) => {
     return buildMockSession({ cfg, reservation, provider: "stripe" });
   }
 
+  const resourceId = resolveReservationResourceId(reservation);
   const successUrl = buildReturnUrl({
     cfg,
     reservation,
@@ -156,8 +169,8 @@ const createStripeSession = async ({ cfg, reservation, amount, currency }) => {
     "line_items[0][price_data][product_data][name]": `Reservation ${reservation.$id}`,
     "line_items[0][quantity]": "1",
     "metadata[reservationId]": reservation.$id,
-    "metadata[propertyId]": reservation.propertyId,
-  });
+    "metadata[resourceId]": resourceId,
+      });
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -203,6 +216,7 @@ const createMercadoPagoPreference = async ({ cfg, reservation, amount, currency 
     return buildMockSession({ cfg, reservation, provider: "mercadopago" });
   }
 
+  const resourceId = resolveReservationResourceId(reservation);
   const successUrl = buildReturnUrl({
     cfg,
     reservation,
@@ -241,8 +255,8 @@ const createMercadoPagoPreference = async ({ cfg, reservation, amount, currency 
       ],
       metadata: {
         reservationId: reservation.$id,
-        propertyId: reservation.propertyId,
-      },
+        resourceId,
+              },
     }),
   });
 
@@ -281,6 +295,47 @@ const safeActivityLog = async ({ db, config, data, logger }) => {
     );
   } catch (err) {
     logger(`activity_logs write skipped: ${err.message}`);
+  }
+};
+
+const upsertPaymentDocument = async ({
+  db,
+  config,
+  existingPending,
+  paymentData,
+}) => {
+  try {
+    if (existingPending) {
+      return await db.updateDocument(
+        config.databaseId,
+        config.reservationPaymentsCollectionId,
+        existingPending.$id,
+        paymentData,
+      );
+    }
+
+    return await db.createDocument(
+      config.databaseId,
+      config.reservationPaymentsCollectionId,
+      ID.unique(),
+      paymentData,
+    );
+  } catch {
+    if (existingPending) {
+      return db.updateDocument(
+        config.databaseId,
+        config.reservationPaymentsCollectionId,
+        existingPending.$id,
+        paymentData,
+      );
+    }
+
+    return db.createDocument(
+      config.databaseId,
+      config.reservationPaymentsCollectionId,
+      ID.unique(),
+      paymentData,
+    );
   }
 };
 
@@ -346,6 +401,7 @@ export default async ({ req, res, log, error }) => {
     .setKey(config.apiKey);
   const db = new Databases(client);
   const users = new Users(client);
+  const modulesService = createModulesService({ db, config });
 
   try {
     const authUser = await users.get(authenticatedUserId);
@@ -441,6 +497,45 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
+    const resourceId = resolveReservationResourceId(reservation);
+    if (!resourceId) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "RESERVATION_RESOURCE_MISSING",
+        message: "Reservation resource is not configured",
+      });
+    }
+
+    await modulesService.assertModuleEnabled("module.resources");
+
+    const resource = await db.getDocument(
+      config.databaseId,
+      config.resourcesCollectionId,
+      resourceId,
+    );
+
+    const commercialMode = getCommercialMode(resource);
+    const bookingType = getBookingType(resource, commercialMode);
+
+    if (bookingType === "manual_contact") {
+      return json(res, 409, {
+        ok: false,
+        success: false,
+        code: "MANUAL_CONTACT_ONLY",
+        message: "This resource uses manual contact flow and does not support checkout",
+      });
+    }
+
+    const requiredBookingModule = getRequiredBookingModule(commercialMode);
+    if (requiredBookingModule) {
+      await modulesService.assertModuleEnabled(requiredBookingModule);
+    }
+
+    if (requiresOnlinePayments(commercialMode, bookingType)) {
+      await modulesService.assertModuleEnabled("module.payments.online");
+    }
+
     const amount = toMoney(reservation.totalAmount || 0);
     if (amount === null || amount <= 0) {
       return json(res, 422, {
@@ -487,7 +582,8 @@ export default async ({ req, res, log, error }) => {
         data: {
           paymentId: existingPending.$id,
           reservationId,
-          provider: providerRaw,
+          resourceId,
+                    provider: providerRaw,
           providerPaymentId: existingPending.providerPaymentId,
           checkoutUrl: existingCheckoutUrl,
           mode: parseRawPayload(existingPending.rawPayload).mode || "unknown",
@@ -513,7 +609,8 @@ export default async ({ req, res, log, error }) => {
 
     const paymentData = {
       reservationId,
-      propertyOwnerId: reservation.propertyOwnerId,
+      resourceId,
+      resourceOwnerUserId: reservation.resourceOwnerUserId,
       provider: providerRaw,
       providerPaymentId: String(session.providerPaymentId || "").slice(0, 120),
       amount,
@@ -527,22 +624,12 @@ export default async ({ req, res, log, error }) => {
       enabled: true,
     };
 
-    let paymentDocument;
-    if (existingPending) {
-      paymentDocument = await db.updateDocument(
-        config.databaseId,
-        config.reservationPaymentsCollectionId,
-        existingPending.$id,
-        paymentData,
-      );
-    } else {
-      paymentDocument = await db.createDocument(
-        config.databaseId,
-        config.reservationPaymentsCollectionId,
-        ID.unique(),
-        paymentData,
-      );
-    }
+    const paymentDocument = await upsertPaymentDocument({
+      db,
+      config,
+      existingPending,
+      paymentData,
+    });
 
     await db.updateDocument(
       config.databaseId,
@@ -567,6 +654,7 @@ export default async ({ req, res, log, error }) => {
         entityId: paymentDocument.$id,
         afterData: safeJsonString({
           reservationId,
+          resourceId,
           provider: providerRaw,
           providerPaymentId: session.providerPaymentId,
           amount,
@@ -586,7 +674,8 @@ export default async ({ req, res, log, error }) => {
       data: {
         paymentId: paymentDocument.$id,
         reservationId,
-        provider: providerRaw,
+        resourceId,
+                provider: providerRaw,
         providerPaymentId: session.providerPaymentId,
         checkoutUrl: session.checkoutUrl,
         mode: session.mode,
@@ -594,6 +683,11 @@ export default async ({ req, res, log, error }) => {
       },
     });
   } catch (err) {
+    if (err?.code === "MODULE_DISABLED" || err?.code === "LIMIT_EXCEEDED") {
+      const moduleError = toModuleErrorResponse(err);
+      return json(res, moduleError.status, moduleError.body);
+    }
+
     error(`create-payment-session failed: ${err.message}`);
     return json(res, 500, {
       ok: false,
@@ -603,3 +697,4 @@ export default async ({ req, res, log, error }) => {
     });
   }
 };
+

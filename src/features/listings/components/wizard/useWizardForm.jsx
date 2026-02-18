@@ -2,8 +2,31 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { propertiesService } from "../../../../services/propertiesService";
 import { isValidSlug, normalizeSlug } from "../../../../utils/slug";
-import { locationOptionsService } from "../../services/locationOptionsService";
 import { WIZARD_DEFAULTS } from "./wizardConfig";
+import {
+  normalizeAttributes,
+  normalizeBookingType,
+  normalizeCommercialMode,
+  normalizePricingModel,
+  normalizeResourceType,
+  toLegacyOperationType,
+  toLegacyPricePerUnit,
+} from "../../../../utils/resourceModel";
+
+let locationOptionsServicePromise = null;
+
+const loadLocationOptionsService = async () => {
+  if (!locationOptionsServicePromise) {
+    locationOptionsServicePromise = import("../../services/locationOptionsService")
+      .then((module) => module.locationOptionsService)
+      .catch((error) => {
+        locationOptionsServicePromise = null;
+        throw error;
+      });
+  }
+
+  return locationOptionsServicePromise;
+};
 
 /* ── helpers ────────────────────────────────────────────────────── */
 
@@ -47,63 +70,119 @@ export const formatFileSize = (bytes) => {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const ALLOWED_PRICING_MODELS = Object.freeze({
+  sale: ["total", "per_m2"],
+  rent_long_term: ["per_month", "total", "per_m2"],
+  rent_short_term: ["per_night", "per_day", "per_person", "total"],
+  rent_hourly: ["per_hour", "per_event", "per_person", "total"],
+});
+
+const normalizeCategoryValue = (value, fallback = "house") => {
+  const normalized = String(value || fallback)
+    .trim()
+    .toLowerCase();
+  return normalized || fallback;
+};
+
+const pickAllowedPricingModel = (inputValue, commercialMode) => {
+  const normalizedMode = normalizeCommercialMode(commercialMode);
+  const allowed = ALLOWED_PRICING_MODELS[normalizedMode] || ALLOWED_PRICING_MODELS.sale;
+  const candidate = normalizePricingModel(inputValue, normalizedMode);
+  return allowed.includes(candidate) ? candidate : allowed[0];
+};
+
+const buildCommercialState = (draft = {}, nextCommercialInput = "sale") => {
+  const commercialMode = normalizeCommercialMode(nextCommercialInput);
+  const pricingModel = pickAllowedPricingModel(
+    draft.pricingModel || draft.pricePerUnit || "total",
+    commercialMode,
+  );
+  const bookingType = normalizeBookingType(draft.bookingType, commercialMode);
+  return {
+    commercialMode,
+    operationType: toLegacyOperationType(commercialMode),
+    pricingModel,
+    pricePerUnit: toLegacyPricePerUnit(pricingModel),
+    bookingType,
+  };
+};
+
 /* ── build form state ────────────────────────────────────────── */
 
-export const buildFormState = (initialValues = {}) => ({
-  ...WIZARD_DEFAULTS,
-  ...initialValues,
-  slug: normalizeSlug(initialValues.slug || ""),
-  title: String(initialValues.title || ""),
-  description: String(initialValues.description || ""),
-  propertyType: String(
-    initialValues.propertyType || WIZARD_DEFAULTS.propertyType,
-  ),
-  operationType: String(
-    initialValues.operationType || WIZARD_DEFAULTS.operationType,
-  ),
-  price: toInputString(initialValues.price, ""),
-  currency: String(initialValues.currency || WIZARD_DEFAULTS.currency),
-  pricePerUnit: String(
-    initialValues.pricePerUnit || WIZARD_DEFAULTS.pricePerUnit,
-  ),
-  priceNegotiable: Boolean(initialValues.priceNegotiable),
-  streetAddress: String(initialValues.streetAddress || ""),
-  neighborhood: String(initialValues.neighborhood || ""),
-  postalCode: String(initialValues.postalCode || ""),
-  latitude: toInputString(initialValues.latitude, ""),
-  longitude: toInputString(initialValues.longitude, ""),
-  bedrooms: toInputString(initialValues.bedrooms, "0"),
-  bathrooms: toInputString(initialValues.bathrooms, "0"),
-  parkingSpaces: toInputString(initialValues.parkingSpaces, "0"),
-  totalArea: toInputString(initialValues.totalArea, ""),
-  builtArea: toInputString(initialValues.builtArea, ""),
-  floors: toInputString(initialValues.floors, "1"),
-  yearBuilt: toInputString(initialValues.yearBuilt, ""),
-  maxGuests: toInputString(initialValues.maxGuests, "1"),
-  furnished: String(initialValues.furnished || ""),
-  petsAllowed: Boolean(initialValues.petsAllowed),
-  rentPeriod: String(initialValues.rentPeriod || "monthly"),
-  minStayNights: toInputString(initialValues.minStayNights, "1"),
-  maxStayNights: toInputString(initialValues.maxStayNights, "365"),
-  checkInTime: String(initialValues.checkInTime || "15:00"),
-  checkOutTime: String(initialValues.checkOutTime || "11:00"),
-  videoUrl: String(initialValues.videoUrl || ""),
-  virtualTourUrl: String(initialValues.virtualTourUrl || ""),
-  city: String(initialValues.city || ""),
-  state: String(initialValues.state || ""),
-  country: String(initialValues.country || WIZARD_DEFAULTS.country),
-  status: "draft",
-  featured: Boolean(initialValues.featured),
-  amenityIds: Array.isArray(initialValues.amenityIds)
+export const buildFormState = (initialValues = {}) => {
+  const merged = {
+    ...WIZARD_DEFAULTS,
+    ...(initialValues || {}),
+  };
+
+  const resourceType = normalizeResourceType(
+    merged.resourceType || WIZARD_DEFAULTS.resourceType,
+  );
+  const category = normalizeCategoryValue(
+    merged.category || merged.propertyType || WIZARD_DEFAULTS.category,
+    WIZARD_DEFAULTS.category,
+  );
+  const commercialState = buildCommercialState(
+    merged,
+    merged.commercialMode || merged.operationType || WIZARD_DEFAULTS.operationType,
+  );
+  const amenityIds = Array.isArray(merged.amenityIds)
     ? Array.from(
         new Set(
-          initialValues.amenityIds
+          merged.amenityIds
             .map((id) => String(id || "").trim())
             .filter(Boolean),
         ),
       )
-    : [],
-});
+    : [];
+
+  return {
+    ...merged,
+    resourceType,
+    category,
+    propertyType: category,
+    commercialMode: commercialState.commercialMode,
+    operationType: commercialState.operationType,
+    pricingModel: commercialState.pricingModel,
+    pricePerUnit: commercialState.pricePerUnit,
+    bookingType: commercialState.bookingType,
+    attributes: normalizeAttributes(merged.attributes || "{}"),
+    slug: normalizeSlug(merged.slug || ""),
+    title: String(merged.title || ""),
+    description: String(merged.description || ""),
+    price: toInputString(merged.price, ""),
+    currency: String(merged.currency || WIZARD_DEFAULTS.currency),
+    priceNegotiable: Boolean(merged.priceNegotiable),
+    streetAddress: String(merged.streetAddress || ""),
+    neighborhood: String(merged.neighborhood || ""),
+    postalCode: String(merged.postalCode || ""),
+    latitude: toInputString(merged.latitude, ""),
+    longitude: toInputString(merged.longitude, ""),
+    bedrooms: toInputString(merged.bedrooms, "0"),
+    bathrooms: toInputString(merged.bathrooms, "0"),
+    parkingSpaces: toInputString(merged.parkingSpaces, "0"),
+    totalArea: toInputString(merged.totalArea, ""),
+    builtArea: toInputString(merged.builtArea, ""),
+    floors: toInputString(merged.floors, "1"),
+    yearBuilt: toInputString(merged.yearBuilt, ""),
+    maxGuests: toInputString(merged.maxGuests, "1"),
+    furnished: String(merged.furnished || ""),
+    petsAllowed: Boolean(merged.petsAllowed),
+    rentPeriod: String(merged.rentPeriod || "monthly"),
+    minStayNights: toInputString(merged.minStayNights, "1"),
+    maxStayNights: toInputString(merged.maxStayNights, "365"),
+    checkInTime: String(merged.checkInTime || "15:00"),
+    checkOutTime: String(merged.checkOutTime || "11:00"),
+    videoUrl: String(merged.videoUrl || ""),
+    virtualTourUrl: String(merged.virtualTourUrl || ""),
+    city: String(merged.city || ""),
+    state: String(merged.state || ""),
+    country: String(merged.country || WIZARD_DEFAULTS.country),
+    status: String(merged.status || "draft"),
+    featured: Boolean(merged.featured),
+    amenityIds,
+  };
+};
 
 /* ── main hook ──────────────────────────────────────────────── */
 
@@ -149,6 +228,12 @@ export const useWizardForm = ({
   const [pendingImageItems, setPendingImageItems] = useState([]);
   const [imageUploadError, setImageUploadError] = useState("");
   const [isDraggingImages, setIsDraggingImages] = useState(false);
+  const [locationService, setLocationService] = useState(null);
+  const [isLocationOptionsLoading, setIsLocationOptionsLoading] =
+    useState(false);
+  const [countryOptions, setCountryOptions] = useState([]);
+  const [stateOptions, setStateOptions] = useState([]);
+  const [cityOptions, setCityOptions] = useState([]);
 
   const slugCheckRequestRef = useRef(0);
   const galleryInputRef = useRef(null);
@@ -197,6 +282,25 @@ export const useWizardForm = ({
     clearPendingImages();
   }, [clearPendingImages, mergedInitialValues, mode]);
 
+  const ensureLocationOptionsLoaded = useCallback(async () => {
+    if (locationService) return locationService;
+    if (isLocationOptionsLoading) return null;
+
+    setIsLocationOptionsLoading(true);
+    try {
+      const service = await loadLocationOptionsService();
+      setLocationService(() => service);
+      setCountryOptions(service.getCountries());
+      return service;
+    } catch {
+      setLocationService(null);
+      setCountryOptions([]);
+      return null;
+    } finally {
+      setIsLocationOptionsLoading(false);
+    }
+  }, [isLocationOptionsLoading, locationService]);
+
   /* ── field helpers ─────────────────────────────────── */
 
   const clearError = useCallback((field) => {
@@ -210,8 +314,77 @@ export const useWizardForm = ({
 
   const setField = useCallback(
     (field, value) => {
-      setForm((prev) => ({ ...prev, [field]: value }));
+      setForm((prev) => {
+        if (field === "operationType" || field === "commercialMode") {
+          return {
+            ...prev,
+            ...buildCommercialState(prev, value),
+          };
+        }
+
+        if (field === "propertyType" || field === "category") {
+          const category = normalizeCategoryValue(
+            value,
+            prev.category || prev.propertyType || "house",
+          );
+          return {
+            ...prev,
+            category,
+            propertyType: category,
+          };
+        }
+
+        if (field === "pricingModel" || field === "pricePerUnit") {
+          const pricingModel = pickAllowedPricingModel(
+            value,
+            prev.commercialMode || prev.operationType || "sale",
+          );
+          return {
+            ...prev,
+            pricingModel,
+            pricePerUnit: toLegacyPricePerUnit(pricingModel),
+          };
+        }
+
+        if (field === "bookingType") {
+          return {
+            ...prev,
+            bookingType: normalizeBookingType(
+              value,
+              prev.commercialMode || prev.operationType || "sale",
+            ),
+          };
+        }
+
+        if (field === "resourceType") {
+          return {
+            ...prev,
+            resourceType: normalizeResourceType(value),
+          };
+        }
+
+        if (field === "attributes") {
+          return {
+            ...prev,
+            attributes: normalizeAttributes(value),
+          };
+        }
+
+        return { ...prev, [field]: value };
+      });
       clearError(field);
+      if (field === "operationType" || field === "commercialMode") {
+        clearError("operationType");
+        clearError("commercialMode");
+      }
+      if (field === "propertyType" || field === "category") {
+        clearError("propertyType");
+        clearError("category");
+      }
+      if (field === "pricingModel" || field === "pricePerUnit") {
+        clearError("pricingModel");
+        clearError("pricePerUnit");
+      }
     },
     [clearError],
   );
@@ -326,33 +499,35 @@ export const useWizardForm = ({
 
   /* ── Location ──────────────────────────────────────── */
 
-  const countryOptions = useMemo(
-    () => locationOptionsService.getCountries(),
-    [],
-  );
-
-  const selectedCountry = useMemo(
-    () => locationOptionsService.findCountry(form.country),
-    [form.country],
-  );
+  const selectedCountry = useMemo(() => {
+    if (!locationService) return null;
+    return locationService.findCountry(form.country);
+  }, [form.country, locationService]);
   const selectedCountryCode = selectedCountry?.value || "";
 
-  const stateOptions = useMemo(
-    () => locationOptionsService.getStates(selectedCountryCode),
-    [selectedCountryCode],
-  );
+  useEffect(() => {
+    if (!locationService || !selectedCountryCode) {
+      setStateOptions([]);
+      return;
+    }
 
-  const selectedState = useMemo(
-    () => locationOptionsService.findState(selectedCountryCode, form.state),
-    [form.state, selectedCountryCode],
-  );
+    setStateOptions(locationService.getStates(selectedCountryCode));
+  }, [locationService, selectedCountryCode]);
+
+  const selectedState = useMemo(() => {
+    if (!locationService || !selectedCountryCode) return null;
+    return locationService.findState(selectedCountryCode, form.state);
+  }, [form.state, locationService, selectedCountryCode]);
   const selectedStateCode = selectedState?.stateCode || "";
 
-  const cityOptions = useMemo(
-    () =>
-      locationOptionsService.getCities(selectedCountryCode, selectedStateCode),
-    [selectedCountryCode, selectedStateCode],
-  );
+  useEffect(() => {
+    if (!locationService || !selectedCountryCode || !selectedStateCode) {
+      setCityOptions([]);
+      return;
+    }
+
+    setCityOptions(locationService.getCities(selectedCountryCode, selectedStateCode));
+  }, [locationService, selectedCountryCode, selectedStateCode]);
 
   const handleCountryChange = useCallback(
     (countryCode) => {
@@ -600,6 +775,38 @@ export const useWizardForm = ({
     [addImageFiles],
   );
 
+  const resolveLocationValues = useCallback(() => {
+    const rawCountry = String(form.country || "")
+      .trim()
+      .toUpperCase();
+    const rawState = String(form.state || "").trim();
+    const rawCity = String(form.city || "").trim();
+
+    if (!locationService) {
+      return {
+        validCountry: rawCountry ? { value: rawCountry } : null,
+        validState: rawState ? { value: rawState, stateCode: rawState } : null,
+        validCity: rawCity ? { value: rawCity } : null,
+      };
+    }
+
+    const validCountry = locationService.findCountry(form.country);
+    const validCountryCode = validCountry?.value || "";
+    const validState = locationService.findState(validCountryCode, form.state);
+    const validStateCode = validState?.stateCode || "";
+    const validCity = locationService.findCity(
+      validCountryCode,
+      validStateCode,
+      form.city,
+    );
+
+    return {
+      validCountry,
+      validState,
+      validCity,
+    };
+  }, [form.city, form.country, form.state, locationService]);
+
   /* ── Validation ────────────────────────────────────── */
 
   const validate = useCallback(
@@ -613,18 +820,7 @@ export const useWizardForm = ({
       const description = String(form.description || "").trim();
       const slug = normalizeSlug(form.slug || "");
 
-      const validCountry = locationOptionsService.findCountry(form.country);
-      const validCountryCode = validCountry?.value || "";
-      const validState = locationOptionsService.findState(
-        validCountryCode,
-        form.state,
-      );
-      const validStateCode = validState?.stateCode || "";
-      const validCity = locationOptionsService.findCity(
-        validCountryCode,
-        validStateCode,
-        form.city,
-      );
+      const { validCountry, validState, validCity } = resolveLocationValues();
 
       // slug
       if (shouldValidate("slug")) {
@@ -650,13 +846,19 @@ export const useWizardForm = ({
         else if (description.length < 20)
           nextErrors.description = t("propertyForm.validation.descriptionMin");
       }
-      // propertyType
-      if (shouldValidate("propertyType") && !form.propertyType)
+      // category/propertyType
+      if (
+        (shouldValidate("propertyType") || shouldValidate("category")) &&
+        !form.propertyType
+      )
         nextErrors.propertyType = t(
           "propertyForm.validation.propertyTypeRequired",
         );
-      // operationType
-      if (shouldValidate("operationType") && !form.operationType)
+      // commercialMode/operationType
+      if (
+        (shouldValidate("operationType") || shouldValidate("commercialMode")) &&
+        !form.operationType
+      )
         nextErrors.operationType = t(
           "propertyForm.validation.operationTypeRequired",
         );
@@ -689,10 +891,10 @@ export const useWizardForm = ({
         if (!Number.isFinite(v) || v < 0)
           nextErrors.bathrooms = t("propertyForm.validation.bathroomsMin");
       }
-      // maxGuests (only for vacation_rental)
+      // maxGuests (vacation + hourly booking modes)
       if (
         shouldValidate("maxGuests") &&
-        form.operationType === "vacation_rental"
+        ["vacation_rental", "rent_hourly"].includes(form.operationType)
       ) {
         const v = parseNumber(form.maxGuests, Number.NaN);
         if (!Number.isFinite(v))
@@ -703,34 +905,42 @@ export const useWizardForm = ({
 
       return nextErrors;
     },
-    [form, slugStatus.state, t],
+    [form, resolveLocationValues, slugStatus.state, t],
   );
 
   /* ── Build payload ─────────────────────────────────── */
 
   const buildPayload = useCallback(() => {
-    const validCountry = locationOptionsService.findCountry(form.country);
-    const validCountryCode = validCountry?.value || "MX";
-    const validState = locationOptionsService.findState(
-      validCountryCode,
-      form.state,
+    const { validCountry, validState, validCity } = resolveLocationValues();
+
+    const category = normalizeCategoryValue(
+      form.category || form.propertyType || "house",
+      "house",
     );
-    const validStateCode = validState?.stateCode || "";
-    const validCity = locationOptionsService.findCity(
-      validCountryCode,
-      validStateCode,
-      form.city,
+    const commercialMode = normalizeCommercialMode(
+      form.commercialMode || form.operationType || "sale",
     );
+    const pricingModel = pickAllowedPricingModel(
+      form.pricingModel || form.pricePerUnit || "total",
+      commercialMode,
+    );
+    const bookingType = normalizeBookingType(form.bookingType, commercialMode);
 
     return {
       slug: normalizeSlug(form.slug),
       title: String(form.title || "").trim(),
       description: String(form.description || "").trim(),
-      propertyType: form.propertyType,
-      operationType: form.operationType,
+      resourceType: normalizeResourceType(form.resourceType),
+      category,
+      propertyType: category,
+      commercialMode,
+      operationType: toLegacyOperationType(commercialMode),
+      pricingModel,
+      pricePerUnit: toLegacyPricePerUnit(pricingModel),
+      bookingType,
+      attributes: normalizeAttributes(form.attributes || "{}"),
       price: clampToRange(parseNumber(form.price, 0), 0, 999999999),
       currency: form.currency || "MXN",
-      pricePerUnit: form.pricePerUnit || "total",
       priceNegotiable: Boolean(form.priceNegotiable),
       streetAddress: String(form.streetAddress || "").trim(),
       neighborhood: String(form.neighborhood || "").trim(),
@@ -747,7 +957,10 @@ export const useWizardForm = ({
       maxGuests: clampToRange(parseNumber(form.maxGuests, 1), 1, 500),
       furnished: form.furnished || null,
       petsAllowed: Boolean(form.petsAllowed),
-      rentPeriod: form.rentPeriod || null,
+      rentPeriod:
+        commercialMode === "rent_long_term"
+          ? form.rentPeriod || "monthly"
+          : null,
       minStayNights: clampToRange(parseNumber(form.minStayNights, 1), 1, 365),
       maxStayNights: clampToRange(parseNumber(form.maxStayNights, 365), 1, 365),
       checkInTime: form.checkInTime || "15:00",
@@ -762,7 +975,7 @@ export const useWizardForm = ({
       amenityIds: Array.from(new Set(form.amenityIds || [])),
       imageFiles: pendingImageItems.map((i) => i.file).filter(Boolean),
     };
-  }, [form, pendingImageItems]);
+  }, [form, pendingImageItems, resolveLocationValues]);
 
   /* ── Slug status view ──────────────────────────────── */
 
@@ -828,6 +1041,8 @@ export const useWizardForm = ({
     countryOptions,
     stateOptions,
     cityOptions,
+    isLocationOptionsLoading,
+    ensureLocationOptionsLoaded,
     selectedCountryCode,
     selectedStateCode,
     handleCountryChange,

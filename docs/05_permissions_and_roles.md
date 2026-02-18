@@ -1,4 +1,4 @@
-﻿# 05_PERMISSIONS_AND_ROLES.md - REAL ESTATE SAAS PLATFORM
+﻿# 05_PERMISSIONS_AND_ROLES - INMOBO RESOURCE PLATFORM
 
 ## Referencia
 
@@ -9,77 +9,40 @@
 
 ## 1. Objetivo
 
-Definir control de acceso completo para una instancia dedicada por cliente,
-incluyendo:
+Definir acceso por rol + scopes + modulos habilitados para arquitectura v3:
 
-1. Roles operativos (`owner`, `staff_*`).
-2. Rol `client` para usuario final registrado.
-3. Usuario `root` interno y oculto.
-4. Reglas de auditoria obligatoria.
+- modelo canonico `resources`
+- gating por `instance_settings`
+- panel root para plan/modulos/limites
 
 ---
 
-## 2. Principios de Seguridad
+## 2. Principios
 
-1. **Default deny**: sin permiso explicito no hay acceso.
-2. **Least privilege**: staff con acceso minimo.
-3. **Backend first**: frontend solo mejora UX, no seguridad.
-4. **Audit by default**: acciones criticas siempre en `activity_logs`.
-5. **Catalogo compartido por instancia**: en modulos internos, la visibilidad se define por rol/scope, no por `ownerUserId/propertyOwnerId`.
-
----
-
-## 3. Roles del Sistema
-
-### 3.1 Root (interno proveedor)
-
-- Acceso completo tecnico y funcional.
-- Puede consultar panel oculto `ActivityLog`.
-- No aparece en listados de usuarios del dashboard normal.
-
-### 3.2 Owner (cliente)
-
-- Control total de negocio en su instancia.
-- Puede gestionar propiedades, reservas, pagos, reseñas y staff.
-- No puede eliminar o exponer configuracion root.
-
-### 3.3 Staff Manager
-
-- Gestion de contenido + leads + reservas.
-- Puede responder mensajes y operar dashboard.
-- No puede tocar configuracion critica ni root panel.
-
-### 3.4 Staff Editor
-
-- CRUD de contenido (propiedades, imagenes, reseñas moderadas).
-- Sin acceso a pagos ni administracion de usuarios.
-
-### 3.5 Staff Support
-
-- Lectura/gestion de leads y reservas.
-- Respuesta de mensajes.
-- Sin acceso a configuracion de contenido avanzado.
-
-### 3.6 Client
-
-- Usuario final registrado desde la web.
-- Puede reservar, pagar y dejar reseña sobre su propia reservacion.
-- No accede al dashboard operativo interno.
-
-### 3.7 Visitor
-
-- Acceso publico a catalogo.
-- Puede enviar lead sin cuenta.
-- Para reservar/pagar/reseñar debe registrarse y verificar email.
+1. Default deny.
+2. Least privilege.
+3. Backend-first (frontend no es seguridad).
+4. Audit by default en `activity_logs`.
+5. Gating por modulos se valida en Functions siempre.
 
 ---
 
-## 4. Scopes por Modulo
+## 3. Roles
 
-`users.scopesJson` puede incluir scopes finos, por ejemplo:
+- `root`: control total tecnico y de producto (modulos, limites, auditoria).
+- `owner`: administra operacion de negocio de su instancia.
+- `staff_manager`: operacion + gestion parcial.
+- `staff_editor`: edicion de catalogo.
+- `staff_support`: atencion de leads/reservas/chat.
+- `client`: usuario final autenticado.
+- `visitor`: solo publico.
 
-- `properties.read`
-- `properties.write`
+---
+
+## 4. Scopes sugeridos
+
+- `resources.read`
+- `resources.write`
 - `leads.read`
 - `leads.write`
 - `reservations.read`
@@ -87,160 +50,116 @@ incluyendo:
 - `payments.read`
 - `reviews.moderate`
 - `staff.manage`
+- `root.modules.manage` (solo root)
+
+`users.scopesJson` complementa, pero nunca sustituye reglas de rol.
+
+---
+
+## 5. Reglas por coleccion
+
+### users / user_preferences
+
+- self read/update: `Role.user(self)`.
+- staff management: via Function (`owner`/`root`).
+
+### resources / resource_images / rate_plans
+
+- publico: solo `resources.status=published` y `enabled=true`.
+- owner/staff autorizado: CRUD por Functions.
+- publish/unpublish siempre auditado.
+
+### leads
+
+- create: `create-lead-public`.
+- gestion interna: owner/staff con scope.
+- canonical id: `resourceId` (compat temporal `propertyId`).
+
+### reservations / reservation_payments / reservation_vouchers
+
+- create reservation: `client` verificado via Function.
+- pagos: system-only por functions/webhooks.
+- owner/staff: lectura operativa segun scope.
+
+### conversations / messages
+
+- acceso por participantes del hilo + permisos de coleccion.
+- canonical FK: `resourceId` en conversation.
+
+### instance_settings
+
+- lectura: root/owner segun politica de UI.
+- escritura: **solo root** (`/app/root/instance`, `/app/root/modules`).
+- cada cambio en modulos/limites genera `activity_logs`.
+
+### activity_logs
+
+- write: solo backend/functions.
+- read completo: root.
+
+---
+
+## 6. Modulos y gating
+
+Modulos minimos:
+
+- `module.resources`
+- `module.leads`
+- `module.staff`
+- `module.analytics.basic`
+- `module.booking.long_term`
+- `module.booking.short_term`
+- `module.booking.hourly`
+- `module.payments.online`
+- `module.messaging.realtime`
+- `module.reviews`
+- `module.calendar.advanced`
 
 Regla:
 
-- Los scopes se evaluan en backend/functions antes de mutaciones sensibles.
+- Si modulo requerido no esta activo -> 403 `MODULE_DISABLED`.
 
 ---
 
-## 5. Reglas por Coleccion
+## 7. Matriz resumida
 
-## 5.1 users
-
-- Lectura propia: `Role.user(self)`.
-- Update propio: `Role.user(self)`.
-- Operaciones de staff management: solo via Function (`owner` o `root`).
-- Filtrado obligatorio para ocultar `isHidden=true` en vistas no root.
-- Owner puede listar `client` en modo solo lectura via Function dedicada.
-
-## 5.2 properties / property_images
-
-- Publico puede leer solo contenido publicado.
-- Owner y staff autorizado pueden crear/editar/eliminar.
-- `ownerUserId` identifica responsable operativo del registro, no frontera de acceso interno por usuario.
-- Toda publicacion/despublicacion se audita.
-
-## 5.3 leads
-
-- Creacion publica via Function (`create-lead-public`).
-- Lectura y gestion: owner + staff con scope de leads.
-- `propertyOwnerId` se conserva para trazabilidad/analitica y no debe usarse como filtro obligatorio de visibilidad interna.
-- Nunca publico.
-
-## 5.4 reservations
-
-- Creacion autenticada via Function (`create-reservation-public`).
-- Requiere `client` con email verificado.
-- Lectura/gestion: owner + staff autorizado.
-- `propertyOwnerId` se conserva para trazabilidad/analitica y no debe usarse como filtro obligatorio de visibilidad interna.
-- Cliente solo puede consultar su propia reserva.
-- Cambios de estado se registran en `activity_logs`.
-
-## 5.5 reservation_payments
-
-- System only (webhooks/functions).
-- Lectura por dashboard mediante endpoint controlado.
-- No editable desde frontend directo.
-
-## 5.6 reservation_vouchers
-
-- Emision automatica por Function.
-- Lectura owner/staff autorizado.
-- Consulta publica opcional solo por token seguro.
-
-## 5.7 reviews
-
-- Creacion autenticada controlada (post-reserva).
-- Requiere `client` con email verificado y reservacion propia elegible.
-- Moderacion por owner/staff con scope `reviews.moderate`.
-- Publicacion/rechazo auditado.
-
-## 5.8 activity_logs
-
-- Escritura exclusiva por backend/functions.
-- Lectura completa solo root.
-- Owner puede tener vista resumida opcional sin before/after completo.
+| Modulo/Accion | Root | Owner | Staff Manager | Staff Editor | Staff Support | Client | Visitor |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Dashboard interno | Yes | Yes | Yes | Yes | Yes | No | No |
+| Resources CRUD | Yes | Yes | Yes | Yes | No | No | No |
+| Leads gestion | Yes | Yes | Yes | No | Yes | No | No |
+| Reservas gestion | Yes | Yes | Yes | No | Yes | No | No |
+| Pagos vista | Yes | Yes | Optional | No | No | No | No |
+| Chat interno | Yes | Yes | Yes | Optional | Yes | No | No |
+| Root modules/limits | Yes | No | No | No | No | No | No |
+| Reserva publica | No | No | No | No | No | Yes | No |
+| Lead publico | No | No | No | No | No | Optional | Yes |
 
 ---
 
-## 6. Matriz de Permisos (Resumen)
+## 8. Guardas frontend (UX)
 
-| Modulo                 | Root | Owner | Staff Manager | Staff Editor | Staff Support | Client | Visitor |
-| ---------------------- | ---- | ----- | ------------- | ------------ | ------------- | ------ | ------- |
-| Dashboard general      | Yes  | Yes   | Yes           | Yes          | Yes           | No     | No      |
-| Propiedades CRUD       | Yes  | Yes   | Yes           | Yes          | No            | No     | No      |
-| Leads gestion          | Yes  | Yes   | Yes           | No           | Yes           | No     | No      |
-| Reservas gestion       | Yes  | Yes   | Yes           | No           | Yes           | No     | No      |
-| Pagos vista            | Yes  | Yes   | Optional      | No           | No            | No     | No      |
-| Staff management       | Yes  | Yes   | No            | No           | No            | No     | No      |
-| ActivityLog oculto     | Yes  | No    | No            | No           | No            | No     | No      |
-| Formulario contacto    | No   | No    | No            | No           | No            | Optional | Yes   |
-| Crear reservacion web  | No   | No    | No            | No           | No            | Yes    | No      |
-| Crear reseña publica   | No   | No    | No            | No            | No            | Yes*   | No      |
+- `ProtectedRoute`
+- `InternalRoute`
+- `RoleRoute`
+- `ScopeRoute`
+- `RootRoute`
 
-`Yes*`: solo si existe reservacion elegible y reglas anti-abuso.
+Guardas mejoran UX, pero el enforcement final es backend.
 
 ---
 
-## 7. Guardas de Frontend (UX)
+## 9. Auditoria obligatoria
 
-Guardas recomendadas:
+Eventos criticos:
 
-- `ProtectedRoute` para sesion activa.
-- `RoleRoute` para validar rol minimo.
-- `ScopeRoute` para modulo especifico.
-- `RootRoute` para panel oculto.
-
-Ejemplo simple:
-
-```jsx
-if (!user) return <Navigate to="/login" replace />;
-if (!hasScope(user, "reservations.read")) return <Navigate to="/forbidden" replace />;
-return children;
-```
+- cambios de modulos/limites/plan
+- create/update/publish de resources
+- reservas/pagos
+- cambios de rol/scopes
+- accesos denegados root
 
 ---
 
-## 8. Auditoria Obligatoria
-
-Eventos que SIEMPRE deben loguearse:
-
-- Alta/baja de usuarios staff.
-- Cambios de rol/scopes.
-- Cambios en propiedades publicadas.
-- Cambio de estado de reservacion.
-- Confirmacion o reversion de pago.
-- Publicacion/rechazo de reseña.
-- Intentos de acceso denegado al panel root.
-
-Campos minimos de log:
-
-- `actorUserId`
-- `actorRole`
-- `action`
-- `entityType`
-- `entityId`
-- `beforeData`
-- `afterData`
-- `createdAt`
-
----
-
-## 9. Root User - Reglas Especiales
-
-1. Se crea durante provisioning y se guarda fuera del flujo comercial.
-2. `isHidden=true` obligatorio.
-3. No editable ni eliminable desde UI de owner.
-4. Solo accesible por ruta oculta y guard root.
-5. Todas sus acciones quedan auditadas.
-
----
-
-## 10. Relacion con Otros Documentos
-
-- `06_appwrite_functions_catalog.md`: implementa enforcement de rol/scope.
-- `07_frontend_routes_and_flows.md`: traduce permisos a guardas UX.
-- `08_env_reference.md`: define variables para root panel y auditoria.
-
----
-
-## 11. Estado del Documento
-
-- Definitivo para roles/permisos del modelo por instancia dedicada.
-- Listo para operacion con staff restringido, clientes registrados y root oculto.
-
----
-
-Ultima actualizacion: 2026-02-11
-Version: 2.1.0
+Ultima actualizacion: 2026-02-18
+Version: 3.0.0

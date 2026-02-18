@@ -1,4 +1,12 @@
-﻿import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
+import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
+import {
+  createModulesService,
+  getBookingType,
+  getCommercialMode,
+  getRequiredBookingModule,
+  requiresOnlinePayments,
+  toModuleErrorResponse,
+} from "./lib/modulesService.js";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SUPPORTED_CURRENCIES = ["MXN", "USD", "EUR"];
@@ -18,10 +26,12 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  propertiesCollectionId: getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+  resourcesCollectionId: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  instanceSettingsCollectionId:
+    getEnv("APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID") || "instance_settings",
 });
 
 const parseBody = (req) => {
@@ -68,11 +78,7 @@ const toMoney = (value) => {
 
 const getAuthenticatedUserId = (req) => {
   const headers = req.headers || {};
-  return (
-    headers["x-appwrite-user-id"] ||
-    headers["x-appwrite-userid"] ||
-    ""
-  );
+  return headers["x-appwrite-user-id"] || headers["x-appwrite-userid"] || "";
 };
 
 const getRequestId = (req) => {
@@ -108,7 +114,7 @@ const buildReservationPermissions = (ownerUserId, guestUserId) =>
   ])];
 
 const buildReservationData = ({
-  property,
+  resource,
   payload,
   guestUserId,
   authUser,
@@ -123,8 +129,8 @@ const buildReservationData = ({
   currency,
 }) => {
   const data = {
-    propertyId: property.$id,
-    propertyOwnerId: property.ownerUserId,
+    resourceId: resource.$id,
+    resourceOwnerUserId: resource.ownerUserId,
     guestUserId,
     guestName:
       normalizeText(payload.guestName, 120) ||
@@ -152,6 +158,70 @@ const buildReservationData = ({
   if (specialRequests) data.specialRequests = specialRequests;
 
   return data;
+};
+
+const createReservationDocument = async ({ db, config, data, permissions }) => {
+  return db.createDocument(
+    config.databaseId,
+    config.reservationsCollectionId,
+    ID.unique(),
+    data,
+    permissions,
+  );
+};
+
+const listOverlaps = async ({ db, config, resourceId, checkInIso, checkOutIso }) => {
+  const baseQueries = [
+    Query.equal("enabled", true),
+    Query.equal("status", ["pending", "confirmed"]),
+    Query.lessThan("checkInDate", checkOutIso),
+    Query.greaterThan("checkOutDate", checkInIso),
+    Query.limit(1),
+  ];
+
+  try {
+    return await db.listDocuments(
+      config.databaseId,
+      config.reservationsCollectionId,
+      [Query.equal("resourceId", resourceId), ...baseQueries],
+    );
+  } catch {
+    return { total: 0, documents: [] };
+  }
+};
+
+const countActiveReservationsThisMonth = async ({ db, config }) => {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+  try {
+    const response = await db.listDocuments(
+      config.databaseId,
+      config.reservationsCollectionId,
+      [
+        Query.equal("enabled", true),
+        Query.equal("status", ["pending", "confirmed"]),
+        Query.greaterThanEqual("$createdAt", start.toISOString()),
+        Query.lessThan("$createdAt", end.toISOString()),
+        Query.limit(1),
+      ],
+    );
+    return Number(response.total || 0);
+  } catch {
+    return 0;
+  }
+};
+
+const resolveBaseAmount = ({ resource, nights }) => {
+  const unitAmount = toMoney(resource.price || 0);
+  if (unitAmount === null || unitAmount <= 0) return null;
+
+  const pricingModel = normalizeText(resource.pricingModel).toLowerCase();
+  const multiplier = ["per_night", "per_day"].includes(pricingModel)
+    ? Math.max(1, nights)
+    : 1;
+  return toMoney(unitAmount * multiplier);
 };
 
 export default async ({ req, res, log, error }) => {
@@ -185,18 +255,18 @@ export default async ({ req, res, log, error }) => {
   }
 
   const payload = parseBody(req);
-  const propertyId = normalizeText(payload.propertyId, 64);
+  const resourceId = normalizeText(payload.resourceId, 64);
   const checkIn = parseDate(payload.checkInDate);
   const checkOut = parseDate(payload.checkOutDate);
   const guestCount = toPositiveInt(payload.guestCount);
 
-  if (!propertyId || !checkIn || !checkOut || guestCount === null) {
+  if (!resourceId || !checkIn || !checkOut || guestCount === null) {
     return json(res, 400, {
       ok: false,
       success: false,
       code: "VALIDATION_ERROR",
       message:
-        "propertyId, checkInDate, checkOutDate and guestCount are required",
+        "resourceId, checkInDate, checkOutDate and guestCount are required",
     });
   }
 
@@ -238,6 +308,7 @@ export default async ({ req, res, log, error }) => {
     .setKey(config.apiKey);
   const db = new Databases(client);
   const users = new Users(client);
+  const modulesService = createModulesService({ db, config });
 
   try {
     const authUser = await users.get(authenticatedUserId);
@@ -270,31 +341,63 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const property = await db.getDocument(
+    await modulesService.assertModuleEnabled("module.resources");
+
+    const resource = await db.getDocument(
       config.databaseId,
-      config.propertiesCollectionId,
-      propertyId,
+      config.resourcesCollectionId,
+      resourceId,
     );
 
-    if (property.enabled !== true || property.status !== "published") {
+    if (resource.enabled !== true || resource.status !== "published") {
       return json(res, 404, {
         ok: false,
         success: false,
-        code: "PROPERTY_NOT_AVAILABLE",
-        message: "Property not available for reservations",
+        code: "RESOURCE_NOT_AVAILABLE",
+        message: "Resource not available for reservations",
       });
     }
 
-    if (!property.ownerUserId) {
+    if (!resource.ownerUserId) {
       return json(res, 422, {
         ok: false,
         success: false,
-        code: "PROPERTY_OWNER_MISSING",
-        message: "Property owner is not configured",
+        code: "RESOURCE_OWNER_MISSING",
+        message: "Resource owner is not configured",
       });
     }
 
-    const maxGuests = Number(property.maxGuests || 0);
+    const commercialMode = getCommercialMode(resource);
+    const bookingType = getBookingType(resource, commercialMode);
+
+    const requiredBookingModule = getRequiredBookingModule(commercialMode);
+    if (requiredBookingModule) {
+      await modulesService.assertModuleEnabled(requiredBookingModule);
+    }
+
+    if (bookingType === "manual_contact") {
+      return json(res, 409, {
+        ok: false,
+        success: false,
+        code: "MANUAL_CONTACT_ONLY",
+        message: "This resource uses manual contact flow and does not support checkout",
+      });
+    }
+
+    if (requiresOnlinePayments(commercialMode, bookingType)) {
+      await modulesService.assertModuleEnabled("module.payments.online");
+    }
+
+    const activeReservationsThisMonth = await countActiveReservationsThisMonth({
+      db,
+      config,
+    });
+    await modulesService.assertLimitNotExceeded(
+      "maxActiveReservationsPerMonth",
+      activeReservationsThisMonth,
+    );
+
+    const maxGuests = Number(resource.maxGuests || 0);
     if (Number.isFinite(maxGuests) && maxGuests > 0 && guestCount > maxGuests) {
       return json(res, 422, {
         ok: false,
@@ -307,18 +410,13 @@ export default async ({ req, res, log, error }) => {
     const checkInIso = checkIn.toISOString();
     const checkOutIso = checkOut.toISOString();
 
-    const overlap = await db.listDocuments(
-      config.databaseId,
-      config.reservationsCollectionId,
-      [
-        Query.equal("propertyId", propertyId),
-        Query.equal("enabled", true),
-        Query.equal("status", ["pending", "confirmed"]),
-        Query.lessThan("checkInDate", checkOutIso),
-        Query.greaterThan("checkOutDate", checkInIso),
-        Query.limit(1),
-      ],
-    );
+    const overlap = await listOverlaps({
+      db,
+      config,
+      resourceId,
+      checkInIso,
+      checkOutIso,
+    });
 
     if (overlap.total > 0) {
       return json(res, 409, {
@@ -329,21 +427,20 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const nightlyAmount = toMoney(property.price || 0);
-    if (nightlyAmount === null || nightlyAmount <= 0) {
+    const baseAmount = resolveBaseAmount({ resource, nights });
+    if (baseAmount === null || baseAmount <= 0) {
       return json(res, 422, {
         ok: false,
         success: false,
         code: "PRICE_NOT_CONFIGURED",
-        message: "Property price is not configured for reservation",
+        message: "Resource price is not configured for reservation",
       });
     }
 
-    const baseAmount = toMoney(nightlyAmount * nights);
     const feesAmount = toMoney(payload.feesAmount || 0);
     const taxAmount = toMoney(payload.taxAmount || 0);
 
-    if (baseAmount === null || feesAmount === null || taxAmount === null) {
+    if (feesAmount === null || taxAmount === null) {
       return json(res, 422, {
         ok: false,
         success: false,
@@ -362,7 +459,7 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const currency = currencyInput || String(property.currency || "MXN").toUpperCase();
+    const currency = currencyInput || String(resource.currency || "MXN").toUpperCase();
     if (!SUPPORTED_CURRENCIES.includes(currency)) {
       return json(res, 422, {
         ok: false,
@@ -373,7 +470,7 @@ export default async ({ req, res, log, error }) => {
     }
 
     const reservationData = buildReservationData({
-      property,
+      resource,
       payload,
       guestUserId: authenticatedUserId,
       authUser,
@@ -388,20 +485,22 @@ export default async ({ req, res, log, error }) => {
       currency,
     });
 
-    const reservation = await db.createDocument(
-      config.databaseId,
-      config.reservationsCollectionId,
-      ID.unique(),
-      reservationData,
-      buildReservationPermissions(property.ownerUserId, authenticatedUserId),
-    );
+    const reservation = await createReservationDocument({
+      db,
+      config,
+      data: reservationData,
+      permissions: buildReservationPermissions(
+        resource.ownerUserId,
+        authenticatedUserId,
+      ),
+    });
 
     await db.updateDocument(
       config.databaseId,
-      config.propertiesCollectionId,
-      propertyId,
+      config.resourcesCollectionId,
+      resourceId,
       {
-        reservationCount: Number(property.reservationCount || 0) + 1,
+        reservationCount: Number(resource.reservationCount || 0) + 1,
       },
     );
 
@@ -416,7 +515,7 @@ export default async ({ req, res, log, error }) => {
         entityType: "reservations",
         entityId: reservation.$id,
         afterData: JSON.stringify({
-          propertyId,
+          resourceId,
           guestUserId: authenticatedUserId,
           guestEmail: reservationData.guestEmail,
           checkInDate: checkInIso,
@@ -437,7 +536,7 @@ export default async ({ req, res, log, error }) => {
       message: "Reservation created",
       data: {
         reservationId: reservation.$id,
-        propertyId,
+        resourceId,
         guestUserId: authenticatedUserId,
         nights,
         totalAmount,
@@ -446,6 +545,11 @@ export default async ({ req, res, log, error }) => {
       },
     });
   } catch (err) {
+    if (err?.code === "MODULE_DISABLED" || err?.code === "LIMIT_EXCEEDED") {
+      const moduleError = toModuleErrorResponse(err);
+      return json(res, moduleError.status, moduleError.body);
+    }
+
     error(`create-reservation-public failed: ${err.message}`);
     return json(res, 500, {
       ok: false,

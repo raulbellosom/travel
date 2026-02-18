@@ -2,8 +2,10 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } fr
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Minimize2, Send, Smile, X } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
+import { useAuth } from "../../hooks/useAuth";
 import { useChat } from "../../contexts/ChatContext";
 import { profileService } from "../../services/profileService";
+import { getConversationCounterparty } from "../../utils/chatParticipants";
 import { isUserOnline, getLastSeenText } from "../../utils/presence";
 import { cn } from "../../utils/cn";
 import { Spinner, ImageViewerModal } from "../common";
@@ -28,6 +30,7 @@ const getInitials = (name) => {
  */
 const ConversationView = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const {
     activeConversation,
     messages,
@@ -50,15 +53,13 @@ const ConversationView = () => {
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
-  const contactName =
-    chatRole === "client"
-      ? activeConversation?.ownerName
-      : activeConversation?.clientName;
-
-  const contactUserId =
-    chatRole === "client"
-      ? activeConversation?.ownerUserId
-      : activeConversation?.clientUserId;
+  const contact = useMemo(
+    () => getConversationCounterparty(activeConversation, user?.$id, chatRole),
+    [activeConversation, chatRole, user?.$id],
+  );
+  const contactName = contact.name;
+  const contactUserId = contact.userId;
+  const ownUserId = user?.$id;
 
   /** Load contact user profile for avatar and presence */
   useEffect(() => {
@@ -99,16 +100,33 @@ const ConversationView = () => {
     return profileService.getAvatarViewUrl(avatarFileId);
   }, [contactProfile]);
 
+  const ownAvatarUrl = useMemo(() => {
+    const avatarFileId = user?.avatarFileId;
+    if (!avatarFileId) return "";
+    return profileService.getAvatarViewUrl(avatarFileId);
+  }, [user?.avatarFileId]);
+
+  const lastOwnMessageId = useMemo(() => {
+    if (!ownUserId) return null;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].senderUserId === ownUserId) {
+        return messages[i].$id;
+      }
+    }
+    return null;
+  }, [messages, ownUserId]);
+
   /** Contact presence status */
   const contactPresence = useMemo(() => {
     const lastSeenAt = contactProfile?.lastSeenAt;
     if (!lastSeenAt) return null;
+    void presenceRefresh;
 
     return {
       isOnline: isUserOnline(lastSeenAt),
       text: getLastSeenText(lastSeenAt, t),
     };
-  }, [contactProfile?.lastSeenAt, t]);
+  }, [contactProfile?.lastSeenAt, t, presenceRefresh]);
 
   /** Refresh presence calculation periodically in addition to profile polling */
   useEffect(() => {
@@ -264,25 +282,40 @@ const ConversationView = () => {
     };
   }, [activeConversation?.$id, messages.length, loadingMessages]);
 
-  // Scroll to bottom when new messages arrive (smooth)
+  // Scroll to bottom when new messages arrive (smooth).
+  // Always follows own sends; follows incoming only if user is near the bottom.
   useEffect(() => {
-    if (messages.length > 0 && sending) {
+    if (messages.length === 0 || loadingMessages) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const lastMessage = messages[messages.length - 1];
+    const isOwnLast = lastMessage?.senderUserId === ownUserId;
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
+
+    if (isOwnLast || isNearBottom) {
       scrollToBottom(true);
     }
-  }, [messages.length, sending, scrollToBottom]);
+  }, [messages, loadingMessages, ownUserId, scrollToBottom]);
 
   /* ── Send handler ────────────────────────────────────── */
 
   const handleSend = async (e) => {
     e?.preventDefault();
-    if (!input.trim() || sending) return;
+    const text = input.trim();
+    if (!text || sending) return;
 
+    setInput("");
+    setShowEmojiPicker(false);
     setSending(true);
     try {
-      await sendMessage(input);
-      setInput("");
+      await sendMessage(text);
       inputRef.current?.focus();
     } catch (err) {
+      setInput(text);
       console.error("Failed to send message:", err);
     } finally {
       setSending(false);
@@ -298,7 +331,16 @@ const ConversationView = () => {
 
   const handleEmojiClick = (emojiObject) => {
     setInput((prev) => prev + emojiObject.emoji);
-    inputRef.current?.focus();
+  };
+
+  const toggleEmojiPicker = () => {
+    setShowEmojiPicker((prev) => {
+      const next = !prev;
+      if (next) {
+        inputRef.current?.blur();
+      }
+      return next;
+    });
   };
 
   /* ── Render ──────────────────────────────────────────── */
@@ -308,10 +350,7 @@ const ConversationView = () => {
       {/* Header - fixed height for consistent transitions */}
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 px-3 dark:border-slate-700">
         <button
-          onClick={() => {
-            console.log("[ConversationView] goBackToList clicked");
-            goBackToList();
-          }}
+          onClick={goBackToList}
           aria-label={t("chat.actions.back")}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
@@ -419,12 +458,10 @@ const ConversationView = () => {
               )}
               <ChatMessage
                 message={msg}
-                isOwn={
-                  (msg.senderUserId === activeConversation?.clientUserId &&
-                    chatRole === "client") ||
-                  (msg.senderUserId === activeConversation?.ownerUserId &&
-                    chatRole !== "client")
-                }
+                isOwn={msg.senderUserId === ownUserId}
+                showOwnAvatar={msg.$id === lastOwnMessageId}
+                ownAvatarUrl={ownAvatarUrl}
+                ownAvatarLabel={user?.name || user?.email || "Me"}
               />
             </div>
           );
@@ -446,6 +483,7 @@ const ConversationView = () => {
               onEmojiClick={handleEmojiClick}
               theme="auto"
               searchDisabled={false}
+              autoFocusSearch={false}
               skinTonesDisabled
               previewConfig={{ showPreview: false }}
               height={350}
@@ -458,7 +496,7 @@ const ConversationView = () => {
           {/* Emoji Button */}
           <button
             type="button"
-            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            onClick={toggleEmojiPicker}
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
               showEmojiPicker

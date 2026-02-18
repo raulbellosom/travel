@@ -1,4 +1,4 @@
-# create-reservation-public
+﻿# create-reservation-public
 
 Creates a reservation from the web booking flow.
 
@@ -20,7 +20,7 @@ Creates a reservation from the web booking flow.
 
 ```json
 {
-  "propertyId": "PROPERTY_ID",
+  "resourceId": "RESOURCE_ID",
   "checkInDate": "2026-06-10T15:00:00.000Z",
   "checkOutDate": "2026-06-14T11:00:00.000Z",
   "guestCount": 2,
@@ -33,3 +33,4 @@ Creates a reservation from the web booking flow.
 ```
 
 `guestEmail` is optional and, if provided, must match the authenticated account email.
+

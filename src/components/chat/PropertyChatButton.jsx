@@ -12,9 +12,11 @@ import { Spinner } from "../common";
  * Only visible to authenticated, email-verified users with role "client".
  * Internal roles (owner/staff/root) cannot initiate conversations from here.
  *
- * @param {{ propertyId: string, propertyTitle: string, ownerUserId: string, ownerName: string, className?: string }} props
+ * @param {{ resourceId?: string, resourceTitle?: string, propertyId?: string, propertyTitle?: string, ownerUserId: string, ownerName: string, className?: string }} props
  */
 const PropertyChatButton = ({
+  resourceId,
+  resourceTitle,
   propertyId,
   propertyTitle,
   ownerUserId,
@@ -39,6 +41,8 @@ const PropertyChatButton = ({
     setLoading(true);
     try {
       await startConversation({
+        resourceId: resourceId || propertyId,
+        resourceTitle: resourceTitle || propertyTitle,
         propertyId,
         propertyTitle,
         ownerUserId,

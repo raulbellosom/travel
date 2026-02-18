@@ -16,7 +16,7 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  propertiesCollectionId: getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+  resourcesCollectionId: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   reviewsCollectionId: getEnv("APPWRITE_COLLECTION_REVIEWS_ID") || "reviews",
@@ -60,12 +60,12 @@ const getAuthenticatedUserId = (req) => {
   );
 };
 
-const buildReviewPermissions = (propertyOwnerId, authorUserId) => {
+const buildReviewPermissions = (resourceOwnerUserId, authorUserId) => {
   const permissions = [Permission.read(Role.user(authorUserId))];
-  if (propertyOwnerId) {
-    permissions.push(Permission.read(Role.user(propertyOwnerId)));
-    permissions.push(Permission.update(Role.user(propertyOwnerId)));
-    permissions.push(Permission.delete(Role.user(propertyOwnerId)));
+  if (resourceOwnerUserId) {
+    permissions.push(Permission.read(Role.user(resourceOwnerUserId)));
+    permissions.push(Permission.update(Role.user(resourceOwnerUserId)));
+    permissions.push(Permission.delete(Role.user(resourceOwnerUserId)));
   }
   return [...new Set(permissions)];
 };
@@ -115,18 +115,18 @@ export default async ({ req, res, log, error }) => {
   }
 
   const payload = parseBody(req);
-  const propertyId = normalizeText(payload.propertyId, 64);
+  const resourceId = normalizeText(payload.resourceId, 64);
   const reservationId = normalizeText(payload.reservationId, 64);
   const comment = normalizeText(payload.comment, 3000);
   const title = normalizeText(payload.title, 160);
   const rating = Number(payload.rating);
 
-  if (!propertyId || !reservationId || !comment) {
+  if (!resourceId || !reservationId || !comment) {
     return json(res, 400, {
       ok: false,
       success: false,
       code: "VALIDATION_ERROR",
-      message: "propertyId, reservationId and comment are required",
+      message: "resourceId, reservationId and comment are required",
     });
   }
 
@@ -176,17 +176,17 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const [property, reservation] = await Promise.all([
-      db.getDocument(config.databaseId, config.propertiesCollectionId, propertyId),
+    const [resource, reservation] = await Promise.all([
+      db.getDocument(config.databaseId, config.resourcesCollectionId, resourceId),
       db.getDocument(config.databaseId, config.reservationsCollectionId, reservationId),
     ]);
 
-    if (property.enabled !== true) {
+    if (resource.enabled !== true) {
       return json(res, 404, {
         ok: false,
         success: false,
-        code: "PROPERTY_NOT_AVAILABLE",
-        message: "Property not available",
+        code: "RESOURCE_NOT_AVAILABLE",
+        message: "Resource not available",
       });
     }
 
@@ -199,12 +199,12 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (reservation.propertyId !== propertyId) {
+    if (normalizeText(reservation.resourceId, 64) !== resourceId) {
       return json(res, 422, {
         ok: false,
         success: false,
         code: "REVIEW_NOT_ELIGIBLE",
-        message: "Reservation does not belong to property",
+        message: "Reservation does not belong to resource",
       });
     }
 
@@ -258,11 +258,11 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const propertyOwnerId =
-      String(reservation.propertyOwnerId || "") || String(property.ownerUserId || "");
+    const resourceOwnerUserId =
+      String(reservation.resourceOwnerUserId || "") || String(resource.ownerUserId || "");
 
     const reviewData = {
-      propertyId,
+      resourceId,
       reservationId,
       authorUserId: authenticatedUserId,
       authorName:
@@ -285,10 +285,10 @@ export default async ({ req, res, log, error }) => {
       config.reviewsCollectionId,
       ID.unique(),
       reviewData,
-      buildReviewPermissions(propertyOwnerId, authenticatedUserId),
+      buildReviewPermissions(resourceOwnerUserId, authenticatedUserId),
     );
 
-    if (propertyOwnerId) {
+    if (resourceOwnerUserId) {
       await safeActivityLog({
         db,
         config,
@@ -301,7 +301,7 @@ export default async ({ req, res, log, error }) => {
           entityId: review.$id,
           afterData: safeJsonString({
             reservationId,
-            propertyId,
+            resourceId,
             authorUserId: authenticatedUserId,
             rating,
             status: "pending",
@@ -319,7 +319,7 @@ export default async ({ req, res, log, error }) => {
       data: {
         reviewId: review.$id,
         reservationId,
-        propertyId,
+        resourceId,
         authorUserId: authenticatedUserId,
         status: "pending",
       },

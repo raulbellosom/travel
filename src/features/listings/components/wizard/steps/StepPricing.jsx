@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Select } from "../../../../../components/common";
-import { CURRENCY_OPTIONS, PRICE_PER_UNIT_OPTIONS } from "../wizardConfig";
+import { CURRENCY_OPTIONS, PRICING_MODEL_OPTIONS } from "../wizardConfig";
+import { getResourceBehavior } from "../../../../../utils/resourceModel";
 
 /**
  * Step: Pricing — price, currency, price per unit, negotiable.
@@ -10,13 +11,17 @@ const StepPricing = ({ formHook }) => {
   const { t } = useTranslation();
   const { form, setField, getFieldClassName, renderFieldError } = formHook;
 
-  const pricePerUnitOptions = useMemo(
+  const behavior = useMemo(() => getResourceBehavior(form), [form]);
+
+  const pricingModelOptions = useMemo(
     () =>
-      PRICE_PER_UNIT_OPTIONS.map((o) => ({
+      PRICING_MODEL_OPTIONS.filter((option) =>
+        behavior.allowedPricingModels.includes(option.value),
+      ).map((o) => ({
         value: o.value,
-        label: t(o.key),
+        label: t(o.key, { defaultValue: o.value }),
       })),
-    [t],
+    [behavior.allowedPricingModels, t],
   );
 
   const currencyOptions = useMemo(
@@ -68,19 +73,21 @@ const StepPricing = ({ formHook }) => {
         </label>
       </div>
 
-      {/* Price per unit */}
+      {/* Pricing model */}
       <label className="grid gap-1 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">
-          {t("propertyForm.fields.pricePer")}
+          {t("propertyForm.fields.pricingModel", {
+            defaultValue: t("propertyForm.fields.pricePer"),
+          })}
         </span>
         <div className="flex flex-wrap gap-2">
-          {pricePerUnitOptions.map((option) => {
-            const isSelected = form.pricePerUnit === option.value;
+          {pricingModelOptions.map((option) => {
+            const isSelected = form.pricingModel === option.value;
             return (
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setField("pricePerUnit", option.value)}
+                onClick={() => setField("pricingModel", option.value)}
                 className={`min-h-11 rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all ${
                   isSelected
                     ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-900/20 dark:text-cyan-300"
@@ -92,6 +99,7 @@ const StepPricing = ({ formHook }) => {
             );
           })}
         </div>
+        {renderFieldError("pricingModel")}
       </label>
 
       {/* Negotiable */}

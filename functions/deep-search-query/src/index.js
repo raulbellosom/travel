@@ -92,7 +92,7 @@ const cfg = () => ({
     users: getEnv("APPWRITE_COLLECTION_USERS_ID") || "users",
     userPreferences:
       getEnv("APPWRITE_COLLECTION_USER_PREFERENCES_ID") || "user_preferences",
-    properties: getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+    properties: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
     leads: getEnv("APPWRITE_COLLECTION_LEADS_ID") || "leads",
     reservations: getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
     payments:

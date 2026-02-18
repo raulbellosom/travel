@@ -1,5 +1,27 @@
 import { cn } from "../../utils/cn";
-import { Clock, Check, AlertCircle } from "lucide-react";
+import { Clock, Check, CheckCheck, AlertCircle } from "lucide-react";
+
+const getInitials = (name) => {
+  if (!name) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+};
+
+const getMessageStatus = (message, isOwn) => {
+  if (!isOwn) return null;
+
+  if (message.status === "failed") return "failed";
+  if (message.status === "sending" || String(message.$id || "").startsWith("temp-")) {
+    return "sending";
+  }
+  if (message.readByRecipient) return "read";
+  if (message.status === "sent") return "sent";
+  return "delivered";
+};
 
 /**
  * Status indicator for sent messages.
@@ -22,6 +44,20 @@ const MessageStatus = ({ status }) => {
           aria-label="Enviado"
         />
       );
+    case "delivered":
+      return (
+        <CheckCheck
+          className="ml-1 inline-block h-3 w-3 text-cyan-200/90"
+          aria-label="Entregado"
+        />
+      );
+    case "read":
+      return (
+        <CheckCheck
+          className="ml-1 inline-block h-3 w-3 text-emerald-200"
+          aria-label="Visto"
+        />
+      );
     case "failed":
       return (
         <AlertCircle
@@ -36,9 +72,16 @@ const MessageStatus = ({ status }) => {
 
 /**
  * Single chat message bubble.
- * @param {{ message: object, isOwn: boolean }} props
+ * @param {{ message: object, isOwn: boolean, showOwnAvatar?: boolean, ownAvatarUrl?: string, ownAvatarLabel?: string }} props
  */
-const ChatMessage = ({ message, isOwn }) => {
+const ChatMessage = ({
+  message,
+  isOwn,
+  showOwnAvatar = false,
+  ownAvatarUrl = "",
+  ownAvatarLabel = "",
+}) => {
+  const messageStatus = getMessageStatus(message, isOwn);
   const time = new Date(message.$createdAt).toLocaleTimeString(undefined, {
     hour: "2-digit",
     minute: "2-digit",
@@ -52,7 +95,7 @@ const ChatMessage = ({ message, isOwn }) => {
           isOwn
             ? "rounded-br-md bg-cyan-600 text-white dark:bg-cyan-500"
             : "rounded-bl-md bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white",
-          message.status === "failed" && "opacity-70",
+          messageStatus === "failed" && "opacity-70",
         )}
       >
         {/* Sender name (only if not own message) */}
@@ -80,9 +123,25 @@ const ChatMessage = ({ message, isOwn }) => {
           )}
         >
           {time}
-          {isOwn && <MessageStatus status={message.status} />}
+          {isOwn && <MessageStatus status={messageStatus} />}
         </p>
       </div>
+
+      {isOwn && showOwnAvatar && (
+        <div className="ml-1.5 flex items-end">
+          {ownAvatarUrl ? (
+            <img
+              src={ownAvatarUrl}
+              alt={ownAvatarLabel || message.senderName || "Me"}
+              className="h-6 w-6 rounded-full object-cover ring-1 ring-white/70 dark:ring-slate-900/70"
+            />
+          ) : (
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-700 text-[9px] font-bold text-white dark:bg-cyan-600">
+              {getInitials(ownAvatarLabel || message.senderName || "Me")}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

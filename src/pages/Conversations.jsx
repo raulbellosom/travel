@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Archive,
   XCircle,
+  UserPlus,
   Smile,
   X,
 } from "lucide-react";
@@ -18,6 +19,10 @@ import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../hooks/useAuth";
 import { useChat } from "../contexts/ChatContext";
 import { profileService } from "../services/profileService";
+import {
+  getConversationCounterparty,
+  getConversationUnreadCount,
+} from "../utils/chatParticipants";
 import { isUserOnline, getLastSeenText } from "../utils/presence";
 import { cn } from "../utils/cn";
 import { Badge, Spinner, StatsCardsRow, ImageViewerModal } from "../components/common";
@@ -39,6 +44,10 @@ const Conversations = () => {
     activeConversation,
     openConversation,
     sendMessage,
+    startDirectConversation,
+    internalChatUsers,
+    loadingInternalChatUsers,
+    loadInternalChatUsers,
     goBackToList,
     chatRole,
     totalUnread,
@@ -52,6 +61,9 @@ const Conversations = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [contactProfile, setContactProfile] = useState(null);
   const [contactProfiles, setContactProfiles] = useState({}); // Profiles for conversation list
+  const [showNewConversationModal, setShowNewConversationModal] = useState(false);
+  const [newConversationSearch, setNewConversationSearch] = useState("");
+  const [startingDirectConversationFor, setStartingDirectConversationFor] = useState("");
   const [presenceRefresh, setPresenceRefresh] = useState(0);
   const [isScrollReady, setIsScrollReady] = useState(false);
   const [viewerImage, setViewerImage] = useState(null);
@@ -71,6 +83,41 @@ const Conversations = () => {
       .map((word) => word.charAt(0).toUpperCase())
       .join("");
   }, []);
+
+  const getConversationContact = useCallback(
+    (conversation) =>
+      getConversationCounterparty(conversation, user?.$id, chatRole),
+    [chatRole, user?.$id],
+  );
+
+  const getContactUserId = useCallback(
+    (conversation) => getConversationContact(conversation).userId,
+    [getConversationContact],
+  );
+
+  const getContactName = useCallback(
+    (conversation) => getConversationContact(conversation).name,
+    [getConversationContact],
+  );
+
+  const getConversationUnread = useCallback(
+    (conversation) =>
+      getConversationUnreadCount(conversation, user?.$id, chatRole),
+    [chatRole, user?.$id],
+  );
+
+  const getInternalUserDisplayName = useCallback(
+    (staffUser) => {
+      const fullName = `${staffUser?.firstName || ""} ${staffUser?.lastName || ""}`.trim();
+      return (
+        fullName ||
+        String(staffUser?.name || "").trim() ||
+        String(staffUser?.email || "").trim() ||
+        t("chat.conversations.unknownUser")
+      );
+    },
+    [t],
+  );
 
   // Get status badge configuration
   const getStatusConfig = useCallback(
@@ -211,11 +258,14 @@ const Conversations = () => {
 
     const container = messagesContainerRef.current;
     if (container) {
-      // Only scroll if near bottom (user hasn't scrolled up)
+      const lastMessage = messages[messages.length - 1];
+      const isOwnLast = lastMessage?.senderUserId === user?.$id;
+
+      // Keep auto-follow for own sends; for incoming only if user is near bottom.
       const isNearBottom =
         container.scrollHeight - container.scrollTop - container.clientHeight <
         100;
-      if (isNearBottom) {
+      if (isNearBottom || isOwnLast) {
         // Use sentinel element for reliable scroll
         const endElement = messagesEndRef.current;
         if (endElement) {
@@ -228,14 +278,11 @@ const Conversations = () => {
         }
       }
     }
-  }, [messages, activeConversationId, loadingMessages]);
+  }, [messages, activeConversationId, loadingMessages, user?.$id]);
 
   /** Load contact user profile for presence */
   useEffect(() => {
-    const contactUserId =
-      chatRole === "client"
-        ? activeConversation?.ownerUserId
-        : activeConversation?.clientUserId;
+    const contactUserId = getContactUserId(activeConversation);
 
     if (!contactUserId) {
       setContactProfile(null);
@@ -265,7 +312,7 @@ const Conversations = () => {
       mounted = false;
       clearInterval(interval);
     };
-  }, [chatRole, activeConversation]);
+  }, [activeConversation, getContactUserId]);
 
   /** Refresh presence calculation periodically */
   useEffect(() => {
@@ -275,12 +322,6 @@ const Conversations = () => {
 
     return () => clearInterval(interval);
   }, []);
-
-  /** Get contact user ID from a conversation */
-  const getContactUserId = useCallback(
-    (conv) => (chatRole === "client" ? conv.ownerUserId : conv.clientUserId),
-    [chatRole],
-  );
 
   /** Load contact profiles for conversation list avatars and presence */
   useEffect(() => {
@@ -355,11 +396,60 @@ const Conversations = () => {
     return conversations.filter(
       (c) =>
         (c.propertyTitle || "").toLowerCase().includes(q) ||
+        (c.resourceTitle || "").toLowerCase().includes(q) ||
         (c.clientName || "").toLowerCase().includes(q) ||
         (c.ownerName || "").toLowerCase().includes(q) ||
-        (c.lastMessage || "").toLowerCase().includes(q),
+      (c.lastMessage || "").toLowerCase().includes(q),
     );
   }, [conversations, search]);
+
+  const filteredInternalChatUsers = useMemo(() => {
+    const q = newConversationSearch.trim().toLowerCase();
+    if (!q) return internalChatUsers;
+    return internalChatUsers.filter((staffUser) => {
+      const fullName = getInternalUserDisplayName(staffUser).toLowerCase();
+      const email = String(staffUser?.email || "").toLowerCase();
+      return fullName.includes(q) || email.includes(q);
+    });
+  }, [internalChatUsers, newConversationSearch, getInternalUserDisplayName]);
+
+  const openNewConversationModal = useCallback(() => {
+    setShowNewConversationModal(true);
+    setNewConversationSearch("");
+    loadInternalChatUsers();
+  }, [loadInternalChatUsers]);
+
+  const closeNewConversationModal = useCallback(() => {
+    setShowNewConversationModal(false);
+    setNewConversationSearch("");
+    setStartingDirectConversationFor("");
+  }, []);
+
+  const handleStartDirectConversation = useCallback(
+    async (staffUser) => {
+      const targetUserId = String(staffUser?.$id || "").trim();
+      if (!targetUserId || startingDirectConversationFor) return;
+
+      setStartingDirectConversationFor(targetUserId);
+      try {
+        await startDirectConversation({
+          targetUserId,
+          targetName: getInternalUserDisplayName(staffUser),
+        });
+        closeNewConversationModal();
+      } catch (err) {
+        console.error("Failed to start direct conversation:", err);
+      } finally {
+        setStartingDirectConversationFor("");
+      }
+    },
+    [
+      closeNewConversationModal,
+      getInternalUserDisplayName,
+      startDirectConversation,
+      startingDirectConversationFor,
+    ],
+  );
 
   /* ── Summary stats ───────────────────────────────────── */
 
@@ -389,12 +479,16 @@ const Conversations = () => {
 
   const handleSend = async (e) => {
     e?.preventDefault();
-    if (!input.trim() || sending) return;
+    const text = input.trim();
+    if (!text || sending) return;
+    setInput("");
+    setShowEmojiPicker(false);
     setSending(true);
     try {
-      await sendMessage(input);
-      setInput("");
+      await sendMessage(text);
+      inputRef.current?.focus();
     } catch {
+      setInput(text);
       // handled in context
     } finally {
       setSending(false);
@@ -410,7 +504,14 @@ const Conversations = () => {
 
   const handleEmojiClick = (emojiObject) => {
     setInput((prev) => prev + emojiObject.emoji);
-    inputRef.current?.focus();
+  };
+
+  const toggleEmojiPicker = () => {
+    setShowEmojiPicker((prev) => {
+      const next = !prev;
+      if (next) inputRef.current?.blur();
+      return next;
+    });
   };
 
   /* ── Close emoji picker when clicking outside ─────────── */
@@ -444,8 +545,7 @@ const Conversations = () => {
     return d.toLocaleDateString();
   };
 
-  const contactName = (conv) =>
-    chatRole === "client" ? conv.ownerName : conv.clientName;
+  const contactName = getContactName;
 
   /** Contact presence status */
   const contactPresence = useMemo(() => {
@@ -465,6 +565,22 @@ const Conversations = () => {
     if (!avatarFileId) return "";
     return profileService.getAvatarViewUrl(avatarFileId);
   }, [contactProfile]);
+
+  const ownAvatarUrl = useMemo(() => {
+    const avatarFileId = user?.avatarFileId;
+    if (!avatarFileId) return "";
+    return profileService.getAvatarViewUrl(avatarFileId);
+  }, [user?.avatarFileId]);
+
+  const lastOwnMessageId = useMemo(() => {
+    if (!user?.$id) return null;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].senderUserId === user.$id) {
+        return messages[i].$id;
+      }
+    }
+    return null;
+  }, [messages, user?.$id]);
 
   /* ── Render ──────────────────────────────────────────── */
 
@@ -500,6 +616,19 @@ const Conversations = () => {
             activeConversationId && "hidden md:flex",
           )}
         >
+          {chatRole === "owner" && (
+            <div className="border-b border-slate-100 px-3 py-3 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={openNewConversationModal}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-900/50 dark:bg-cyan-950/30 dark:text-cyan-300 dark:hover:bg-cyan-950/50"
+              >
+                <UserPlus size={16} />
+                {t("conversationsPage.actions.newConversation")}
+              </button>
+            </div>
+          )}
+
           {/* Search */}
           <div className="border-b border-slate-100 px-3 py-3 dark:border-slate-800">
             <div className="relative">
@@ -540,10 +669,7 @@ const Conversations = () => {
             )}
 
             {filtered.map((conv) => {
-              const unread =
-                chatRole === "client"
-                  ? conv.clientUnread || 0
-                  : conv.ownerUnread || 0;
+              const unread = getConversationUnread(conv);
               const online = isListContactOnline(conv);
               const avatarUrl = getListContactAvatarUrl(conv);
 
@@ -601,7 +727,7 @@ const Conversations = () => {
                       </span>
                     </div>
                     <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                      {conv.propertyTitle}
+                      {conv.resourceTitle || conv.propertyTitle}
                     </p>
                     <div className="mt-1 flex items-center justify-between gap-2">
                       <p
@@ -694,9 +820,12 @@ const Conversations = () => {
                       </span>
                     </div>
                   )}
-                  {!contactPresence && activeConversation?.propertyTitle && (
+                  {!contactPresence &&
+                    (activeConversation?.resourceTitle ||
+                      activeConversation?.propertyTitle) && (
                     <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                      {activeConversation.propertyTitle}
+                      {activeConversation.resourceTitle ||
+                        activeConversation.propertyTitle}
                     </p>
                   )}
                 </div>
@@ -750,6 +879,9 @@ const Conversations = () => {
                       key={msg.$id}
                       message={msg}
                       isOwn={msg.senderUserId === user?.$id}
+                      showOwnAvatar={msg.$id === lastOwnMessageId}
+                      ownAvatarUrl={ownAvatarUrl}
+                      ownAvatarLabel={user?.name || user?.email || "Me"}
                     />
                   ))}
                   {/* Sentinel element for reliable scroll to bottom */}
@@ -769,6 +901,7 @@ const Conversations = () => {
                       onEmojiClick={handleEmojiClick}
                       theme="auto"
                       searchDisabled={false}
+                      autoFocusSearch={false}
                       skinTonesDisabled
                       previewConfig={{ showPreview: false }}
                       height={350}
@@ -784,7 +917,7 @@ const Conversations = () => {
                   {/* Emoji Button */}
                   <button
                     type="button"
-                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    onClick={toggleEmojiPicker}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                     aria-label={t("chat.actions.emoji")}
                   >
@@ -818,6 +951,106 @@ const Conversations = () => {
           )}
         </div>
       </div>
+
+      {showNewConversationModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                  {t("conversationsPage.newConversation.title")}
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  {t("conversationsPage.newConversation.subtitle")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeNewConversationModal}
+                className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label={t("chat.actions.close")}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 p-4">
+              <div className="relative">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  value={newConversationSearch}
+                  onChange={(e) => setNewConversationSearch(e.target.value)}
+                  placeholder={t("conversationsPage.newConversation.searchPlaceholder")}
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+
+              <div className="max-h-80 overflow-y-auto rounded-lg border border-slate-100 dark:border-slate-800">
+                {loadingInternalChatUsers && (
+                  <div className="flex items-center justify-center py-8">
+                    <Spinner size="sm" />
+                  </div>
+                )}
+
+                {!loadingInternalChatUsers &&
+                  filteredInternalChatUsers.length === 0 && (
+                    <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                      {t("conversationsPage.newConversation.empty")}
+                    </div>
+                  )}
+
+                {!loadingInternalChatUsers &&
+                  filteredInternalChatUsers.map((staffUser) => {
+                    const fullName = getInternalUserDisplayName(staffUser);
+                    const roleLabel = String(staffUser?.role || "")
+                      .replaceAll("_", " ")
+                      .trim();
+                    const avatarUrl = staffUser?.avatarFileId
+                      ? profileService.getAvatarViewUrl(staffUser.avatarFileId)
+                      : "";
+                    const isStarting =
+                      startingDirectConversationFor === staffUser.$id;
+
+                    return (
+                      <button
+                        key={staffUser.$id}
+                        type="button"
+                        onClick={() => handleStartDirectConversation(staffUser)}
+                        disabled={Boolean(startingDirectConversationFor)}
+                        className="flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:hover:bg-slate-800/50"
+                      >
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt={fullName}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
+                            {getInitials(fullName)}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                            {fullName}
+                          </p>
+                          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                            {staffUser?.email || roleLabel}
+                          </p>
+                        </div>
+                        {isStarting && <Spinner size="xs" />}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Image Viewer Modal */}
       <ImageViewerModal

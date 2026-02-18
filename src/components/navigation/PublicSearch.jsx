@@ -1,268 +1,290 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import {
-  Search,
-  X,
-  MapPin,
-  Home,
-  Building2,
-  Palmtree,
-  Loader2,
-} from "lucide-react";
+import { Search, X, MapPin, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
+import { storage } from "../../api/appwriteClient";
+import env from "../../env";
 import { cn } from "../../utils/cn";
-import { DEFAULT_AMENITIES_CATALOG } from "../../data/amenitiesCatalog";
-import { propertiesService } from "../../services/propertiesService";
+import LazyImage from "../common/atoms/LazyImage";
+import {
+  PUBLIC_SEARCH_MIN_QUERY_LENGTH,
+  usePublicSearchData,
+} from "./usePublicSearchData";
 
-/**
- * Quick-suggestion categories shown when the input is empty or has a short query.
- * Each navigates to a pre-filtered URL on the public properties page.
- */
-const useSuggestions = (t) => [
-  {
-    icon: Palmtree,
-    label: t("publicSearch.suggestions.vacationRentals", "Rentas Vacacionales"),
-    to: "/buscar?operationType=vacation_rental",
-  },
-  {
-    icon: Home,
-    label: t("publicSearch.suggestions.houses", "Casas en venta"),
-    to: "/buscar?propertyType=house&operationType=sale",
-  },
-  {
-    icon: Building2,
-    label: t("publicSearch.suggestions.apartments", "Departamentos"),
-    to: "/buscar?propertyType=apartment",
-  },
-  {
-    icon: MapPin,
-    label: t("publicSearch.suggestions.puertoVallarta", "Puerto Vallarta"),
-    to: "/buscar?q=Puerto+Vallarta",
-  },
-  {
-    icon: MapPin,
-    label: t("publicSearch.suggestions.rivieraNayarit", "Riviera Nayarit"),
-    to: "/buscar?q=Riviera+Nayarit",
-  },
-];
-
-/* ────────────────────────────────────────────── */
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=200&q=60";
 
 const PublicSearch = ({
   showDesktopInput = true,
   showMobileTrigger = true,
-  /** When rendered inside a transparent header over the hero */
   variant = "default",
+  showDesktopInputOnMobile = false,
+  desktopContainerClassName = "",
+  mobileTriggerClassName = "",
+  onMobileOpenChange,
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [isDesktopOpen, setIsDesktopOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [liveResults, setLiveResults] = useState([]);
-  const [liveLoading, setLiveLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const liveSearchTimer = useRef(null);
+
   const desktopRef = useRef(null);
   const mobileInputRef = useRef(null);
   const dropdownRef = useRef(null);
-  const suggestions = useSuggestions(t);
+  const formattersRef = useRef(new Map());
 
-  // Close desktop dropdown on outside click
+  const language = i18n.resolvedLanguage || i18n.language || "es";
+  const {
+    trimmedQuery,
+    suggestions,
+    liveResults,
+    liveLoading,
+    amenityMatches,
+    resetResults,
+  } = usePublicSearchData({
+    query,
+    language,
+    t,
+  });
+
+  useEffect(() => {
+    onMobileOpenChange?.(isMobileOpen);
+  }, [isMobileOpen, onMobileOpenChange]);
+
+  useEffect(() => {
+    formattersRef.current.clear();
+  }, [language]);
+
   useEffect(() => {
     if (!isDesktopOpen) return;
-    const handler = (e) => {
-      if (!desktopRef.current?.contains(e.target)) setIsDesktopOpen(false);
+    const handleOutsideClick = (event) => {
+      if (!desktopRef.current?.contains(event.target)) {
+        setIsDesktopOpen(false);
+      }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [isDesktopOpen]);
 
-  // Debounced live property search
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed.length < 2) {
-      setLiveResults([]);
-      setLiveLoading(false);
-      return;
+  const formatPrice = useCallback(
+    (value, currency = "MXN") => {
+      const normalizedCurrency = String(currency || "MXN")
+        .trim()
+        .toUpperCase();
+      const cacheKey = `${language}:${normalizedCurrency}`;
+
+      let formatter = formattersRef.current.get(cacheKey);
+      if (!formatter) {
+        try {
+          formatter = new Intl.NumberFormat(language, {
+            style: "currency",
+            currency: normalizedCurrency,
+            maximumFractionDigits: 0,
+          });
+        } catch {
+          formatter = new Intl.NumberFormat(language, {
+            style: "currency",
+            currency: "MXN",
+            maximumFractionDigits: 0,
+          });
+        }
+        formattersRef.current.set(cacheKey, formatter);
+      }
+
+      return formatter.format(Number(value) || 0);
+    },
+    [language],
+  );
+
+  const getPropertyImage = useCallback((property) => {
+    if (property?.images?.[0]) return String(property.images[0]);
+    if (property?.mainImageUrl) return String(property.mainImageUrl);
+
+    const firstImageId = property?.galleryImageIds?.[0];
+    const bucketId = env.appwrite.buckets.propertyImages;
+    if (firstImageId && bucketId) {
+      return storage.getFileView({
+        bucketId,
+        fileId: firstImageId,
+      });
     }
-    setLiveLoading(true);
-    clearTimeout(liveSearchTimer.current);
-    liveSearchTimer.current = setTimeout(() => {
-      propertiesService
-        .listPublic({ page: 1, limit: 5, filters: { search: trimmed } })
-        .then((res) => setLiveResults(res.documents || []))
-        .catch(() => setLiveResults([]))
-        .finally(() => setLiveLoading(false));
-    }, 350);
-    return () => clearTimeout(liveSearchTimer.current);
-  }, [query]);
 
-  // Bilingual amenity matching — searches BOTH name_en and name_es
-  const amenityMatches = useMemo(() => {
-    if (query.trim().length < 2) return [];
-    const q = query.trim().toLowerCase();
-    const lang = i18n.resolvedLanguage || "es";
-    return DEFAULT_AMENITIES_CATALOG.filter(
-      (a) =>
-        a.name_en.toLowerCase().includes(q) ||
-        a.name_es.toLowerCase().includes(q),
-    )
-      .slice(0, 4)
-      .map((a) => ({
-        ...a,
-        displayName: lang === "en" ? a.name_en : a.name_es,
-      }));
-  }, [query, i18n.resolvedLanguage]);
+    return FALLBACK_IMAGE;
+  }, []);
 
-  const doSearch = (q) => {
-    const trimmed = String(q || "").trim();
-    if (!trimmed) return;
-    navigate(`/buscar?q=${encodeURIComponent(trimmed)}`);
-    closeAll();
-  };
+  const decoratedLiveResults = useMemo(
+    () =>
+      liveResults.map((property) => ({
+        ...property,
+        previewImage: getPropertyImage(property),
+        formattedPrice: formatPrice(property.price, property.currency),
+      })),
+    [formatPrice, getPropertyImage, liveResults],
+  );
 
-  const closeAll = () => {
+  const closeAll = useCallback(() => {
     setQuery("");
     setIsDesktopOpen(false);
     setIsMobileOpen(false);
-    setLiveResults([]);
-    setLiveLoading(false);
     setActiveIndex(-1);
-  };
+    resetResults();
+  }, [resetResults]);
 
-  // Build a flat list of navigable items for keyboard navigation
+  const goTo = useCallback(
+    (to) => {
+      navigate(to);
+      closeAll();
+    },
+    [closeAll, navigate],
+  );
+
+  const doSearch = useCallback(
+    (value) => {
+      const nextQuery = String(value || "").trim();
+      if (!nextQuery) return;
+      goTo(`/buscar?q=${encodeURIComponent(nextQuery)}`);
+    },
+    [goTo],
+  );
+
   const navItems = useMemo(() => {
     const items = [];
-    // "Search for ..." button
-    if (query.trim().length > 0) {
-      items.push({ type: "search", action: () => doSearch(query) });
+
+    if (trimmedQuery.length > 0) {
+      items.push({ type: "search", action: () => doSearch(trimmedQuery) });
     }
-    // Live property results
-    if (query.trim().length >= 2 && !liveLoading) {
-      liveResults.forEach((p) => {
+
+    if (
+      trimmedQuery.length >= PUBLIC_SEARCH_MIN_QUERY_LENGTH &&
+      !liveLoading
+    ) {
+      decoratedLiveResults.forEach((property) => {
         items.push({
           type: "property",
-          action: () => goTo(`/propiedades/${p.slug}`),
+          action: () => goTo(`/propiedades/${property.slug}`),
         });
       });
     }
-    // Amenity matches
-    amenityMatches.forEach((a) => {
+
+    amenityMatches.forEach((amenity) => {
       items.push({
         type: "amenity",
-        action: () => goTo(`/buscar?q=${encodeURIComponent(a.displayName)}`),
+        action: () =>
+          goTo(`/buscar?q=${encodeURIComponent(amenity.displayName)}`),
       });
     });
-    // Popular suggestions
-    suggestions.forEach((s) => {
-      items.push({ type: "suggestion", action: () => goTo(s.to) });
-    });
-    return items;
-  }, [query, liveResults, liveLoading, amenityMatches, suggestions]);
 
-  // Reset active index when items change
+    suggestions.forEach((suggestion) => {
+      items.push({ type: "suggestion", action: () => goTo(suggestion.to) });
+    });
+
+    return items;
+  }, [
+    amenityMatches,
+    decoratedLiveResults,
+    doSearch,
+    goTo,
+    liveLoading,
+    suggestions,
+    trimmedQuery,
+  ]);
+
   useEffect(() => {
     setActiveIndex(-1);
   }, [navItems.length]);
 
-  // Scroll active item into view
   useEffect(() => {
     if (activeIndex < 0) return;
     const container = dropdownRef.current;
     if (!container) return;
-    const btns = container.querySelectorAll("[data-nav-item]");
-    btns[activeIndex]?.scrollIntoView({ block: "nearest" });
+    const navButtons = container.querySelectorAll("[data-nav-item]");
+    navButtons[activeIndex]?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
-  const onKeyDown = (e) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setActiveIndex((i) => (i < navItems.length - 1 ? i + 1 : 0));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveIndex((i) => (i > 0 ? i - 1 : navItems.length - 1));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (activeIndex >= 0 && navItems[activeIndex]) {
-        navItems[activeIndex].action();
-      } else {
-        doSearch(query);
+  const onKeyDown = useCallback(
+    (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActiveIndex((prev) => (prev < navItems.length - 1 ? prev + 1 : 0));
+        return;
       }
-    } else if (e.key === "Escape") {
-      setIsDesktopOpen(false);
-      setIsMobileOpen(false);
-      setActiveIndex(-1);
-    }
-  };
 
-  const goTo = (to) => {
-    navigate(to);
-    closeAll();
-  };
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : navItems.length - 1));
+        return;
+      }
 
-  /* ── Suggestion list (reused in desktop + mobile) ── */
-  // Track a running index counter across sections so keyboard nav works
-  const SuggestionList = ({ compact }) => {
-    let idx = query.trim().length > 0 ? 1 : 0; // "Search for" button takes slot 0 when visible
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (activeIndex >= 0 && navItems[activeIndex]) {
+          navItems[activeIndex].action();
+        } else {
+          doSearch(trimmedQuery);
+        }
+        return;
+      }
+
+      if (event.key === "Escape") {
+        closeAll();
+      }
+    },
+    [activeIndex, closeAll, doSearch, navItems, trimmedQuery],
+  );
+
+  const SuggestionList = ({ compact = false }) => {
+    let indexOffset = trimmedQuery.length > 0 ? 1 : 0;
 
     return (
       <div ref={dropdownRef} className={cn("py-2", compact && "px-1")}>
-        {/* Live property results */}
-        {query.trim().length >= 2 && (
+        {trimmedQuery.length >= PUBLIC_SEARCH_MIN_QUERY_LENGTH && (
           <div className="border-b border-slate-100 dark:border-slate-700">
             {liveLoading ? (
               <div className="flex items-center justify-center gap-2 py-4 text-xs text-slate-400">
-                <Loader2 size={14} className="animate-spin" />
+                <Search size={14} className="animate-pulse" />
                 {t("publicSearch.searching")}
               </div>
-            ) : liveResults.length > 0 ? (
+            ) : decoratedLiveResults.length > 0 ? (
               <div className="py-1.5">
                 <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                   {t("publicSearch.properties")}
                 </p>
-                {liveResults.map((p) => {
-                  const myIdx = idx++;
-                  const img =
-                    p.images?.[0] ||
-                    p.mainImageUrl ||
-                    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=200&q=60";
+                {decoratedLiveResults.map((property) => {
+                  const currentIndex = indexOffset++;
                   return (
                     <button
-                      key={p.$id}
+                      key={property.$id}
                       type="button"
                       data-nav-item
-                      onClick={() => goTo(`/propiedades/${p.slug}`)}
-                      onMouseEnter={() => setActiveIndex(myIdx)}
+                      onClick={() => goTo(`/propiedades/${property.slug}`)}
+                      onMouseEnter={() => setActiveIndex(currentIndex)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
-                        activeIndex === myIdx
+                        activeIndex === currentIndex
                           ? "bg-cyan-50 dark:bg-slate-700"
                           : "hover:bg-cyan-50 dark:hover:bg-slate-700",
                       )}
                     >
-                      <img
-                        src={img}
-                        alt={p.title}
+                      <LazyImage
+                        src={property.previewImage}
+                        alt={property.title}
                         className="h-11 w-14 shrink-0 rounded-lg object-cover"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                          {p.title}
+                          {property.title}
                         </p>
                         <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                           <MapPin size={10} />
-                          {p.city}
+                          {property.city}
                         </p>
                       </div>
                       <span className="shrink-0 text-xs font-bold text-cyan-700 dark:text-cyan-400">
-                        {new Intl.NumberFormat(i18n.language, {
-                          style: "currency",
-                          currency: p.currency || "MXN",
-                          maximumFractionDigits: 0,
-                        }).format(p.price || 0)}
+                        {property.formattedPrice}
                       </span>
                     </button>
                   );
@@ -276,14 +298,13 @@ const PublicSearch = ({
           </div>
         )}
 
-        {/* Smart amenity matches (bilingual) */}
         {amenityMatches.length > 0 && (
           <>
             <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
               {t("publicSearch.matchingAmenities")}
             </p>
             {amenityMatches.map((amenity) => {
-              const myIdx = idx++;
+              const currentIndex = indexOffset++;
               return (
                 <button
                   key={amenity.slug}
@@ -292,10 +313,10 @@ const PublicSearch = ({
                   onClick={() =>
                     goTo(`/buscar?q=${encodeURIComponent(amenity.displayName)}`)
                   }
-                  onMouseEnter={() => setActiveIndex(myIdx)}
+                  onMouseEnter={() => setActiveIndex(currentIndex)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-300",
-                    activeIndex === myIdx
+                    activeIndex === currentIndex
                       ? "bg-cyan-50 dark:bg-slate-700"
                       : "hover:bg-cyan-50 dark:hover:bg-slate-700",
                   )}
@@ -314,29 +335,28 @@ const PublicSearch = ({
           </>
         )}
 
-        {/* Popular searches */}
         <p className="px-3 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
           {t("publicSearch.quickFilters")}
         </p>
-        {suggestions.map((s) => {
-          const myIdx = idx++;
-          const Icon = s.icon;
+        {suggestions.map((suggestion) => {
+          const currentIndex = indexOffset++;
+          const Icon = suggestion.icon;
           return (
             <button
-              key={s.to}
+              key={suggestion.to}
               type="button"
               data-nav-item
-              onClick={() => goTo(s.to)}
-              onMouseEnter={() => setActiveIndex(myIdx)}
+              onClick={() => goTo(suggestion.to)}
+              onMouseEnter={() => setActiveIndex(currentIndex)}
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-300",
-                activeIndex === myIdx
+                activeIndex === currentIndex
                   ? "bg-cyan-50 dark:bg-slate-700"
                   : "hover:bg-cyan-50 dark:hover:bg-slate-700",
               )}
             >
               <Icon size={15} className="text-cyan-600 dark:text-cyan-400" />
-              <span>{s.label}</span>
+              <span>{suggestion.label}</span>
             </button>
           );
         })}
@@ -344,24 +364,22 @@ const PublicSearch = ({
     );
   };
 
-  /* ── Mobile overlay ── */
   const mobileOverlay = (
     <AnimatePresence>
       {isMobileOpen && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[95] bg-slate-950/55 p-3 backdrop-blur-sm sm:hidden"
         >
-          <motion.section
+          <Motion.section
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
             className="mx-auto flex h-full w-full max-w-[34rem] flex-col overflow-hidden rounded-3xl border border-cyan-100 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-950/95"
           >
-            {/* Header */}
             <header className="flex items-center gap-2 border-b border-slate-100 px-3 py-3 dark:border-slate-700">
               <label className="relative block flex-1">
                 <Search
@@ -373,11 +391,11 @@ const PublicSearch = ({
                   type="text"
                   autoFocus
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={onKeyDown}
                   placeholder={t(
                     "publicSearch.placeholder",
-                    "Buscar propiedades, ciudades, características…",
+                    "Buscar propiedades, ciudades, caracteristicas...",
                   )}
                   className="h-11 w-full rounded-2xl border border-cyan-200/90 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/25 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                 />
@@ -391,38 +409,45 @@ const PublicSearch = ({
               </button>
             </header>
 
-            {/* Body */}
             <div className="flex-1 overflow-y-auto">
-              {query.trim().length > 0 ? (
+              {trimmedQuery.length > 0 ? (
                 <div className="p-4">
                   <button
                     type="button"
-                    onClick={() => doSearch(query)}
+                    onClick={() => doSearch(trimmedQuery)}
                     className="flex w-full items-center gap-3 rounded-xl bg-cyan-50 px-4 py-3 text-sm font-medium text-cyan-700 transition hover:bg-cyan-100 dark:bg-cyan-900/30 dark:text-cyan-400"
                   >
                     <Search size={16} />
                     <span>
                       {t("publicSearch.searchFor", "Buscar")}{" "}
-                      <strong>"{query.trim()}"</strong>
+                      <strong>"{trimmedQuery}"</strong>
                     </span>
                   </button>
                 </div>
               ) : null}
               <SuggestionList compact />
             </div>
-          </motion.section>
-        </motion.div>
+          </Motion.section>
+        </Motion.div>
       )}
     </AnimatePresence>
   );
 
+  const mobileTriggerBaseClass =
+    variant === "transparent"
+      ? "inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25 sm:hidden"
+      : "inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 backdrop-blur-sm transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:hidden";
+
   return (
     <>
-      {/* ── Desktop input ── */}
       {showDesktopInput && (
         <div
           ref={desktopRef}
-          className="relative hidden w-full max-w-md sm:block"
+          className={cn(
+            "relative w-full max-w-md",
+            !showDesktopInputOnMobile && "hidden sm:block",
+            desktopContainerClassName,
+          )}
         >
           <label className="relative block">
             <Search
@@ -438,14 +463,14 @@ const PublicSearch = ({
               type="text"
               value={query}
               onFocus={() => setIsDesktopOpen(true)}
-              onChange={(e) => {
-                setQuery(e.target.value);
+              onChange={(event) => {
+                setQuery(event.target.value);
                 setIsDesktopOpen(true);
               }}
               onKeyDown={onKeyDown}
               placeholder={t(
                 "publicSearch.placeholder",
-                "Buscar propiedades, ciudades…",
+                "Buscar propiedades, ciudades...",
               )}
               className={cn(
                 "h-10 w-full rounded-full pl-9 pr-3 text-sm outline-none transition",
@@ -458,19 +483,19 @@ const PublicSearch = ({
 
           <AnimatePresence>
             {isDesktopOpen && (
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
                 className="absolute right-0 top-[calc(100%+0.5rem)] z-[85] w-[min(24rem,calc(100vw-2rem))] min-w-full max-h-[calc(100vh-8rem)] overflow-y-auto overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
               >
-                {query.trim().length > 0 && (
+                {trimmedQuery.length > 0 && (
                   <div className="border-b border-slate-100 p-2 dark:border-slate-700">
                     <button
                       type="button"
                       data-nav-item
-                      onClick={() => doSearch(query)}
+                      onClick={() => doSearch(trimmedQuery)}
                       onMouseEnter={() => setActiveIndex(0)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-cyan-700 transition dark:text-cyan-400",
@@ -482,19 +507,18 @@ const PublicSearch = ({
                       <Search size={15} />
                       <span>
                         {t("publicSearch.searchFor", "Buscar")}{" "}
-                        <strong>"{query.trim()}"</strong>
+                        <strong>"{trimmedQuery}"</strong>
                       </span>
                     </button>
                   </div>
                 )}
                 <SuggestionList />
-              </motion.div>
+              </Motion.div>
             )}
           </AnimatePresence>
         </div>
       )}
 
-      {/* ── Mobile trigger ── */}
       {showMobileTrigger && (
         <button
           type="button"
@@ -504,14 +528,13 @@ const PublicSearch = ({
               requestAnimationFrame(() => mobileInputRef.current?.focus());
             });
           }}
-          className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25 sm:hidden"
+          className={cn(mobileTriggerBaseClass, mobileTriggerClassName)}
           aria-label={t("publicSearch.open", "Buscar")}
         >
           <Search size={16} />
         </button>
       )}
 
-      {/* Portal for mobile overlay */}
       {showMobileTrigger && typeof document !== "undefined"
         ? createPortal(mobileOverlay, document.body)
         : null}

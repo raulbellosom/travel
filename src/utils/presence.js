@@ -2,6 +2,14 @@
  * Utility functions for user online presence
  */
 
+const ONLINE_WINDOW_SECONDS = 75;
+
+const parseDate = (value) => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
 /**
  * Check if a user is currently online based on their lastSeenAt timestamp
  * @param {string} lastSeenAt - ISO 8601 datetime string
@@ -10,17 +18,14 @@
 export const isUserOnline = (lastSeenAt) => {
   if (!lastSeenAt) return false;
 
-  try {
-    const lastSeen = new Date(lastSeenAt);
-    const now = new Date();
-    const diffInSeconds = (now - lastSeen) / 1000;
+  const lastSeen = parseDate(lastSeenAt);
+  if (!lastSeen) return false;
 
-    // User is considered online if last seen within 30 seconds
-    return diffInSeconds < 30;
-  } catch (error) {
-    console.warn("Invalid lastSeenAt date:", lastSeenAt);
-    return false;
-  }
+  const now = new Date();
+  const diffInSeconds = Math.max(0, (now - lastSeen) / 1000);
+
+  // Slightly larger than heartbeat interval to avoid false offline flicker.
+  return diffInSeconds <= ONLINE_WINDOW_SECONDS;
 };
 
 /**
@@ -36,24 +41,23 @@ export const getLastSeenText = (lastSeenAt, t) => {
     return t("chat.presence.online");
   }
 
-  try {
-    const lastSeen = new Date(lastSeenAt);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now - lastSeen) / 60000);
-
-    if (diffInMinutes < 60) {
-      return t("chat.presence.minutesAgo", { count: diffInMinutes });
-    }
-
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) {
-      return t("chat.presence.hoursAgo", { count: diffInHours });
-    }
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    return t("chat.presence.daysAgo", { count: diffInDays });
-  } catch (error) {
-    console.warn("Invalid lastSeenAt date:", lastSeenAt);
+  const lastSeen = parseDate(lastSeenAt);
+  if (!lastSeen) {
     return "";
   }
+
+  const now = new Date();
+  const diffInMinutes = Math.max(1, Math.floor((now - lastSeen) / 60000));
+
+  if (diffInMinutes < 60) {
+    return t("chat.presence.minutesAgo", { count: diffInMinutes });
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return t("chat.presence.hoursAgo", { count: diffInHours });
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  return t("chat.presence.daysAgo", { count: diffInDays });
 };

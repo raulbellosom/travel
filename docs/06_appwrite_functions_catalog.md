@@ -1,4 +1,4 @@
-﻿# 06_APPWRITE_FUNCTIONS_CATALOG.md - REAL ESTATE SAAS PLATFORM
+﻿# 06_APPWRITE_FUNCTIONS_CATALOG - RESOURCE + MODULE GATING
 
 ## Referencia
 
@@ -10,301 +10,195 @@
 
 ## 1. Objetivo
 
-Definir el catalogo oficial de Appwrite Functions por instancia cliente para:
+Catalogo oficial de Functions para arquitectura v3:
 
-- automatizacion operativa
-- seguridad backend-first
-- reservas y pagos
-- auditoria completa
+- `resources` como entidad canonica
+- validacion de modulos/limites por instancia
+- compatibilidad temporal con `propertyId`
 
 ---
 
-## 2. Reglas Globales
+## 2. Reglas globales
 
 1. Runtime Node.js >= 18.
-2. `node-appwrite` >= 17.0.0.
-3. Sin secrets hardcodeados.
-4. Validacion de env obligatoria al inicio.
-5. Logs estructurados con `requestId`.
-6. Operaciones criticas deben registrar `activity_logs`.
+2. Validacion estricta de env al inicio.
+3. Sin secretos hardcodeados.
+4. Logs estructurados con `requestId`.
+5. Toda mutacion critica registra `activity_logs`.
+6. Gating por modulo/limite en backend (obligatorio).
 
 ---
 
-## 3. Estructura Obligatoria
+## 3. Helper compartido de modulos
 
-Cada function debe tener:
+Ubicacion recomendada por function: `src/lib/modulesService.js`.
 
-```text
-functions/
-  <function-name>/
-    .env.example
-    README.md
-    package.json
-    src/index.js
-```
+API minima:
+
+- `loadInstanceSettings()`
+- `assertModuleEnabled(moduleKey)`
+- `assertLimitNotExceeded(limitKey, currentValue)`
+- `toModuleErrorResponse(error)`
+
+Errores estandar:
+
+- `MODULE_DISABLED` (403)
+- `LIMIT_EXCEEDED` (403)
 
 ---
 
-## 4. Functions MVP (Obligatorias)
+## 4. Functions activas
 
 ## 4.1 `user-create-profile`
 
-- Tipo: Event Trigger (`users.*.create`).
-- Crea `users` y `user_preferences`.
-- Default role: `client` para todos los nuevos usuarios.
-- Role upgrades (owner, staff) se gestionan mediante BD por usuarios root.
+- Trigger `users.*.create`.
+- Crea `users` + `user_preferences`.
+- Rol default: `client`.
 
 ## 4.2 `create-lead-public`
 
-- Tipo: HTTP POST.
-- Crea lead desde formulario publico.
-- Valida propiedad publicada.
-- Escribe log en `activity_logs` (`lead.create_public`).
+- HTTP POST publico.
+- Canonico: recibe `resourceId` (acepta `propertyId` como fallback).
+- Valida modulo: `module.resources`, `module.leads`.
+- Crea lead con `resourceId` + alias legacy `propertyId`.
 
 ## 4.3 `send-lead-notification`
 
-- Tipo: Event Trigger (`databases.*.collections.leads.documents.*.create`).
-- Envia email al owner/staff responsable.
+- Trigger on lead create.
+- Notifica owner/staff responsable.
 
-## 4.3.1 `property-view-counter`
+## 4.4 `property-view-counter`
 
-- Tipo: HTTP POST.
-- Recibe `propertyId`.
-- Incrementa `properties.views` para propiedad publica.
-- Uso recomendado: llamada no bloqueante desde detalle publico.
+- HTTP POST.
+- Incrementa vistas en entidad de catalogo (compat temporal con properties).
 
-## 4.4 `create-reservation-public`
+## 4.5 `create-reservation-public`
 
-- Tipo: HTTP POST autenticado.
-- Crea reservacion `pending`.
-- Requiere usuario `client` con email verificado.
-- Valida disponibilidad minima (fechas, cupo, reglas basicas).
-- Devuelve identificador de reserva y siguiente paso de pago.
+- HTTP POST autenticado.
+- Canonico: `resourceId` (fallback `propertyId`).
+- Valida modulo `module.resources`.
+- Valida modulo por modo comercial:
+  - `rent_short_term` -> `module.booking.short_term`
+  - `rent_hourly` -> `module.booking.hourly`
+- Si requiere pago online: valida `module.payments.online`.
+- Valida limite `maxActiveReservationsPerMonth`.
+- Bloquea modos `manual_contact` con respuesta funcional.
 
-## 4.4.1 `reservation-created-notification`
+## 4.6 `reservation-created-notification`
 
-- Tipo: Event Trigger (`databases.*.collections.reservations.documents.*.create`).
-- Notifica al owner/staff sobre nueva reservacion pendiente.
-- Registra evento de notificacion en auditoria.
+- Trigger post create reservation.
 
-## 4.5 `create-payment-session`
+## 4.7 `create-payment-session`
 
-- Tipo: HTTP POST autenticado.
-- Requiere usuario `client` con email verificado.
-- Genera sesion de pago con Stripe o preferencia con Mercado Pago.
-- Crea/actualiza registro `reservation_payments` en `pending`.
+- HTTP POST autenticado.
+- Resuelve `resourceId` desde reserva (`resourceId || propertyId`).
+- Valida modulos de booking + pagos online.
+- Crea/actualiza `reservation_payments` con `resourceId` + compat legacy.
 
-## 4.6 `payment-webhook-stripe`
+## 4.8 `payment-webhook-stripe`
 
-- Tipo: HTTP endpoint webhook.
-- Valida firma Stripe.
-- Aplica idempotencia por `providerEventId`.
-- Marca pago `approved/rejected`.
-- Si aprobado: confirma reservacion y dispara voucher.
+- Webhook Stripe.
+- Idempotencia por `providerEventId`.
 
-## 4.7 `payment-webhook-mercadopago`
+## 4.9 `payment-webhook-mercadopago`
 
-- Tipo: HTTP endpoint webhook.
-- Valida origen/firma segun proveedor.
-- Idempotencia y reconciliacion en `reservation_payments`.
-- Confirma o rechaza reservacion segun estado real.
+- Webhook Mercado Pago.
+- Idempotencia y reconciliacion.
 
-## 4.8 `issue-reservation-voucher`
+## 4.10 `issue-reservation-voucher`
 
-- Tipo: HTTP interno (invocado por webhooks de pago via `Functions.createExecution`).
-- Precondicion: reservacion `confirmed` y pago `approved`.
-- Genera `voucherCode` unico + `reservation_vouchers`.
-- Envia email con voucher al cliente.
+- Emite voucher cuando pago aprobado.
 
-## 4.9 `create-review-public`
+## 4.11 `create-review-public`
 
-- Tipo: HTTP POST autenticado.
-- Requiere usuario `client` con email verificado.
-- Permite reseña solo para reservaciones elegibles.
-- Crea reseña en `pending`.
+- POST autenticado (`client` verificado).
 
-## 4.10 `moderate-review`
+## 4.12 `moderate-review`
 
-- Tipo: HTTP autenticado.
 - Requiere scope `reviews.moderate`.
-- Cambia estado a `published` o `rejected`.
 
-## 4.11 `staff-user-management`
+## 4.13 `staff-user-management`
 
-- Tipo: HTTP autenticado.
-- Operaciones implementadas: `create_staff`, `list_staff`, `update_staff`, `set_staff_enabled`.
-- Solo `owner` o `root`.
-- Bloquea gestion de cuentas `root` y `owner`.
-- Registra auditoria before/after en `activity_logs`.
+- CRUD staff controlado por `owner/root`.
 
-## 4.12 `email-verification`
+## 4.14 `email-verification`
 
-- Tipo: HTTP.
-- Acciones: `send`, `resend`, `verify`.
-- Sincroniza estado de verificacion en Auth + `users`.
+- `send`, `resend`, `verify`.
 
-## 4.13 `sync-user-profile`
+## 4.15 `sync-user-profile`
 
-- Tipo: HTTP autenticado.
-- Sincroniza `users` con Auth (`name/email/phone`) y campos de perfil en `users` (`phoneCountryCode`, `whatsappCountryCode`, `whatsappNumber`).
+- Sincroniza Auth y `users`.
 
-## 4.14 `activity-log-query` (root-only)
+## 4.16 `activity-log-query`
 
-- Tipo: HTTP autenticado.
-- Expone consulta filtrada de `activity_logs`.
-- Requiere rol `root`.
-- Soporta filtros por `action`, `actorUserId`, `entityType`, `severity`, `fromDate`, `toDate`.
-- Registra intentos denegados como `root_panel.access_denied`.
+- Root only.
 
-## 4.15 `dashboard-metrics-aggregator`
+## 4.17 `dashboard-metrics-aggregator`
 
-- Tipo: Cron Job diario (`55 23 * * *`, UTC).
-- Calcula KPIs diarios y escribe en `analytics_daily`.
-- Alimenta visualizaciones del dashboard (leads, reservas, ingresos).
+- Cron diario para `analytics_daily`.
 
-## 4.16 `root-functions-diagnostics` (root-only)
+## 4.18 `root-functions-diagnostics`
 
-- Tipo: HTTP autenticado.
-- Requiere usuario autenticado con `role === root`.
-- Revisa salud operativa de functions (existencia, variables runtime, ultima ejecucion).
-- Permite smoke tests no destructivos para validar ejecucion en ambiente real.
-- Disenada para usarse desde tab interna root del panel administrativo.
+- Root only, diagnostico operativo.
 
-## 4.17 `send-chat-notification`
+## 4.19 `send-chat-notification`
 
-- Tipo: HTTP POST.
-- Envia notificacion por email cuando un participante del chat recibe un mensaje y esta offline.
-- Recibe `conversationId`, `senderUserId`, `recipientUserId`, `messagePreview`.
-- Consulta datos del destinatario y conversacion.
-- Genera email HTML estilizado con link directo a la conversacion (`/app/conversations?focus={id}`).
-- CC automatico al email del propietario de la plataforma (`PLATFORM_OWNER_EMAIL`).
-- Variables requeridas: `APPWRITE_COLLECTION_CONVERSATIONS_ID`, `APPWRITE_COLLECTION_USERS_ID`, SMTP, `PLATFORM_OWNER_EMAIL`, `APP_BASE_URL`.
-- Execute permission: `any`.
-
-## 4.18 Permiso Execute y Scope de Actor (Definitivo)
-
-| Function                           | Execute Appwrite | Scope de actor                                                         |
-| ---------------------------------- | ---------------- | ---------------------------------------------------------------------- |
-| `user-create-profile`              | `[]`             | No aplica (evento)                                                     |
-| `create-lead-public`               | `any`            | No requiere auth                                                       |
-| `send-lead-notification`           | `[]`             | No aplica (evento)                                                     |
-| `property-view-counter`            | `any`            | No requiere auth                                                       |
-| `create-reservation-public`        | `users`          | Usuario autenticado con email verificado                               |
-| `reservation-created-notification` | `[]`             | No aplica (evento)                                                     |
-| `create-payment-session`           | `users`          | Usuario autenticado con email verificado y reserva propia              |
-| `payment-webhook-stripe`           | `any`            | No usa rol/scope; valida firma Stripe                                  |
-| `payment-webhook-mercadopago`      | `any`            | No usa rol/scope; valida firma/HMAC                                    |
-| `issue-reservation-voucher`        | `[]`             | No usa rol/scope; invocacion interna                                   |
-| `create-review-public`             | `users`          | Usuario autenticado con email verificado y reserva elegible propia     |
-| `moderate-review`                  | `users`          | `owner`/`root` o scope `reviews.moderate`                              |
-| `staff-user-management`            | `users`          | `owner`/`root` o scope `staff.manage`                                  |
-| `email-verification`               | `any`            | `verify` por token; `send/resend` segun validacion de payload/cooldown |
-| `sync-user-profile`                | `users`          | Usuario autenticado solo sobre su propio perfil                        |
-| `activity-log-query`               | `users`          | Solo `role=root`                                                       |
-| `dashboard-metrics-aggregator`     | `[]`             | No aplica (cron)                                                       |
-| `root-functions-diagnostics`       | `users`          | Solo `role=root`                                                       |
-| `send-chat-notification`           | `any`            | No requiere auth; invocado desde frontend al enviar mensaje            |
+- Notificacion email para chat offline.
 
 ---
 
-## 5. Functions Futuras (Fase 1+)
+## 5. Execute permissions (resumen)
 
-- `reservation-reminder-cron`
-- `reservation-no-show-processor`
-- `refund-processor`
-- `seo-sitemap-generator`
-- `image-processor`
-
----
-
-## 6. Variables Core Minimas
-
-Todas las functions requieren:
-
-```bash
-APPWRITE_ENDPOINT=
-APPWRITE_PROJECT_ID=
-APPWRITE_API_KEY=
-APPWRITE_DATABASE_ID=main
-```
-
-Variables adicionales por dominio:
-
-- Leads: IDs de `properties`, `leads`, SMTP.
-- Reservas/pagos: IDs de `reservations`, `reservation_payments`, claves Stripe/Mercado Pago.
-- Chat: IDs de `conversations`, `users`, SMTP, `PLATFORM_OWNER_EMAIL`, `APP_BASE_URL`.
-- Auditoria: ID `activity_logs`.
+| Function | Execute |
+| --- | --- |
+| `create-lead-public` | `any` |
+| `create-reservation-public` | `users` |
+| `create-payment-session` | `users` |
+| `create-review-public` | `users` |
+| `moderate-review` | `users` |
+| `staff-user-management` | `users` |
+| `activity-log-query` | `users` (root only) |
+| `root-functions-diagnostics` | `users` (root only) |
+| webhooks | `any` |
+| triggers/cron | `[]` |
 
 ---
 
-## 7. Politicas de Implementacion
+## 6. Variables clave (v3)
 
-1. Toda function HTTP valida metodo, body y auth.
-2. En webhooks, nunca confiar en datos del frontend.
-3. Todas las mutaciones criticas generan log de auditoria.
-4. Manejo de errores con codigos HTTP consistentes.
-5. Reintentos idempotentes para webhooks.
+Nuevas/actualizadas:
+
+- `APPWRITE_COLLECTION_RESOURCES_ID`
+- `APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID`
+- `APPWRITE_COLLECTION_RATE_PLANS_ID` (si aplica)
+
+Nota:
+
+- `APPWRITE_COLLECTION_RESOURCES_ID` es obligatorio para todas las functions de catalogo.
 
 ---
 
-## 8. Contratos de Respuesta (Base)
-
-Estandar recomendado:
-
-```json
-{
-  "success": true,
-  "code": "RESERVATION_CREATED",
-  "message": "Reservation created",
-  "data": {}
-}
-```
-
-Errores:
+## 7. Contrato de error estandar
 
 ```json
 {
   "success": false,
-  "code": "VALIDATION_ERROR",
-  "message": "Missing required fields"
+  "error": "MODULE_DISABLED",
+  "moduleKey": "module.booking.short_term",
+  "message": "Este modulo no esta habilitado para esta instancia."
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "LIMIT_EXCEEDED",
+  "limitKey": "maxActiveReservationsPerMonth",
+  "message": "Se excedio el limite configurado para el plan."
 }
 ```
 
 ---
 
-## 9. Testing Minimo por Function
-
-- Caso exitoso.
-- Caso de validacion fallida.
-- Caso de permisos insuficientes.
-- Caso de dependencia externa fallida.
-- En webhooks: prueba de idempotencia.
-
----
-
-## 10. Seguridad
-
-- API key por function con scopes minimos.
-- Nunca loguear secretos completos.
-- Rate limit para endpoints publicos.
-- Rotacion de llaves semestral.
-
----
-
-## 11. Relacion con Otros Documentos
-
-- `03_appwrite_db_schema.md` define colecciones usadas por estas functions.
-- `05_permissions_and_roles.md` define roles/scopes que estas functions deben aplicar.
-- `07_frontend_routes_and_flows.md` define como el frontend consume endpoints.
-
----
-
-## 12. Estado del Documento
-
-- Definitivo para MVP con reservas, pagos, chat en tiempo real y auditoria root.
-- Listo para implementacion incremental por cliente.
-
----
-
-Ultima actualizacion: 2026-02-16
-Version: 2.4.0
+Ultima actualizacion: 2026-02-18
+Version: 3.0.0

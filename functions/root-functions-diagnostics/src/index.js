@@ -1,4 +1,4 @@
-import { Client, Databases, Functions, Query } from "node-appwrite";
+﻿import { Client, Databases, Functions, Query } from "node-appwrite";
 
 const hasValue = (value) =>
   value !== undefined && value !== null && String(value).trim() !== "";
@@ -77,7 +77,7 @@ const DIAGNOSTICS_CATALOG = [
     functionIdEnvKey: "APPWRITE_FUNCTION_CREATE_LEAD_ID",
     requiredEnv: ["APPWRITE_DATABASE_ID"],
     recommendedEnv: [
-      "APPWRITE_COLLECTION_PROPERTIES_ID",
+      "APPWRITE_COLLECTION_RESOURCES_ID",
       "APPWRITE_COLLECTION_LEADS_ID",
       "APPWRITE_COLLECTION_ACTIVITY_LOGS_ID",
     ],
@@ -139,7 +139,7 @@ const DIAGNOSTICS_CATALOG = [
       "EMAIL_FROM_ADDRESS",
     ],
     recommendedEnv: [
-      "APPWRITE_COLLECTION_PROPERTIES_ID",
+      "APPWRITE_COLLECTION_RESOURCES_ID",
       "APPWRITE_COLLECTION_USERS_ID",
       "APP_BASE_URL",
       "EMAIL_SMTP_PORT",
@@ -153,7 +153,7 @@ const DIAGNOSTICS_CATALOG = [
     title: "property-view-counter",
     functionIdEnvKey: "APPWRITE_FUNCTION_PROPERTY_VIEW_COUNTER_ID",
     requiredEnv: ["APPWRITE_DATABASE_ID"],
-    recommendedEnv: ["APPWRITE_COLLECTION_PROPERTIES_ID"],
+    recommendedEnv: ["APPWRITE_COLLECTION_RESOURCES_ID"],
     smokePayload: {},
   },
   {
@@ -162,7 +162,7 @@ const DIAGNOSTICS_CATALOG = [
     functionIdEnvKey: "APPWRITE_FUNCTION_CREATE_RESERVATION_ID",
     requiredEnv: ["APPWRITE_DATABASE_ID"],
     recommendedEnv: [
-      "APPWRITE_COLLECTION_PROPERTIES_ID",
+      "APPWRITE_COLLECTION_RESOURCES_ID",
       "APPWRITE_COLLECTION_RESERVATIONS_ID",
       "APPWRITE_COLLECTION_ACTIVITY_LOGS_ID",
     ],
@@ -242,7 +242,7 @@ const DIAGNOSTICS_CATALOG = [
     functionIdEnvKey: "APPWRITE_FUNCTION_CREATE_REVIEW_ID",
     requiredEnv: ["APPWRITE_DATABASE_ID"],
     recommendedEnv: [
-      "APPWRITE_COLLECTION_PROPERTIES_ID",
+      "APPWRITE_COLLECTION_RESOURCES_ID",
       "APPWRITE_COLLECTION_RESERVATIONS_ID",
       "APPWRITE_COLLECTION_REVIEWS_ID",
       "APPWRITE_COLLECTION_ACTIVITY_LOGS_ID",
@@ -267,7 +267,7 @@ const DIAGNOSTICS_CATALOG = [
     functionIdEnvKey: "APPWRITE_FUNCTION_DASHBOARD_METRICS_ID",
     requiredEnv: ["APPWRITE_DATABASE_ID"],
     recommendedEnv: [
-      "APPWRITE_COLLECTION_PROPERTIES_ID",
+      "APPWRITE_COLLECTION_RESOURCES_ID",
       "APPWRITE_COLLECTION_LEADS_ID",
       "APPWRITE_COLLECTION_RESERVATIONS_ID",
       "APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID",
@@ -779,3 +779,4 @@ export default async ({ req, res, error }) => {
     });
   }
 };
+

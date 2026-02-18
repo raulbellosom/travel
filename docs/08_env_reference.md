@@ -38,8 +38,10 @@ APPWRITE_DATABASE_ID=main
 
 APPWRITE_COLLECTION_USERS_ID=users
 APPWRITE_COLLECTION_USER_PREFERENCES_ID=user_preferences
-APPWRITE_COLLECTION_PROPERTIES_ID=properties
-APPWRITE_COLLECTION_PROPERTY_IMAGES_ID=property_images
+APPWRITE_COLLECTION_RESOURCES_ID=resources
+APPWRITE_COLLECTION_RESOURCE_IMAGES_ID=resource_images
+APPWRITE_COLLECTION_RATE_PLANS_ID=rate_plans
+APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID=instance_settings
 APPWRITE_COLLECTION_AMENITIES_ID=amenities
 APPWRITE_COLLECTION_LEADS_ID=leads
 APPWRITE_COLLECTION_RESERVATIONS_ID=reservations
@@ -52,7 +54,7 @@ APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID=email_verifications
 APPWRITE_COLLECTION_CONVERSATIONS_ID=conversations
 APPWRITE_COLLECTION_MESSAGES_ID=messages
 
-APPWRITE_BUCKET_PROPERTY_IMAGES_ID=property-images
+APPWRITE_BUCKET_RESOURCE_IMAGES_ID=resource-images
 APPWRITE_BUCKET_AVATARS_ID=avatars
 APPWRITE_BUCKET_DOCUMENTS_ID=documents
 ```
@@ -153,7 +155,7 @@ GA_MEASUREMENT_ID=
 | `FEATURE_DARK_MODE`      | Habilita selector de tema oscuro                                                            |
 | `FEATURE_I18N`           | Habilita selector de idioma                                                                 |
 | `FEATURE_VERBOSE_LOGS`   | Activa logs detallados en consola                                                           |
-| `FEATURE_MARKETING_SITE` | `true` = landing CRM marketing en `/`, `false` = catálogo de propiedades del cliente en `/` |
+| `FEATURE_MARKETING_SITE` | `true` = landing CRM marketing en `/`, `false` = catálogo de recursos del cliente en `/` |
 
 ---
 
@@ -167,7 +169,7 @@ const required = [
   "APPWRITE_PROJECT_ID",
   "APPWRITE_DATABASE_ID",
   "APPWRITE_COLLECTION_USERS_ID",
-  "APPWRITE_COLLECTION_PROPERTIES_ID",
+  "APPWRITE_COLLECTION_RESOURCES_ID",
   "APPWRITE_COLLECTION_LEADS_ID",
   "APPWRITE_COLLECTION_RESERVATIONS_ID",
   "APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID",

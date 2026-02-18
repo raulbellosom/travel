@@ -303,6 +303,8 @@
     "rootActivity": "Root: Auditoria",
     "rootAmenities": "Root: Amenidades",
     "rootFunctionsDiagnostics": "Root: Functions",
+    "rootInstance": "Root: Instancia",
+    "rootModules": "Root: Modulos",
     "navigation": "Navegacion",
     "collapse": "Colapsar menu",
     "expand": "Expandir menu"
@@ -1309,8 +1311,12 @@
       "slug": "Slug",
       "title": "Titulo",
       "description": "Descripcion",
+      "resourceType": "Tipo de recurso",
+      "category": "Categoria",
       "propertyType": "Tipo de propiedad",
+      "commercialMode": "Modo comercial",
       "operationType": "Tipo de operacion",
+      "pricingModel": "Modelo de precio",
       "price": "Precio",
       "currency": "Moneda",
       "pricePer": "Precio por",
@@ -1455,9 +1461,34 @@
       "operationType": {
         "sale": "Venta",
         "rent": "Renta",
+        "hourly": "Por horas",
         "vacationRental": "Renta vacacional",
         "vacation_rental": "Renta vacacional",
         "transfer": "Traspaso"
+      },
+      "resourceType": {
+        "property": "Propiedad",
+        "service": "Servicio",
+        "venue": "Salon",
+        "experience": "Experiencia",
+        "vehicle": "Vehiculo"
+      },
+      "category": {
+        "cleaning": "Limpieza",
+        "dj": "DJ",
+        "chef": "Chef",
+        "eventHall": "Salon de eventos",
+        "commercialLocal": "Local comercial"
+      },
+      "pricingModel": {
+        "total": "Total",
+        "perMonth": "Por mes",
+        "perNight": "Por noche",
+        "perDay": "Por dia",
+        "perHour": "Por hora",
+        "perPerson": "Por persona",
+        "perEvent": "Por evento",
+        "perM2": "Por m2"
       },
       "status": {
         "draft": "Borrador",
@@ -2281,6 +2312,9 @@
     "title": "Mensajes",
     "subtitle": "Gestiona tus conversaciones con clientes e inquilinos.",
     "selectConversation": "Selecciona una conversación para ver los mensajes.",
+    "actions": {
+      "newConversation": "Nueva conversación"
+    },
     "metrics": {
       "total": "Total",
       "active": "Activas",
@@ -2290,6 +2324,12 @@
       "active": "Activa",
       "archived": "Archivada",
       "closed": "Cerrada"
+    },
+    "newConversation": {
+      "title": "Iniciar conversación interna",
+      "subtitle": "Selecciona un miembro administrativo para abrir un chat directo.",
+      "searchPlaceholder": "Buscar por nombre o correo...",
+      "empty": "No se encontraron usuarios administrativos."
     }
   },
   "myConversations": {

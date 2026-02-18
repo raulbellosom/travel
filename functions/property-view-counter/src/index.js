@@ -15,7 +15,7 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  propertiesCollectionId: getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+  resourcesCollectionId: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
 });
 
 const parseBody = (req) => {
@@ -52,13 +52,13 @@ export default async ({ req, res, error }) => {
   }
 
   const body = asObjectOrEmpty(parseBody(req));
-  const propertyId = String(body.propertyId || "").trim();
-  if (!propertyId) {
+  const resourceId = String(body.resourceId || "").trim();
+  if (!resourceId) {
     return json(res, 400, {
       ok: false,
       success: false,
       code: "VALIDATION_ERROR",
-      message: "propertyId is required",
+      message: "resourceId is required",
     });
   }
 
@@ -69,38 +69,38 @@ export default async ({ req, res, error }) => {
   const db = new Databases(client);
 
   try {
-    const property = await db.getDocument(
+    const resource = await db.getDocument(
       config.databaseId,
-      config.propertiesCollectionId,
-      propertyId,
+      config.resourcesCollectionId,
+      resourceId,
     );
 
-    if (property.enabled !== true || property.status !== "published") {
+    if (resource.enabled !== true || resource.status !== "published") {
       return json(res, 404, {
         ok: false,
         success: false,
-        code: "PROPERTY_NOT_AVAILABLE",
-        message: "Property not available",
+        code: "RESOURCE_NOT_AVAILABLE",
+        message: "Resource not available",
       });
     }
 
-    const currentViews = Number(property.views || 0);
+    const currentViews = Number(resource.views || 0);
     const nextViews = Number.isFinite(currentViews) && currentViews >= 0 ? currentViews + 1 : 1;
 
     await db.updateDocument(
       config.databaseId,
-      config.propertiesCollectionId,
-      propertyId,
+      config.resourcesCollectionId,
+      resourceId,
       { views: nextViews },
     );
 
     return json(res, 200, {
       ok: true,
       success: true,
-      code: "PROPERTY_VIEW_COUNTED",
-      message: "Property view incremented",
+      code: "RESOURCE_VIEW_COUNTED",
+      message: "Resource view incremented",
       data: {
-        propertyId,
+        resourceId,
         views: nextViews,
       },
     });

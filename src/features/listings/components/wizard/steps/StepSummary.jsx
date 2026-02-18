@@ -16,8 +16,7 @@ import LazyImage from "../../../../../components/common/atoms/LazyImage";
 import {
   PROPERTY_TYPES,
   OPERATION_TYPES,
-  CURRENCY_OPTIONS,
-  PRICE_PER_UNIT_OPTIONS,
+  PRICING_MODEL_OPTIONS,
   FURNISHED_OPTIONS,
   RENT_PERIOD_OPTIONS,
 } from "../wizardConfig";
@@ -85,12 +84,9 @@ const StepSummary = ({ formHook, onEditStep }) => {
 
   const operationLabel = resolveLabel(OPERATION_TYPES, form.operationType, t);
   const propertyTypeLabel = resolveLabel(PROPERTY_TYPES, form.propertyType, t);
-  const currencyLabel =
-    CURRENCY_OPTIONS.find((o) => o.value === form.currency)?.label ||
-    form.currency;
-  const pricePerUnitLabel = resolveLabel(
-    PRICE_PER_UNIT_OPTIONS,
-    form.pricePerUnit,
+  const pricingModelLabel = resolveLabel(
+    PRICING_MODEL_OPTIONS,
+    form.pricingModel || form.pricePerUnit,
     t,
   );
   const furnishedLabel = resolveLabel(FURNISHED_OPTIONS, form.furnished, t);
@@ -141,6 +137,12 @@ const StepSummary = ({ formHook, onEditStep }) => {
         <SummaryRow
           label={t("propertyForm.fields.operationType", "Operación")}
           value={operationLabel}
+        />
+        <SummaryRow
+          label={t("propertyForm.fields.resourceType", {
+            defaultValue: "Resource type",
+          })}
+          value={form.resourceType}
         />
         <SummaryRow
           label={t("propertyForm.fields.propertyType", "Tipo")}
@@ -235,7 +237,7 @@ const StepSummary = ({ formHook, onEditStep }) => {
       </SummarySection>
 
       {/* Rental Terms (rent only) */}
-      {form.operationType === "rent" && (
+      {form.commercialMode === "rent_long_term" && (
         <SummarySection
           icon={ClipboardList}
           title={t(
@@ -262,7 +264,7 @@ const StepSummary = ({ formHook, onEditStep }) => {
       )}
 
       {/* Vacation Rules (vacation_rental only) */}
-      {form.operationType === "vacation_rental" && (
+      {["rent_short_term", "rent_hourly"].includes(form.commercialMode) && (
         <SummarySection
           icon={CalendarCheck}
           title={t(
@@ -316,7 +318,7 @@ const StepSummary = ({ formHook, onEditStep }) => {
         />
         <SummaryRow
           label={t("propertyForm.fields.pricePer", "Por")}
-          value={pricePerUnitLabel}
+          value={pricingModelLabel}
         />
         <SummaryRow
           label={t("propertyForm.fields.priceNegotiable", "Negociable")}

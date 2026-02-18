@@ -21,6 +21,7 @@ import { storage } from "../../../api/appwriteClient";
 import env from "../../../env";
 import PropertyImagePlaceholder from "../atoms/PropertyImagePlaceholder";
 import LazyImage from "../atoms/LazyImage";
+import { getResourceBehavior } from "../../../utils/resourceModel";
 
 const normalizeEnumValue = (value) =>
   String(value || "")
@@ -39,6 +40,7 @@ const PropertyCard = ({ property, className }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const resource = useMemo(() => getResourceBehavior(property), [property]);
 
   // Build image URLs from galleryImageIds
   const images = useMemo(() => {
@@ -120,8 +122,8 @@ const PropertyCard = ({ property, className }) => {
     }
   };
 
-  const propertyTypeRaw = property?.propertyType || property?.type;
-  const operationRaw = property?.operationType || property?.operation;
+  const propertyTypeRaw = resource?.category || property?.propertyType || property?.type;
+  const operationRaw = resource?.operationType || property?.operationType || property?.operation;
 
   const formattedPropertyType = propertyTypeRaw
     ? t(
@@ -139,6 +141,7 @@ const PropertyCard = ({ property, className }) => {
     : "";
 
   const isNightlyOperation =
+    resource?.pricingModel === "per_night" ||
     normalizeEnumValue(operationRaw) === "vacation_rental" ||
     normalizeEnumValue(operationRaw) === "rent_short";
 

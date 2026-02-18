@@ -18,8 +18,8 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  propertiesCollectionId:
-    getEnv("APPWRITE_COLLECTION_PROPERTIES_ID") || "properties",
+  resourcesCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   usersCollectionId: getEnv("APPWRITE_COLLECTION_USERS_ID") || "users",
   appUrl: getEnv("APP_BASE_URL") || "http://localhost:5173",
 });
@@ -69,9 +69,9 @@ export default async ({ req, res, log, error }) => {
     return res.json({ ok: false, error: "Missing Appwrite credentials" }, 500);
   }
 
-  const propertyId = body.propertyId;
-  const propertyOwnerId = body.propertyOwnerId;
-  if (!propertyId || !propertyOwnerId) {
+  const resourceId = body.resourceId;
+  const resourceOwnerUserId = body.resourceOwnerUserId;
+  if (!resourceId || !resourceOwnerUserId) {
     return res.json({ ok: false, error: "Invalid lead payload" }, 400);
   }
 
@@ -82,9 +82,9 @@ export default async ({ req, res, log, error }) => {
   const db = new Databases(client);
 
   try {
-    const [property, owner] = await Promise.all([
-      db.getDocument(config.databaseId, config.propertiesCollectionId, propertyId),
-      db.getDocument(config.databaseId, config.usersCollectionId, propertyOwnerId),
+    const [resource, owner] = await Promise.all([
+      db.getDocument(config.databaseId, config.resourcesCollectionId, resourceId),
+      db.getDocument(config.databaseId, config.usersCollectionId, resourceOwnerUserId),
     ]);
 
     const ownerEmail = owner.email;
@@ -106,10 +106,10 @@ export default async ({ req, res, log, error }) => {
     await transporter.sendMail({
       from: `"${fromName}" <${fromAddress}>`,
       to: ownerEmail,
-      subject: `Nuevo lead para ${property.title}`,
+      subject: `Nuevo lead para ${resource.title}`,
       html: `
         <h2>Nuevo lead recibido</h2>
-        <p><strong>Propiedad:</strong> ${property.title}</p>
+        <p><strong>Recurso:</strong> ${resource.title}</p>
         <p><strong>Nombre:</strong> ${body.name || "-"}</p>
         <p><strong>Email:</strong> ${body.email || "-"}</p>
         <p><strong>Telefono:</strong> ${body.phone || "-"}</p>

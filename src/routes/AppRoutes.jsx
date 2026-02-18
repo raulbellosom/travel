@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -10,7 +11,6 @@ import { UIProvider } from "../contexts/UIContext";
 import InternalRoute from "./InternalRoute";
 import OwnerRoute from "./OwnerRoute";
 import RootRoute from "./RootRoute";
-import RoleRoute from "./RoleRoute";
 import ScopeRoute from "./ScopeRoute";
 import ClientRoute from "./ClientRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
@@ -18,46 +18,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
-import Home from "../pages/Home";
-import SearchPage from "../pages/SearchPage";
-import PropertyDetail from "../pages/PropertyDetail";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import ForgotPassword from "../pages/ForgotPassword";
-import ResetPassword from "../pages/ResetPassword";
-import VerifyEmail from "../pages/VerifyEmail";
-import Dashboard from "../pages/Dashboard";
-import MyProperties from "../pages/MyProperties";
-import AppPropertyDetail from "../pages/AppPropertyDetail";
-import CreateProperty from "../pages/CreateProperty";
-import EditProperty from "../pages/EditProperty";
-import Leads from "../pages/Leads";
-import Conversations from "../pages/Conversations";
-import Clients from "../pages/Clients";
-import Team from "../pages/Team";
-import AppReservations from "../pages/AppReservations";
-import AppCalendar from "../pages/AppCalendar";
-import AppPayments from "../pages/AppPayments";
-import AppReviews from "../pages/AppReviews";
-import Profile from "../pages/Profile";
-import AppProfile from "../pages/AppProfile";
-import MyReservations from "../pages/MyReservations";
-import MyReviews from "../pages/MyReviews";
-import MyConversations from "../pages/MyConversations";
-import ReserveProperty from "../pages/ReserveProperty";
-import VoucherLookup from "../pages/VoucherLookup";
-import PrivacyNotice from "../pages/PrivacyNotice";
-import TermsConditions from "../pages/TermsConditions";
-import UIDocsPage from "../pages/UIDocsPage";
-import NotFound from "../pages/NotFound";
-import BadRequest from "../pages/BadRequest";
-import Forbidden from "../pages/Forbidden";
-import ServerError from "../pages/ServerError";
-import ServiceUnavailable from "../pages/ServiceUnavailable";
-import ErrorsDemo from "../pages/ErrorsDemo";
-import RootAmenitiesPanel from "../pages/RootAmenitiesPanel";
-import RootActivityLog from "../pages/RootActivityLog";
-import RootFunctionsDiagnostics from "../pages/RootFunctionsDiagnostics";
 import {
   INTERNAL_BASE_PATH,
   INTERNAL_ROUTES,
@@ -70,7 +30,52 @@ import ScrollToTop from "../components/routing/ScrollToTop";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { ChatProvider } from "../contexts/ChatContext";
-import { ChatBubble } from "../components/chat";
+
+const Home = lazy(() => import("../pages/Home"));
+const SearchPage = lazy(() => import("../pages/SearchPage"));
+const PropertyDetail = lazy(() => import("../pages/PropertyDetail"));
+const Login = lazy(() => import("../pages/Login"));
+const Register = lazy(() => import("../pages/Register"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const MyProperties = lazy(() => import("../pages/MyProperties"));
+const AppPropertyDetail = lazy(() => import("../pages/AppPropertyDetail"));
+const CreateProperty = lazy(() => import("../pages/CreateProperty"));
+const EditProperty = lazy(() => import("../pages/EditProperty"));
+const Leads = lazy(() => import("../pages/Leads"));
+const Conversations = lazy(() => import("../pages/Conversations"));
+const Clients = lazy(() => import("../pages/Clients"));
+const Team = lazy(() => import("../pages/Team"));
+const AppReservations = lazy(() => import("../pages/AppReservations"));
+const AppCalendar = lazy(() => import("../pages/AppCalendar"));
+const AppPayments = lazy(() => import("../pages/AppPayments"));
+const AppReviews = lazy(() => import("../pages/AppReviews"));
+const Profile = lazy(() => import("../pages/Profile"));
+const AppProfile = lazy(() => import("../pages/AppProfile"));
+const MyReservations = lazy(() => import("../pages/MyReservations"));
+const MyReviews = lazy(() => import("../pages/MyReviews"));
+const MyConversations = lazy(() => import("../pages/MyConversations"));
+const ReserveProperty = lazy(() => import("../pages/ReserveProperty"));
+const VoucherLookup = lazy(() => import("../pages/VoucherLookup"));
+const PrivacyNotice = lazy(() => import("../pages/PrivacyNotice"));
+const TermsConditions = lazy(() => import("../pages/TermsConditions"));
+const UIDocsPage = lazy(() => import("../pages/UIDocsPage"));
+const NotFound = lazy(() => import("../pages/NotFound"));
+const BadRequest = lazy(() => import("../pages/BadRequest"));
+const Forbidden = lazy(() => import("../pages/Forbidden"));
+const ServerError = lazy(() => import("../pages/ServerError"));
+const ServiceUnavailable = lazy(() => import("../pages/ServiceUnavailable"));
+const ErrorsDemo = lazy(() => import("../pages/ErrorsDemo"));
+const RootAmenitiesPanel = lazy(() => import("../pages/RootAmenitiesPanel"));
+const RootActivityLog = lazy(() => import("../pages/RootActivityLog"));
+const RootFunctionsDiagnostics = lazy(
+  () => import("../pages/RootFunctionsDiagnostics"),
+);
+const RootInstancePage = lazy(() => import("../pages/RootInstancePage"));
+const RootModulesPage = lazy(() => import("../pages/RootModulesPage"));
+const ChatBubble = lazy(() => import("../components/chat/ChatBubble"));
 
 const LegacyEditPropertyRedirect = () => {
   const { id } = useParams();
@@ -104,6 +109,8 @@ const MarketingEntryRoute = () => {
   return null;
 };
 
+const RoutesFallback = () => <LoadingScreen transparent={false} />;
+
 const AppRoutes = () => {
   return (
     <BrowserRouter>
@@ -111,14 +118,15 @@ const AppRoutes = () => {
       <AuthProvider>
         <UIProvider>
           <ChatProvider>
-            {env.features.marketingSite ? (
-              <Routes>
-                {/* Marketing Mode: Only Landing + Redirects */}
-                <Route path="/" element={<MarketingEntryRoute />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            ) : (
-              <Routes>
+            <Suspense fallback={<RoutesFallback />}>
+              {env.features.marketingSite ? (
+                <Routes>
+                  {/* Marketing Mode: Only Landing + Redirects */}
+                  <Route path="/" element={<MarketingEntryRoute />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              ) : (
+                <Routes>
                 {/* Client Mode: Full Application */}
                 <Route element={<MainLayout />}>
                   {!env.features.marketingSite && (
@@ -373,6 +381,22 @@ const AppRoutes = () => {
                       </RootRoute>
                     }
                   />
+                  <Route
+                    path="root/instance"
+                    element={
+                      <RootRoute>
+                        <RootInstancePage />
+                      </RootRoute>
+                    }
+                  />
+                  <Route
+                    path="root/modules"
+                    element={
+                      <RootRoute>
+                        <RootModulesPage />
+                      </RootRoute>
+                    }
+                  />
                   <Route path="profile" element={<AppProfile />} />
                   <Route
                     path="mis-propiedades"
@@ -530,10 +554,13 @@ const AppRoutes = () => {
                 <Route path="/error/500" element={<ServerError />} />
                 <Route path="/error/503" element={<ServiceUnavailable />} />
 
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            )}
-            <ChatBubble />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              )}
+            </Suspense>
+            <Suspense fallback={null}>
+              <ChatBubble />
+            </Suspense>
           </ChatProvider>
         </UIProvider>
       </AuthProvider>

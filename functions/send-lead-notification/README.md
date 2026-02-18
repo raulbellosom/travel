@@ -1,6 +1,6 @@
-# send-lead-notification
+﻿# send-lead-notification
 
-Sends email notification to the property owner when a lead is created.
+Sends email notification to the resource owner when a lead is created.
 
 ## Execution Contract
 
@@ -13,3 +13,4 @@ Sends email notification to the property owner when a lead is created.
 ## Minimum API key scopes
 
 - `databases.read`
+

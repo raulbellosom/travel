@@ -1,4 +1,4 @@
-# create-payment-session
+﻿# create-payment-session
 
 Creates a payment session/preference for an existing reservation.
 
@@ -26,3 +26,4 @@ Creates a payment session/preference for an existing reservation.
 ```
 
 `guestEmail` is optional and, if provided, must match the authenticated account email.
+

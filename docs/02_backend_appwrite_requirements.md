@@ -1,8 +1,6 @@
-﻿# 02_BACKEND_APPWRITE_REQUIREMENTS - REAL ESTATE SAAS PLATFORM
+﻿# 02_BACKEND_APPWRITE_REQUIREMENTS - INMOBO RESOURCE PLATFORM
 
 ## Referencia
-
-Este documento se rige por:
 
 - `00_ai_project_context.md`
 - `00_project_brief.md`
@@ -10,272 +8,183 @@ Este documento se rige por:
 
 ---
 
-## 1. Principio Arquitectonico
+## 1. Principio arquitectonico
 
-El backend se disena como **single-tenant por instancia**:
+INMOBO opera como **single-tenant por instancia**:
 
-- Una instancia Appwrite por cliente.
-- Un database principal por cliente (`main`).
-- Buckets y Functions propios por cliente.
-- Sin shared database entre clientes.
-
----
-
-## 2. Stack Backend
-
-- Appwrite self-hosted (>= 1.8.x recomendado).
-- PostgreSQL como motor de datos.
-- Node.js >= 18 para Functions.
-- SDK `node-appwrite` >= 17.0.0.
+- 1 proyecto Appwrite por cliente.
+- 1 database principal por instancia (`main`).
+- Colecciones, buckets y functions aisladas por instancia.
+- No existe modelo multi-org dentro de la misma instancia.
 
 ---
 
-## 3. Servicios Appwrite Utilizados
+## 2. Objetivo backend v3
+
+Backend canonico orientado a **resources** + **feature gating por modulos**:
+
+- Entidad comercial principal: `resources`.
+- Compatibilidad temporal: `properties` sigue vigente como legado (DEPRECATE).
+- Gating de plan: `instance_settings` con `enabledModules` + `limits`.
+- Todas las validaciones criticas se ejecutan en Functions.
+
+---
+
+## 3. Servicios Appwrite usados
 
 ### 3.1 Auth
 
-- Email/password en MVP.
-- Verificacion de email obligatoria.
-- Recovery de password.
-- Sesiones persistentes seguras.
+- Email/password.
+- Verificacion de email obligatoria para reservas/pagos/reviews.
 
-### 3.2 Databases
+### 3.2 Databases (minimo v3)
 
-Colecciones minimas:
+Colecciones canonicas:
 
 - `users`
 - `user_preferences`
-- `properties`
-- `property_images`
+- `resources`
+- `resource_images` (o `property_images` en compatibilidad)
+- `rate_plans`
 - `amenities`
 - `leads`
 - `reservations`
 - `reservation_payments`
 - `reservation_vouchers`
 - `reviews`
+- `conversations`
+- `messages`
+- `instance_settings`
 - `analytics_daily`
 - `activity_logs`
 - `email_verifications`
+
+Colecciones legacy (deprecate, no eliminar aun):
+
+- `properties`
+- `property_images`
 
 ### 3.3 Storage
 
 Buckets minimos:
 
 - `property-images` (public read)
-- `avatars` (private/controlled read)
+- `avatars` (public/controlled segun politica actual)
 - `documents` (private)
 
 ### 3.4 Functions
 
-- Triggers de auth/database/storage.
-- Endpoints HTTP para flujos publicos (lead/reserva/review).
-- Webhooks de pago para Stripe/Mercado Pago.
-
-### 3.5 Messaging
-
-- SMTP como base.
-- Plantillas para verificacion, reservas, voucher y notificaciones.
-
-### 3.6 Estadisticas y visualizacion
-
-- KPIs diarios materializados en `analytics_daily`.
-- Dashboard consume agregados para graficas y cards.
-- Actualizacion por Function programada (cron) o evento.
+- HTTP publicas: leads, reservas, pagos.
+- Triggers/eventos: notificaciones, auditoria, agregados.
+- Webhooks: Stripe/Mercado Pago.
 
 ---
 
-## 4. Modelo de Roles y Seguridad
+## 4. Sistema de modulos (backend obligatorio)
 
-Roles de negocio (campo `users.role`):
+Fuente de verdad: `instance_settings` (`key = "main"`).
 
-- `root` (interno proveedor, oculto)
-- `owner` (dueno de instancia cliente)
+Campos clave:
+
+- `planKey`
+- `enabledModules[]`
+- `limits` (JSON serializado)
+- `enabled`
+
+Modulos base sugeridos:
+
+- `module.resources`
+- `module.leads`
+- `module.staff`
+- `module.analytics.basic`
+- `module.booking.long_term`
+- `module.booking.short_term`
+- `module.booking.hourly`
+- `module.payments.online`
+- `module.messaging.realtime`
+- `module.reviews`
+- `module.calendar.advanced`
+
+### 4.1 Contrato de bloqueo
+
+Si un modulo esta deshabilitado:
+
+- HTTP `403`
+- Payload:
+
+```json
+{
+  "error": "MODULE_DISABLED",
+  "moduleKey": "module.booking.short_term",
+  "message": "Este modulo no esta habilitado para esta instancia."
+}
+```
+
+Si se excede un limite:
+
+```json
+{
+  "error": "LIMIT_EXCEEDED",
+  "limitKey": "maxActiveReservationsPerMonth",
+  "message": "Se excedio el limite configurado para el plan."
+}
+```
+
+---
+
+## 5. Roles y seguridad
+
+Roles en `users.role`:
+
+- `root`
+- `owner`
 - `staff_manager`
 - `staff_editor`
 - `staff_support`
-- `client` (usuario final registrado)
+- `client`
 
 Reglas:
 
-- `root` nunca aparece en listados del dashboard normal.
-- `owner` puede crear/desactivar staff.
-- Staff opera solo en modulos permitidos.
-- Ninguna decision de seguridad depende solo del frontend.
+- Seguridad critica en backend/functions, nunca solo UI.
+- `root` controla modulos/plan/limites.
+- Owner/staff operan segun scopes y modulos habilitados.
 
 ---
 
-## 5. Principios de Datos
+## 6. Compatibilidad de migracion
 
-### 5.1 Estandar comun
+Mientras dure la migracion a resources:
 
-Todas las colecciones de negocio deben incluir:
-
-- `createdAt` (datetime)
-- `updatedAt` (datetime)
-- `enabled` (boolean)
-
-### 5.2 Auditoria obligatoria
-
-Toda accion critica debe registrar entrada en `activity_logs`:
-
-- Actor (`actorUserId`, `actorRole`)
-- Entidad (`entityType`, `entityId`)
-- Accion (`create`, `update`, `delete`, `status_change`, etc.)
-- Snapshot antes/despues (`beforeData`, `afterData`)
-- Timestamp
-
-### 5.3 Consistencia funcional
-
-- Estados de reserva y pago deben ser trazables.
-- Toda confirmacion de pago depende de webhook validado.
-- Emision de voucher solo despues de `paymentStatus=paid`.
+- aceptar `resourceId` y `propertyId` en endpoints criticos.
+- guardar `resourceId` como canonico y `propertyId` como alias legacy cuando aplique.
+- mantener ruta publica `/propiedades/:slug` cargando desde `resources`.
 
 ---
 
-## 6. Permisos (Backend First)
+## 7. Auditoria
 
-Primitivas Appwrite usadas:
+Toda mutacion relevante debe registrar `activity_logs`:
 
-- `Role.any()`
-- `Role.users()`
-- `Role.user(userId)`
-
-Notas:
-
-- No se usa modelo multi-tenant por Team para separar clientes.
-- El aislamiento entre clientes se resuelve por **instancias separadas**.
-
-Colecciones sensibles (`reservation_payments`, `activity_logs`) son system-only
-para lectura/escritura directa y se exponen por Functions controladas.
+- cambios en recursos y estados de publicacion
+- reservas/pagos
+- cambios de plan/modulos/limites
+- acciones root
 
 ---
 
-## 7. Reservas y Pagos
+## 8. Provisioning de instancia
 
-### 7.1 Flujo base
-
-1. Cliente autenticado y verificado crea reservacion (`pending`).
-2. Se genera intento de pago.
-3. Pasarela confirma via webhook.
-4. Sistema actualiza pago y reservacion (`confirmed`).
-5. Sistema genera voucher.
-
-### 7.2 Integraciones
-
-- Stripe: `payment_intent` + `webhook`.
-- Mercado Pago: `preference/payment` + `webhook`.
-
-### 7.3 Reglas no negociables
-
-- Validar firma de webhook.
-- Idempotencia por `providerEventId`.
-- No confirmar reserva por callback del frontend.
-
----
-
-## 8. Functions - Estructura Estandar
-
-Cada Function:
-
-- `functions/<name>/.env.example`
-- `functions/<name>/README.md`
-- `functions/<name>/package.json`
-- `functions/<name>/src/index.js`
-
-Politicas:
-
-- Sin secrets hardcodeados.
-- Validacion de env requerida al inicio.
-- Logs estructurados con `requestId`.
-
----
-
-## 9. Eventos y Triggers
-
-Eventos minimos recomendados:
-
-- `users.*.create` -> `user-create-profile`
-- `databases.*.collections.leads.documents.*.create` -> `send-lead-notification`
-- `databases.*.collections.reservations.documents.*.create` -> `reservation-created-notification`
-- `databases.*.collections.reservation_payments.documents.*.update` -> `issue-reservation-voucher` (si paid)
-
----
-
-## 10. Logging y Monitoreo
-
-### 10.1 Logs de ejecucion
-
-- `log()` para eventos funcionales.
-- `error()` para fallas.
-- Incluir `entityId`, `actorUserId`, `requestId`.
-
-### 10.2 Panel de auditoria root
-
-- Ruta oculta de ActivityLog en frontend.
-- Solo `root` puede acceder.
-- Debe permitir filtros por fecha, actor, entidad y accion.
-
----
-
-## 11. Backup y Recuperacion
-
-Minimo por instancia cliente:
-
-- Backup DB diario (retencion 30 dias).
-- Backup storage semanal (retencion 60 dias).
-- Procedimiento documentado de restore.
-
----
-
-## 12. Provisioning de Nueva Instancia Cliente
-
-Checklist:
+Checklist minimo:
 
 1. Crear proyecto Appwrite dedicado.
-2. Crear `database main`.
-3. Crear colecciones + indices de `03_appwrite_db_schema.md`.
-4. Crear buckets requeridos.
-5. Deploy de functions requeridas.
-6. Configurar variables de entorno (`08_env_reference.md`).
-7. Crear usuario `owner`.
-8. Crear usuario `root` interno y marcarlo no listable.
-9. Ejecutar smoke test:
-   - login
-   - alta propiedad
-   - lead publico
-   - reserva + pago sandbox
-   - voucher
-   - ActivityLog
+2. Crear DB `main`.
+3. Crear colecciones canonicas v3.
+4. Mantener colecciones legacy solo para compatibilidad temporal.
+5. Deploy functions con helper de modulos/limites.
+6. Crear documento `instance_settings` con `key=main`.
+7. Ejecutar smoke test: recurso -> lead -> reserva/pago -> chat.
 
 ---
 
-## 13. Seguridad
-
-- API keys por funcion con scope minimo.
-- Rotacion de secrets cada 6 meses.
-- Rate limiting en endpoints publicos (`leads`) y autenticados (`reservas/reviews/pagos`).
-- Sanitizacion de payloads y validacion estricta.
-
----
-
-## 14. Relacion con Documentos Posteriores
-
-Este documento habilita:
-
-- `03_appwrite_db_schema.md`
-- `05_permissions_and_roles.md`
-- `06_appwrite_functions_catalog.md`
-- `08_env_reference.md`
-
----
-
-## 15. Estado del Documento
-
-- Definitivo para arquitectura single-tenant por instancia.
-- Preparado para reservas, pagos y auditoria root.
-- Sujeto a ampliaciones por cliente sin romper base comun.
-
----
-
-Ultima actualizacion: 2026-02-11
-Version: 2.1.0
+Ultima actualizacion: 2026-02-18
+Version: 3.0.0

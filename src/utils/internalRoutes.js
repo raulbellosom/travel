@@ -17,6 +17,8 @@ export const INTERNAL_ROUTES = Object.freeze({
   rootActivity: withInternalBase("activity"),
   rootAmenities: withInternalBase("amenities"),
   rootFunctionsDiagnostics: withInternalBase("functions-health"),
+  rootInstance: withInternalBase("root/instance"),
+  rootModules: withInternalBase("root/modules"),
   profile: withInternalBase("profile"),
 });
 

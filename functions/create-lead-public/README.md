@@ -1,4 +1,4 @@
-# create-lead-public
+﻿# create-lead-public
 
 Recibe leads desde formulario publico y crea documento en `leads`.
 
@@ -19,15 +19,16 @@ Recibe leads desde formulario publico y crea documento en `leads`.
 
 ```json
 {
-  "propertyId": "PROPERTY_ID",
+  "resourceId": "RESOURCE_ID",
   "name": "Juan Perez",
   "email": "juan@example.com",
   "phone": "+5215512345678",
-  "message": "Estoy interesado en esta propiedad"
+  "message": "Estoy interesado en este recurso"
 }
 ```
 
 ## Reglas clave
 
-- `propertyId`, `name`, `email`, `message` son obligatorios.
-- La propiedad debe estar `status=published` y `enabled=true`.
+- `resourceId`, `name`, `email`, `message` son obligatorios.
+- El recurso debe estar `status=published` y `enabled=true`.
+

@@ -1,20 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Building2,
-  CalendarCheck,
-  Camera,
-  ClipboardList,
-  DollarSign,
-  Home,
-  Loader2,
-  MapPin,
-  Save,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Loader2, Save, X } from "lucide-react";
 import { useWizardForm, buildFormState } from "../wizard/useWizardForm";
+import { getActiveSteps } from "../wizard/wizardConfig";
 import Modal, {
   ModalFooter,
 } from "../../../../components/common/organisms/Modal";
@@ -26,73 +15,14 @@ import StepVacationRules from "../wizard/steps/StepVacationRules";
 import StepPricing from "../wizard/steps/StepPricing";
 import StepAmenities from "../wizard/steps/StepAmenities";
 import StepImages from "../wizard/steps/StepImages";
+import { useInstanceModules } from "../../../../hooks/useInstanceModules";
 
-/* ── Tab definitions ──────────────────────────────── */
-
-const ALL_TABS = [
-  {
-    id: "typeAndInfo",
-    titleKey: "propertyForm.wizard.steps.typeAndInfo",
-    icon: Home,
-    appliesTo: ["sale", "rent", "vacation_rental"],
-  },
-  {
-    id: "location",
-    titleKey: "propertyForm.wizard.steps.location",
-    icon: MapPin,
-    appliesTo: ["sale", "rent", "vacation_rental"],
-  },
-  {
-    id: "features",
-    titleKey: "propertyForm.wizard.steps.features",
-    icon: Building2,
-    appliesTo: ["sale", "rent", "vacation_rental"],
-  },
-  {
-    id: "rentalTerms",
-    titleKey: "propertyForm.wizard.steps.rentalTerms",
-    icon: ClipboardList,
-    appliesTo: ["rent"],
-  },
-  {
-    id: "vacationRules",
-    titleKey: "propertyForm.wizard.steps.vacationRules",
-    icon: CalendarCheck,
-    appliesTo: ["vacation_rental"],
-  },
-  {
-    id: "pricing",
-    titleKey: "propertyForm.wizard.steps.pricing",
-    icon: DollarSign,
-    appliesTo: ["sale", "rent", "vacation_rental"],
-  },
-  {
-    id: "amenities",
-    titleKey: "propertyForm.wizard.steps.amenities",
-    icon: Sparkles,
-    appliesTo: ["sale", "rent", "vacation_rental"],
-  },
-  {
-    id: "images",
-    titleKey: "propertyForm.wizard.steps.images",
-    icon: Camera,
-    appliesTo: ["sale", "rent", "vacation_rental"],
-  },
-];
-
-/* ── fade variant ─────────────────────────────────── */
 const fadeVariants = {
   hidden: { opacity: 0, y: 8 },
   visible: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -8 },
 };
 
-/**
- * PropertyEditor — Tabbed form for editing an existing property.
- *
- * Key difference from wizard: no step-by-step navigation, all tabs are
- * always accessible, and the save button only appears when there are changes.
- */
 const PropertyEditor = ({
   propertyId,
   initialValues,
@@ -107,6 +37,7 @@ const PropertyEditor = ({
   const [isConfirmDiscardModalOpen, setIsConfirmDiscardModalOpen] =
     useState(false);
   const tabsRef = useRef(null);
+  const modulesApi = useInstanceModules();
 
   const formHook = useWizardForm({
     mode: "edit",
@@ -116,10 +47,14 @@ const PropertyEditor = ({
     existingImages,
   });
 
-  const { form, errors, validate, buildPayload, pendingImageItems } = formHook;
+  const { form, validate, buildPayload, pendingImageItems } = formHook;
 
-  /* ── dirty tracking ─────────────────────────────── */
-  const initialSnapshot = useRef(JSON.stringify(buildFormState(initialValues)));
+  const initialSnapshot = useRef(JSON.stringify(buildFormState(initialValues || {})));
+
+  useEffect(() => {
+    initialSnapshot.current = JSON.stringify(buildFormState(initialValues || {}));
+  }, [initialValues]);
+
   const isDirty = useMemo(() => {
     const current = JSON.stringify(
       Object.fromEntries(
@@ -129,7 +64,6 @@ const PropertyEditor = ({
     return current !== initialSnapshot.current || pendingImageItems.length > 0;
   }, [form, pendingImageItems]);
 
-  // Reset snapshot after a successful save
   const resetSnapshot = useCallback(() => {
     initialSnapshot.current = JSON.stringify(
       Object.fromEntries(
@@ -138,44 +72,31 @@ const PropertyEditor = ({
     );
   }, [form]);
 
-  /* ── active tabs based on operation type ─────────── */
   const activeTabs = useMemo(
     () =>
-      ALL_TABS.filter((tab) =>
-        tab.appliesTo.includes(form.operationType || "sale"),
-      ),
-    [form.operationType],
+      getActiveSteps(form.operationType, {
+        isEnabled: modulesApi.isEnabled,
+      }).filter((step) => step.id !== "summary"),
+    [form.operationType, modulesApi.isEnabled],
   );
 
-  // If the active tab is no longer applicable, reset to first
   useEffect(() => {
     if (!activeTabs.find((tab) => tab.id === activeTab)) {
       setActiveTab(activeTabs[0]?.id || "typeAndInfo");
     }
   }, [activeTabs, activeTab]);
 
-  /* ── submit ─────────────────────────────────────── */
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
 
-      // Gather all fields across all active tabs
-      const allFields = activeTabs.reduce((acc, tab) => {
-        const stepDef = ALL_TABS.find((t) => t.id === tab.id);
-        // Use fields from wizard config if possible; fallback to empty
-        return acc;
-      }, []);
-
       const validationErrors = validate();
       if (Object.keys(validationErrors).length > 0) {
-        // Find the first tab that contains an error
-        for (const tab of activeTabs) {
-          // Simple approach: switch to tab and let user see errors
-          const tabHasError = Object.keys(validationErrors).some((field) => {
-            // Rough heuristic — if error field starts with a field this tab manages
-            return true; // Show errors inline in each tab
-          });
-          if (tabHasError) break;
+        const firstTabWithError = activeTabs.find((tab) =>
+          (tab.fields || []).some((field) => validationErrors[field]),
+        );
+        if (firstTabWithError) {
+          setActiveTab(firstTabWithError.id);
         }
         return;
       }
@@ -186,10 +107,9 @@ const PropertyEditor = ({
         resetSnapshot();
       }
     },
-    [activeTabs, validate, buildPayload, onSubmit, resetSnapshot],
+    [activeTabs, buildPayload, onSubmit, resetSnapshot, validate],
   );
 
-  /* ── tab scroll for mobile ──────────────────────── */
   const scrollTabIntoView = useCallback((tabId) => {
     const container = tabsRef.current;
     if (!container) return;
@@ -210,11 +130,9 @@ const PropertyEditor = ({
     [scrollTabIntoView],
   );
 
-  /* ── discard changes ────────────────────────────── */
   const handleDiscardChanges = useCallback(() => {
     if (isDirty) {
       setIsConfirmDiscardModalOpen(true);
-      return;
     }
   }, [isDirty]);
 
@@ -223,11 +141,10 @@ const PropertyEditor = ({
     window.location.reload();
   }, []);
 
-  /* ── render tab content ─────────────────────────── */
   const renderTabContent = () => {
     switch (activeTab) {
       case "typeAndInfo":
-        return <StepTypeAndInfo formHook={formHook} />;
+        return <StepTypeAndInfo formHook={formHook} modulesApi={modulesApi} />;
       case "location":
         return <StepLocation formHook={formHook} />;
       case "features":
@@ -252,16 +169,8 @@ const PropertyEditor = ({
     }
   };
 
-  /* ── errors badge count per tab ─────────────────── */
-  const tabErrorCount = useMemo(() => {
-    const counts = {};
-    // We don't compute per-tab errors here for perf; errors show inline
-    return counts;
-  }, []);
-
   return (
     <form onSubmit={handleSubmit} className="space-y-0">
-      {/* ── Tab bar ────────────────────────────────── */}
       <div
         ref={tabsRef}
         className="scrollbar-none flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-1 dark:border-slate-700 dark:bg-slate-900"
@@ -282,15 +191,12 @@ const PropertyEditor = ({
               }`}
             >
               <Icon className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                {t(tab.titleKey, tab.id)}
-              </span>
+              <span className="hidden sm:inline">{t(tab.titleKey, tab.id)}</span>
             </button>
           );
         })}
       </div>
 
-      {/* ── Tab content ────────────────────────────── */}
       <div className="min-h-[400px] rounded-b-2xl border border-t-0 border-slate-200 bg-white p-4 sm:p-6 dark:border-slate-700 dark:bg-slate-900">
         <AnimatePresence mode="wait">
           <motion.div
@@ -306,7 +212,6 @@ const PropertyEditor = ({
         </AnimatePresence>
       </div>
 
-      {/* ── Save footer (only when dirty) ──────────── */}
       <AnimatePresence>
         {isDirty && (
           <motion.div
@@ -349,7 +254,6 @@ const PropertyEditor = ({
         )}
       </AnimatePresence>
 
-      {/* ── Confirm discard modal ──────────────────── */}
       <Modal
         isOpen={isConfirmDiscardModalOpen}
         onClose={() => setIsConfirmDiscardModalOpen(false)}
@@ -381,7 +285,7 @@ const PropertyEditor = ({
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {t(
             "propertyForm.editor.confirmDiscardMessage",
-            "Se perderán todos los cambios que no hayas guardado. ¿Deseas continuar?",
+            "Se perderan todos los cambios que no hayas guardado. Deseas continuar?",
           )}
         </p>
       </Modal>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { MapPin } from "lucide-react";
 import Combobox from "../../../../../components/common/molecules/Combobox";
@@ -27,12 +27,18 @@ const StepLocation = ({ formHook }) => {
     countryOptions,
     stateOptions,
     cityOptions,
+    isLocationOptionsLoading,
+    ensureLocationOptionsLoaded,
     selectedCountryCode,
     selectedStateCode,
     handleCountryChange,
     handleStateChange,
     handleCityChange,
   } = formHook;
+
+  useEffect(() => {
+    ensureLocationOptionsLoaded?.();
+  }, [ensureLocationOptionsLoaded]);
 
   /**
    * When the user confirms a point on the map, auto-fill all location fields.
@@ -130,6 +136,7 @@ const StepLocation = ({ formHook }) => {
             required
             value={form.country}
             options={countryOptions}
+            disabled={isLocationOptionsLoading}
             inputClassName={`${comboboxInputClassName} ${errors.country ? inputErrorClassName : ""}`}
             placeholder={t("propertyForm.locationCombobox.countryPlaceholder")}
             noResultsText={t("propertyForm.locationCombobox.noResultsCountry")}
@@ -146,7 +153,7 @@ const StepLocation = ({ formHook }) => {
             required
             value={form.state}
             options={stateOptions}
-            disabled={!selectedCountryCode}
+            disabled={isLocationOptionsLoading || !selectedCountryCode}
             inputClassName={`${comboboxInputClassName} ${errors.state ? inputErrorClassName : ""}`}
             placeholder={t("propertyForm.locationCombobox.statePlaceholder")}
             noResultsText={t("propertyForm.locationCombobox.noResultsState")}
@@ -165,7 +172,11 @@ const StepLocation = ({ formHook }) => {
           required
           value={form.city}
           options={cityOptions}
-          disabled={!selectedCountryCode || !selectedStateCode}
+          disabled={
+            isLocationOptionsLoading ||
+            !selectedCountryCode ||
+            !selectedStateCode
+          }
           inputClassName={`${comboboxInputClassName} ${errors.city ? inputErrorClassName : ""}`}
           placeholder={t("propertyForm.locationCombobox.cityPlaceholder")}
           noResultsText={t("propertyForm.locationCombobox.noResultsCity")}

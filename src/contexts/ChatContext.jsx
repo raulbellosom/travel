@@ -10,6 +10,11 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { usePresence } from "../hooks/usePresence";
 import { chatService } from "../services/chatService";
+import {
+  getConversationSide,
+  getConversationUnreadCount,
+  getConversationUnreadResetPatch,
+} from "../utils/chatParticipants";
 import { playNotificationSound } from "../utils/notificationSound";
 import { isInternalRole } from "../utils/roles";
 
@@ -35,6 +40,8 @@ export const ChatProvider = ({ children }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [internalChatUsers, setInternalChatUsers] = useState([]);
+  const [loadingInternalChatUsers, setLoadingInternalChatUsers] = useState(false);
   const [isRestoringConversation, setIsRestoringConversation] = useState(() =>
     Boolean(localStorage.getItem("activeConversationId")),
   );
@@ -54,12 +61,13 @@ export const ChatProvider = ({ children }) => {
 
   const totalUnread = useMemo(() => {
     if (!isAuthenticated) return 0;
-    return conversations.reduce((acc, c) => {
-      const count =
-        chatRole === "client" ? c.clientUnread || 0 : c.ownerUnread || 0;
-      return acc + count;
-    }, 0);
-  }, [conversations, chatRole, isAuthenticated]);
+    return conversations.reduce(
+      (acc, conversation) =>
+        acc +
+        getConversationUnreadCount(conversation, user?.$id, chatRole),
+      0,
+    );
+  }, [conversations, chatRole, isAuthenticated, user?.$id]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.$id === activeConversationId) || null,
@@ -104,11 +112,9 @@ export const ChatProvider = ({ children }) => {
     );
 
     if (conversationExists) {
-      console.log("[ChatContext] Restoring conversation:", savedConversationId);
       setActiveConversationId(savedConversationId);
     } else {
       // Conversation was deleted, clear localStorage
-      console.log("[ChatContext] Saved conversation not found, clearing");
       localStorage.removeItem("activeConversationId");
     }
     setIsRestoringConversation(false);
@@ -134,7 +140,9 @@ export const ChatProvider = ({ children }) => {
     if (!isAuthenticated) {
       localStorage.removeItem("activeConversationId");
       setActiveConversationId(null);
+      setConversations([]);
       setMessages([]);
+      setInternalChatUsers([]);
     }
   }, [isAuthenticated]);
 
@@ -146,6 +154,7 @@ export const ChatProvider = ({ children }) => {
     try {
       const res = await chatService.listConversations(user.$id, {
         role: chatRole,
+        includeClientConversations: isInternal,
       });
       setConversations(res.documents || []);
     } catch (err) {
@@ -153,7 +162,29 @@ export const ChatProvider = ({ children }) => {
     } finally {
       setLoadingConversations(false);
     }
-  }, [user?.$id, chatRole]);
+  }, [user?.$id, chatRole, isInternal]);
+
+  const loadInternalChatUsers = useCallback(async () => {
+    if (!isInternal || !user?.$id) {
+      setInternalChatUsers([]);
+      return [];
+    }
+
+    setLoadingInternalChatUsers(true);
+    try {
+      const docs = await chatService.listInternalChatUsers({
+        excludeUserId: user.$id,
+      });
+      setInternalChatUsers(docs || []);
+      return docs || [];
+    } catch (err) {
+      console.error("Failed to load internal chat users:", err);
+      setInternalChatUsers([]);
+      return [];
+    } finally {
+      setLoadingInternalChatUsers(false);
+    }
+  }, [isInternal, user?.$id]);
 
   /* ── Load messages for active conversation ───────────── */
 
@@ -185,7 +216,7 @@ export const ChatProvider = ({ children }) => {
         localStorage.removeItem("activeConversationId");
       }
     }
-  }, [activeConversationId, conversations.length, loadMessages]);
+  }, [activeConversationId, conversations, loadMessages]);
 
   /* ── Open a conversation ─────────────────────────────── */
 
@@ -197,24 +228,29 @@ export const ChatProvider = ({ children }) => {
 
       // Mark as read
       try {
-        await chatService.markAsRead(conversationId, chatRole);
+        await chatService.markAsRead(conversationId, chatRole, user?.$id);
         setConversations((prev) =>
           prev.map((c) =>
             c.$id === conversationId
               ? {
                   ...c,
-                  ...(chatRole === "client"
-                    ? { clientUnread: 0 }
-                    : { ownerUnread: 0 }),
+                  ...getConversationUnreadResetPatch(c, user?.$id, chatRole),
                 }
               : c,
+          ),
+        );
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.senderUserId === user?.$id
+              ? m
+              : { ...m, readByRecipient: true },
           ),
         );
       } catch {
         // Silent fail for mark-as-read
       }
     },
-    [chatRole],
+    [chatRole, user?.$id],
   );
 
   /* ── Start or resume a conversation from property ────── */
@@ -223,7 +259,14 @@ export const ChatProvider = ({ children }) => {
      but don't create new ones from the public property page. */
 
   const startConversation = useCallback(
-    async ({ propertyId, propertyTitle, ownerUserId, ownerName }) => {
+    async ({
+      resourceId,
+      resourceTitle,
+      propertyId,
+      propertyTitle,
+      ownerUserId,
+      ownerName,
+    }) => {
       if (!user?.$id) return null;
 
       // Guard: only verified clients can initiate
@@ -235,6 +278,8 @@ export const ChatProvider = ({ children }) => {
       }
 
       const conversation = await chatService.getOrCreateConversation({
+        resourceId: resourceId || propertyId,
+        resourceTitle: resourceTitle || propertyTitle,
         propertyId,
         propertyTitle,
         clientUserId: user.$id,
@@ -256,6 +301,37 @@ export const ChatProvider = ({ children }) => {
     [user, openConversation],
   );
 
+  const startDirectConversation = useCallback(
+    async ({ targetUserId, targetName }) => {
+      if (!isInternal || !user?.$id) {
+        throw new Error("Only internal users can start direct conversations.");
+      }
+
+      const conversation = await chatService.getOrCreateDirectConversation({
+        initiatorUserId: user.$id,
+        initiatorName: user.name || user.email || "Usuario",
+        targetUserId,
+        targetName,
+      });
+
+      setConversations((prev) => {
+        const next = [
+          conversation,
+          ...prev.filter((item) => item.$id !== conversation.$id),
+        ];
+        return next.sort((a, b) => {
+          const aTime = new Date(a?.lastMessageAt || a?.$updatedAt || 0).getTime();
+          const bTime = new Date(b?.lastMessageAt || b?.$updatedAt || 0).getTime();
+          return bTime - aTime;
+        });
+      });
+
+      await openConversation(conversation.$id);
+      return conversation;
+    },
+    [isInternal, user, openConversation],
+  );
+
   /* ── Send a message ──────────────────────────────────── */
 
   const sendMessage = useCallback(
@@ -263,6 +339,7 @@ export const ChatProvider = ({ children }) => {
       if (!activeConversationId || !user?.$id || !body.trim()) return null;
 
       const trimmedBody = body.trim();
+      const senderSide = getConversationSide(activeConversation, user.$id, chatRole);
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       // Optimistic update: add message immediately with "sending" status
@@ -271,7 +348,7 @@ export const ChatProvider = ({ children }) => {
         conversationId: activeConversationId,
         senderUserId: user.$id,
         senderName: user.name || user.email || "Usuario",
-        senderRole: chatRole,
+        senderRole: senderSide || chatRole,
         body: trimmedBody,
         $createdAt: new Date().toISOString(),
         status: "sending",
@@ -285,7 +362,7 @@ export const ChatProvider = ({ children }) => {
           conversationId: activeConversationId,
           senderUserId: user.$id,
           senderName: user.name || user.email || "Usuario",
-          senderRole: chatRole,
+          senderRole: senderSide || chatRole,
           body: trimmedBody,
         });
 
@@ -310,7 +387,9 @@ export const ChatProvider = ({ children }) => {
             ? {
                 ...c,
                 lastMessage:
-                  body.length > 120 ? body.slice(0, 120) + "…" : body,
+                  trimmedBody.length > 120
+                    ? `${trimmedBody.slice(0, 120)}...`
+                    : trimmedBody,
                 lastMessageAt: new Date().toISOString(),
               }
             : c,
@@ -323,7 +402,7 @@ export const ChatProvider = ({ children }) => {
           conversationId: activeConversationId,
           messageId: message.$id,
           senderName: user.name || user.email,
-          body: body.trim(),
+          body: trimmedBody,
         });
       } catch {
         // Non-critical
@@ -331,7 +410,7 @@ export const ChatProvider = ({ children }) => {
 
       return message;
     },
-    [activeConversationId, user, chatRole],
+    [activeConversation, activeConversationId, user, chatRole],
   );
 
   /* ── Toggle chat ─────────────────────────────────────── */
@@ -347,9 +426,6 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const goBackToList = useCallback(() => {
-    console.log(
-      "[ChatContext] goBackToList called - setting activeConversationId to null",
-    );
     setActiveConversationId(null);
     setMessages([]);
     // Also clear from localStorage
@@ -361,6 +437,11 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated) return;
     loadConversations();
+    if (isInternal) {
+      loadInternalChatUsers();
+    } else {
+      setInternalChatUsers([]);
+    }
 
     // Subscribe to conversation changes
     unsubConversationsRef.current = chatService.subscribeToConversations(
@@ -394,7 +475,13 @@ export const ChatProvider = ({ children }) => {
         unsubConversationsRef.current = null;
       }
     };
-  }, [isAuthenticated, user?.$id, loadConversations]);
+  }, [
+    isAuthenticated,
+    isInternal,
+    user?.$id,
+    loadConversations,
+    loadInternalChatUsers,
+  ]);
 
   /* ── Real-time: messages ─────────────────────────────── */
 
@@ -417,7 +504,23 @@ export const ChatProvider = ({ children }) => {
           setMessages((prev) => {
             // Check if we already have this message (by $id) or an optimistic version (by tempId)
             const existingIndex = prev.findIndex((m) => m.$id === doc.$id);
-            if (existingIndex !== -1) return prev;
+            if (existingIndex !== -1) {
+              const updated = [...prev];
+              const current = updated[existingIndex];
+              const merged = { ...current, ...doc };
+
+              if (doc.senderUserId === user.$id && doc.readByRecipient) {
+                merged.status = "read";
+              } else if (
+                doc.senderUserId === user.$id &&
+                current.status === "sent"
+              ) {
+                merged.status = "delivered";
+              }
+
+              updated[existingIndex] = merged;
+              return updated;
+            }
 
             // Check for optimistic messages (same sender, body, recent timestamp)
             const optimisticIndex = prev.findIndex(
@@ -430,34 +533,65 @@ export const ChatProvider = ({ children }) => {
             if (optimisticIndex !== -1) {
               // Replace optimistic message with confirmed one
               const updated = [...prev];
-              updated[optimisticIndex] = { ...doc, status: "sent" };
+              updated[optimisticIndex] = {
+                ...doc,
+                status:
+                  doc.senderUserId === user.$id
+                    ? doc.readByRecipient
+                      ? "read"
+                      : "delivered"
+                    : undefined,
+              };
               return updated;
             }
 
-            return [...prev, { ...doc, status: "sent" }];
+            return [
+              ...prev,
+              {
+                ...doc,
+                status:
+                  doc.senderUserId === user.$id
+                    ? doc.readByRecipient
+                      ? "read"
+                      : "delivered"
+                    : undefined,
+              },
+            ];
           });
 
           // If message is from the other party, play notification sound and auto-mark as read
           if (doc.senderUserId !== user.$id) {
-            // Play notification sound for incoming message
             playNotificationSound();
 
             chatService
-              .markAsRead(activeConversationId, chatRole)
+              .markAsRead(activeConversationId, chatRole, user.$id)
               .catch(() => {});
             setConversations((prev) =>
               prev.map((c) =>
                 c.$id === activeConversationId
                   ? {
                       ...c,
-                      ...(chatRole === "client"
-                        ? { clientUnread: 0 }
-                        : { ownerUnread: 0 }),
+                      ...getConversationUnreadResetPatch(c, user.$id, chatRole),
                     }
                   : c,
               ),
             );
           }
+        } else if (event.includes(".update")) {
+          setMessages((prev) =>
+            prev.map((m) => {
+              if (m.$id !== doc.$id) return m;
+              const merged = { ...m, ...doc };
+
+              if (doc.senderUserId === user.$id && doc.readByRecipient) {
+                merged.status = "read";
+              } else if (doc.senderUserId === user.$id && m.status === "sent") {
+                merged.status = "delivered";
+              }
+
+              return merged;
+            }),
+          );
         }
       },
     );
@@ -482,6 +616,8 @@ export const ChatProvider = ({ children }) => {
       isChatOpen,
       loadingConversations,
       loadingMessages,
+      internalChatUsers,
+      loadingInternalChatUsers,
       totalUnread,
       chatRole,
       isAuthenticated,
@@ -489,8 +625,10 @@ export const ChatProvider = ({ children }) => {
 
       // Actions
       loadConversations,
+      loadInternalChatUsers,
       openConversation,
       startConversation,
+      startDirectConversation,
       sendMessage,
       toggleChat,
       closeChat,
@@ -504,13 +642,17 @@ export const ChatProvider = ({ children }) => {
       isChatOpen,
       loadingConversations,
       loadingMessages,
+      internalChatUsers,
+      loadingInternalChatUsers,
       totalUnread,
       chatRole,
       isAuthenticated,
       isRestoringConversation,
       loadConversations,
+      loadInternalChatUsers,
       openConversation,
       startConversation,
+      startDirectConversation,
       sendMessage,
       toggleChat,
       closeChat,

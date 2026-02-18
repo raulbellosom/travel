@@ -7,7 +7,7 @@ import { useMemo } from "react";
 /**
  * Step 1: Property type, operation type, title, slug, description.
  */
-const StepTypeAndInfo = ({ formHook }) => {
+const StepTypeAndInfo = ({ formHook, modulesApi = {} }) => {
   const { t } = useTranslation();
   const {
     form,
@@ -22,14 +22,115 @@ const StepTypeAndInfo = ({ formHook }) => {
     slugStatus,
   } = formHook;
 
+  const isModuleEnabled =
+    typeof modulesApi.isEnabled === "function"
+      ? modulesApi.isEnabled
+      : () => true;
+
+  const resourceTypeOptions = useMemo(
+    () => [
+      {
+        value: "property",
+        label: t("propertyForm.options.resourceType.property", {
+          defaultValue: "Property",
+        }),
+      },
+      {
+        value: "service",
+        label: t("propertyForm.options.resourceType.service", {
+          defaultValue: "Service",
+        }),
+      },
+      {
+        value: "venue",
+        label: t("propertyForm.options.resourceType.venue", {
+          defaultValue: "Venue",
+        }),
+      },
+      {
+        value: "experience",
+        label: t("propertyForm.options.resourceType.experience", {
+          defaultValue: "Experience",
+        }),
+      },
+      {
+        value: "vehicle",
+        label: t("propertyForm.options.resourceType.vehicle", {
+          defaultValue: "Vehicle",
+        }),
+      },
+    ],
+    [t],
+  );
+
+  const serviceCategoryOptions = useMemo(
+    () => [
+      {
+        value: "cleaning",
+        label: t("propertyForm.options.category.cleaning", {
+          defaultValue: "Cleaning",
+        }),
+      },
+      {
+        value: "dj",
+        label: t("propertyForm.options.category.dj", {
+          defaultValue: "DJ",
+        }),
+      },
+      {
+        value: "chef",
+        label: t("propertyForm.options.category.chef", {
+          defaultValue: "Chef",
+        }),
+      },
+    ],
+    [t],
+  );
+
+  const venueCategoryOptions = useMemo(
+    () => [
+      {
+        value: "event_hall",
+        label: t("propertyForm.options.category.eventHall", {
+          defaultValue: "Event hall",
+        }),
+      },
+      {
+        value: "commercial_local",
+        label: t("propertyForm.options.category.commercialLocal", {
+          defaultValue: "Commercial local",
+        }),
+      },
+    ],
+    [t],
+  );
+
   const propertyTypeOptions = useMemo(
     () => PROPERTY_TYPES.map((o) => ({ value: o.value, label: t(o.key) })),
     [t],
   );
 
+  const categoryOptions = useMemo(() => {
+    const type = String(form.resourceType || "property").trim().toLowerCase();
+    if (type === "service") return serviceCategoryOptions;
+    if (type === "venue") return venueCategoryOptions;
+    return propertyTypeOptions;
+  }, [
+    form.resourceType,
+    propertyTypeOptions,
+    serviceCategoryOptions,
+    venueCategoryOptions,
+  ]);
+
   const operationTypeOptions = useMemo(
-    () => OPERATION_TYPES.map((o) => ({ value: o.value, label: t(o.key) })),
-    [t],
+    () =>
+      OPERATION_TYPES.filter(
+        (option) => !option.moduleKey || isModuleEnabled(option.moduleKey),
+      ).map((option) => ({
+        value: option.commercialMode || option.value,
+        label: t(option.key),
+      })),
+    [isModuleEnabled, t],
   );
 
   const SlugIcon =
@@ -43,19 +144,35 @@ const StepTypeAndInfo = ({ formHook }) => {
 
   return (
     <div className="space-y-5">
-      {/* Operation type cards */}
+      {/* Resource type */}
+      <label className="grid gap-1 text-sm">
+        <span className="font-medium text-slate-700 dark:text-slate-200">
+          {t("propertyForm.fields.resourceType", { defaultValue: "Resource type" })}
+        </span>
+        <Select
+          value={form.resourceType}
+          options={resourceTypeOptions}
+          size="md"
+          onChange={(value) => setField("resourceType", value)}
+        />
+      </label>
+
+      {/* Commercial mode cards */}
       <div>
         <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-          {t("propertyForm.fields.operationType")} *
+          {t("propertyForm.fields.commercialMode", {
+            defaultValue: t("propertyForm.fields.operationType"),
+          })}{" "}
+          *
         </span>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {operationTypeOptions.map((option) => {
-            const isSelected = form.operationType === option.value;
+            const isSelected = form.commercialMode === option.value;
             return (
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setField("operationType", option.value)}
+                onClick={() => setField("commercialMode", option.value)}
                 className={`min-h-14 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition-all duration-200 ${
                   isSelected
                     ? "border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm shadow-cyan-500/10 dark:border-cyan-400 dark:bg-cyan-900/20 dark:text-cyan-300"
@@ -70,18 +187,21 @@ const StepTypeAndInfo = ({ formHook }) => {
         {renderFieldError("operationType")}
       </div>
 
-      {/* Property type */}
+      {/* Category */}
       <label className="grid gap-1 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">
-          {t("propertyForm.fields.propertyType")} *
+          {t("propertyForm.fields.category", {
+            defaultValue: t("propertyForm.fields.propertyType"),
+          })}{" "}
+          *
         </span>
         <Select
           required
-          value={form.propertyType}
-          options={propertyTypeOptions}
+          value={form.category || form.propertyType}
+          options={categoryOptions}
           size="md"
           className={errors.propertyType ? "border-red-400" : ""}
-          onChange={(value) => setField("propertyType", value)}
+          onChange={(value) => setField("category", value)}
         />
         {renderFieldError("propertyType")}
       </label>

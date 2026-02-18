@@ -1,4 +1,4 @@
-# dashboard-metrics-aggregator
+﻿# dashboard-metrics-aggregator
 
 Materializes daily KPIs in `analytics_daily`.
 
@@ -17,8 +17,9 @@ Materializes daily KPIs in `analytics_daily`.
 
 ## KPI calculados
 
-- `propertiesPublished`
+- `resourcesPublished`
 - `leadsCreated`
 - `reservationsCreated`
 - `paymentsApproved`
 - `grossRevenue`
+

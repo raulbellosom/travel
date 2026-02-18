@@ -1,59 +1,53 @@
-# 12_ENV_TRACEABILITY_MATRIX.md - ENV -> Archivo -> Modulo
+﻿# 12_ENV_TRACEABILITY_MATRIX - RESOURCE + MODULES
 
 ## Proposito
 
-Trazar cada variable critica a su punto de consumo para reducir fallos por
-misconfiguracion entre frontend, functions y despliegue.
+Trazabilidad de variables de entorno para arquitectura v3.
 
 ---
 
-## Matriz core
+## Matriz principal
 
-| ENV                                              | Archivo(s) principal(es)                                                                                                                            | Modulo / Uso                                                             |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `APP_BASE_URL`                                   | `src/env.js`, `functions/issue-reservation-voucher/src/index.js`                                                                                    | URL base publica para links (voucher/PWA)                                |
-| `APPWRITE_ENDPOINT`                              | `src/env.js`, `src/api/appwriteClient.js`, `functions/*/src/index.js`                                                                               | Cliente Appwrite frontend/functions                                      |
-| `APPWRITE_PROJECT_ID`                            | `src/env.js`, `src/api/appwriteClient.js`, `functions/*/src/index.js`                                                                               | Proyecto Appwrite                                                        |
-| `APPWRITE_DATABASE_ID`                           | `src/env.js`, `src/services/*.js`, `functions/*/src/index.js`                                                                                       | Base `main`                                                              |
-| `APPWRITE_COLLECTION_USERS_ID`                   | `src/env.js`, `functions/staff-user-management/src/index.js`, `functions/activity-log-query/src/index.js`                                           | Perfiles/roles                                                           |
-| `APPWRITE_COLLECTION_PROPERTIES_ID`              | `src/env.js`, `src/services/propertiesService.js`, `functions/create-lead-public/src/index.js`                                                      | Catalogo de propiedades                                                  |
-| `APPWRITE_COLLECTION_LEADS_ID`                   | `src/env.js`, `src/services/leadsService.js`, `functions/create-lead-public/src/index.js`                                                           | Leads comerciales                                                        |
-| `APPWRITE_COLLECTION_RESERVATIONS_ID`            | `src/env.js`, `src/services/reservationsService.js`, `functions/create-reservation-public/src/index.js`, `functions/payment-webhook-*/src/index.js` | Reservas                                                                 |
-| `APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID`    | `src/env.js`, `src/services/paymentsService.js`, `functions/create-payment-session/src/index.js`, `functions/payment-webhook-*/src/index.js`        | Pagos                                                                    |
-| `APPWRITE_COLLECTION_RESERVATION_VOUCHERS_ID`    | `src/env.js`, `functions/issue-reservation-voucher/src/index.js`                                                                                    | Vouchers                                                                 |
-| `APPWRITE_COLLECTION_REVIEWS_ID`                 | `src/env.js`, `src/services/reviewsService.js`, `functions/create-review-public/src/index.js`, `functions/moderate-review/src/index.js`             | Reseñas                                                                  |
-| `APPWRITE_COLLECTION_ANALYTICS_DAILY_ID`         | `src/env.js`, `functions/dashboard-metrics-aggregator/src/index.js`                                                                                 | KPIs diarios                                                             |
-| `APPWRITE_COLLECTION_ACTIVITY_LOGS_ID`           | `src/env.js`, `src/services/activityLogsService.js`, `functions/*/src/index.js`                                                                     | Auditoria forense                                                        |
-| `APPWRITE_COLLECTION_CONVERSATIONS_ID`           | `src/env.js`, `src/services/chatService.js`, `functions/send-chat-notification/src/index.js`                                                        | Hilos de chat cliente-propietario                                        |
-| `APPWRITE_COLLECTION_MESSAGES_ID`                | `src/env.js`, `src/services/chatService.js`                                                                                                         | Mensajes individuales por conversacion                                   |
-| `APPWRITE_FUNCTION_CREATE_LEAD_ID`               | `src/env.js`, `src/services/leadsService.js`                                                                                                        | Alta de lead publico                                                     |
-| `APPWRITE_FUNCTION_CREATE_RESERVATION_ID`        | `src/env.js`, `src/services/reservationsService.js`                                                                                                 | Crear reserva publica                                                    |
-| `APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID`    | `src/env.js`, `src/services/reservationsService.js`                                                                                                 | Iniciar checkout                                                         |
-| `APPWRITE_FUNCTION_CREATE_REVIEW_ID`             | `src/env.js`, `src/services/reviewsService.js`                                                                                                      | Crear reseña publica                                                     |
-| `APPWRITE_FUNCTION_MODERATE_REVIEW_ID`           | `src/env.js`, `src/services/reviewsService.js`                                                                                                      | Moderación de reseñas                                                    |
-| `APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID`     | `src/env.js`, `src/services/staffService.js`                                                                                                        | Alta/gestion staff                                                       |
-| `APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID`        | `src/env.js`, `src/services/activityLogsService.js`                                                                                                 | Consulta root activity logs                                              |
-| `APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID`    | `src/env.js`, `src/services/chatService.js`                                                                                                         | Notificacion email chat offline                                          |
-| `APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID` | `.env.example`, `functions/payment-webhook-*/src/index.js`                                                                                          | Emision de voucher tras pago aprobado                                    |
-| `APPWRITE_API_KEY` / `APPWRITE_FUNCTION_API_KEY` | `functions/*/src/index.js`                                                                                                                          | Credenciales server-side                                                 |
-| `STRIPE_SECRET_KEY`                              | `functions/create-payment-session/src/index.js`                                                                                                     | Sesion de pago Stripe                                                    |
-| `STRIPE_WEBHOOK_SECRET`                          | `functions/payment-webhook-stripe/src/index.js`                                                                                                     | Firma webhook Stripe                                                     |
-| `MERCADOPAGO_ACCESS_TOKEN`                       | `functions/create-payment-session/src/index.js`                                                                                                     | Checkout Mercado Pago                                                    |
-| `MERCADOPAGO_WEBHOOK_SECRET`                     | `functions/payment-webhook-mercadopago/src/index.js`                                                                                                | Firma webhook MP                                                         |
-| `PAYMENT_DEFAULT_PROVIDER`                       | `functions/create-payment-session/src/index.js`                                                                                                     | Fallback de proveedor                                                    |
-| `PAYMENT_SUCCESS_URL` / `PAYMENT_CANCEL_URL`     | `functions/create-payment-session/src/index.js`                                                                                                     | Redirect post pago                                                       |
-| `FEATURE_MARKETING_SITE`                         | `vite.config.js`, `src/env.js`, `src/pages/Home.jsx`                                                                                                | Toggle landing: CRM marketing (`true`) vs catálogo propiedades (`false`) |
-| `PLATFORM_OWNER_EMAIL`                           | `functions/send-chat-notification/src/index.js`                                                                                                     | CC en notificaciones de chat al propietario de plataforma                |
+| ENV | Archivo(s) principal(es) | Uso |
+| --- | --- | --- |
+| `APPWRITE_ENDPOINT` | `src/env.js`, `src/api/appwriteClient.js`, `functions/*/src/index.js` | cliente Appwrite |
+| `APPWRITE_PROJECT_ID` | `src/env.js`, `src/api/appwriteClient.js`, `functions/*/src/index.js` | proyecto |
+| `APPWRITE_DATABASE_ID` | `src/env.js`, `src/services/*.js`, `functions/*/src/index.js` | DB `main` |
+| `APPWRITE_COLLECTION_RESOURCES_ID` | `src/env.js`, `src/services/resourcesService.js`, `functions/create-*/src/index.js`, `functions/deep-search-query/src/index.js` | coleccion canonica de catalogo |
+| `APPWRITE_COLLECTION_RATE_PLANS_ID` | `src/env.js`, `src/services/resourcesService.js`, `functions/*` | pricing avanzado |
+| `APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID` | `src/env.js`, `src/services/instanceSettingsService.js`, `functions/*/src/lib/modulesService.js` | plan/modulos/limites |
+| `APPWRITE_COLLECTION_LEADS_ID` | `src/env.js`, `src/services/leadsService.js`, `functions/create-lead-public/src/index.js` | leads |
+| `APPWRITE_COLLECTION_RESERVATIONS_ID` | `src/env.js`, `src/services/reservationsService.js`, `functions/create-reservation-public/src/index.js` | reservas |
+| `APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID` | `src/env.js`, `functions/create-payment-session/src/index.js`, `functions/payment-webhook-*/src/index.js` | pagos |
+| `APPWRITE_COLLECTION_RESERVATION_VOUCHERS_ID` | `src/env.js`, `functions/issue-reservation-voucher/src/index.js` | vouchers |
+| `APPWRITE_COLLECTION_REVIEWS_ID` | `src/env.js`, `src/services/reviewsService.js`, `functions/create-review-public/src/index.js` | reviews |
+| `APPWRITE_COLLECTION_CONVERSATIONS_ID` | `src/env.js`, `src/services/chatService.js`, `functions/send-chat-notification/src/index.js` | chat threads |
+| `APPWRITE_COLLECTION_MESSAGES_ID` | `src/env.js`, `src/services/chatService.js` | mensajes |
+| `APPWRITE_COLLECTION_ACTIVITY_LOGS_ID` | `src/env.js`, `src/services/activityLogsService.js`, `functions/*/src/index.js` | auditoria |
+| `APPWRITE_COLLECTION_ANALYTICS_DAILY_ID` | `src/env.js`, `functions/dashboard-metrics-aggregator/src/index.js` | KPIs |
+| `APPWRITE_COLLECTION_USERS_ID` | `src/env.js`, `functions/staff-user-management/src/index.js` | usuarios y roles |
+| `APPWRITE_FUNCTION_CREATE_LEAD_ID` | `src/env.js`, `src/services/leadsService.js` | ejecucion function lead |
+| `APPWRITE_FUNCTION_CREATE_RESERVATION_ID` | `src/env.js`, `src/services/reservationsService.js` | ejecucion function reservation |
+| `APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID` | `src/env.js`, `src/services/reservationsService.js` | checkout |
+| `APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID` | `src/env.js`, `src/services/chatService.js` | notificacion chat offline |
+| `APPWRITE_API_KEY` / `APPWRITE_FUNCTION_API_KEY` | `functions/*/src/index.js` | server-side credentials |
+| `STRIPE_SECRET_KEY` | `functions/create-payment-session/src/index.js` | stripe checkout |
+| `STRIPE_WEBHOOK_SECRET` | `functions/payment-webhook-stripe/src/index.js` | validacion webhook |
+| `MERCADOPAGO_ACCESS_TOKEN` | `functions/create-payment-session/src/index.js` | MP checkout |
+| `MERCADOPAGO_WEBHOOK_SECRET` | `functions/payment-webhook-mercadopago/src/index.js` | validacion webhook |
+| `PAYMENT_DEFAULT_PROVIDER` | `functions/create-payment-session/src/index.js` | proveedor por defecto |
+| `PAYMENT_SUCCESS_URL` / `PAYMENT_CANCEL_URL` | `functions/create-payment-session/src/index.js` | redirects post pago |
+| `APP_BASE_URL` | `src/env.js`, `functions/*` | enlaces publicos |
 
 ---
 
-## Notas de control
+## Notas operativas
 
-- Fuente de verdad de nombres: `docs/08_env_reference.md`.
-- Este documento no reemplaza `.env.example`; lo complementa para auditoria.
-- Si se agrega una nueva function o coleccion, se actualiza esta matriz en el mismo PR.
+- `APPWRITE_COLLECTION_RESOURCES_ID` es obligatorio en todos los despliegues activos.
+- `APPWRITE_COLLECTION_RESOURCE_IMAGES_ID`, `APPWRITE_COLLECTION_RATE_PLANS_ID` y `APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID` deben estar definidos para arquitectura completa.
+- `.env.example` y `functions/*/.env.example` deben mantenerse sincronizados con esta matriz.
 
 ---
 
-Ultima actualizacion: 2026-02-16
-Version: 1.1.0
+Ultima actualizacion: 2026-02-18
+Version: 2.0.0

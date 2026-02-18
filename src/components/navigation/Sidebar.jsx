@@ -14,6 +14,7 @@ import {
   MessageCircle,
   MessageSquareText,
   ShieldAlert,
+  SlidersHorizontal,
   Sparkles,
   Users,
   Wrench,
@@ -154,6 +155,16 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
             name: t("sidebar.rootFunctionsDiagnostics"),
             href: INTERNAL_ROUTES.rootFunctionsDiagnostics,
             icon: Wrench,
+          },
+          {
+            name: t("sidebar.rootInstance"),
+            href: INTERNAL_ROUTES.rootInstance,
+            icon: ShieldAlert,
+          },
+          {
+            name: t("sidebar.rootModules"),
+            href: INTERNAL_ROUTES.rootModules,
+            icon: SlidersHorizontal,
           },
         ]
       : []),

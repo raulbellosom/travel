@@ -15,6 +15,41 @@ import { executeJsonFunction } from "../utils/functions";
 const DB = () => env.appwrite.databaseId;
 const COL_CONVERSATIONS = () => env.appwrite.collections.conversations;
 const COL_MESSAGES = () => env.appwrite.collections.messages;
+const COL_USERS = () => env.appwrite.collections.users;
+const normalizeId = (value) => String(value || "").trim();
+const INTERNAL_CHAT_ROLES = [
+  "owner",
+  "staff_manager",
+  "staff_editor",
+  "staff_support",
+];
+
+const isQueryCompatibilityError = (error) => {
+  const code = Number(error?.code);
+  if (code === 400) return true;
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("invalid query") ||
+    message.includes("attribute") ||
+    message.includes("index")
+  );
+};
+
+const buildConversationPermissions = (clientUserId, ownerUserId) => {
+  const userIds = Array.from(
+    new Set([normalizeId(clientUserId), normalizeId(ownerUserId)].filter(Boolean)),
+  );
+  const readPermissions = userIds.map((id) => Permission.read(Role.user(id)));
+  const updatePermissions = userIds.map((id) => Permission.update(Role.user(id)));
+  return [...readPermissions, ...updatePermissions];
+};
+
+const sortByLastMessageAtDesc = (docs) =>
+  [...docs].sort((a, b) => {
+    const aTime = new Date(a?.lastMessageAt || a?.$updatedAt || 0).getTime();
+    const bTime = new Date(b?.lastMessageAt || b?.$updatedAt || 0).getTime();
+    return bTime - aTime;
+  });
 
 /* ─── Conversations ────────────────────────────────────── */
 
@@ -23,19 +58,36 @@ export const chatService = {
    * Find an existing conversation between a client and a property,
    * or return null if none exists.
    */
-  async findConversation(propertyId, clientUserId) {
+  async findConversation(resourceId, clientUserId) {
     ensureAppwriteConfigured();
-    const res = await databases.listDocuments({
-      databaseId: DB(),
-      collectionId: COL_CONVERSATIONS(),
-      queries: [
-        Query.equal("propertyId", propertyId),
-        Query.equal("clientUserId", clientUserId),
-        Query.equal("enabled", true),
-        Query.limit(1),
-      ],
-    });
-    return res.documents[0] || null;
+    const normalizedResourceId = normalizeId(resourceId);
+    if (!normalizedResourceId) return null;
+
+    const queryByField = async (fieldName) =>
+      databases.listDocuments({
+        databaseId: DB(),
+        collectionId: COL_CONVERSATIONS(),
+        queries: [
+          Query.equal(fieldName, normalizedResourceId),
+          Query.equal("clientUserId", clientUserId),
+          Query.equal("enabled", true),
+          Query.limit(1),
+        ],
+      });
+
+    try {
+      const resourceResult = await queryByField("resourceId");
+      if (resourceResult.documents?.[0]) return resourceResult.documents[0];
+    } catch {
+      // Fallback to legacy propertyId below
+    }
+
+    try {
+      const legacyResult = await queryByField("propertyId");
+      return legacyResult.documents?.[0] || null;
+    } catch {
+      return null;
+    }
   },
 
   /**
@@ -49,6 +101,8 @@ export const chatService = {
    * Security is enforced via query filters (clientUserId/ownerUserId).
    */
   async createConversation({
+    resourceId,
+    resourceTitle,
     propertyId,
     propertyTitle,
     clientUserId,
@@ -63,8 +117,10 @@ export const chatService = {
       collectionId: COL_CONVERSATIONS(),
       documentId: docId,
       data: {
-        propertyId,
-        propertyTitle,
+        resourceId: normalizeId(resourceId || propertyId),
+        resourceTitle: String(resourceTitle || propertyTitle || "").trim(),
+        propertyId: normalizeId(propertyId || resourceId),
+        propertyTitle: String(propertyTitle || resourceTitle || "").trim(),
         clientUserId,
         clientName,
         ownerUserId,
@@ -76,12 +132,7 @@ export const chatService = {
         status: "active",
         enabled: true,
       },
-      // Only grant permissions to the creator (current user).
-      // The owner will access via collection-level read permission + query filters.
-      permissions: [
-        Permission.read(Role.user(clientUserId)),
-        Permission.update(Role.user(clientUserId)),
-      ],
+      permissions: buildConversationPermissions(clientUserId, ownerUserId),
     });
   },
 
@@ -90,7 +141,7 @@ export const chatService = {
    */
   async getOrCreateConversation(params) {
     const existing = await this.findConversation(
-      params.propertyId,
+      params.resourceId || params.propertyId,
       params.clientUserId,
     );
     if (existing) return existing;
@@ -98,20 +149,130 @@ export const chatService = {
   },
 
   /**
+   * Find-or-create a direct internal conversation between two admin users.
+   * Uses a canonical pair id so both users land on the same thread.
+   */
+  async getOrCreateDirectConversation({
+    initiatorUserId,
+    initiatorName,
+    targetUserId,
+    targetName,
+  }) {
+    const a = normalizeId(initiatorUserId);
+    const b = normalizeId(targetUserId);
+    if (!a || !b || a === b) {
+      throw new Error("Invalid direct conversation participants.");
+    }
+
+    const [clientUserId, ownerUserId] = [a, b].sort();
+    const clientName =
+      clientUserId === a
+        ? String(initiatorName || "Usuario").trim()
+        : String(targetName || "Usuario").trim();
+    const ownerName =
+      ownerUserId === b
+        ? String(targetName || "Usuario").trim()
+        : String(initiatorName || "Usuario").trim();
+    const resourceId = `direct:${clientUserId}:${ownerUserId}`;
+
+    return this.getOrCreateConversation({
+      resourceId,
+      resourceTitle: "Chat interno",
+      propertyId: resourceId,
+      propertyTitle: "Chat interno",
+      clientUserId,
+      clientName,
+      ownerUserId,
+      ownerName,
+    });
+  },
+
+  /**
+   * List internal users available for admin-to-admin direct chat.
+   * Root users are always excluded.
+   */
+  async listInternalChatUsers({ excludeUserId } = {}) {
+    ensureAppwriteConfigured();
+
+    const baseQueries = [
+      Query.equal("role", INTERNAL_CHAT_ROLES),
+      Query.equal("enabled", true),
+      Query.orderDesc("$createdAt"),
+      Query.limit(200),
+    ];
+
+    let response;
+    try {
+      response = await databases.listDocuments({
+        databaseId: DB(),
+        collectionId: COL_USERS(),
+        queries: [...baseQueries, Query.equal("isHidden", false)],
+      });
+    } catch (strictError) {
+      if (!isQueryCompatibilityError(strictError)) throw strictError;
+      response = await databases.listDocuments({
+        databaseId: DB(),
+        collectionId: COL_USERS(),
+        queries: baseQueries,
+      });
+    }
+
+    const excludedId = normalizeId(excludeUserId);
+    return (response.documents || []).filter((doc) => {
+      const role = String(doc?.role || "").trim().toLowerCase();
+      if (role === "root") return false;
+      if (!INTERNAL_CHAT_ROLES.includes(role)) return false;
+      if (doc?.enabled === false) return false;
+      if (doc?.isHidden === true) return false;
+      if (excludedId && doc?.$id === excludedId) return false;
+      return true;
+    });
+  },
+
+  /**
    * List all conversations for a given user (either as client or owner).
    */
-  async listConversations(userId, { role } = {}) {
+  async listConversations(userId, { role, includeClientConversations } = {}) {
     ensureAppwriteConfigured();
-    const queries = [
+    const normalizedUserId = normalizeId(userId);
+    const baseQueries = [
       Query.equal("enabled", true),
       Query.orderDesc("lastMessageAt"),
       Query.limit(100),
     ];
 
+    if (role === "owner" && includeClientConversations) {
+      const [asOwner, asClient] = await Promise.allSettled([
+        databases.listDocuments({
+          databaseId: DB(),
+          collectionId: COL_CONVERSATIONS(),
+          queries: [...baseQueries, Query.equal("ownerUserId", normalizedUserId)],
+        }),
+        databases.listDocuments({
+          databaseId: DB(),
+          collectionId: COL_CONVERSATIONS(),
+          queries: [...baseQueries, Query.equal("clientUserId", normalizedUserId)],
+        }),
+      ]);
+
+      const docs = [
+        ...(asOwner.status === "fulfilled" ? asOwner.value.documents || [] : []),
+        ...(asClient.status === "fulfilled" ? asClient.value.documents || [] : []),
+      ];
+      const unique = Array.from(new Map(docs.map((doc) => [doc.$id, doc])).values());
+      const documents = sortByLastMessageAtDesc(unique);
+      return {
+        total: documents.length,
+        documents,
+      };
+    }
+
+    const queries = [...baseQueries];
+
     if (role === "client") {
-      queries.push(Query.equal("clientUserId", userId));
+      queries.push(Query.equal("clientUserId", normalizedUserId));
     } else if (role === "owner") {
-      queries.push(Query.equal("ownerUserId", userId));
+      queries.push(Query.equal("ownerUserId", normalizedUserId));
     }
     // If no role filter, Appwrite permissions will naturally scope results.
 
@@ -174,14 +335,21 @@ export const chatService = {
       documentId: conversationId,
     });
 
-    const isClient = senderRole === "client";
+    const senderId = normalizeId(senderUserId);
+    const isSenderClient = normalizeId(conversation.clientUserId) === senderId;
+    const isSenderOwner = normalizeId(conversation.ownerUserId) === senderId;
     const patch = {
-      lastMessage: body.length > 120 ? body.slice(0, 120) + "…" : body,
+      lastMessage: body.length > 120 ? `${body.slice(0, 120)}...` : body,
       lastMessageAt: new Date().toISOString(),
     };
 
-    // Increment unread count for the other party
-    if (isClient) {
+    // Increment unread count for the other party.
+    if (isSenderClient) {
+      patch.ownerUnread = (conversation.ownerUnread || 0) + 1;
+    } else if (isSenderOwner) {
+      patch.clientUnread = (conversation.clientUnread || 0) + 1;
+    } else if (senderRole === "client") {
+      // Fallback for legacy payloads that do not include matching participant ids.
       patch.ownerUnread = (conversation.ownerUnread || 0) + 1;
     } else {
       patch.clientUnread = (conversation.clientUnread || 0) + 1;
@@ -218,13 +386,64 @@ export const chatService = {
    * Mark all messages in a conversation as read for the given user role.
    * Also resets the unread counter on the conversation.
    */
-  async markAsRead(conversationId, myRole) {
+  async markAsRead(conversationId, myRole, myUserId) {
     ensureAppwriteConfigured();
+    const conversation = await databases.getDocument({
+      databaseId: DB(),
+      collectionId: COL_CONVERSATIONS(),
+      documentId: conversationId,
+    });
 
-    // Reset the unread counter
-    const patch =
-      myRole === "client" ? { clientUnread: 0 } : { ownerUnread: 0 };
+    const normalizedMyUserId = normalizeId(myUserId);
+    let mySide = null;
+
+    if (normalizedMyUserId) {
+      if (normalizeId(conversation.clientUserId) === normalizedMyUserId) {
+        mySide = "client";
+      } else if (normalizeId(conversation.ownerUserId) === normalizedMyUserId) {
+        mySide = "owner";
+      }
+    }
+
+    if (!mySide) {
+      mySide = myRole === "client" ? "client" : "owner";
+    }
+
+    // Reset unread for the participant side opening this conversation.
+    const patch = mySide === "client" ? { clientUnread: 0 } : { ownerUnread: 0 };
     await this.updateConversation(conversationId, patch);
+
+    if (!normalizedMyUserId) return;
+
+    // Mark incoming messages as read for read receipts.
+    // Uses a small window (latest 100) to keep requests bounded.
+    const unreadMessages = await databases.listDocuments({
+      databaseId: DB(),
+      collectionId: COL_MESSAGES(),
+      queries: [
+        Query.equal("conversationId", conversationId),
+        Query.equal("enabled", true),
+        Query.equal("readByRecipient", false),
+        Query.limit(100),
+      ],
+    });
+
+    const incomingUnread = (unreadMessages.documents || []).filter(
+      (msg) => normalizeId(msg.senderUserId) !== normalizedMyUserId,
+    );
+
+    if (incomingUnread.length === 0) return;
+
+    await Promise.allSettled(
+      incomingUnread.map((msg) =>
+        databases.updateDocument({
+          databaseId: DB(),
+          collectionId: COL_MESSAGES(),
+          documentId: msg.$id,
+          data: { readByRecipient: true },
+        }),
+      ),
+    );
   },
 
   /* ─── Real-time subscriptions ──────────────────────── */

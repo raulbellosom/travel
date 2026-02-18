@@ -1,4 +1,4 @@
-# create-review-public
+﻿# create-review-public
 
 Receives a review for an eligible reservation.
 
@@ -20,10 +20,11 @@ Receives a review for an eligible reservation.
 
 ```json
 {
-  "propertyId": "PROPERTY_ID",
+  "resourceId": "RESOURCE_ID",
   "reservationId": "RESERVATION_ID",
   "rating": 5,
   "title": "Great stay",
   "comment": "Very clean and comfortable"
 }
 ```
+

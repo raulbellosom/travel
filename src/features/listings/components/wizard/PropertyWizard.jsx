@@ -24,6 +24,7 @@ import StepPricing from "./steps/StepPricing";
 import StepAmenities from "./steps/StepAmenities";
 import StepImages from "./steps/StepImages";
 import StepSummary from "./steps/StepSummary";
+import { useInstanceModules } from "../../../../hooks/useInstanceModules";
 
 /* ── animation variants ──────────────────────────────── */
 
@@ -56,6 +57,7 @@ const PropertyWizard = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const modulesApi = useInstanceModules();
 
   const formHook = useWizardForm({
     mode: "create",
@@ -77,13 +79,15 @@ const PropertyWizard = ({
   const [completedSteps, setCompletedSteps] = useState(new Set());
 
   const activeSteps = useMemo(
-    () => getActiveSteps(form.operationType),
-    [form.operationType],
+    () =>
+      getActiveSteps(form.operationType, {
+        isEnabled: modulesApi.isEnabled,
+      }),
+    [form.operationType, modulesApi.isEnabled],
   );
 
   const currentStep = activeSteps[currentStepIndex] || activeSteps[0];
   const isFirstStep = currentStepIndex === 0;
-  const isLastStep = currentStepIndex === activeSteps.length - 1;
   const isSummary = currentStep.id === "summary";
   const totalSteps = activeSteps.length;
 
@@ -211,7 +215,7 @@ const PropertyWizard = ({
   const renderStepContent = () => {
     switch (currentStep.id) {
       case "typeAndInfo":
-        return <StepTypeAndInfo formHook={formHook} />;
+        return <StepTypeAndInfo formHook={formHook} modulesApi={modulesApi} />;
       case "location":
         return <StepLocation formHook={formHook} />;
       case "features":
@@ -236,8 +240,10 @@ const PropertyWizard = ({
           <StepSummary
             formHook={formHook}
             amenitiesOptions={amenitiesOptions}
-            onEditStep={goToStep}
-            activeSteps={activeSteps}
+            onEditStep={(stepId) => {
+              const index = activeSteps.findIndex((step) => step.id === stepId);
+              if (index >= 0) goToStep(index);
+            }}
           />
         );
       default:

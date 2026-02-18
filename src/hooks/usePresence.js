@@ -4,100 +4,70 @@ import { databases } from "../api/appwriteClient";
 import env from "../env";
 
 /**
- * Hook to manage user presence (online status) via heartbeat
- * Updates lastSeenAt every 30 seconds while user is authenticated
+ * Hook to manage user presence (online status) via heartbeat.
+ * Updates lastSeenAt every 30 seconds while user is authenticated.
  */
 export const usePresence = () => {
   const { user, isAuthenticated } = useAuth();
   const intervalRef = useRef(null);
-  const userIdRef = useRef(null);
+  const isUpdatingRef = useRef(false);
 
   useEffect(() => {
-    console.log(
-      "[usePresence] Effect triggered - isAuthenticated:",
-      isAuthenticated,
-      "user:",
-      user?.$id,
-    );
-
     if (!isAuthenticated || !user?.$id) {
-      console.log(
-        "[usePresence] Not authenticated or no user ID, clearing interval",
-      );
-      // Clear interval if user logs out
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      userIdRef.current = null;
       return;
     }
 
-    // Store user ID
-    userIdRef.current = user.$id;
-
-    // Function to update presence
     const updatePresence = async () => {
-      const userId = userIdRef.current;
-      if (!userId) {
-        console.warn("[usePresence] No userId in ref, skipping update");
-        return;
-      }
+      if (isUpdatingRef.current) return;
 
+      isUpdatingRef.current = true;
       try {
-        console.log(
-          "[usePresence] Attempting to update presence for user:",
-          userId,
-        );
-        console.log("[usePresence] Database:", env.appwrite.databaseId);
-        console.log(
-          "[usePresence] Collection:",
-          env.appwrite.collections.users,
-        );
-
-        await databases.updateDocument(
-          env.appwrite.databaseId,
-          env.appwrite.collections.users,
-          userId,
-          {
+        await databases.updateDocument({
+          databaseId: env.appwrite.databaseId,
+          collectionId: env.appwrite.collections.users,
+          documentId: user.$id,
+          data: {
             lastSeenAt: new Date().toISOString(),
           },
-        );
-        console.log("[usePresence] ✅ Updated presence for user:", userId);
-      } catch (error) {
-        console.error("[usePresence] ❌ Failed to update presence:", error);
-        console.error("[usePresence] Error details:", {
-          message: error.message,
-          code: error.code,
-          type: error.type,
         });
+      } catch {
+        // Presence is best-effort; avoid noisy logs every heartbeat.
+      } finally {
+        isUpdatingRef.current = false;
       }
     };
 
-    // Update presence immediately on mount
-    console.log("[usePresence] Setting up heartbeat for user:", user.$id);
+    const handleVisible = () => {
+      if (document.visibilityState === "visible") {
+        updatePresence();
+      }
+    };
+
     updatePresence();
 
-    // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
+    intervalRef.current = setInterval(updatePresence, 30000);
 
-    // Set up interval to update every 30 seconds
-    intervalRef.current = setInterval(() => {
-      console.log("[usePresence] Heartbeat tick");
-      updatePresence();
-    }, 30000); // 30 seconds
+    document.addEventListener("visibilitychange", handleVisible);
+    window.addEventListener("focus", updatePresence);
+    window.addEventListener("online", updatePresence);
 
-    // Cleanup on unmount or user change
     return () => {
-      console.log("[usePresence] Cleaning up interval");
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      document.removeEventListener("visibilitychange", handleVisible);
+      window.removeEventListener("focus", updatePresence);
+      window.removeEventListener("online", updatePresence);
     };
   }, [isAuthenticated, user?.$id]);
 
-  return null; // This hook doesn't return anything, just runs side effects
+  return null;
 };

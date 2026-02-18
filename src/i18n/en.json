@@ -338,6 +338,8 @@
     "rootActivity": "Root: Audit",
     "rootAmenities": "Root: Amenities",
     "rootFunctionsDiagnostics": "Root: Functions",
+    "rootInstance": "Root: Instance",
+    "rootModules": "Root: Modules",
     "navigation": "Navigation",
     "collapse": "Collapse menu",
     "expand": "Expand menu"
@@ -1344,8 +1346,12 @@
       "slug": "Slug",
       "title": "Title",
       "description": "Description",
+      "resourceType": "Resource type",
+      "category": "Category",
       "propertyType": "Property type",
+      "commercialMode": "Commercial mode",
       "operationType": "Operation type",
+      "pricingModel": "Pricing model",
       "price": "Price",
       "currency": "Currency",
       "pricePer": "Price per",
@@ -1490,9 +1496,34 @@
       "operationType": {
         "sale": "Sale",
         "rent": "Rent",
+        "hourly": "Hourly",
         "vacationRental": "Vacation rental",
         "vacation_rental": "Vacation rental",
         "transfer": "Transfer"
+      },
+      "resourceType": {
+        "property": "Property",
+        "service": "Service",
+        "venue": "Venue",
+        "experience": "Experience",
+        "vehicle": "Vehicle"
+      },
+      "category": {
+        "cleaning": "Cleaning",
+        "dj": "DJ",
+        "chef": "Chef",
+        "eventHall": "Event hall",
+        "commercialLocal": "Commercial unit"
+      },
+      "pricingModel": {
+        "total": "Total",
+        "perMonth": "Per month",
+        "perNight": "Per night",
+        "perDay": "Per day",
+        "perHour": "Per hour",
+        "perPerson": "Per person",
+        "perEvent": "Per event",
+        "perM2": "Per m2"
       },
       "status": {
         "draft": "Draft",
@@ -2316,6 +2347,9 @@
     "title": "Messages",
     "subtitle": "Manage your conversations with clients and tenants.",
     "selectConversation": "Select a conversation to view messages.",
+    "actions": {
+      "newConversation": "New conversation"
+    },
     "metrics": {
       "total": "Total",
       "active": "Active",
@@ -2325,6 +2359,12 @@
       "active": "Active",
       "archived": "Archived",
       "closed": "Closed"
+    },
+    "newConversation": {
+      "title": "Start internal conversation",
+      "subtitle": "Select an admin team member to open a direct chat.",
+      "searchPlaceholder": "Search by name or email...",
+      "empty": "No admin users found."
     }
   },
   "myConversations": {

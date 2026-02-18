@@ -1,62 +1,80 @@
-# 11_SCHEMA_MAPPING_MATRIX.md - Codigo vs Schema Canonico
+﻿# 11_SCHEMA_MAPPING_MATRIX - PROPERTIES -> RESOURCES
 
 ## Proposito
 
-Matriz de trazabilidad para validar que el codigo use los nombres y enums definidos
-en `03_appwrite_db_schema.md`.
+Matriz de mapeo entre contrato legacy y contrato canonico v3.
 
 Regla:
 
-- Si hay conflicto, el schema canonico manda.
+- Nuevo desarrollo usa `resources`.
+- Compatibilidad temporal con `properties` mientras dure migracion.
 
 ---
 
-## Matriz de mapeo
+## Mapeo de entidades
 
-| Modulo                               | Antes (legacy/no canonico)                    | Canonico (docs/03)                                                         | Estado       | Referencia de implementacion                                                                                 |
-| ------------------------------------ | --------------------------------------------- | -------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------ |
-| Propiedades (frontend/services)      | `userId`                                      | `ownerUserId`                                                              | Migrado      | `src/services/propertiesService.js`                                                                          |
-| Propiedades (frontend/pages)         | `property.userId`                             | `property.ownerUserId`                                                     | Migrado      | `src/pages/PropertyDetail.jsx`, `src/pages/EditProperty.jsx`                                                 |
-| Imagenes de propiedad                | `order`                                       | `sortOrder`                                                                | Migrado      | `src/services/propertiesService.js`                                                                          |
-| Listados temporales                  | `createdAt` custom                            | `$createdAt` / `$updatedAt`                                                | Migrado      | `src/services/propertiesService.js`, `src/services/reservationsService.js`, `src/services/reviewsService.js` |
-| Lead publico (function)              | `property.userId`                             | `property.ownerUserId`                                                     | Migrado      | `functions/create-lead-public/src/index.js`                                                                  |
-| Perfil inicial de usuario            | rol legacy no permitido                       | `owner` / `client` segun flujo                                             | Migrado      | `functions/user-create-profile/src/index.js`                                                                 |
-| Sync perfil (function)               | escritura de campos no declarados             | solo campos `users` declarados                                             | Migrado      | `functions/sync-user-profile/src/index.js`                                                                   |
-| Email verification (function)        | dependencia en campos fuera de schema `users` | solo campos declarados + coleccion `email_verifications`                   | Migrado      | `functions/email-verification/src/index.js`                                                                  |
-| Staff management (function)          | solo alta parcial                             | alta/listado/update/enable sobre `users` canonico                          | Migrado      | `functions/staff-user-management/src/index.js`                                                               |
-| Root audit query                     | sin rango por fecha                           | filtros por `$createdAt` con `fromDate/toDate`                             | Migrado      | `functions/activity-log-query/src/index.js`, `src/services/activityLogsService.js`                           |
-| Calendario admin (frontend)          | N/A (nuevo modulo)                            | `reservations.*` via `reservationsService.listForOwner()`                  | Implementado | `src/features/calendar/hooks/useCalendarReservations.js`                                                     |
-| Calendario disponibilidad (frontend) | N/A (nuevo modulo)                            | `reservations.status`, `reservations.checkIn/checkOut`, `properties.price` | Implementado | `src/features/calendar/components/PropertyAvailabilityCalendar.jsx`                                          |
-| Conversaciones (backend/schema)      | N/A (nuevo modulo)                            | `conversations.*` segun `docs/03` y `docs/13`                              | Documentado  | `docs/13_chat_messaging_schema.md`                                                                           |
-| Mensajes (backend/schema)            | N/A (nuevo modulo)                            | `messages.*` segun `docs/03` y `docs/13`                                   | Documentado  | `docs/13_chat_messaging_schema.md`                                                                           |
+| Dominio | Legacy | Canonico v3 | Estado |
+| --- | --- | --- | --- |
+| Catalogo principal | `properties` | `resources` | en migracion |
+| Galeria | `property_images` | `resource_images` | en migracion |
+| Pricing | campos directos en `properties` | `rate_plans` + campos base en `resources` | en migracion |
+| Configuracion de plan | N/A | `instance_settings` | vigente |
 
 ---
 
-## Enums canonicos aplicados
+## Mapeo de campos
 
-- `users.role`: `root`, `owner`, `staff_manager`, `staff_editor`, `staff_support`, `client`.
-- `properties.propertyType`: `house`, `apartment`, `land`, `commercial`, `office`, `warehouse`.
-- `properties.operationType`: `sale`, `rent`, `vacation_rental`.
-- `properties.status`: `draft`, `published`, `inactive`, `archived`.
-- `properties.currency`: `MXN`, `USD`, `EUR`.
-- `reservations.status`: `pending`, `confirmed`, `cancelled`, `completed`, `expired`.
-- `reservations.paymentStatus`: `unpaid`, `pending`, `paid`, `failed`, `refunded`.
-- `reservations.paymentProvider`: `stripe`, `mercadopago`, `manual`.
-- `reservation_payments.provider`: `stripe`, `mercadopago`.
-- `reservation_payments.status`: `pending`, `approved`, `rejected`, `refunded`.
-- `reviews.status`: `pending`, `published`, `rejected`.
-- `activity_logs.severity`: `info`, `warning`, `critical`.
-- `conversations.status`: `active`, `archived`, `closed`.
-- `messages.senderRole`: `client`, `owner`, `staff`, `root`.
+| Legacy | Canonico | Notas |
+| --- | --- | --- |
+| `properties.$id` | `resources.$id` | id principal de recurso |
+| `operationType` | `commercialMode` | `sale -> sale`, `rent -> rent_long_term`, `vacation_rental -> rent_short_term`, `hourly -> rent_hourly` |
+| `propertyType` | `category` | mapeo semantico por tipo |
+| `pricePerUnit` | `pricingModel` | alias temporal permitido |
+| `propertyId` | `resourceId` | canonico en leads/reservations/chat |
+| `propertyTitle` | `resourceTitle` | denormalizado para UI/chat |
 
 ---
 
-## Notas
+## Mapeo por coleccion
 
-- Esta matriz se debe actualizar cada vez que se introduzca una mutacion de datos.
-- El objetivo es evitar regresiones de naming entre frontend, functions y Appwrite.
+| Coleccion | Antes | Ahora | Compat |
+| --- | --- | --- | --- |
+| `leads` | `propertyId` | `resourceId` | guardar ambos temporalmente |
+| `reservations` | `propertyId` | `resourceId` | aceptar ambos en API |
+| `reservation_payments` | referencia indirecta property | referencia canonica a resource | mantener alias legacy |
+| `conversations` | `propertyId`,`propertyTitle` | `resourceId`,`resourceTitle` | mantener aliases |
+| `messages` | sin campo property | sin cambio (via conversation) | no aplica |
 
 ---
 
-Ultima actualizacion: 2026-02-16
-Version: 1.1.0
+## Enums canonicos v3
+
+### resources
+
+- `resourceType`: `property`, `service`, `vehicle`, `experience`, `venue`
+- `commercialMode`: `sale`, `rent_long_term`, `rent_short_term`, `rent_hourly`
+- `pricingModel`: `total`, `per_month`, `per_night`, `per_day`, `per_hour`, `per_person`, `per_event`, `per_m2`
+- `bookingType`: `manual_contact`, `date_range`, `time_slot`, `fixed_event`
+
+### instance_settings
+
+- `planKey`: `starter`, `pro`, `elite`, `custom`
+- `enabledModules[]`: lista de modulo keys (`module.*`)
+
+---
+
+## Estado de implementacion en codigo
+
+| Componente | Cambio | Estado |
+| --- | --- | --- |
+| Wizard/editor | usa `resourceType/category/commercialMode/pricingModel` | implementado |
+| Sidebar root | links a instancia/modulos | implementado |
+| Leads function | `resourceId` canonico + fallback | implementado |
+| Reservations function | gating por modulo/limite + `resourceId` | implementado |
+| Payment session function | resolve `resourceId` + gating | implementado |
+| Chat servicios | soporte `resourceId` con alias legacy | implementado parcial |
+
+---
+
+Ultima actualizacion: 2026-02-18
+Version: 2.0.0

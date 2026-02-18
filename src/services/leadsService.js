@@ -3,7 +3,10 @@ import { databases, ensureAppwriteConfigured, ID, Query } from "../api/appwriteC
 import { executeJsonFunction } from "../utils/functions";
 
 export const leadsService = {
-  async listMine(_userId, { status, propertyId, propertyOwnerId } = {}) {
+  async listMine(
+    _userId,
+    { status, resourceId, propertyId, propertyOwnerId } = {},
+  ) {
     ensureAppwriteConfigured();
     const queries = [
       Query.equal("enabled", true),
@@ -11,7 +14,14 @@ export const leadsService = {
       Query.limit(200),
     ];
     if (status) queries.push(Query.equal("status", status));
-    if (propertyId) queries.push(Query.equal("propertyId", propertyId));
+    const resolvedResourceId = resourceId || propertyId;
+    if (resolvedResourceId) {
+      try {
+        queries.push(Query.equal("resourceId", resolvedResourceId));
+      } catch {
+        queries.push(Query.equal("propertyId", resolvedResourceId));
+      }
+    }
     if (propertyOwnerId) queries.push(Query.equal("propertyOwnerId", propertyOwnerId));
 
     return databases.listDocuments({
@@ -45,12 +55,17 @@ export const leadsService = {
 
   async createDirectLead(payload, propertyOwnerId) {
     ensureAppwriteConfigured();
+    const resolvedResourceId = String(
+      payload.resourceId || payload.propertyId || "",
+    ).trim();
     return databases.createDocument({
       databaseId: env.appwrite.databaseId,
       collectionId: env.appwrite.collections.leads,
       documentId: ID.unique(),
       data: {
         ...payload,
+        resourceId: resolvedResourceId || undefined,
+        propertyId: resolvedResourceId || payload.propertyId,
         propertyOwnerId,
         status: payload.status || "new",
         enabled: true,
