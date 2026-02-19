@@ -48,10 +48,8 @@ const getCollectionConfig = () => {
     legacyPropertiesCollectionId,
     resourceImagesCollectionId,
     resourceImagesBucketId,
-    useCanonicalResources:
-      Boolean(resourcesCollectionId) &&
-      Boolean(legacyPropertiesCollectionId) &&
-      resourcesCollectionId !== legacyPropertiesCollectionId,
+    // Resource-only mode: always query canonical fields in resources collection.
+    useCanonicalResources: Boolean(resourcesCollectionId),
   };
 };
 
@@ -717,4 +715,3 @@ export const propertiesService = {
     });
   },
 };
-
