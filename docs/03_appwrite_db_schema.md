@@ -86,25 +86,27 @@ Regla:
 
 ## Collections - Resumen
 
-| Collection ID          | Purpose                                | Phase |
-| ---------------------- | -------------------------------------- | ----- |
-| `users`                | Perfiles y roles internos + clientes   | 0     |
-| `user_preferences`     | Preferencias de UI                     | 0     |
-| `resources`            | Catalogo principal de recursos         | 0     |
-| `resource_images`      | Galeria por recurso                    | 0     |
-| `rate_plans`           | Reglas de pricing y booking            | 0     |
-| `amenities`            | Catalogo de amenidades                 | 0     |
-| `leads`                | Mensajes/contactos                     | 0     |
-| `reservations`         | Reservaciones                          | 0     |
-| `reservation_payments` | Intentos/confirmaciones de pago        | 0     |
-| `reservation_vouchers` | Voucher emitido por reserva pagada     | 0     |
-| `reviews`              | Resenas de clientes                    | 0     |
-| `analytics_daily`      | Agregados diarios para dashboard       | 0     |
-| `activity_logs`        | Auditoria detallada                    | 0     |
-| `email_verifications`  | Tokens de verificacion de correo       | 0     |
-| `conversations`        | Hilos de chat cliente-propietario      | 0     |
-| `messages`             | Mensajes individuales por conversacion | 0     |
-| `instance_settings`    | Configuracion de plan/modulos/limites  | 0     |
+| Collection ID            | Purpose                                | Phase |
+| ------------------------ | -------------------------------------- | ----- |
+| `users`                  | Perfiles y roles internos + clientes   | 0     |
+| `user_preferences`       | Preferencias de UI                     | 0     |
+| `resources`              | Catalogo principal de recursos         | 0     |
+| `resource_images`        | Galeria por recurso                    | 0     |
+| `rate_plans`             | Reglas de pricing y booking            | 0     |
+| `amenities`              | Catalogo de amenidades                 | 0     |
+| `leads`                  | Mensajes/contactos                     | 0     |
+| `marketing_contacts`     | Contactos del CRM landing              | 0     |
+| `newsletter_subscribers` | Suscriptores de newsletter landing     | 0     |
+| `reservations`           | Reservaciones                          | 0     |
+| `reservation_payments`   | Intentos/confirmaciones de pago        | 0     |
+| `reservation_vouchers`   | Voucher emitido por reserva pagada     | 0     |
+| `reviews`                | Resenas de clientes                    | 0     |
+| `analytics_daily`        | Agregados diarios para dashboard       | 0     |
+| `activity_logs`          | Auditoria detallada                    | 0     |
+| `email_verifications`    | Tokens de verificacion de correo       | 0     |
+| `conversations`          | Hilos de chat cliente-propietario      | 0     |
+| `messages`               | Mensajes individuales por conversacion | 0     |
+| `instance_settings`      | Configuracion de plan/modulos/limites  | 0     |
 
 ---
 
@@ -400,6 +402,72 @@ Purpose: mensajes de contacto del sitio publico.
 
 - Creacion publica via Function.
 - Lectura/escritura interna por owner/staff con scope de leads.
+
+---
+
+## Collection: marketing_contacts
+
+Purpose: contactos generales generados desde el CRM landing (sitio de marketing de la plataforma).
+
+### Attributes
+
+| Attribute  | Type    | Size | Required | Default               | Constraint                   |
+| ---------- | ------- | ---- | -------- | --------------------- | ---------------------------- |
+| `name`     | string  | 120  | yes      | -                     | min 2                        |
+| `lastName` | string  | 120  | no       | -                     | -                            |
+| `email`    | email   | 254  | yes      | -                     | email valido                 |
+| `phone`    | string  | 25   | no       | -                     | regex telefono internacional |
+| `message`  | string  | 4000 | yes      | -                     | min 5                        |
+| `locale`   | enum    | -    | no       | `es`                  | `es`,`en`                    |
+| `source`   | string  | 80   | no       | `crm_landing_contact` | origen del formulario        |
+| `status`   | enum    | -    | no       | `new`                 | `new`,`contacted`,`closed`   |
+| `enabled`  | boolean | -    | no       | true                  | -                            |
+
+### Indexes
+
+| Index Name                            | Type | Attributes               | Notes                 |
+| ------------------------------------- | ---- | ------------------------ | --------------------- |
+| `idx_marketing_contacts_email`        | idx  | `email ↑`                | Filtro por email      |
+| `idx_marketing_contacts_status`       | idx  | `status ↑`               | Seguimiento comercial |
+| `idx_marketing_contacts_source`       | idx  | `source ↑`               | Analitica por origen  |
+| `idx_marketing_contacts_createdat`    | idx  | `$createdAt ↓`           | Recientes             |
+| `idx_marketing_contacts_stat_created` | idx  | `status ↑, $createdAt ↓` | Bandeja operativa     |
+
+### Permissions
+
+- Creacion publica via Function (`create-marketing-contact-public`).
+- Lectura/escritura interna solo por owner/root/staff autorizado.
+
+---
+
+## Collection: newsletter_subscribers
+
+Purpose: suscriptores de newsletter capturados desde el footer del CRM landing.
+
+### Attributes
+
+| Attribute | Type    | Size | Required | Default              | Constraint                  |
+| --------- | ------- | ---- | -------- | -------------------- | --------------------------- |
+| `email`   | email   | 254  | yes      | -                    | email valido                |
+| `locale`  | enum    | -    | no       | `es`                 | `es`,`en`                   |
+| `source`  | string  | 80   | no       | `crm_landing_footer` | origen del alta             |
+| `status`  | enum    | -    | no       | `subscribed`         | `subscribed`,`unsubscribed` |
+| `enabled` | boolean | -    | no       | true                 | -                           |
+
+### Indexes
+
+| Index Name                                  | Type | Attributes               | Notes                  |
+| ------------------------------------------- | ---- | ------------------------ | ---------------------- |
+| `uq_newsletter_subscribers_email`           | uq   | `email ↑`                | Unico por correo       |
+| `idx_newsletter_subscribers_status`         | idx  | `status ↑`               | Segmentacion           |
+| `idx_newsletter_subscribers_source`         | idx  | `source ↑`               | Canal de adquisicion   |
+| `idx_newsletter_subscribers_createdat`      | idx  | `$createdAt ↓`           | Recientes              |
+| `idx_newsletter_subscribers_status_created` | idx  | `status ↑, $createdAt ↓` | Exportes y seguimiento |
+
+### Permissions
+
+- Alta publica via Function (`create-newsletter-subscription-public`).
+- Lectura/escritura interna solo por owner/root/staff autorizado.
 
 ---
 

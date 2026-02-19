@@ -49,8 +49,12 @@ const PublicNavbar = () => {
 
   const themeDropdownRef = useRef(null);
 
-  const language = i18n.resolvedLanguage || i18n.language || "es";
-  const nextLanguage = language === "es" ? "en" : "es";
+  const languageCode = String(i18n.resolvedLanguage || i18n.language || "es")
+    .toLowerCase()
+    .startsWith("en")
+    ? "en"
+    : "es";
+  const nextLanguage = languageCode === "es" ? "en" : "es";
 
   const currentTheme =
     theme === "light" || theme === "dark" || theme === "system"

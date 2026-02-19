@@ -89,6 +89,12 @@ const env = {
         "APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID",
       ),
       createReview: get("APPWRITE_FUNCTION_CREATE_REVIEW_ID"),
+      createMarketingContact: get(
+        "APPWRITE_FUNCTION_CREATE_MARKETING_CONTACT_ID",
+      ),
+      createNewsletterSubscription: get(
+        "APPWRITE_FUNCTION_CREATE_NEWSLETTER_SUBSCRIPTION_ID",
+      ),
       moderateReview: get("APPWRITE_FUNCTION_MODERATE_REVIEW_ID"),
       dashboardMetrics: get("APPWRITE_FUNCTION_DASHBOARD_METRICS_ID"),
       staffUserManagement: get("APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID"),

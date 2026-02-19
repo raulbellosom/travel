@@ -20,7 +20,11 @@ const DashboardNavbar = ({
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { theme, changeTheme, changeLanguage } = useUI();
-  const language = i18n.resolvedLanguage || i18n.language || "es";
+  const languageCode = String(i18n.resolvedLanguage || i18n.language || "es")
+    .toLowerCase()
+    .startsWith("en")
+    ? "en"
+    : "es";
   const currentTheme =
     theme === "light" || theme === "dark" || theme === "system"
       ? theme
@@ -36,7 +40,7 @@ const DashboardNavbar = ({
   const themeToggleLabel = t("dashboardNavbar.toggleThemeTo", {
     theme: t(`theme.${nextTheme}`),
   });
-  const nextLanguage = language === "es" ? "en" : "es";
+  const nextLanguage = languageCode === "es" ? "en" : "es";
 
   // react-theme-switch-animation for circle animation
   const {
@@ -133,7 +137,7 @@ const DashboardNavbar = ({
             aria-label={t("dashboardNavbar.toggleLanguage")}
             title={t("dashboardNavbar.toggleLanguage")}
           >
-            <span>{String(language || "es").toUpperCase()}</span>
+            <span>{String(nextLanguage || "en").toUpperCase()}</span>
           </button>
 
           <a

@@ -41,8 +41,12 @@ const MarketingNavbar = () => {
   const themeDropdownRef = useRef(null);
 
   // Language
-  const language = i18n.resolvedLanguage || i18n.language || "es";
-  const nextLanguage = language === "es" ? "en" : "es";
+  const languageCode = String(i18n.resolvedLanguage || i18n.language || "es")
+    .toLowerCase()
+    .startsWith("en")
+    ? "en"
+    : "es";
+  const nextLanguage = languageCode === "es" ? "en" : "es";
 
   // Theme
   const currentTheme =
@@ -215,7 +219,7 @@ const MarketingNavbar = () => {
                 title={t("dashboardNavbar.toggleLanguage")}
               >
                 <span className="text-[11px] font-semibold uppercase tracking-wide">
-                  {String(language || "es").toUpperCase()}
+                  {String(nextLanguage || "en").toUpperCase()}
                 </span>
               </button>
 
@@ -389,7 +393,7 @@ const MarketingNavbar = () => {
                     aria-label={t("dashboardNavbar.toggleLanguage")}
                   >
                     <span className="text-[11px] font-semibold uppercase tracking-wide">
-                      {String(language || "es").toUpperCase()}
+                      {String(nextLanguage || "en").toUpperCase()}
                     </span>
                   </button>
 
