@@ -6,12 +6,48 @@ import { useAuth } from "../../../../hooks/useAuth";
 import { isInternalRole } from "../../../../utils/roles";
 import { INTERNAL_ROUTES } from "../../../../utils/internalRoutes";
 
-const Footer = () => {
+/**
+ * Footer component with multiple variants.
+ * @param {"default"|"admin"} variant - Footer style variant
+ *   - "default": Full footer with newsletter, description, contact info
+ *   - "admin": Minimal footer for admin panel (copyright + essential links only)
+ */
+const Footer = ({ variant = "default" }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const showInternalLinks = isInternalRole(user?.role);
   const profileHref = showInternalLinks ? INTERNAL_ROUTES.profile : "/perfil";
+  const currentYear = new Date().getFullYear();
 
+  // Admin/minimal footer variant
+  if (variant === "admin") {
+    return (
+      <footer className="border-t border-slate-200 bg-slate-50 py-4 dark:border-slate-800 dark:bg-slate-900/50">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
+          <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <Copyright size={12} />
+            {t("client:footer.copyright", { year: currentYear })}
+          </p>
+          <nav className="flex items-center gap-4">
+            <Link
+              to="/privacidad"
+              className="text-xs text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              {t("client:footer.links.privacy")}
+            </Link>
+            <Link
+              to="/terminos"
+              className="text-xs text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              {t("client:footer.links.terms")}
+            </Link>
+          </nav>
+        </div>
+      </footer>
+    );
+  }
+
+  // Default full footer
   return (
     <footer className="relative bg-slate-900 pt-16 text-slate-300 dark:bg-slate-950">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-slate-950 opacity-40" />

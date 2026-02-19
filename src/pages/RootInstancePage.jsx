@@ -1,73 +1,257 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Building2, Settings } from "lucide-react";
+import {
+  Building2,
+  Settings,
+  Package,
+  Gauge,
+  CheckCircle2,
+  XCircle,
+  Users,
+  Home,
+  Calendar,
+} from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
 import { useInstanceModules } from "../hooks/useInstanceModules";
-import { INTERNAL_ROUTES } from "../utils/internalRoutes";
+import { Badge, Button, Spinner } from "../components/common/atoms";
+import ModulesConfigModal from "../components/root/ModulesConfigModal";
 
 const RootInstancePage = () => {
   const { t } = useTranslation();
-  const { settings, loading, error } = useInstanceModules();
+  const { user } = useAuth();
+  const { settings, moduleCatalog, loading, error, saving, saveSettings } =
+    useInstanceModules();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const enabledModulesCount = settings.enabledModules?.length || 0;
+  const isEnabled = settings.enabled !== false;
+
+  const getPlanBadgeVariant = (planKey) => {
+    const variants = {
+      starter: "default",
+      pro: "info",
+      elite: "success",
+      custom: "warning",
+    };
+    return variants[planKey] || "default";
+  };
+
+  const formatModuleLabel = (key) => {
+    const parts = key.split(".");
+    const lastPart = parts[parts.length - 1];
+    return lastPart.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
   return (
-    <section className="space-y-5">
-      <header className="space-y-1">
-        <h1 className="inline-flex items-center gap-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          <Building2 size={24} />
-          {t("rootInstancePage.title", { defaultValue: "Instance Settings" })}
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("rootInstancePage.subtitle", {
-            defaultValue:
-              "Resumen operativo de la instancia y acceso a configuracion de modulos.",
+    <section className="space-y-6">
+      {/* Header */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="inline-flex items-center gap-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            <Building2 size={24} className="text-cyan-500" />
+            {t("rootInstancePage.title", { defaultValue: "Instance Settings" })}
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {t("rootInstancePage.subtitle", {
+              defaultValue:
+                "Resumen operativo de la instancia y configuración de módulos.",
+            })}
+          </p>
+        </div>
+
+        <Button
+          variant="primary"
+          iconLeft={Settings}
+          onClick={() => setIsModalOpen(true)}
+          disabled={loading}
+        >
+          {t("rootInstancePage.actions.configure", {
+            defaultValue: "Configurar",
           })}
-        </p>
+        </Button>
       </header>
 
-      {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("common.loading")}
-        </p>
-      ) : null}
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      )}
 
-      {error ? (
+      {/* Error State */}
+      {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
         </div>
-      ) : null}
+      )}
 
-      {!loading ? (
-        <article className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-          <div className="grid gap-2 text-sm md:grid-cols-2">
-            <p className="text-slate-700 dark:text-slate-200">
-              <strong>key:</strong> {settings.key}
-            </p>
-            <p className="text-slate-700 dark:text-slate-200">
-              <strong>planKey:</strong> {settings.planKey}
-            </p>
-            <p className="text-slate-700 dark:text-slate-200">
-              <strong>enabled:</strong> {settings.enabled !== false ? "true" : "false"}
-            </p>
-            <p className="text-slate-700 dark:text-slate-200">
-              <strong>enabledModules:</strong> {settings.enabledModules?.length || 0}
-            </p>
-          </div>
+      {/* Content */}
+      {!loading && !error && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Instance Info Card */}
+          <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 lg:col-span-1">
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <Building2 size={16} className="text-cyan-500" />
+              {t("rootInstancePage.info.title", { defaultValue: "Instancia" })}
+            </h2>
 
-          <div className="mt-4 flex justify-end">
-            <Link
-              to={INTERNAL_ROUTES.rootModules}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-            >
-              <Settings size={16} />
-              {t("rootInstancePage.actions.manageModules", {
-                defaultValue: "Manage modules",
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Key
+                </span>
+                <code className="rounded bg-slate-100 px-2 py-0.5 text-sm font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  {settings.key || "main"}
+                </code>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Plan
+                </span>
+                <Badge
+                  variant={getPlanBadgeVariant(settings.planKey)}
+                  size="sm"
+                >
+                  {(settings.planKey || "starter").toUpperCase()}
+                </Badge>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Estado
+                </span>
+                {isEnabled ? (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 size={14} />
+                    Activa
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400">
+                    <XCircle size={14} />
+                    Inactiva
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Módulos activos
+                </span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {enabledModulesCount}
+                </span>
+              </div>
+            </div>
+          </article>
+
+          {/* Limits Card */}
+          <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 lg:col-span-1">
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <Gauge size={16} className="text-cyan-500" />
+              {t("rootInstancePage.limits.title", { defaultValue: "Límites" })}
+            </h2>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-50 dark:bg-cyan-950/50">
+                  <Home
+                    size={18}
+                    className="text-cyan-600 dark:text-cyan-400"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Recursos publicados
+                  </p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {settings.limits?.maxPublishedResources ?? 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/50">
+                  <Users
+                    size={18}
+                    className="text-emerald-600 dark:text-emerald-400"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Usuarios staff
+                  </p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {settings.limits?.maxStaffUsers ?? 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/50">
+                  <Calendar
+                    size={18}
+                    className="text-amber-600 dark:text-amber-400"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Reservas/mes
+                  </p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {settings.limits?.maxActiveReservationsPerMonth ?? 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          {/* Active Modules Card */}
+          <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 lg:col-span-1">
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <Package size={16} className="text-cyan-500" />
+              {t("rootInstancePage.modules.title", {
+                defaultValue: "Módulos activos",
               })}
-            </Link>
-          </div>
-        </article>
-      ) : null}
+            </h2>
+
+            {enabledModulesCount > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {settings.enabledModules?.slice(0, 8).map((moduleKey) => (
+                  <Badge key={moduleKey} variant="success" size="sm">
+                    {formatModuleLabel(moduleKey)}
+                  </Badge>
+                ))}
+                {enabledModulesCount > 8 && (
+                  <Badge variant="default" size="sm">
+                    +{enabledModulesCount - 8} más
+                  </Badge>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t("rootInstancePage.modules.empty", {
+                  defaultValue: "No hay módulos activos",
+                })}
+              </p>
+            )}
+          </article>
+        </div>
+      )}
+
+      {/* Modules Config Modal */}
+      <ModulesConfigModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        settings={settings}
+        moduleCatalog={moduleCatalog}
+        saving={saving}
+        onSave={saveSettings}
+        userId={user?.$id}
+        userRole={user?.role}
+      />
     </section>
   );
 };
 
 export default RootInstancePage;
-

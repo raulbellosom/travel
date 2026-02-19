@@ -34,7 +34,10 @@ export const useInstanceModules = () => {
     (moduleKey) => {
       const key = String(moduleKey || "").trim();
       if (!key) return true;
-      return Boolean(settings.enabledModules || []).includes(key);
+      const enabledModules = Array.isArray(settings.enabledModules)
+        ? settings.enabledModules
+        : [];
+      return enabledModules.includes(key);
     },
     [settings.enabledModules],
   );
@@ -82,7 +85,10 @@ export const useInstanceModules = () => {
     [],
   );
 
-  const modules = useMemo(() => settings.enabledModules || [], [settings.enabledModules]);
+  const modules = useMemo(
+    () => (Array.isArray(settings.enabledModules) ? settings.enabledModules : []),
+    [settings.enabledModules],
+  );
   const limits = useMemo(() => settings.limits || {}, [settings.limits]);
 
   return {
@@ -100,4 +106,3 @@ export const useInstanceModules = () => {
     moduleCatalog: instanceSettingsService.getModuleCatalog(),
   };
 };
-

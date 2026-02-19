@@ -27,7 +27,10 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(SIDEBAR_COLLAPSE_STORAGE_KEY, String(sidebarCollapsed));
+      localStorage.setItem(
+        SIDEBAR_COLLAPSE_STORAGE_KEY,
+        String(sidebarCollapsed),
+      );
     } catch {
       // localStorage is optional in restricted environments.
     }
@@ -92,7 +95,9 @@ const DashboardLayout = () => {
           onToggleCollapse={handleToggleDesktopSidebar}
         />
 
-        <div className={`flex min-h-dvh min-w-0 flex-1 flex-col transition-[padding-left] duration-300 ${shellPadding}`}>
+        <div
+          className={`flex min-h-dvh min-w-0 flex-1 flex-col transition-[padding-left] duration-300 ${shellPadding}`}
+        >
           <DashboardNavbar
             onMenuClick={() => setSidebarOpen(true)}
             desktopOffsetClass={navbarDesktopOffset}
@@ -111,7 +116,7 @@ const DashboardLayout = () => {
           </main>
 
           <div className="relative z-[65] mb-[calc(5.5rem+env(safe-area-inset-bottom))] min-w-0 lg:mb-0">
-            <Footer variant="app" />
+            <Footer variant="admin" />
           </div>
 
           <DashboardBottomTabs />
