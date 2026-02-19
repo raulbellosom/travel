@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
+  Check,
   EllipsisVertical,
   Eye,
   EyeOff,
@@ -20,6 +21,7 @@ import {
   UserRound,
   UserX,
   Users,
+  X,
 } from "lucide-react";
 import { Select, TablePagination } from "../components/common";
 import LazyImage from "../components/common/atoms/LazyImage";
@@ -51,14 +53,16 @@ const parseRoleValue = (value) =>
 
 const SCOPE_OPTIONS = [
   "staff.manage",
-  "properties.read",
-  "properties.write",
+  "resources.read",
+  "resources.write",
   "leads.read",
   "leads.write",
   "reservations.read",
   "reservations.write",
   "payments.read",
   "reviews.moderate",
+  "messaging.read",
+  "messaging.write",
 ];
 
 const EMPTY_FORM = {
@@ -165,6 +169,16 @@ const Team = () => {
   const passwordScore = useMemo(
     () => getPasswordStrengthScore(form.password),
     [form.password],
+  );
+  const passwordsMatch = useMemo(
+    () =>
+      form.confirmPassword.length > 0 && form.password === form.confirmPassword,
+    [form.password, form.confirmPassword],
+  );
+  const showPasswordMismatch = useMemo(
+    () =>
+      form.confirmPassword.length > 0 && form.password !== form.confirmPassword,
+    [form.password, form.confirmPassword],
   );
 
   const roleOptions = useMemo(
@@ -473,11 +487,13 @@ const Team = () => {
 
       if (form.password !== form.confirmPassword) {
         setError(t("teamPage.errors.passwordMismatch"));
+        setLoadingCreate(false);
         return;
       }
 
       if (!isStrongPassword(form.password)) {
         setError(t("teamPage.errors.passwordWeak"));
+        setLoadingCreate(false);
         return;
       }
 
@@ -1302,13 +1318,16 @@ const Team = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                  <label
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition dark:border-slate-700 dark:text-slate-200 ${loadingCreate ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+                  >
                     <ImagePlus size={14} />
                     {t("teamPage.actions.uploadPhoto")}
                     <input
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
                       className="hidden"
+                      disabled={loadingCreate}
                       onChange={(event) => {
                         const file = event.target.files?.[0];
                         event.target.value = "";
@@ -1320,7 +1339,8 @@ const Team = () => {
                     <button
                       type="button"
                       onClick={clearAvatarSelection}
-                      className="inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                      disabled={loadingCreate}
+                      className="inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                       {t("teamPage.actions.removePhoto")}
                     </button>
@@ -1337,6 +1357,7 @@ const Team = () => {
                   </span>
                   <input
                     required
+                    disabled={loadingCreate}
                     minLength={2}
                     value={form.firstName}
                     autoComplete="given-name"
@@ -1353,6 +1374,7 @@ const Team = () => {
                   </span>
                   <input
                     required
+                    disabled={loadingCreate}
                     minLength={2}
                     value={form.lastName}
                     autoComplete="family-name"
@@ -1369,6 +1391,7 @@ const Team = () => {
                   </span>
                   <input
                     required
+                    disabled={loadingCreate}
                     type="email"
                     autoComplete="email"
                     value={form.email}
@@ -1383,6 +1406,7 @@ const Team = () => {
                   <span>{t("teamPage.fields.role")}</span>
                   <Select
                     required
+                    disabled={loadingCreate}
                     value={form.role}
                     onChange={(value) => onFormChange("role", value)}
                     options={roleOptions}
@@ -1404,6 +1428,7 @@ const Team = () => {
                       <div className="relative">
                         <input
                           required
+                          disabled={loadingCreate}
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
                           value={form.password}
@@ -1414,13 +1439,14 @@ const Team = () => {
                         />
                         <button
                           type="button"
+                          disabled={loadingCreate}
                           onClick={() => setShowPassword((prev) => !prev)}
                           aria-label={
                             showPassword
                               ? t("passwordField.hide")
                               : t("passwordField.show")
                           }
-                          className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                          className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
                         >
                           {showPassword ? (
                             <EyeOff size={16} />
@@ -1436,33 +1462,63 @@ const Team = () => {
                       <div className="relative">
                         <input
                           required
+                          disabled={loadingCreate}
                           type={showConfirmPassword ? "text" : "password"}
                           autoComplete="new-password"
                           value={form.confirmPassword}
                           onChange={(event) =>
                             onFormChange("confirmPassword", event.target.value)
                           }
-                          className={`${inputClass} pr-11`}
+                          className={`${inputClass} pr-20 ${
+                            showPasswordMismatch
+                              ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                              : passwordsMatch
+                                ? "border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+                                : ""
+                          }`}
                         />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowConfirmPassword((prev) => !prev)
-                          }
-                          aria-label={
-                            showConfirmPassword
-                              ? t("passwordField.hide")
-                              : t("passwordField.show")
-                          }
-                          className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff size={16} />
-                          ) : (
-                            <Eye size={16} />
+                        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                          {form.confirmPassword.length > 0 && (
+                            <span
+                              className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                                passwordsMatch
+                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
+                                  : "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400"
+                              }`}
+                            >
+                              {passwordsMatch ? (
+                                <Check size={12} />
+                              ) : (
+                                <X size={12} />
+                              )}
+                            </span>
                           )}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowConfirmPassword((prev) => !prev)
+                            }
+                            disabled={loadingCreate}
+                            aria-label={
+                              showConfirmPassword
+                                ? t("passwordField.hide")
+                                : t("passwordField.show")
+                            }
+                            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff size={16} />
+                            ) : (
+                              <Eye size={16} />
+                            )}
+                          </button>
+                        </div>
                       </div>
+                      {showPasswordMismatch && (
+                        <p className="text-xs text-red-500 dark:text-red-400">
+                          {t("teamPage.errors.passwordMismatch")}
+                        </p>
+                      )}
                     </label>
                   </div>
 
@@ -1520,10 +1576,11 @@ const Team = () => {
               {SCOPE_OPTIONS.map((scope) => (
                 <label
                   key={scope}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900 ${loadingCreate ? "cursor-not-allowed opacity-60" : ""}`}
                 >
                   <input
                     type="checkbox"
+                    disabled={loadingCreate}
                     checked={form.scopes.includes(scope)}
                     onChange={() => toggleScope(scope)}
                   />

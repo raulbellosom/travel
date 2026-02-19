@@ -13,31 +13,37 @@ export const PROPERTY_EDITOR_ROLES = new Set([
   "staff_editor",
 ]);
 
-const ROLE_HIERARCHY = ["staff_support", "staff_editor", "staff_manager", "owner", "root"];
+const ROLE_HIERARCHY = [
+  "staff_support",
+  "staff_editor",
+  "staff_manager",
+  "owner",
+  "root",
+];
 
 const ROLE_DEFAULT_SCOPES = {
   root: ["*"],
   owner: ["*"],
   staff_manager: [
-    "properties.read",
-    "properties.write",
+    "resources.read",
+    "resources.write",
     "leads.read",
     "leads.write",
     "reservations.read",
     "reservations.write",
     "payments.read",
     "reviews.moderate",
+    "messaging.read",
+    "messaging.write",
   ],
-  staff_editor: [
-    "properties.read",
-    "properties.write",
-    "reviews.moderate",
-  ],
+  staff_editor: ["resources.read", "resources.write", "reviews.moderate"],
   staff_support: [
     "leads.read",
     "leads.write",
     "reservations.read",
     "reservations.write",
+    "messaging.read",
+    "messaging.write",
   ],
   client: [],
 };
@@ -48,7 +54,11 @@ export const canPublishProperty = (role) =>
   PROPERTY_EDITOR_ROLES.has(String(role || ""));
 
 export const getRoleRank = (role) =>
-  ROLE_HIERARCHY.indexOf(String(role || "").trim().toLowerCase());
+  ROLE_HIERARCHY.indexOf(
+    String(role || "")
+      .trim()
+      .toLowerCase(),
+  );
 
 export const hasRoleAtLeast = (role, minimumRole) => {
   const currentRank = getRoleRank(role);
@@ -73,7 +83,9 @@ const parseScopesJson = (rawScopes) => {
 };
 
 export const getEffectiveScopes = (user) => {
-  const role = String(user?.role || "").trim().toLowerCase();
+  const role = String(user?.role || "")
+    .trim()
+    .toLowerCase();
   const roleScopes = ROLE_DEFAULT_SCOPES[role] || [];
   const explicitScopes = parseScopesJson(user?.scopesJson);
   const scopes = new Set([...roleScopes, ...explicitScopes]);

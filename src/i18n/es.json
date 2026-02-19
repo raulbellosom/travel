@@ -1820,14 +1820,16 @@
     },
     "scopeOptions": {
       "staff_manage": "Gestionar equipo",
-      "properties_read": "Ver propiedades",
-      "properties_write": "Editar propiedades",
+      "resources_read": "Ver recursos",
+      "resources_write": "Editar recursos",
       "leads_read": "Ver leads",
       "leads_write": "Gestionar leads",
       "reservations_read": "Ver reservas",
       "reservations_write": "Gestionar reservas",
       "payments_read": "Ver pagos",
-      "reviews_moderate": "Moderar reseñas"
+      "reviews_moderate": "Moderar reseñas",
+      "messaging_read": "Ver mensajes",
+      "messaging_write": "Gestionar mensajes"
     },
     "status": {
       "enabled": "Activo",

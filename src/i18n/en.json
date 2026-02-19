@@ -1855,14 +1855,16 @@
     },
     "scopeOptions": {
       "staff_manage": "Manage team",
-      "properties_read": "View properties",
-      "properties_write": "Edit properties",
+      "resources_read": "View resources",
+      "resources_write": "Edit resources",
       "leads_read": "View leads",
       "leads_write": "Manage leads",
       "reservations_read": "View reservations",
       "reservations_write": "Manage reservations",
       "payments_read": "View payments",
-      "reviews_moderate": "Moderate reviews"
+      "reviews_moderate": "Moderate reviews",
+      "messaging_read": "View messages",
+      "messaging_write": "Manage messages"
     },
     "status": {
       "enabled": "Active",
