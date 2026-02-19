@@ -1,233 +1,249 @@
 {
-    "hero":  {
-                 "badge":  "Dual Real Estate Platform",
-                 "titleStart":  "Your Real Estate CRM",
-                 "titleHighlight":  "and Website",
-                 "titleEnd":  "in one",
-                 "subtitle":  "The only platform that bridges your internal management with your public presence. Control your leads and properties while captivating your clients.",
-                 "contact":  "Start Now"
-             },
-    "features":  {
-                     "sectionTitle":  "What is Inmobo?",
-                     "sectionSubtitle":  "The platform that transforms your real estate business",
-                     "description":  "Inmobo is a complete real estate CRM that centralizes all your business operations: from property publishing to closing sales, including lead management, bookings, and payments."
-                 },
-    "stats":  {
-                  "cloud":  "Cloud Native Platform",
-                  "leads":  "Lead Capture",
-                  "gateways":  "Payment Gateways",
-                  "unlimited":  "Unlimited Properties"
-              },
-    "grid":  {
-                 "sectionTitle":  "Features",
-                 "sectionSubtitle":  "Everything you need to",
-                 "subtitleHighlight":  "sell more",
-                 "feature1":  {
-                                  "title":  "Property Management",
-                                  "desc":  "Register, edit, and organize all your properties in one place with images, amenities, and custom details."
-                              },
-                 "feature2":  {
-                                  "title":  "Lead CRM",
-                                  "desc":  "Automatically capture leads from your public site, track their interest, and turn prospects into clients."
-                              },
-                 "feature3":  {
-                                  "title":  "Bookings",
-                                  "desc":  "Complete booking system with calendar, automatic confirmations, and availability management."
-                              },
-                 "feature4":  {
-                                  "title":  "Integrated Payments",
-                                  "desc":  "Accept payments with Stripe and MercadoPago. Generate automatic vouchers and keep up-to-date financial control."
-                              },
-                 "feature5":  {
-                                  "title":  "Real-Time Analytics",
-                                  "desc":  "Dashboard with metrics on visits, bookings, income, and performance of each property."
-                              },
-                 "feature6":  {
-                                  "title":  "Team \u0026 Permissions",
-                                  "desc":  "Invite your team with specific roles and permissions. Control who can view, edit, or manage."
-                              }
-             },
-    "allInOne":  {
-                     "eyebrow":  "Everything in one place",
-                     "title":  "Stop using",
-                     "strikethrough":  "Excel, WhatsApp, sticky notes",
-                     "description":  "With Inmobo, you centralize all your real estate business information. You no longer need to jump between 10 different tools â€” everything is integrated and synchronized in real time.",
-                     "list1":  "Secure data in the cloud with Appwrite",
-                     "list2":  "Public site to capture clients 24/7",
-                     "list3":  "Automate payments, notifications, and vouchers"
-                 },
-    "mockup":  {
-                   "properties":  "Properties",
-                   "leadsToday":  "Leads today",
-                   "income":  "Income",
-                   "weeklyVisits":  "Weekly visits",
-                   "newReservation":  "New reservation",
-                   "timeAgo":  "2 minutes ago"
-               },
-    "howItWorks":  {
-                       "sectionTitle":  "How it works",
-                       "sectionSubtitle":  "Start in",
-                       "subtitleHighlight":  "3 simple steps",
-                       "step1":  {
-                                     "title":  "Register your account",
-                                     "desc":  "Create your free account in minutes. Set up your profile and start adding properties."
-                                 },
-                       "step2":  {
-                                     "title":  "Add your properties",
-                                     "desc":  "Upload photos, describe amenities, and customize each listing to attract the best clients."
-                                 },
-                       "step3":  {
-                                     "title":  "Manage and grow",
-                                     "desc":  "Receive leads, bookings, and payments automatically. Analyze your performance and scale your business."
-                                 }
-                   },
-    "socialProof":  {
-                        "title":  "Designed to scale",
-                        "subtitle":  "Tools designed for the modern real estate professional",
-                        "stat1":  {
-                                      "label":  "Guaranteed Uptime"
-                                  },
-                        "stat2":  {
-                                      "label":  "Properties Managed"
-                                  },
-                        "stat3":  {
-                                      "label":  "Load Time"
-                                  },
-                        "stat4":  {
-                                      "label":  "More Productivity"
-                                  }
-                    },
-    "showcase":  {
-                     "title":  "Power for every",
-                     "titleHighlight":  "workflow",
-                     "subtitle":  "From property acquisition to deal closing, Inmobo gives you the tools to manage every step of your operation with precision.",
-                     "tabs":  {
-                                  "listings":  "Property Management",
-                                  "crm":  "CRM \u0026 Leads",
-                                  "site":  "Public Website"
-                              },
-                     "listings":  {
-                                      "toolbar":  {
-                                                      "title":  "Properties",
-                                                      "search":  "Search...",
-                                                      "newProperty":  "New Property",
-                                                      "total":  "total"
-                                                  },
-                                      "table":  {
-                                                    "property":  "Property",
-                                                    "status":  "Status",
-                                                    "price":  "Price",
-                                                    "stats":  "Stats",
-                                                    "actions":  "Actions"
-                                                },
-                                      "status":  {
-                                                     "published":  "Published",
-                                                     "draft":  "Draft"
-                                                 },
-                                      "type":  {
-                                                   "sale":  "Sale"
-                                               }
-                                  },
-                     "crm":  {
-                                 "columns":  {
-                                                 "new":  "New",
-                                                 "contacted":  "Contacted",
-                                                 "closing":  "Closing"
-                                             },
-                                 "cards":  {
-                                               "highIntent":  "High Intent",
-                                               "contractSent":  "Contract sent for signature",
-                                               "appointment":  "Appointment: Tomorrow 10:00 AM",
-                                               "ago":  {
-                                                           "2h":  "2h ago",
-                                                           "yesterday":  "Yesterday"
-                                                       }
-                                           }
-                             },
-                     "website":  {
-                                     "hero":  {
-                                                  "title":  "Find your ideal home",
-                                                  "searchPlaceholder":  "Search properties..."
-                                              },
-                                     "cards":  {
-                                                   "sale":  "Sale"
-                                               }
-                                 }
-                 },
-    "nav":  {
-                "login":  "Login",
-                "register":  "Register",
-                "dashboard":  "My Dashboard",
-                "logout":  "Logout",
-                "contact":  "Contact",
-                "sections":  {
-                                 "whatIs":  "What is it?",
-                                 "features":  "Features",
-                                 "platform":  "Platform",
-                                 "howItWorks":  "How it works"
-                             }
-            },
-    "footer":  {
-                   "sections":  {
-                                    "product":  "Product",
-                                    "company":  "Company",
-                                    "contact":  "Contact",
-                                    "newsletter":  "Subscribe"
-                                },
-                   "links":  {
-                                 "features":  "Features",
-                                 "pricing":  "Pricing",
-                                 "integrations":  "Integrations",
-                                 "changelog":  "Changelog",
-                                 "about":  "About Us",
-                                 "blog":  "Blog",
-                                 "careers":  "Careers"
-                             },
-                   "rights":  "Â© {{year}} Inmobo. All rights reserved.",
-                   "privacy":  "Privacy Policy",
-                   "terms":  "Terms \u0026 Conditions",
-                   "cookies":  "Cookies",
-                   "description":  "The most complete real estate CRM platform to manage properties, clients, and sales in one place.",
-                   "newsletter":  {
-                                      "description":  "Get the latest real estate news and tips directly in your inbox.",
-                                      "placeholder":  "Your email address",
-                                      "action":  "Subscribe",
-                                      "submitting":  "Submitting...",
-                                      "messages":  {
-                                                       "required":  "Enter your email to subscribe.",
-                                                       "success":  "Thanks. You have been subscribed successfully.",
-                                                       "error":  "We could not complete your subscription. Try again."
-                                                   }
-                                  }
-               },
-    "contact":  {
-                    "badge":  "Let\u0027s talk about your project",
-                    "title":  "Ready to transform your",
-                    "highlight":  "real estate business?",
-                    "subtitle":  "Contact our team and discover how Inmobo can help you.",
-                    "emailLabel":  "Email",
-                    "emailValue":  "ventas@inmobo.com",
-                    "phoneLabel":  "Phone",
-                    "phoneValue":  "+52 (55) 1234-5678",
-                    "disclaimer":  "By submitting this form you agree to our privacy policy.",
-                    "form":  {
-                                 "name":  "Name",
-                                 "namePlaceholder":  "Your name",
-                                 "lastName":  "Last name",
-                                 "lastNamePlaceholder":  "Your last name",
-                                 "email":  "Email",
-                                 "emailPlaceholder":  "name@company.com",
-                                 "phone":  "Phone",
-                                 "phonePlaceholder":  "+1 555 123 4567",
-                                 "message":  "Message",
-                                 "messagePlaceholder":  "Tell us about your needs...",
-                                 "submit":  "Send Message",
-                                 "submitting":  "Sending...",
-                                 "success":  "Thanks. We received your message and will contact you soon.",
-                                 "errors":  {
-                                                "required":  "Complete name, email and message to continue.",
-                                                "generic":  "Could not send your message. Please try again."
-                                            }
-                             }
-                }
+  "hero": {
+    "badge": "All-in-one real estate platform",
+    "titleStart": "Your intelligent",
+    "titleHighlight": "real estate",
+    "titleEnd": "CRM",
+    "subtitle": "Manage properties, capture leads, process reservations and payments, and analyze your performance — all from a single platform designed for the real estate professional.",
+    "startFree": "Start for free",
+    "hasAccount": "I have an account"
+  },
+  "features": {
+    "sectionTitle": "Why choose Inmobo?",
+    "sectionSubtitle": "We connect you with the best properties",
+    "description": "Inmobo is a complete real estate CRM that centralizes all your business operations: from property publishing to closing sales, including lead management, reservations, and collections.",
+    "trust": {
+      "title": "Trust and transparency",
+      "description": "Every listing is reviewed to ensure accuracy and quality."
+    },
+    "fast": {
+      "title": "Fast and simple",
+      "description": "Find your ideal property in minutes with smart search."
+    },
+    "experience": {
+      "title": "Unique experiences",
+      "description": "From beachfront villas to urban apartments, for every lifestyle."
+    },
+    "quality": {
+      "title": "Premium quality",
+      "description": "Only curated properties that meet our standards."
+    },
+    "investment": {
+      "title": "Investment opportunities",
+      "description": "Properties with high appreciation potential and solid returns."
+    },
+    "support": {
+      "title": "Personalized support",
+      "description": "Expert guidance throughout the entire process."
+    }
+  },
+  "stats": {
+    "cloud": "Cloud platform",
+    "leads": "Lead capture",
+    "gateways": "Payment gateways",
+    "unlimited": "Unlimited properties",
+    "sectionTitle": "Numbers that speak for us",
+    "sectionSubtitle": "Join thousands of satisfied clients",
+    "properties": "Properties",
+    "clients": "Happy customers",
+    "cities": "Cities",
+    "satisfaction": "Satisfaction"
+  },
+  "grid": {
+    "sectionTitle": "Features",
+    "sectionSubtitle": "Everything you need to",
+    "subtitleHighlight": "sell more",
+    "feature1": {
+      "title": "Property Management",
+      "desc": "Register, edit and organize all your properties in one place with images, amenities and custom details."
+    },
+    "feature2": {
+      "title": "Lead CRM",
+      "desc": "Automatically capture leads from your public site, track their interest and convert prospects into clients."
+    },
+    "feature3": {
+      "title": "Reservations",
+      "desc": "Complete reservation system with calendar, automatic confirmations and availability management."
+    },
+    "feature4": {
+      "title": "Integrated Payments",
+      "desc": "Accept payments with Stripe and MercadoPago. Generate automatic vouchers and keep up-to-date financial control."
+    },
+    "feature5": {
+      "title": "Real-Time Analytics",
+      "desc": "Dashboard with metrics on visits, reservations, income and performance of each property."
+    },
+    "feature6": {
+      "title": "Team & Permissions",
+      "desc": "Invite your team with specific roles and permissions. Control who can view, edit or manage."
+    }
+  },
+  "allInOne": {
+    "eyebrow": "All in one place",
+    "title": "Stop using",
+    "strikethrough": "Excel, WhatsApp, notes",
+    "description": "With Inmobo you centralize all your real estate business information. You no longer need to jump between 10 different tools — everything is integrated and synchronized in real time.",
+    "list1": "Secure data in the cloud with Appwrite",
+    "list2": "Public site to capture clients 24/7",
+    "list3": "Automate collections, notifications and vouchers"
+  },
+  "mockup": {
+    "properties": "Properties",
+    "leadsToday": "Leads today",
+    "income": "Income",
+    "weeklyVisits": "Weekly visits",
+    "newReservation": "New reservation",
+    "timeAgo": "2 minutes ago"
+  },
+  "howItWorks": {
+    "sectionTitle": "How it works",
+    "sectionSubtitle": "Find your perfect property in simple steps",
+    "subtitleHighlight": "3 simple steps",
+    "step1": {
+      "title": "Search and explore",
+      "desc": "Browse our catalog and use filters to find properties that match your criteria.",
+      "description": "Browse our catalog and use filters to find properties that match your criteria."
+    },
+    "step2": {
+      "title": "Contact and visit",
+      "desc": "Connect directly with agents and schedule visits at your convenience.",
+      "description": "Connect directly with agents and schedule visits at your convenience."
+    },
+    "step3": {
+      "title": "Close the deal",
+      "desc": "Receive leads, reservations and payments automatically. Analyze your performance and scale your business.",
+      "description": "We support you through the entire closing process with secure documentation."
+    },
+    "step4": {
+      "title": "Enjoy your new home",
+      "description": "Move into your ideal property and enjoy the lifestyle you deserve."
+    },
+    "bottomText": "Simple process, extraordinary results."
+  },
+  "socialProof": {
+    "title": "Designed to scale",
+    "subtitle": "Tools designed for the modern real estate professional",
+    "stat1": {
+      "label": "Guaranteed uptime"
+    },
+    "stat2": {
+      "label": "Properties managed"
+    },
+    "stat3": {
+      "label": "Load time"
+    },
+    "stat4": {
+      "label": "More productivity"
+    }
+  },
+  "finalCta": {
+    "badge": "Start for free, no credit card required",
+    "title": "Ready to transform your",
+    "titleHighlight": "real estate",
+    "titleEnd": "business?",
+    "subtitle": "Join the professionals who already manage their properties, leads and collections with Inmobo.",
+    "button": "Create free account",
+    "login": "Sign in"
+  },
+  "footer": {
+    "sections": {
+      "product": "Product",
+      "company": "Company",
+      "contact": "Contact",
+      "newsletter": "Subscribe"
+    },
+    "links": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "integrations": "Integrations",
+      "changelog": "Changelog",
+      "about": "About Us",
+      "blog": "Blog",
+      "careers": "Careers"
+    },
+    "rights": "© {{year}} Inmobo. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms and Conditions",
+    "cookies": "Cookies",
+    "description": "The most complete real estate CRM platform to manage properties, clients, and sales in one place.",
+    "newsletter": {
+      "description": "Get the latest real estate news and tips directly in your inbox.",
+      "placeholder": "Your email address",
+      "action": "Subscribe",
+      "submitting": "Submitting...",
+      "messages": {
+        "required": "Enter your email to subscribe.",
+        "success": "Thanks. You have been subscribed successfully.",
+        "error": "We could not complete your subscription. Try again."
+      }
+    }
+  },
+  "showcase": {
+    "title": "Power for every",
+    "titleHighlight": "workflow",
+    "subtitle": "From property acquisition to closing deals, Inmobo gives you the tools to manage every step of your operation with precision.",
+    "tabs": {
+      "listings": "Property Management",
+      "crm": "CRM & Leads",
+      "site": "Public Website"
+    }
+  },
+  "contact": {
+    "badge": "Let's talk about your project",
+    "title": "Ready to transform your",
+    "highlight": " real estate business?",
+    "subtitle": "Contact our team and discover how Inmobo can help you.",
+    "emailLabel": "Email",
+    "phoneLabel": "Phone",
+    "disclaimer": "By submitting this form you agree to our privacy policy.",
+    "form": {
+      "name": "Name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "message": "Message",
+      "submit": "Send Message",
+      "namePlaceholder": "Your name",
+      "lastNamePlaceholder": "Your last name",
+      "emailPlaceholder": "name@company.com",
+      "phonePlaceholder": "+1 555 123 4567",
+      "messagePlaceholder": "Tell us about your needs...",
+      "submitting": "Sending...",
+      "success": "Thanks. We received your message and will contact you soon.",
+      "errors": {
+        "required": "Complete name, email and message to continue.",
+        "generic": "Could not send your message. Please try again."
+      }
+    },
+    "emailValue": "ventas@inmobo.com",
+    "phoneValue": "+52 (55) 1234-5678"
+  },
+  "cta": {
+    "title": "Ready to find your ideal place?",
+    "subtitle": "Explore exclusive properties and live the experience you deserve.",
+    "getStarted": "Get started",
+    "browseProperties": "Browse properties",
+    "noFees": "No hidden fees",
+    "support24": "24/7 support",
+    "verified": "Verified properties",
+    "contactTitle": "Need help?",
+    "contactSubtitle": "Our team is available to assist you.",
+    "phone": "+52 322 123 4567",
+    "email": "hello@inmobo.com",
+    "availability": "Mon - Fri: 9 AM - 6 PM"
+  },
+  "propertyShowcase": {
+    "sectionTitle": "Featured Properties",
+    "sectionSubtitle": "Discover the best options hand-picked for you.",
+    "viewAll": "View all",
+    "loading": "Loading properties...",
+    "noProperties": "No properties available at this time.",
+    "errorLoading": "Could not load properties."
+  },
+  "quickCategories": {
+    "beachfront": "Beachfront",
+    "luxuryVillas": "Luxury villas",
+    "apartments": "Apartments",
+    "newDevelopments": "New developments"
+  }
 }

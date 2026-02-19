@@ -1,233 +1,249 @@
 {
-    "hero":  {
-                 "badge":  "Plataforma inmobiliaria dual",
-                 "titleStart":  "Tu CRM Inmobiliario",
-                 "titleHighlight":  "y Sitio Web",
-                 "titleEnd":  "en uno",
-                 "subtitle":  "La Ãºnica plataforma que une tu gestiÃ³n interna con tu presencia pÃºblica. Controla tus leads y propiedades mientras cautivas a tus clientes.",
-                 "contact":  "Comenzar Ahora"
-             },
-    "features":  {
-                     "sectionTitle":  "Â¿QuÃ© es Inmobo?",
-                     "sectionSubtitle":  "La plataforma que transforma tu negocio inmobiliario",
-                     "description":  "Inmobo es un CRM inmobiliario completo que centraliza todas las operaciones de tu negocio: desde la publicaciÃ³n de propiedades hasta el cierre de ventas, pasando por la gestiÃ³n de leads, reservaciones y cobros."
-                 },
-    "stats":  {
-                  "cloud":  "Plataforma en la nube",
-                  "leads":  "CaptaciÃ³n de leads",
-                  "gateways":  "Pasarelas de pago",
-                  "unlimited":  "Propiedades ilimitadas"
-              },
-    "grid":  {
-                 "sectionTitle":  "CaracterÃ­sticas",
-                 "sectionSubtitle":  "Todo lo que necesitas para",
-                 "subtitleHighlight":  "vender mÃ¡s",
-                 "feature1":  {
-                                  "title":  "GestiÃ³n de Propiedades",
-                                  "desc":  "Registra, edita y organiza todas tus propiedades en un solo lugar con imÃ¡genes, amenidades y detalles personalizados."
-                              },
-                 "feature2":  {
-                                  "title":  "CRM de Leads",
-                                  "desc":  "Captura leads automÃ¡ticamente desde tu sitio pÃºblico, rastrea su interÃ©s y convierte prospectos en clientes."
-                              },
-                 "feature3":  {
-                                  "title":  "Reservaciones",
-                                  "desc":  "Sistema completo de reservaciones con calendario, confirmaciones automÃ¡ticas y gestiÃ³n de disponibilidad."
-                              },
-                 "feature4":  {
-                                  "title":  "Pagos Integrados",
-                                  "desc":  "Acepta pagos con Stripe y MercadoPago. Genera vouchers automÃ¡ticos y lleva control financiero al dÃ­a."
-                              },
-                 "feature5":  {
-                                  "title":  "AnalÃ­ticas en Tiempo Real",
-                                  "desc":  "Dashboard con mÃ©tricas de visitas, reservaciones, ingresos y rendimiento de cada propiedad."
-                              },
-                 "feature6":  {
-                                  "title":  "Equipo \u0026 Permisos",
-                                  "desc":  "Invita a tu equipo con roles y permisos especÃ­ficos. Controla quiÃ©n puede ver, editar o administrar."
-                              }
-             },
-    "allInOne":  {
-                     "eyebrow":  "Todo en un solo lugar",
-                     "title":  "Deja de usar",
-                     "strikethrough":  "Excel, WhatsApp, notas",
-                     "description":  "Con Inmobo centralizas toda la informaciÃ³n de tu negocio inmobiliario. Ya no necesitas saltar entre 10 herramientas diferentes â€” todo estÃ¡ integrado y sincronizado en tiempo real.",
-                     "list1":  "Datos seguros en la nube con Appwrite",
-                     "list2":  "Sitio pÃºblico para captar clientes 24/7",
-                     "list3":  "Automatiza cobros, notificaciones y vouchers"
-                 },
-    "mockup":  {
-                   "properties":  "Propiedades",
-                   "leadsToday":  "Leads hoy",
-                   "income":  "Ingresos",
-                   "weeklyVisits":  "Visitas semanales",
-                   "newReservation":  "Nueva reservaciÃ³n",
-                   "timeAgo":  "hace 2 minutos"
-               },
-    "howItWorks":  {
-                       "sectionTitle":  "CÃ³mo funciona",
-                       "sectionSubtitle":  "Empieza en",
-                       "subtitleHighlight":  "3 simples pasos",
-                       "step1":  {
-                                     "title":  "Registra tu cuenta",
-                                     "desc":  "Crea tu cuenta gratis en minutos. Configura tu perfil y comienza a agregar propiedades."
-                                 },
-                       "step2":  {
-                                     "title":  "Agrega tus propiedades",
-                                     "desc":  "Sube fotos, describe amenidades y personaliza cada listado para atraer a los mejores clientes."
-                                 },
-                       "step3":  {
-                                     "title":  "Gestiona y crece",
-                                     "desc":  "Recibe leads, reservaciones y pagos automÃ¡ticamente. Analiza tu rendimiento y escala tu negocio."
-                                 }
-                   },
-    "socialProof":  {
-                        "title":  "DiseÃ±ado para escalar",
-                        "subtitle":  "Herramientas pensadas para el profesional inmobiliario moderno",
-                        "stat1":  {
-                                      "label":  "Uptime garantizado"
-                                  },
-                        "stat2":  {
-                                      "label":  "Propiedades gestionadas"
-                                  },
-                        "stat3":  {
-                                      "label":  "Tiempo de carga"
-                                  },
-                        "stat4":  {
-                                      "label":  "MÃ¡s productividad"
-                                  }
-                    },
-    "showcase":  {
-                     "title":  "Poder para cada",
-                     "titleHighlight":  "flujo de trabajo",
-                     "subtitle":  "Desde la captaciÃ³n de propiedades hasta el cierre de tratos, Inmobo te da las herramientas para gestionar cada paso de tu operaciÃ³n con precisiÃ³n.",
-                     "tabs":  {
-                                  "listings":  "GestiÃ³n de Propiedades",
-                                  "crm":  "CRM y Leads",
-                                  "site":  "Sitio Web PÃºblico"
-                              },
-                     "listings":  {
-                                      "toolbar":  {
-                                                      "title":  "Propiedades",
-                                                      "search":  "Buscar...",
-                                                      "newProperty":  "Nueva propiedad",
-                                                      "total":  "total"
-                                                  },
-                                      "table":  {
-                                                    "property":  "Propiedad",
-                                                    "status":  "Estado",
-                                                    "price":  "Precio",
-                                                    "stats":  "EstadÃ­sticas",
-                                                    "actions":  "Acciones"
-                                                },
-                                      "status":  {
-                                                     "published":  "Publicada",
-                                                     "draft":  "Borrador"
-                                                 },
-                                      "type":  {
-                                                   "sale":  "Venta"
-                                               }
-                                  },
-                     "crm":  {
-                                 "columns":  {
-                                                 "new":  "Nuevos",
-                                                 "contacted":  "Contactados",
-                                                 "closing":  "Cierre"
-                                             },
-                                 "cards":  {
-                                               "highIntent":  "Alta intenciÃ³n",
-                                               "contractSent":  "Contrato enviado para firma",
-                                               "appointment":  "Cita: MaÃ±ana 10:00 AM",
-                                               "ago":  {
-                                                           "2h":  "Hace 2h",
-                                                           "yesterday":  "Ayer"
-                                                       }
-                                           }
-                             },
-                     "website":  {
-                                     "hero":  {
-                                                  "title":  "Encuentra tu hogar ideal",
-                                                  "searchPlaceholder":  "Buscar propiedades..."
-                                              },
-                                     "cards":  {
-                                                   "sale":  "Venta"
-                                               }
-                                 }
-                 },
-    "nav":  {
-                "login":  "Iniciar SesiÃ³n",
-                "register":  "Registrarse",
-                "dashboard":  "Mi Panel",
-                "logout":  "Cerrar SesiÃ³n",
-                "contact":  "Contacto",
-                "sections":  {
-                                 "whatIs":  "Â¿QuÃ© es?",
-                                 "features":  "CaracterÃ­sticas",
-                                 "platform":  "Plataforma",
-                                 "howItWorks":  "CÃ³mo funciona"
-                             }
-            },
-    "footer":  {
-                   "sections":  {
-                                    "product":  "Producto",
-                                    "company":  "CompaÃ±Ã­a",
-                                    "contact":  "Contacto",
-                                    "newsletter":  "SuscrÃ­bete"
-                                },
-                   "links":  {
-                                 "features":  "CaracterÃ­sticas",
-                                 "pricing":  "Precios",
-                                 "integrations":  "Integraciones",
-                                 "changelog":  "Novedades",
-                                 "about":  "Nosotros",
-                                 "blog":  "Blog",
-                                 "careers":  "Carreras"
-                             },
-                   "rights":  "Â© {{year}} Inmobo. Todos los derechos reservados.",
-                   "privacy":  "Aviso de Privacidad",
-                   "terms":  "TÃ©rminos y Condiciones",
-                   "cookies":  "Cookies",
-                   "description":  "La plataforma CRM inmobiliaria mas completa para gestionar propiedades, clientes y ventas en un solo lugar.",
-                   "newsletter":  {
-                                      "description":  "Recibe las ultimas noticias y consejos inmobiliarios directamente en tu bandeja.",
-                                      "placeholder":  "Tu correo electronico",
-                                      "action":  "Suscribirme",
-                                      "submitting":  "Enviando...",
-                                      "messages":  {
-                                                       "required":  "Ingresa tu correo para suscribirte.",
-                                                       "success":  "Gracias. Te suscribimos correctamente.",
-                                                       "error":  "No fue posible suscribirte. Intenta nuevamente."
-                                                   }
-                                  }
-               },
-    "contact":  {
-                    "badge":  "Hablemos de tu proyecto",
-                    "title":  "Listo para transformar tu",
-                    "highlight":  "negocio inmobiliario?",
-                    "subtitle":  "Contacta a nuestro equipo y descubre como Inmobo puede ayudarte.",
-                    "emailLabel":  "Correo Electronico",
-                    "emailValue":  "ventas@inmobo.com",
-                    "phoneLabel":  "Telefono",
-                    "phoneValue":  "+52 (55) 1234-5678",
-                    "disclaimer":  "Al enviar este formulario aceptas nuestra politica de privacidad.",
-                    "form":  {
-                                 "name":  "Nombre",
-                                 "namePlaceholder":  "Tu nombre",
-                                 "lastName":  "Apellido",
-                                 "lastNamePlaceholder":  "Tu apellido",
-                                 "email":  "Correo Electronico",
-                                 "emailPlaceholder":  "nombre@empresa.com",
-                                 "phone":  "Telefono",
-                                 "phonePlaceholder":  "+52 123 456 7890",
-                                 "message":  "Mensaje",
-                                 "messagePlaceholder":  "Cuentanos sobre tus necesidades...",
-                                 "submit":  "Enviar Mensaje",
-                                 "submitting":  "Enviando...",
-                                 "success":  "Gracias. Recibimos tu mensaje y te contactaremos pronto.",
-                                 "errors":  {
-                                                "required":  "Completa nombre, correo y mensaje para continuar.",
-                                                "generic":  "No fue posible enviar tu mensaje. Intenta nuevamente."
-                                            }
-                             }
-                }
+  "hero": {
+    "badge": "Plataforma inmobiliaria todo en uno",
+    "titleStart": "Tu CRM",
+    "titleHighlight": "inmobiliario",
+    "titleEnd": "inteligente",
+    "subtitle": "Gestiona propiedades, captura leads, procesa reservas y pagos, y analiza tu rendimiento â€” todo desde una sola plataforma diseÃ±ada para el profesional inmobiliario.",
+    "startFree": "Comenzar gratis",
+    "hasAccount": "Tengo una cuenta"
+  },
+  "features": {
+    "sectionTitle": "¿Por qué elegir Inmobo?",
+    "sectionSubtitle": "Te conectamos con las mejores propiedades",
+    "description": "Inmobo es un CRM inmobiliario completo que centraliza todas las operaciones de tu negocio: desde la publicación de propiedades hasta el cierre de ventas, pasando por la gestión de leads, reservas y cobros.",
+    "trust": {
+      "title": "Confianza y transparencia",
+      "description": "Cada anuncio es revisado para garantizar precisión y calidad."
+    },
+    "fast": {
+      "title": "Rápido y simple",
+      "description": "Encuentra tu propiedad ideal en minutos con búsqueda inteligente."
+    },
+    "experience": {
+      "title": "Experiencias únicas",
+      "description": "Desde villas frente al mar hasta departamentos urbanos, para cada estilo de vida."
+    },
+    "quality": {
+      "title": "Calidad premium",
+      "description": "Solo propiedades curadas que cumplen nuestros estándares."
+    },
+    "investment": {
+      "title": "Oportunidades de inversión",
+      "description": "Propiedades con alto potencial de plusvalía y retornos sólidos."
+    },
+    "support": {
+      "title": "Soporte personalizado",
+      "description": "Asesoría experta durante todo el proceso."
+    }
+  },
+  "stats": {
+    "cloud": "Plataforma en la nube",
+    "leads": "Captación de leads",
+    "gateways": "Pasarelas de pago",
+    "unlimited": "Propiedades ilimitadas",
+    "sectionTitle": "Números que hablan por nosotros",
+    "sectionSubtitle": "Ãšnete a miles de clientes satisfechos",
+    "properties": "Propiedades",
+    "clients": "Clientes felices",
+    "cities": "Ciudades",
+    "satisfaction": "Satisfacción"
+  },
+  "grid": {
+    "sectionTitle": "Características",
+    "sectionSubtitle": "Todo lo que necesitas para",
+    "subtitleHighlight": "vender más",
+    "feature1": {
+      "title": "Gestión de Propiedades",
+      "desc": "Registra, edita y organiza todas tus propiedades en un solo lugar con imágenes, amenidades y detalles personalizados."
+    },
+    "feature2": {
+      "title": "CRM de Leads",
+      "desc": "Captura leads automáticamente desde tu sitio público, rastrea su interés y convierte prospectos en clientes."
+    },
+    "feature3": {
+      "title": "Reservaciones",
+      "desc": "Sistema completo de reservaciones con calendario, confirmaciones automáticas y gestión de disponibilidad."
+    },
+    "feature4": {
+      "title": "Pagos Integrados",
+      "desc": "Acepta pagos con Stripe y MercadoPago. Genera vouchers automáticos y lleva control financiero al día."
+    },
+    "feature5": {
+      "title": "Analíticas en Tiempo Real",
+      "desc": "Dashboard con métricas de visitas, reservaciones, ingresos y rendimiento de cada propiedad."
+    },
+    "feature6": {
+      "title": "Equipo y Permisos",
+      "desc": "Invita a tu equipo con roles y permisos específicos. Controla quién puede ver, editar o administrar."
+    }
+  },
+  "allInOne": {
+    "eyebrow": "Todo en un solo lugar",
+    "title": "Deja de usar",
+    "strikethrough": "Excel, WhatsApp, notas",
+    "description": "Con Inmobo centralizas toda la informaciÃ³n de tu negocio inmobiliario. Ya no necesitas saltar entre 10 herramientas diferentes â€” todo estÃ¡ integrado y sincronizado en tiempo real.",
+    "list1": "Datos seguros en la nube con Appwrite",
+    "list2": "Sitio público para captar clientes 24/7",
+    "list3": "Automatiza cobros, notificaciones y vouchers"
+  },
+  "mockup": {
+    "properties": "Propiedades",
+    "leadsToday": "Leads hoy",
+    "income": "Ingresos",
+    "weeklyVisits": "Visitas semanales",
+    "newReservation": "Nueva reservación",
+    "timeAgo": "hace 2 minutos"
+  },
+  "howItWorks": {
+    "sectionTitle": "Cómo funciona",
+    "sectionSubtitle": "Encuentra tu propiedad perfecta en simples pasos",
+    "subtitleHighlight": "3 simples pasos",
+    "step1": {
+      "title": "Busca y explora",
+      "desc": "Navega nuestro catálogo y usa filtros para encontrar propiedades que se ajusten a tus criterios.",
+      "description": "Navega nuestro catálogo y usa filtros para encontrar propiedades que se ajusten a tus criterios."
+    },
+    "step2": {
+      "title": "Contacta y visita",
+      "desc": "Conéctate directamente con agentes y agenda visitas a tu conveniencia.",
+      "description": "Conéctate directamente con agentes y agenda visitas a tu conveniencia."
+    },
+    "step3": {
+      "title": "Cierra el trato",
+      "desc": "Recibe leads, reservaciones y pagos automáticamente. Analiza tu rendimiento y escala tu negocio.",
+      "description": "Te acompañamos durante todo el proceso de cierre con documentación segura."
+    },
+    "step4": {
+      "title": "Disfruta tu nuevo hogar",
+      "description": "Múdate a tu propiedad ideal y disfruta el estilo de vida que mereces."
+    },
+    "bottomText": "Proceso simple, resultados extraordinarios."
+  },
+  "socialProof": {
+    "title": "Diseñado para escalar",
+    "subtitle": "Herramientas pensadas para el profesional inmobiliario moderno",
+    "stat1": {
+      "label": "Uptime garantizado"
+    },
+    "stat2": {
+      "label": "Propiedades gestionadas"
+    },
+    "stat3": {
+      "label": "Tiempo de carga"
+    },
+    "stat4": {
+      "label": "Más productividad"
+    }
+  },
+  "finalCta": {
+    "badge": "Comienza gratis, sin tarjeta de crédito",
+    "title": "¿Listo para transformar tu",
+    "titleHighlight": "negocio",
+    "titleEnd": "inmobiliario?",
+    "subtitle": "Ãšnete a los profesionales que ya gestionan sus propiedades, leads y cobros con Inmobo.",
+    "button": "Crear cuenta gratis",
+    "login": "Iniciar sesión"
+  },
+  "footer": {
+    "sections": {
+      "product": "Producto",
+      "company": "Compañía",
+      "contact": "Contacto",
+      "newsletter": "Suscríbete"
+    },
+    "links": {
+      "features": "Características",
+      "pricing": "Precios",
+      "integrations": "Integraciones",
+      "changelog": "Novedades",
+      "about": "Nosotros",
+      "blog": "Blog",
+      "careers": "Carreras"
+    },
+    "rights": "© {{year}} Inmobo. Todos los derechos reservados.",
+    "privacy": "Aviso de Privacidad",
+    "terms": "Términos y Condiciones",
+    "cookies": "Cookies",
+    "description": "La plataforma CRM inmobiliaria más completa para gestionar propiedades, clientes y ventas en un solo lugar.",
+    "newsletter": {
+      "description": "Recibe las últimas noticias y consejos inmobiliarios directamente en tu bandeja.",
+      "placeholder": "Tu correo electrónico",
+      "action": "Suscribirme",
+      "submitting": "Enviando...",
+      "messages": {
+        "required": "Ingresa tu correo para suscribirte.",
+        "success": "Gracias. Te suscribimos correctamente.",
+        "error": "No fue posible suscribirte. Intenta nuevamente."
+      }
+    }
+  },
+  "showcase": {
+    "title": "Poder para cada",
+    "titleHighlight": "flujo de trabajo",
+    "subtitle": "Desde la captación de propiedades hasta el cierre de tratos, Inmobo te da las herramientas para gestionar cada paso de tu operación con precisión.",
+    "tabs": {
+      "listings": "Gestión de Propiedades",
+      "crm": "CRM y Leads",
+      "site": "Sitio Web Público"
+    }
+  },
+  "contact": {
+    "badge": "Hablemos de tu proyecto",
+    "title": "¿Listo para transformar tu",
+    "highlight": " negocio inmobiliario?",
+    "subtitle": "Contáctanos y descubre cómo Inmobo puede ayudarte.",
+    "emailLabel": "Correo Electrónico",
+    "phoneLabel": "Teléfono",
+    "disclaimer": "Al enviar este formulario aceptas nuestra Política de Privacidad.",
+    "form": {
+      "name": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo Electrónico",
+      "phone": "Teléfono",
+      "message": "Mensaje",
+      "submit": "Enviar Mensaje",
+      "namePlaceholder": "Tu nombre",
+      "lastNamePlaceholder": "Tu apellido",
+      "emailPlaceholder": "nombre@empresa.com",
+      "phonePlaceholder": "+52 123 456 7890",
+      "messagePlaceholder": "Cuéntanos sobre tus necesidades...",
+      "submitting": "Enviando...",
+      "success": "Gracias. Recibimos tu mensaje y te contactaremos pronto.",
+      "errors": {
+        "required": "Completa nombre, correo y mensaje para continuar.",
+        "generic": "No fue posible enviar tu mensaje. Intenta nuevamente."
+      }
+    },
+    "emailValue": "ventas@inmobo.com",
+    "phoneValue": "+52 (55) 1234-5678"
+  },
+  "cta": {
+    "title": "¿Listo para encontrar tu lugar ideal?",
+    "subtitle": "Explora propiedades exclusivas y vive la experiencia que mereces.",
+    "getStarted": "Comenzar",
+    "browseProperties": "Explorar propiedades",
+    "noFees": "Sin cargos ocultos",
+    "support24": "Soporte 24/7",
+    "verified": "Propiedades verificadas",
+    "contactTitle": "¿Necesitas ayuda?",
+    "contactSubtitle": "Nuestro equipo está disponible para ayudarte.",
+    "phone": "+52 322 123 4567",
+    "email": "hola@inmobo.com",
+    "availability": "Lun - Vie: 9 AM - 6 PM"
+  },
+  "propertyShowcase": {
+    "sectionTitle": "Propiedades Destacadas",
+    "sectionSubtitle": "Descubre las mejores opciones seleccionadas para ti.",
+    "viewAll": "Ver todas",
+    "loading": "Cargando propiedades...",
+    "noProperties": "No hay propiedades disponibles en este momento.",
+    "errorLoading": "No se pudieron cargar las propiedades."
+  },
+  "quickCategories": {
+    "beachfront": "Frente al mar",
+    "luxuryVillas": "Villas de lujo",
+    "apartments": "Departamentos",
+    "newDevelopments": "Nuevos desarrollos"
+  }
 }

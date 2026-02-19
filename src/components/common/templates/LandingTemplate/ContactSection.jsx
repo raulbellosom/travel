@@ -123,7 +123,7 @@ const ContactSection = () => {
                 <p className="text-lg text-slate-600 dark:text-slate-300 mb-10 max-w-lg leading-relaxed">
                   {t(
                     "landing:contact.subtitle",
-                    "Dejanos tus datos y un experto te contactara en menos de 24 horas para mostrarte como Inmobo puede ayudarte a escalar.",
+                    "Déjanos tus datos y un experto te contactará en menos de 24 horas para mostrarte cómo Inmobo puede ayudarte a escalar.",
                   )}
                 </p>
 
@@ -134,7 +134,7 @@ const ContactSection = () => {
                     </div>
                     <div>
                       <h4 className="text-slate-900 dark:text-white font-bold mb-1">
-                        {t("landing:contact.emailLabel", "Correo Electronico")}
+                        {t("landing:contact.emailLabel", "Correo Electrónico")}
                       </h4>
                       <p className="text-slate-500 dark:text-slate-400">
                         {t("landing:contact.emailValue", "ventas@inmobo.com")}
@@ -147,7 +147,7 @@ const ContactSection = () => {
                     </div>
                     <div>
                       <h4 className="text-slate-900 dark:text-white font-bold mb-1">
-                        {t("landing:contact.phoneLabel", "Telefono")}
+                        {t("landing:contact.phoneLabel", "Teléfono")}
                       </h4>
                       <p className="text-slate-500 dark:text-slate-400">
                         {t("landing:contact.phoneValue", "+52 (55) 1234-5678")}
@@ -196,7 +196,7 @@ const ContactSection = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
-                      {t("landing:contact.form.email", "Correo Electronico")}
+                      {t("landing:contact.form.email", "Correo Electrónico")}
                     </label>
                     <input
                       type="email"
@@ -212,7 +212,7 @@ const ContactSection = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
-                      {t("landing:contact.form.phone", "Telefono")}
+                      {t("landing:contact.form.phone", "Teléfono")}
                     </label>
                     <input
                       type="tel"
@@ -236,7 +236,7 @@ const ContactSection = () => {
                       onChange={handleChange("message")}
                       placeholder={t(
                         "landing:contact.form.messagePlaceholder",
-                        "Cuentanos sobre tus necesidades...",
+                        "Cuéntanos sobre tus necesidades...",
                       )}
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium resize-none"
                     />
@@ -268,7 +268,7 @@ const ContactSection = () => {
                   <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-4">
                     {t(
                       "landing:contact.disclaimer",
-                      "Al enviar este formulario, aceptas nuestra Politica de Privacidad.",
+                      "Al enviar este formulario, aceptas nuestra Política de Privacidad.",
                     )}
                   </p>
                 </form>
@@ -282,3 +282,4 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
+

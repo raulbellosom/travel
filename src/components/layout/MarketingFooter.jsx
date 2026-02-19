@@ -73,7 +73,7 @@ const MarketingFooter = () => {
             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
               {t(
                 "landing:footer.description",
-                "La plataforma CRM inmobiliaria mas completa para gestionar propiedades, clientes y ventas en un solo lugar.",
+                "La plataforma CRM inmobiliaria más completa para gestionar propiedades, clientes y ventas en un solo lugar.",
               )}
             </p>
             <div className="flex gap-4">
@@ -114,7 +114,7 @@ const MarketingFooter = () => {
                   href="#features"
                   className="text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 text-sm transition-colors"
                 >
-                  {t("landing:footer.links.features", "Caracteristicas")}
+                  {t("landing:footer.links.features", "Características")}
                 </a>
               </li>
               <li>
@@ -146,7 +146,7 @@ const MarketingFooter = () => {
 
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-6">
-              {t("landing:footer.sections.company", "Compania")}
+              {t("landing:footer.sections.company", "Compañía")}
             </h4>
             <ul className="space-y-4">
               <li>
@@ -186,12 +186,12 @@ const MarketingFooter = () => {
 
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-6">
-              {t("landing:footer.sections.newsletter", "Suscribete")}
+              {t("landing:footer.sections.newsletter", "Suscríbete")}
             </h4>
             <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">
               {t(
                 "landing:footer.newsletter.description",
-                "Recibe las ultimas noticias y consejos inmobiliarios directamente en tu bandeja.",
+                "Recibe las últimas noticias y consejos inmobiliarios directamente en tu bandeja.",
               )}
             </p>
             <form className="flex flex-col gap-3" onSubmit={onSubmitNewsletter}>
@@ -201,7 +201,7 @@ const MarketingFooter = () => {
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder={t(
                   "landing:footer.newsletter.placeholder",
-                  "Tu correo electronico",
+                  "Tu correo electrónico",
                 )}
                 className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all text-sm"
               />
@@ -247,7 +247,7 @@ const MarketingFooter = () => {
               to="/terms"
               className="hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
             >
-              {t("landing:footer.terms", "Terminos")}
+              {t("landing:footer.terms", "Términos")}
             </Link>
             <Link
               to="/cookies"
@@ -263,3 +263,4 @@ const MarketingFooter = () => {
 };
 
 export default MarketingFooter;
+
