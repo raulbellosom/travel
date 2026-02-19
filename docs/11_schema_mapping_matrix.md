@@ -35,6 +35,13 @@ Regla:
 
 ---
 
+Nota de alcance para `propertyType -> category`:
+
+- El alias legacy `propertyType` representa categorias del dominio inmobiliario (`resourceType=property`).
+- En recursos no inmobiliarios (`service`,`vehicle`,`experience`,`venue`), el campo canonico es `category` y debe validarse contra su catalogo propio por tipo.
+
+---
+
 ## Mapeo por coleccion
 
 | Coleccion | Antes | Ahora | Compat |

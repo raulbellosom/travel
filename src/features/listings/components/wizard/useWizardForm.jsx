@@ -12,6 +12,12 @@ import {
   toLegacyOperationType,
   toLegacyPricePerUnit,
 } from "../../../../utils/resourceModel";
+import {
+  isAllowedCategory,
+  isAllowedCommercialMode,
+  sanitizeCategory,
+  sanitizeCommercialMode,
+} from "../../../../utils/resourceTaxonomy";
 
 let locationOptionsServicePromise = null;
 
@@ -77,12 +83,11 @@ const ALLOWED_PRICING_MODELS = Object.freeze({
   rent_hourly: ["per_hour", "per_event", "per_person", "total"],
 });
 
-const normalizeCategoryValue = (value, fallback = "house") => {
-  const normalized = String(value || fallback)
-    .trim()
-    .toLowerCase();
-  return normalized || fallback;
-};
+const normalizeCategoryValue = (
+  resourceType,
+  value,
+  fallback = WIZARD_DEFAULTS.category,
+) => sanitizeCategory(resourceType, value || fallback);
 
 const pickAllowedPricingModel = (inputValue, commercialMode) => {
   const normalizedMode = normalizeCommercialMode(commercialMode);
@@ -91,8 +96,16 @@ const pickAllowedPricingModel = (inputValue, commercialMode) => {
   return allowed.includes(candidate) ? candidate : allowed[0];
 };
 
-const buildCommercialState = (draft = {}, nextCommercialInput = "sale") => {
-  const commercialMode = normalizeCommercialMode(nextCommercialInput);
+const buildCommercialState = (
+  draft = {},
+  nextCommercialInput = "sale",
+  resourceTypeInput = WIZARD_DEFAULTS.resourceType,
+) => {
+  const normalizedResourceType = normalizeResourceType(resourceTypeInput);
+  const commercialMode = sanitizeCommercialMode(
+    normalizedResourceType,
+    nextCommercialInput,
+  );
   const pricingModel = pickAllowedPricingModel(
     draft.pricingModel || draft.pricePerUnit || "total",
     commercialMode,
@@ -119,12 +132,14 @@ export const buildFormState = (initialValues = {}) => {
     merged.resourceType || WIZARD_DEFAULTS.resourceType,
   );
   const category = normalizeCategoryValue(
+    resourceType,
     merged.category || merged.propertyType || WIZARD_DEFAULTS.category,
     WIZARD_DEFAULTS.category,
   );
   const commercialState = buildCommercialState(
     merged,
     merged.commercialMode || merged.operationType || WIZARD_DEFAULTS.operationType,
+    resourceType,
   );
   const amenityIds = Array.isArray(merged.amenityIds)
     ? Array.from(
@@ -318,14 +333,15 @@ export const useWizardForm = ({
         if (field === "operationType" || field === "commercialMode") {
           return {
             ...prev,
-            ...buildCommercialState(prev, value),
+            ...buildCommercialState(prev, value, prev.resourceType),
           };
         }
 
         if (field === "propertyType" || field === "category") {
           const category = normalizeCategoryValue(
+            prev.resourceType,
             value,
-            prev.category || prev.propertyType || "house",
+            prev.category || prev.propertyType || WIZARD_DEFAULTS.category,
           );
           return {
             ...prev,
@@ -357,9 +373,23 @@ export const useWizardForm = ({
         }
 
         if (field === "resourceType") {
+          const nextResourceType = normalizeResourceType(value);
+          const category = normalizeCategoryValue(
+            nextResourceType,
+            prev.category || prev.propertyType || WIZARD_DEFAULTS.category,
+            WIZARD_DEFAULTS.category,
+          );
+          const commercialState = buildCommercialState(
+            prev,
+            prev.commercialMode || prev.operationType || WIZARD_DEFAULTS.operationType,
+            nextResourceType,
+          );
           return {
             ...prev,
-            resourceType: normalizeResourceType(value),
+            resourceType: nextResourceType,
+            category,
+            propertyType: category,
+            ...commercialState,
           };
         }
 
@@ -384,6 +414,12 @@ export const useWizardForm = ({
       if (field === "pricingModel" || field === "pricePerUnit") {
         clearError("pricingModel");
         clearError("pricePerUnit");
+      }
+      if (field === "resourceType") {
+        clearError("propertyType");
+        clearError("category");
+        clearError("operationType");
+        clearError("commercialMode");
       }
     },
     [clearError],
@@ -819,6 +855,13 @@ export const useWizardForm = ({
       const title = String(form.title || "").trim();
       const description = String(form.description || "").trim();
       const slug = normalizeSlug(form.slug || "");
+      const resourceType = normalizeResourceType(form.resourceType);
+      const categoryValue = String(form.category || form.propertyType || "")
+        .trim()
+        .toLowerCase();
+      const commercialModeValue = normalizeCommercialMode(
+        form.commercialMode || form.operationType || "",
+      );
 
       const { validCountry, validState, validCity } = resolveLocationValues();
 
@@ -849,19 +892,39 @@ export const useWizardForm = ({
       // category/propertyType
       if (
         (shouldValidate("propertyType") || shouldValidate("category")) &&
-        !form.propertyType
+        !categoryValue
       )
         nextErrors.propertyType = t(
           "propertyForm.validation.propertyTypeRequired",
         );
+      else if (
+        shouldValidate("propertyType") ||
+        shouldValidate("category")
+      ) {
+        if (!isAllowedCategory(resourceType, categoryValue)) {
+          nextErrors.propertyType = t(
+            "propertyForm.validation.categoryInvalidForResourceType",
+          );
+        }
+      }
       // commercialMode/operationType
       if (
         (shouldValidate("operationType") || shouldValidate("commercialMode")) &&
-        !form.operationType
+        !String(form.commercialMode || form.operationType || "").trim()
       )
         nextErrors.operationType = t(
           "propertyForm.validation.operationTypeRequired",
         );
+      else if (
+        shouldValidate("operationType") ||
+        shouldValidate("commercialMode")
+      ) {
+        if (!isAllowedCommercialMode(resourceType, commercialModeValue)) {
+          nextErrors.operationType = t(
+            "propertyForm.validation.commercialModeInvalidForResourceType",
+          );
+        }
+      }
       // price
       if (shouldValidate("price")) {
         const price = parseNumber(form.price, Number.NaN);
@@ -913,11 +976,14 @@ export const useWizardForm = ({
   const buildPayload = useCallback(() => {
     const { validCountry, validState, validCity } = resolveLocationValues();
 
+    const resourceType = normalizeResourceType(form.resourceType);
     const category = normalizeCategoryValue(
+      resourceType,
       form.category || form.propertyType || "house",
       "house",
     );
-    const commercialMode = normalizeCommercialMode(
+    const commercialMode = sanitizeCommercialMode(
+      resourceType,
       form.commercialMode || form.operationType || "sale",
     );
     const pricingModel = pickAllowedPricingModel(
@@ -930,7 +996,7 @@ export const useWizardForm = ({
       slug: normalizeSlug(form.slug),
       title: String(form.title || "").trim(),
       description: String(form.description || "").trim(),
-      resourceType: normalizeResourceType(form.resourceType),
+      resourceType,
       category,
       propertyType: category,
       commercialMode,

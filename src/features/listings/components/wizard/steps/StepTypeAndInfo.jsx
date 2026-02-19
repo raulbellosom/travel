@@ -1,8 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { RefreshCw, Loader2, Check, AlertCircle } from "lucide-react";
 import { Select, TextInputWithCharCounter } from "../../../../../components/common";
-import { PROPERTY_TYPES, OPERATION_TYPES } from "../wizardConfig";
+import { OPERATION_TYPES } from "../wizardConfig";
 import { useMemo } from "react";
+import {
+  getAllowedCategories,
+  getAllowedCommercialModes,
+  getCategoryTranslationKey,
+} from "../../../../../utils/resourceTaxonomy";
 
 /**
  * Step 1: Property type, operation type, title, slug, description.
@@ -63,74 +68,42 @@ const StepTypeAndInfo = ({ formHook, modulesApi = {} }) => {
     [t],
   );
 
-  const serviceCategoryOptions = useMemo(
-    () => [
-      {
-        value: "cleaning",
-        label: t("propertyForm.options.category.cleaning", {
-          defaultValue: "Cleaning",
-        }),
-      },
-      {
-        value: "dj",
-        label: t("propertyForm.options.category.dj", {
-          defaultValue: "DJ",
-        }),
-      },
-      {
-        value: "chef",
-        label: t("propertyForm.options.category.chef", {
-          defaultValue: "Chef",
-        }),
-      },
-    ],
-    [t],
-  );
-
-  const venueCategoryOptions = useMemo(
-    () => [
-      {
-        value: "event_hall",
-        label: t("propertyForm.options.category.eventHall", {
-          defaultValue: "Event hall",
-        }),
-      },
-      {
-        value: "commercial_local",
-        label: t("propertyForm.options.category.commercialLocal", {
-          defaultValue: "Commercial local",
-        }),
-      },
-    ],
-    [t],
-  );
-
-  const propertyTypeOptions = useMemo(
-    () => PROPERTY_TYPES.map((o) => ({ value: o.value, label: t(o.key) })),
-    [t],
-  );
+  const formatCategoryFallback = (value) =>
+    String(value || "")
+      .trim()
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
 
   const categoryOptions = useMemo(() => {
-    const type = String(form.resourceType || "property").trim().toLowerCase();
-    if (type === "service") return serviceCategoryOptions;
-    if (type === "venue") return venueCategoryOptions;
-    return propertyTypeOptions;
-  }, [
-    form.resourceType,
-    propertyTypeOptions,
-    serviceCategoryOptions,
-    venueCategoryOptions,
-  ]);
+    const categories = getAllowedCategories(form.resourceType);
+    return categories.map((category) => ({
+      value: category,
+      label: t(getCategoryTranslationKey(category), {
+        defaultValue: formatCategoryFallback(category),
+      }),
+    }));
+  }, [form.resourceType, t]);
 
   const operationTypeOptions = useMemo(
-    () =>
-      OPERATION_TYPES.filter(
-        (option) => !option.moduleKey || isModuleEnabled(option.moduleKey),
-      ).map((option) => ({
+    () => {
+      const allowedCommercialModes = new Set(
+        getAllowedCommercialModes(form.resourceType),
+      );
+
+      return OPERATION_TYPES.filter((option) => {
+        const optionMode = String(option.commercialMode || option.value || "")
+          .trim()
+          .toLowerCase();
+        const moduleAllowed = !option.moduleKey || isModuleEnabled(option.moduleKey);
+        return moduleAllowed && allowedCommercialModes.has(optionMode);
+      }).map((option) => ({
         value: option.commercialMode || option.value,
         label: t(option.key),
-      })),
-    [isModuleEnabled, t],
+      }));
+    },
+    [form.resourceType, isModuleEnabled, t],
   );
 
   const SlugIcon =

@@ -56,6 +56,32 @@ Campos troncales:
 - `time_slot`
 - `fixed_event`
 
+### Matriz canonica type -> category
+
+| resourceType | categories permitidas |
+| --- | --- |
+| `property` | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse` |
+| `service` | `cleaning`,`dj`,`chef`,`photography`,`catering`,`maintenance` |
+| `vehicle` | `car`,`suv`,`pickup`,`van`,`motorcycle`,`boat` |
+| `experience` | `tour`,`class`,`workshop`,`adventure`,`wellness`,`gastronomy` |
+| `venue` | `event_hall`,`commercial_local`,`studio`,`coworking`,`meeting_room` |
+
+### Matriz canonica type -> commercialMode
+
+| resourceType | commercialMode permitido |
+| --- | --- |
+| `property` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `service` | `rent_short_term`,`rent_hourly` |
+| `vehicle` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `experience` | `rent_short_term`,`rent_hourly` |
+| `venue` | `rent_short_term`,`rent_hourly` |
+
+Reglas de fallback:
+
+- Si llega `category` invalida, se usa la primera categoria valida del `resourceType` solo para normalizacion interna de UI.
+- Si llega `commercialMode` invalido, se usa el primer modo valido del `resourceType` solo para normalizacion interna de UI.
+- Persistencia debe rechazar combinaciones invalidas (`422 VALIDATION_ERROR`) cuando el payload explicita una combinacion no permitida.
+
 ---
 
 ## 3. Rate plans

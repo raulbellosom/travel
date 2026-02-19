@@ -17,6 +17,12 @@ import {
   toLegacyOperationType,
   toLegacyPricePerUnit,
 } from "../utils/resourceModel";
+import {
+  isAllowedCategory,
+  isAllowedCommercialMode,
+  sanitizeCategory,
+  sanitizeCommercialMode,
+} from "../utils/resourceTaxonomy";
 
 const hasOwn = (input, key) =>
   Object.prototype.hasOwnProperty.call(input || {}, key);
@@ -53,11 +59,26 @@ const getCollectionConfig = () => {
   };
 };
 
+const createValidationError = (message, field, details = {}) => {
+  const error = new Error(message);
+  error.code = 422;
+  error.type = "VALIDATION_ERROR";
+  error.field = field;
+  error.details = details;
+  return error;
+};
+
+const normalizeCategoryToken = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
 const normalizeResourceInput = (
   input = {},
-  { forUpdate = false, target = "legacy" } = {},
+  { forUpdate = false, target = "legacy", existing = {} } = {},
 ) => {
   const source = input || {};
+  const base = existing || {};
   const data = {};
   const assign = (key, value) => {
     if (!forUpdate || hasOwn(source, key)) {
@@ -65,13 +86,83 @@ const normalizeResourceInput = (
     }
   };
 
-  const normalizedCategory = String(
-    source.category || source.propertyType || "house",
-  )
-    .trim()
-    .toLowerCase();
-  const normalizedCommercialMode = normalizeCommercialMode(
-    source.commercialMode || source.operationType || "sale",
+  const hasResourceTypeField = hasOwn(source, "resourceType");
+  const hasCategoryField = hasOwn(source, "category") || hasOwn(source, "propertyType");
+  const hasCommercialField = hasOwn(source, "commercialMode") || hasOwn(source, "operationType");
+
+  const baseCategoryRaw = normalizeCategoryToken(base.category || base.propertyType);
+  const baseCommercialRaw = normalizeCommercialMode(
+    base.commercialMode || base.operationType || "sale",
+  );
+
+  const normalizedResourceType = normalizeResourceType(
+    hasResourceTypeField ? source.resourceType : base.resourceType,
+  );
+  const categoryInput = hasCategoryField
+    ? source.category || source.propertyType
+    : baseCategoryRaw;
+  const commercialInput = hasCommercialField
+    ? source.commercialMode || source.operationType
+    : baseCommercialRaw;
+
+  const rawCategory = normalizeCategoryToken(categoryInput);
+  const rawCommercialMode = normalizeCommercialMode(commercialInput || "sale");
+
+  if (hasCategoryField && rawCategory && !isAllowedCategory(normalizedResourceType, rawCategory)) {
+    throw createValidationError(
+      "La categoria seleccionada no es valida para este tipo de recurso.",
+      "category",
+      {
+        resourceType: normalizedResourceType,
+        category: rawCategory,
+      },
+    );
+  }
+
+  if (hasCommercialField && !isAllowedCommercialMode(normalizedResourceType, rawCommercialMode)) {
+    throw createValidationError(
+      "El modo comercial seleccionado no es valido para este tipo de recurso.",
+      "commercialMode",
+      {
+        resourceType: normalizedResourceType,
+        commercialMode: rawCommercialMode,
+      },
+    );
+  }
+
+  if (forUpdate && hasResourceTypeField && !hasCategoryField && rawCategory) {
+    if (!isAllowedCategory(normalizedResourceType, rawCategory)) {
+      throw createValidationError(
+        "Debes actualizar la categoria para que sea compatible con el nuevo tipo de recurso.",
+        "category",
+        {
+          resourceType: normalizedResourceType,
+          category: rawCategory,
+        },
+      );
+    }
+  }
+
+  if (forUpdate && hasResourceTypeField && !hasCommercialField) {
+    if (!isAllowedCommercialMode(normalizedResourceType, rawCommercialMode)) {
+      throw createValidationError(
+        "Debes actualizar el modo comercial para que sea compatible con el nuevo tipo de recurso.",
+        "commercialMode",
+        {
+          resourceType: normalizedResourceType,
+          commercialMode: rawCommercialMode,
+        },
+      );
+    }
+  }
+
+  const normalizedCategory = sanitizeCategory(
+    normalizedResourceType,
+    rawCategory || baseCategoryRaw,
+  );
+  const normalizedCommercialMode = sanitizeCommercialMode(
+    normalizedResourceType,
+    rawCommercialMode,
   );
   const normalizedPricingModel = normalizePricingModel(
     source.pricingModel || source.pricePerUnit || "total",
@@ -101,7 +192,7 @@ const normalizeResourceInput = (
   assign("priceNegotiable", Boolean(source.priceNegotiable));
 
   if (target === "canonical") {
-    assign("resourceType", normalizeResourceType(source.resourceType));
+    assign("resourceType", normalizedResourceType);
     assign("category", normalizedCategory);
     assign("commercialMode", normalizedCommercialMode);
     assign("pricingModel", normalizedPricingModel);
@@ -523,9 +614,29 @@ export const propertiesService = {
   async update(resourceId, _userId, payload) {
     ensureAppwriteConfigured();
     const { resourcesCollectionId, useCanonicalResources } = getCollectionConfig();
+    const needsResourceContext = [
+      "resourceType",
+      "category",
+      "propertyType",
+      "commercialMode",
+      "operationType",
+      "pricingModel",
+      "pricePerUnit",
+      "bookingType",
+    ].some((key) => hasOwn(payload, key));
+
+    const existing = needsResourceContext
+      ? await databases.getDocument({
+          databaseId: env.appwrite.databaseId,
+          collectionId: resourcesCollectionId,
+          documentId: resourceId,
+        })
+      : {};
+
     const normalized = normalizeResourceInput(payload, {
       forUpdate: true,
       target: useCanonicalResources ? "canonical" : "legacy",
+      existing,
     });
 
     const updated = await databases.updateDocument({

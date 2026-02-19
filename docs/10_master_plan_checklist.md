@@ -51,6 +51,12 @@ Checklist maestro para migracion de `properties` a `resources` con sistema de mo
 7. Lead + chat operan con `resourceId` (si messaging ON).
 - [ ] Ejecutado
 
+8. Wizard filtra categorias por `resourceType` (sin cruces invalidos entre tipos).
+- [ ] Ejecutado
+
+9. Persistencia rechaza combinaciones invalidas `resourceType/category/commercialMode` con `422 VALIDATION_ERROR`.
+- [ ] Ejecutado
+
 ---
 
 ## Validaciones tecnicas

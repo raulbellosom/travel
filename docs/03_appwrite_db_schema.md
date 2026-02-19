@@ -239,6 +239,28 @@ Notas de aplicabilidad por modo comercial:
 - Para `rent_short_term`, la periodicidad se define con `pricingModel` (`per_night`/`per_day`) y reglas en `rate_plans`.
 - Para `rent_hourly`, la periodicidad se define con `pricingModel` (`per_hour`/`per_event`) y `bookingType` (`time_slot`/`fixed_event`).
 
+### Taxonomia controlada (obligatoria)
+
+`category` permanece como `string`, pero su valor se valida contra catalogos controlados por `resourceType`.
+
+| resourceType | categories permitidas |
+| --- | --- |
+| `property` | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse` |
+| `service` | `cleaning`,`dj`,`chef`,`photography`,`catering`,`maintenance` |
+| `vehicle` | `car`,`suv`,`pickup`,`van`,`motorcycle`,`boat` |
+| `experience` | `tour`,`class`,`workshop`,`adventure`,`wellness`,`gastronomy` |
+| `venue` | `event_hall`,`commercial_local`,`studio`,`coworking`,`meeting_room` |
+
+`commercialMode` tambien se valida por `resourceType`:
+
+| resourceType | commercialMode permitido |
+| --- | --- |
+| `property` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `service` | `rent_short_term`,`rent_hourly` |
+| `vehicle` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `experience` | `rent_short_term`,`rent_hourly` |
+| `venue` | `rent_short_term`,`rent_hourly` |
+
 ### Indexes
 
 | Index Name                   | Type | Attributes               | Notes                  |

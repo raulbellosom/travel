@@ -14,12 +14,17 @@ import {
 } from "lucide-react";
 import LazyImage from "../../../../../components/common/atoms/LazyImage";
 import {
-  PROPERTY_TYPES,
   OPERATION_TYPES,
   PRICING_MODEL_OPTIONS,
   FURNISHED_OPTIONS,
   RENT_PERIOD_OPTIONS,
 } from "../wizardConfig";
+import {
+  getCategoryTranslationKey,
+  normalizeCategory,
+  sanitizeCategory,
+} from "../../../../../utils/resourceTaxonomy";
+import { normalizeResourceType } from "../../../../../utils/resourceModel";
 
 /**
  * Helper: resolve label from config options array.
@@ -83,7 +88,17 @@ const StepSummary = ({ formHook, onEditStep }) => {
   } = formHook;
 
   const operationLabel = resolveLabel(OPERATION_TYPES, form.operationType, t);
-  const propertyTypeLabel = resolveLabel(PROPERTY_TYPES, form.propertyType, t);
+  const resourceType = normalizeResourceType(form.resourceType);
+  const categoryValue = sanitizeCategory(
+    resourceType,
+    normalizeCategory(form.category || form.propertyType),
+  );
+  const resourceTypeLabel = t(`propertyForm.options.resourceType.${resourceType}`, {
+    defaultValue: resourceType,
+  });
+  const categoryLabel = t(getCategoryTranslationKey(categoryValue), {
+    defaultValue: categoryValue,
+  });
   const pricingModelLabel = resolveLabel(
     PRICING_MODEL_OPTIONS,
     form.pricingModel || form.pricePerUnit,
@@ -142,11 +157,11 @@ const StepSummary = ({ formHook, onEditStep }) => {
           label={t("propertyForm.fields.resourceType", {
             defaultValue: "Resource type",
           })}
-          value={form.resourceType}
+          value={resourceTypeLabel}
         />
         <SummaryRow
-          label={t("propertyForm.fields.propertyType", "Tipo")}
-          value={propertyTypeLabel}
+          label={t("propertyForm.fields.category", { defaultValue: "Categoria" })}
+          value={categoryLabel}
         />
         <SummaryRow
           label={t("propertyForm.fields.title", "Título")}

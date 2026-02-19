@@ -131,6 +131,8 @@ Uso obligatorio en:
 - Si `module.booking.short_term` esta OFF: ocultar opcion vacacional.
 - Si `module.booking.hourly` esta OFF: ocultar opcion por horas.
 - Si `module.payments.online` esta OFF: deshabilitar checkout online.
+- Wizard/editor debe filtrar `category` y `commercialMode` por `resourceType` usando taxonomia canonica.
+- No se permiten combinaciones cruzadas invalidadas por matriz (ejemplo: `resourceType=vehicle` con `category=house`).
 
 Nota: backend vuelve a validar siempre.
 
