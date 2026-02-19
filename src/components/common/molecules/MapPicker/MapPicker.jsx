@@ -25,6 +25,8 @@ import { reverseGeocode } from "../../../../services/mapbox.service";
 import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
+  FALLBACK_TILE_OPTIONS,
+  HAS_MAPBOX_TOKEN,
   TILE_LAYERS,
   TILE_OPTIONS,
   MEXICO_BOUNDS,
@@ -112,6 +114,7 @@ const MapPicker = ({
   const [position, setPosition] = useState({ lat: initLat, lng: initLng });
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(isDarkMode);
+  const [useFallbackTiles, setUseFallbackTiles] = useState(!HAS_MAPBOX_TOKEN);
   const abortRef = useRef(null);
 
   useEffect(() => {
@@ -140,7 +143,12 @@ const MapPicker = ({
 
   const center = useMemo(() => [position.lat, position.lng], [position]);
 
-  const tileConfig = dark ? TILE_LAYERS.dark : TILE_LAYERS.light;
+  const tileConfig = useFallbackTiles
+    ? TILE_LAYERS.fallback
+    : dark
+      ? TILE_LAYERS.dark
+      : TILE_LAYERS.light;
+  const tileOptions = useFallbackTiles ? FALLBACK_TILE_OPTIONS : TILE_OPTIONS;
 
   const maxBounds = restrictToBounds
     ? L.latLngBounds(
@@ -228,9 +236,14 @@ const MapPicker = ({
         <TileLayer
           attribution={tileConfig.attribution}
           url={tileConfig.url}
-          tileSize={TILE_OPTIONS.tileSize}
-          zoomOffset={TILE_OPTIONS.zoomOffset}
-          maxZoom={TILE_OPTIONS.maxZoom}
+          eventHandlers={{
+            tileerror: () => {
+              setUseFallbackTiles(true);
+            },
+          }}
+          tileSize={tileOptions.tileSize}
+          zoomOffset={tileOptions.zoomOffset}
+          maxZoom={tileOptions.maxZoom}
         />
         {readOnly ? (
           <Marker position={center} />

@@ -9,6 +9,7 @@ import env from "../env";
  * Never hardcode — always sourced from MAPBOX_ACCESS_TOKEN env var.
  */
 export const MAPBOX_TOKEN = env.external.mapboxToken;
+export const HAS_MAPBOX_TOKEN = Boolean(MAPBOX_TOKEN);
 
 /**
  * Mexico bounding box [southwest, northeast] for biased geocoding results.
@@ -72,6 +73,11 @@ export const TILE_LAYERS = {
     attribution:
       '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   },
+  fallback: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
 };
 
 /**
@@ -81,4 +87,13 @@ export const TILE_OPTIONS = {
   tileSize: 512,
   zoomOffset: -1,
   maxZoom: 18,
+};
+
+/**
+ * Tile options for fallback OSM tiles.
+ */
+export const FALLBACK_TILE_OPTIONS = {
+  tileSize: 256,
+  zoomOffset: 0,
+  maxZoom: 19,
 };
