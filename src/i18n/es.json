@@ -1225,7 +1225,7 @@
       "operation": {
         "sale": "Venta",
         "rent": "Renta",
-        "vacation_rental": "Renta vacacional",
+        "vacation_rental": "Renta corta (dias)",
         "transfer": "Traspaso"
       }
     },
@@ -1355,6 +1355,7 @@
       "checkOutTime": "Hora de check-out",
       "floors": "Pisos",
       "yearBuilt": "Año de construcción",
+      "vehicleModelYear": "Ano del modelo",
       "bookingMinUnits": "Minimo de unidades de reserva",
       "bookingMaxUnits": "Maximo de unidades de reserva",
       "availabilityStartTime": "Hora de inicio disponible",
@@ -1498,8 +1499,8 @@
         "sale": "Venta",
         "rent": "Renta",
         "hourly": "Por horas",
-        "vacationRental": "Renta vacacional",
-        "vacation_rental": "Renta vacacional",
+        "vacationRental": "Renta corta (dias)",
+        "vacation_rental": "Renta corta (dias)",
         "transfer": "Traspaso"
       },
       "resourceType": {
@@ -1569,6 +1570,7 @@
         "furnished": "Amueblado"
       },
       "rentPeriod": {
+        "daily": "Diario",
         "weekly": "Semanal",
         "monthly": "Mensual",
         "yearly": "Anual"

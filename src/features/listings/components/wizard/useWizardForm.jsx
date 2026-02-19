@@ -4,6 +4,7 @@ import { propertiesService } from "../../../../services/propertiesService";
 import { isValidSlug, normalizeSlug } from "../../../../utils/slug";
 import { WIZARD_DEFAULTS } from "./wizardConfig";
 import {
+  getAllowedPricingModels,
   normalizeAttributes,
   normalizeBookingType,
   normalizeCommercialMode,
@@ -84,13 +85,6 @@ export const formatFileSize = (bytes) => {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const ALLOWED_PRICING_MODELS = Object.freeze({
-  sale: ["total", "per_m2"],
-  rent_long_term: ["per_month", "total", "per_m2"],
-  rent_short_term: ["per_night", "per_day", "per_person", "total"],
-  rent_hourly: ["per_hour", "per_event", "per_person", "total"],
-});
-
 const ROOT_FIELD_PAYLOAD_DEFAULTS = Object.freeze({
   bedrooms: 0,
   bathrooms: 0,
@@ -115,10 +109,14 @@ const normalizeCategoryValue = (
   fallback = WIZARD_DEFAULTS.category,
 ) => sanitizeCategory(resourceType, value || fallback);
 
-const pickAllowedPricingModel = (inputValue, commercialMode) => {
+const pickAllowedPricingModel = (inputValue, commercialMode, resourceType) => {
   const normalizedMode = normalizeCommercialMode(commercialMode);
-  const allowed = ALLOWED_PRICING_MODELS[normalizedMode] || ALLOWED_PRICING_MODELS.sale;
-  const candidate = normalizePricingModel(inputValue, normalizedMode);
+  const allowed = getAllowedPricingModels(resourceType, normalizedMode);
+  const candidate = normalizePricingModel(
+    inputValue,
+    normalizedMode,
+    resourceType,
+  );
   return allowed.includes(candidate) ? candidate : allowed[0];
 };
 
@@ -135,6 +133,7 @@ const buildCommercialState = (
   const pricingModel = pickAllowedPricingModel(
     draft.pricingModel || draft.pricePerUnit || "total",
     commercialMode,
+    normalizedResourceType,
   );
   const bookingType = normalizeBookingType(draft.bookingType, commercialMode);
   return {
@@ -167,6 +166,16 @@ export const buildFormState = (initialValues = {}) => {
     merged.commercialMode || merged.operationType || WIZARD_DEFAULTS.operationType,
     resourceType,
   );
+  const initialAttributes = parseResourceAttributes(merged.attributes || "{}");
+  if (
+    resourceType === "vehicle" &&
+    !Object.prototype.hasOwnProperty.call(initialAttributes, "vehicleModelYear")
+  ) {
+    const legacyVehicleYear = toInputString(merged.yearBuilt, "");
+    if (legacyVehicleYear) {
+      initialAttributes.vehicleModelYear = legacyVehicleYear;
+    }
+  }
   const amenityIds = Array.isArray(merged.amenityIds)
     ? Array.from(
         new Set(
@@ -187,7 +196,7 @@ export const buildFormState = (initialValues = {}) => {
     pricingModel: commercialState.pricingModel,
     pricePerUnit: commercialState.pricePerUnit,
     bookingType: commercialState.bookingType,
-    attributes: normalizeAttributes(merged.attributes || "{}"),
+    attributes: normalizeAttributes(initialAttributes),
     slug: normalizeSlug(merged.slug || ""),
     title: String(merged.title || ""),
     description: String(merged.description || ""),
@@ -380,6 +389,7 @@ export const useWizardForm = ({
           const pricingModel = pickAllowedPricingModel(
             value,
             prev.commercialMode || prev.operationType || "sale",
+            prev.resourceType,
           );
           return {
             ...prev,
@@ -1168,6 +1178,7 @@ export const useWizardForm = ({
     const pricingModel = pickAllowedPricingModel(
       form.pricingModel || form.pricePerUnit || "total",
       commercialMode,
+      resourceType,
     );
     const bookingType = normalizeBookingType(form.bookingType, commercialMode);
     const profile = getResourceFormProfile({

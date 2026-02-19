@@ -1260,7 +1260,7 @@
       "operation": {
         "sale": "Sale",
         "rent": "Rent",
-        "vacation_rental": "Vacation rental",
+        "vacation_rental": "Short-term rent (daily)",
         "transfer": "Transfer"
       }
     },
@@ -1390,6 +1390,7 @@
       "checkOutTime": "Check-out time",
       "floors": "Floors",
       "yearBuilt": "Year built",
+      "vehicleModelYear": "Model year",
       "bookingMinUnits": "Minimum booking units",
       "bookingMaxUnits": "Maximum booking units",
       "availabilityStartTime": "Availability start time",
@@ -1533,8 +1534,8 @@
         "sale": "Sale",
         "rent": "Rent",
         "hourly": "Hourly",
-        "vacationRental": "Vacation rental",
-        "vacation_rental": "Vacation rental",
+        "vacationRental": "Short-term rent (daily)",
+        "vacation_rental": "Short-term rent (daily)",
         "transfer": "Transfer"
       },
       "resourceType": {
@@ -1604,6 +1605,7 @@
         "furnished": "Furnished"
       },
       "rentPeriod": {
+        "daily": "Daily",
         "weekly": "Weekly",
         "monthly": "Monthly",
         "yearly": "Yearly"

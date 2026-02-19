@@ -29,6 +29,17 @@ const PRICING_MODEL_TO_LEGACY_UNIT = Object.freeze({
   per_event: "total",
 });
 
+const KNOWN_PRICING_MODELS = Object.freeze([
+  "total",
+  "per_month",
+  "per_night",
+  "per_day",
+  "per_hour",
+  "per_person",
+  "per_event",
+  "per_m2",
+]);
+
 const COMMERCIAL_MODE_VALUES = new Set([
   "sale",
   "rent_long_term",
@@ -63,6 +74,61 @@ export const normalizeCommercialMode = (value) => {
   return "sale";
 };
 
+const ALLOWED_PRICING_MODELS_BY_RESOURCE_AND_MODE = Object.freeze({
+  property: Object.freeze({
+    sale: Object.freeze(["total", "per_m2"]),
+    rent_long_term: Object.freeze(["per_month", "per_day", "total", "per_m2"]),
+    rent_short_term: Object.freeze(["per_day", "per_night", "total"]),
+    rent_hourly: Object.freeze(["per_hour", "per_event", "total"]),
+  }),
+  vehicle: Object.freeze({
+    sale: Object.freeze(["total"]),
+    rent_long_term: Object.freeze(["per_month", "per_day", "total"]),
+    rent_short_term: Object.freeze(["per_day", "total"]),
+    rent_hourly: Object.freeze(["per_hour", "total"]),
+  }),
+  service: Object.freeze({
+    rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "total"]),
+    rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "total"]),
+  }),
+  experience: Object.freeze({
+    rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "total"]),
+    rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "total"]),
+  }),
+  venue: Object.freeze({
+    rent_short_term: Object.freeze(["per_day", "per_event", "total"]),
+    rent_hourly: Object.freeze(["per_hour", "per_event", "total"]),
+  }),
+});
+
+const pickFirstNonEmptyPricingModelList = (pricingMap = {}) =>
+  Object.values(pricingMap).find(
+    (models) => Array.isArray(models) && models.length > 0,
+  ) || [];
+
+export const getAllowedPricingModels = (
+  resourceType = "property",
+  commercialMode = "sale",
+) => {
+  const normalizedType = normalizeResourceType(resourceType);
+  const normalizedMode = normalizeCommercialMode(commercialMode);
+
+  const byType =
+    ALLOWED_PRICING_MODELS_BY_RESOURCE_AND_MODE[normalizedType] ||
+    ALLOWED_PRICING_MODELS_BY_RESOURCE_AND_MODE.property;
+
+  const direct = byType[normalizedMode];
+  if (Array.isArray(direct) && direct.length > 0) return [...direct];
+
+  const fallbackFromType = pickFirstNonEmptyPricingModelList(byType);
+  if (fallbackFromType.length > 0) return [...fallbackFromType];
+
+  const fallbackFromProperty = pickFirstNonEmptyPricingModelList(
+    ALLOWED_PRICING_MODELS_BY_RESOURCE_AND_MODE.property,
+  );
+  return fallbackFromProperty.length > 0 ? [...fallbackFromProperty] : ["total"];
+};
+
 export const normalizeBookingType = (value, fallbackCommercialMode = "sale") => {
   const normalized = normalizeLower(value);
   if (["manual_contact", "date_range", "time_slot", "fixed_event"].includes(normalized)) {
@@ -75,31 +141,31 @@ export const normalizeBookingType = (value, fallbackCommercialMode = "sale") => 
   return "manual_contact";
 };
 
-export const normalizePricingModel = (value, fallbackCommercialMode = "sale") => {
+export const normalizePricingModel = (
+  value,
+  fallbackCommercialMode = "sale",
+  fallbackResourceType = "property",
+) => {
+  const allowedPricingModels = getAllowedPricingModels(
+    fallbackResourceType,
+    fallbackCommercialMode,
+  );
+
   const normalized = normalizeLower(value);
-  if (
-    [
-      "total",
-      "per_month",
-      "per_night",
-      "per_day",
-      "per_hour",
-      "per_person",
-      "per_event",
-      "per_m2",
-    ].includes(normalized)
-  ) {
-    return normalized;
+  if (KNOWN_PRICING_MODELS.includes(normalized)) {
+    return allowedPricingModels.includes(normalized)
+      ? normalized
+      : allowedPricingModels[0] || "total";
   }
 
   const legacyMapping = LEGACY_PRICE_PER_UNIT_TO_MODEL[normalized];
-  if (legacyMapping) return legacyMapping;
+  if (legacyMapping) {
+    return allowedPricingModels.includes(legacyMapping)
+      ? legacyMapping
+      : allowedPricingModels[0] || "total";
+  }
 
-  const mode = normalizeCommercialMode(fallbackCommercialMode);
-  if (mode === "rent_long_term") return "per_month";
-  if (mode === "rent_short_term") return "per_night";
-  if (mode === "rent_hourly") return "per_hour";
-  return "total";
+  return allowedPricingModels[0] || "total";
 };
 
 export const toLegacyOperationType = (commercialMode) =>
@@ -136,6 +202,7 @@ export const normalizeResourceDocument = (doc = {}) => {
   const pricingModel = normalizePricingModel(
     doc.pricingModel || doc.pricePerUnit,
     commercialMode,
+    resourceType,
   );
   const category = normalizeText(doc.category || doc.propertyType || "house");
   const attributes = normalizeAttributes(doc.attributes);
@@ -160,13 +227,6 @@ export const normalizeResourceDocument = (doc = {}) => {
     attributes,
   };
 };
-
-const pricingByCommercialMode = Object.freeze({
-  sale: ["total", "per_m2"],
-  rent_long_term: ["per_month", "total", "per_m2"],
-  rent_short_term: ["per_night", "per_day", "per_person", "total"],
-  rent_hourly: ["per_hour", "per_event", "per_person", "total"],
-});
 
 const priceLabelByModel = Object.freeze({
   total: "total",
@@ -214,11 +274,12 @@ export const getResourceBehavior = (resourceDraftOrDoc = {}, modulesApi = {}) =>
     paymentModule,
     canOperateMode,
     canUsePayments,
-    allowedPricingModels:
-      pricingByCommercialMode[normalized.commercialMode] || pricingByCommercialMode.sale,
+    allowedPricingModels: getAllowedPricingModels(
+      normalized.resourceType,
+      normalized.commercialMode,
+    ),
     ctaType:
       normalized.bookingType === "manual_contact" ? "contact" : "book",
     priceLabel: priceLabelByModel[normalized.pricingModel] || "total",
   };
 };
-

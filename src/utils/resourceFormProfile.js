@@ -153,6 +153,10 @@ export const RESOURCE_FORM_FIELD_DEFINITIONS = Object.freeze({
     defaultValue: "monthly",
     options: Object.freeze([
       Object.freeze({
+        value: "daily",
+        labelKey: "propertyForm.options.rentPeriod.daily",
+      }),
+      Object.freeze({
         value: "weekly",
         labelKey: "propertyForm.options.rentPeriod.weekly",
       }),
@@ -165,6 +169,16 @@ export const RESOURCE_FORM_FIELD_DEFINITIONS = Object.freeze({
         labelKey: "propertyForm.options.rentPeriod.yearly",
       }),
     ]),
+  }),
+  vehicleModelYear: createField({
+    key: "vehicleModelYear",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.vehicleModelYear",
+    defaultValue: "",
+    min: 1950,
+    max: 2100,
+    step: 1,
   }),
   minStayNights: createField({
     key: "minStayNights",
@@ -536,12 +550,12 @@ const PROPERTY_FEATURE_FIELDS_BY_CATEGORY = Object.freeze({
 
 const FEATURES_BY_RESOURCE_TYPE = Object.freeze({
   vehicle: Object.freeze([
+    "vehicleModelYear",
     "vehicleSeats",
     "vehicleDoors",
     "vehicleTransmission",
     "vehicleFuelType",
     "vehicleLuggageCapacity",
-    "yearBuilt",
   ]),
   service: Object.freeze([
     "serviceDurationMinutes",

@@ -304,6 +304,7 @@ export const FURNISHED_OPTIONS = [
 
 /** Rent period options */
 export const RENT_PERIOD_OPTIONS = [
+  { value: "daily", key: "propertyForm.options.rentPeriod.daily" },
   { value: "weekly", key: "propertyForm.options.rentPeriod.weekly" },
   { value: "monthly", key: "propertyForm.options.rentPeriod.monthly" },
   { value: "yearly", key: "propertyForm.options.rentPeriod.yearly" },

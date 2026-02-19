@@ -27,9 +27,9 @@ Regla:
 | Legacy | Canonico | Notas |
 | --- | --- | --- |
 | `properties.$id` | `resources.$id` | id principal de recurso |
-| `operationType` | `commercialMode` | `sale -> sale`, `rent -> rent_long_term`, `vacation_rental -> rent_short_term`, `hourly -> rent_hourly` |
+| `operationType` | `commercialMode` | `sale -> sale`, `rent -> rent_long_term`, `vacation_rental -> rent_short_term` (renta corta), `hourly -> rent_hourly` |
 | `propertyType` | `category` | mapeo semantico por tipo |
-| `pricePerUnit` | `pricingModel` | alias temporal permitido |
+| `pricePerUnit` | `pricingModel` | alias temporal permitido; UI valida por `resourceType + commercialMode` |
 | campos especificos por vertical | `attributes` (JSON) | vehicle/service/experience/venue usan perfil dinamico en frontend |
 | `propertyId` | `resourceId` | canonico en leads/reservations/chat |
 | `propertyTitle` | `resourceTitle` | denormalizado para UI/chat |
@@ -40,6 +40,7 @@ Nota de alcance para `propertyType -> category`:
 
 - El alias legacy `propertyType` representa categorias del dominio inmobiliario (`resourceType=property`).
 - En recursos no inmobiliarios (`service`,`vehicle`,`experience`,`venue`), el campo canonico es `category` y debe validarse contra su catalogo propio por tipo.
+- `yearBuilt` permanece para inmueble; en `vehicle` el dato semantico es `attributes.vehicleModelYear`.
 
 ---
 
@@ -63,6 +64,7 @@ Nota de alcance para `propertyType -> category`:
 - `commercialMode`: `sale`, `rent_long_term`, `rent_short_term`, `rent_hourly`
 - `pricingModel`: `total`, `per_month`, `per_night`, `per_day`, `per_hour`, `per_person`, `per_event`, `per_m2`
 - `bookingType`: `manual_contact`, `date_range`, `time_slot`, `fixed_event`
+- `rentPeriod` (cuando `commercialMode=rent_long_term`): `daily`, `weekly`, `monthly`, `yearly`
 
 ### instance_settings
 
@@ -85,4 +87,4 @@ Nota de alcance para `propertyType -> category`:
 ---
 
 Ultima actualizacion: 2026-02-19
-Version: 2.1.0
+Version: 2.2.0

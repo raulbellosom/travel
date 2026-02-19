@@ -76,6 +76,25 @@ Campos troncales:
 | `experience` | `rent_short_term`,`rent_hourly` |
 | `venue` | `rent_short_term`,`rent_hourly` |
 
+### Matriz canonica type+commercialMode -> pricingModel
+
+| resourceType | commercialMode | pricingModel permitido |
+| --- | --- | --- |
+| `property` | `sale` | `total`,`per_m2` |
+| `property` | `rent_long_term` | `per_month`,`per_day`,`total`,`per_m2` |
+| `property` | `rent_short_term` | `per_day`,`per_night`,`total` |
+| `property` | `rent_hourly` | `per_hour`,`per_event`,`total` |
+| `vehicle` | `sale` | `total` |
+| `vehicle` | `rent_long_term` | `per_month`,`per_day`,`total` |
+| `vehicle` | `rent_short_term` | `per_day`,`total` |
+| `vehicle` | `rent_hourly` | `per_hour`,`total` |
+| `service` | `rent_short_term` | `per_day`,`per_person`,`per_event`,`total` |
+| `service` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`total` |
+| `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`total` |
+| `experience` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`total` |
+| `venue` | `rent_short_term` | `per_day`,`per_event`,`total` |
+| `venue` | `rent_hourly` | `per_hour`,`per_event`,`total` |
+
 Reglas de fallback:
 
 - Si llega `category` invalida, se usa la primera categoria valida del `resourceType` solo para normalizacion interna de UI.
@@ -94,13 +113,14 @@ Ahora resuelve el formulario por:
 Reglas operativas:
 
 - Los campos `root` se usan solo cuando aplican al perfil activo.
+- `yearBuilt` queda para inmuebles; `vehicle` usa `attributes.vehicleModelYear`.
 - Campos especificos no inmobiliarios se serializan en `attributes` (JSON).
 - Al cambiar de tipo/categoria/modo, el payload limpia campos dinamicos fuera de perfil para evitar combinaciones ilogicas (ejemplo: `vehicle` con `bedrooms`).
 - Los pasos `features`, `rentalTerms` y `vacationRules` se renderizan solo si el perfil tiene campos.
 
 Catalogo inicial de atributos dinamicos (`attributes`) en UI:
 
-- `vehicle`: `vehicleSeats`, `vehicleDoors`, `vehicleTransmission`, `vehicleFuelType`, `vehicleLuggageCapacity`.
+- `vehicle`: `vehicleModelYear`, `vehicleSeats`, `vehicleDoors`, `vehicleTransmission`, `vehicleFuelType`, `vehicleLuggageCapacity`.
 - `service`: `serviceDurationMinutes`, `serviceStaffCount`, `serviceAtClientLocation`, `serviceIncludesMaterials`, `serviceResponseTimeHours`.
 - `experience`: `experienceDurationMinutes`, `experienceMinParticipants`, `experienceMaxParticipants`, `experienceDifficulty`, `experienceIncludesEquipment`, `experienceMinAge`.
 - `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
@@ -156,6 +176,7 @@ Se consume en:
 - booking: `manual_contact`
 - CTA: solicitar informacion
 - pagos online: no
+- `rentPeriod` habilita `daily`,`weekly`,`monthly`,`yearly`
 
 ### rent_short_term
 
@@ -190,4 +211,4 @@ Durante migracion:
 ---
 
 Ultima actualizacion: 2026-02-19
-Version: 1.1.0
+Version: 1.2.0

@@ -30,7 +30,10 @@ Migracion progresiva por fases, con doble lectura/escritura temporal y rollback 
 
 - Wizard/editor con `resourceType/category/commercialMode/pricingModel`.
 - Perfil dinamico de campos por `resourceType + category + commercialMode`.
+- Matriz de `pricingModel` por `resourceType + commercialMode` (no solo por modo comercial).
 - Campos no inmobiliarios serializados en `attributes` para vehicle/service/experience/venue.
+- Ajustes semanticos por vertical (ejemplo: `attributes.vehicleModelYear` en lugar de `yearBuilt` para vehiculos).
+- `rentPeriod` en largo plazo con soporte `daily`,`weekly`,`monthly`,`yearly`.
 - `getResourceBehavior` como fuente unica.
 - Mantener rutas SEO legacy (`/propiedades/:slug`).
 
@@ -89,4 +92,4 @@ Si release falla:
 ---
 
 Ultima actualizacion: 2026-02-19
-Version: 1.1.0
+Version: 1.2.0

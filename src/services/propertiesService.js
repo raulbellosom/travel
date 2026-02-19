@@ -167,6 +167,7 @@ const normalizeResourceInput = (
   const normalizedPricingModel = normalizePricingModel(
     source.pricingModel || source.pricePerUnit || "total",
     normalizedCommercialMode,
+    normalizedResourceType,
   );
   const normalizedBookingType = normalizeBookingType(
     source.bookingType,
