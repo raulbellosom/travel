@@ -12,6 +12,7 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
+import { getResourceFormProfile } from "../../../../utils/resourceFormProfile";
 
 /** Default form values for property creation wizard */
 export const WIZARD_DEFAULTS = {
@@ -118,15 +119,7 @@ export const WIZARD_STEPS = [
     titleKey: "propertyForm.wizard.steps.features",
     descriptionKey: "propertyForm.wizard.steps.featuresDesc",
     icon: Building2,
-    fields: [
-      "bedrooms",
-      "bathrooms",
-      "parkingSpaces",
-      "totalArea",
-      "builtArea",
-      "floors",
-      "yearBuilt",
-    ],
+    fields: [],
     appliesTo: ["sale", "rent", "vacation_rental", "rent_hourly"],
   },
   {
@@ -134,7 +127,7 @@ export const WIZARD_STEPS = [
     titleKey: "propertyForm.wizard.steps.rentalTerms",
     descriptionKey: "propertyForm.wizard.steps.rentalTermsDesc",
     icon: ClipboardList,
-    fields: ["furnished", "petsAllowed", "rentPeriod"],
+    fields: [],
     appliesTo: ["rent"],
   },
   {
@@ -142,15 +135,7 @@ export const WIZARD_STEPS = [
     titleKey: "propertyForm.wizard.steps.vacationRules",
     descriptionKey: "propertyForm.wizard.steps.vacationRulesDesc",
     icon: CalendarCheck,
-    fields: [
-      "maxGuests",
-      "minStayNights",
-      "maxStayNights",
-      "checkInTime",
-      "checkOutTime",
-      "furnished",
-      "petsAllowed",
-    ],
+    fields: [],
     appliesTo: ["vacation_rental", "rent_hourly"],
   },
   {
@@ -207,14 +192,37 @@ const resolveAllowedOperationTypes = (modulesApi = {}) => {
   ];
 };
 
-export const getActiveSteps = (operationType = "sale", modulesApi = {}) => {
+export const getActiveSteps = (
+  operationType = "sale",
+  modulesApi = {},
+  resourceContext = {},
+) => {
   const allowedOperations = resolveAllowedOperationTypes(modulesApi);
   const effectiveOperation = allowedOperations.includes(operationType)
     ? operationType
     : "sale";
-  const steps = WIZARD_STEPS.filter((step) =>
-    step.appliesTo.includes(effectiveOperation),
-  );
+
+  const profile = getResourceFormProfile(resourceContext);
+  const dynamicFieldsByStep = {
+    features: profile.features.map((field) => field.key),
+    rentalTerms: profile.rentalTerms.map((field) => field.key),
+    vacationRules: profile.vacationRules.map((field) => field.key),
+  };
+
+  const steps = WIZARD_STEPS.filter((step) => {
+    if (!step.appliesTo.includes(effectiveOperation)) return false;
+    const dynamicFields = dynamicFieldsByStep[step.id];
+    if (!dynamicFields) return true;
+    return dynamicFields.length > 0;
+  }).map((step) => {
+    const dynamicFields = dynamicFieldsByStep[step.id];
+    if (!dynamicFields) return step;
+    return {
+      ...step,
+      fields: dynamicFields,
+    };
+  });
+
   return [...steps, SUMMARY_STEP];
 };
 

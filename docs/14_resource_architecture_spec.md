@@ -82,6 +82,30 @@ Reglas de fallback:
 - Si llega `commercialMode` invalido, se usa el primer modo valido del `resourceType` solo para normalizacion interna de UI.
 - Persistencia debe rechazar combinaciones invalidas (`422 VALIDATION_ERROR`) cuando el payload explicita una combinacion no permitida.
 
+### Perfil dinamico de campos (wizard/editor)
+
+El wizard/editor ya no usa un set fijo de campos de inmueble.
+Ahora resuelve el formulario por:
+
+- `resourceType`
+- `category`
+- `commercialMode`
+
+Reglas operativas:
+
+- Los campos `root` se usan solo cuando aplican al perfil activo.
+- Campos especificos no inmobiliarios se serializan en `attributes` (JSON).
+- Al cambiar de tipo/categoria/modo, el payload limpia campos dinamicos fuera de perfil para evitar combinaciones ilogicas (ejemplo: `vehicle` con `bedrooms`).
+- Los pasos `features`, `rentalTerms` y `vacationRules` se renderizan solo si el perfil tiene campos.
+
+Catalogo inicial de atributos dinamicos (`attributes`) en UI:
+
+- `vehicle`: `vehicleSeats`, `vehicleDoors`, `vehicleTransmission`, `vehicleFuelType`, `vehicleLuggageCapacity`.
+- `service`: `serviceDurationMinutes`, `serviceStaffCount`, `serviceAtClientLocation`, `serviceIncludesMaterials`, `serviceResponseTimeHours`.
+- `experience`: `experienceDurationMinutes`, `experienceMinParticipants`, `experienceMaxParticipants`, `experienceDifficulty`, `experienceIncludesEquipment`, `experienceMinAge`.
+- `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
+- booking generico (no-property): `bookingMinUnits`, `bookingMaxUnits`, `availabilityStartTime`, `availabilityEndTime`.
+
 ---
 
 ## 3. Rate plans
@@ -165,5 +189,5 @@ Durante migracion:
 
 ---
 
-Ultima actualizacion: 2026-02-18
-Version: 1.0.0
+Ultima actualizacion: 2026-02-19
+Version: 1.1.0

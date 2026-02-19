@@ -30,6 +30,7 @@ Regla:
 | `operationType` | `commercialMode` | `sale -> sale`, `rent -> rent_long_term`, `vacation_rental -> rent_short_term`, `hourly -> rent_hourly` |
 | `propertyType` | `category` | mapeo semantico por tipo |
 | `pricePerUnit` | `pricingModel` | alias temporal permitido |
+| campos especificos por vertical | `attributes` (JSON) | vehicle/service/experience/venue usan perfil dinamico en frontend |
 | `propertyId` | `resourceId` | canonico en leads/reservations/chat |
 | `propertyTitle` | `resourceTitle` | denormalizado para UI/chat |
 
@@ -74,7 +75,7 @@ Nota de alcance para `propertyType -> category`:
 
 | Componente | Cambio | Estado |
 | --- | --- | --- |
-| Wizard/editor | usa `resourceType/category/commercialMode/pricingModel` | implementado |
+| Wizard/editor | usa `resourceType/category/commercialMode/pricingModel` + perfil dinamico de campos (`attributes`) | implementado |
 | Sidebar root | links a instancia/modulos | implementado |
 | Leads function | `resourceId` canonico + fallback | implementado |
 | Reservations function | gating por modulo/limite + `resourceId` | implementado |
@@ -83,5 +84,5 @@ Nota de alcance para `propertyType -> category`:
 
 ---
 
-Ultima actualizacion: 2026-02-18
-Version: 2.0.0
+Ultima actualizacion: 2026-02-19
+Version: 2.1.0

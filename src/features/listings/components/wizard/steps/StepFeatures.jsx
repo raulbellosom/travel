@@ -1,98 +1,113 @@
-import { useTranslation } from "react-i18next";
-import { BedDouble, Bath, Car, Ruler, Building2, Calendar } from "lucide-react";
+﻿import { useTranslation } from "react-i18next";
+import { Select } from "../../../../../components/common";
+import { getResourceFieldLabel } from "../../../../../utils/resourceFormProfile";
 
-/**
- * Step 3: Physical features — bedrooms, bathrooms, parking, area, floors, year.
- */
 const StepFeatures = ({ formHook }) => {
   const { t } = useTranslation();
-  const { form, setField, getFieldClassName, renderFieldError } = formHook;
+  const {
+    resourceFormProfile,
+    getResourceFieldValue,
+    setResourceFieldValue,
+    getFieldClassName,
+    renderFieldError,
+  } = formHook;
 
-  const featureCard = (icon, label, field, { min, max, step, unit } = {}) => {
-    const Icon = icon;
+  const featureFields = resourceFormProfile.features;
+
+  const renderField = (field) => {
+    const value = getResourceFieldValue(field.key);
+    const fieldLabel = getResourceFieldLabel(field, t, {
+      commercialMode: resourceFormProfile.commercialMode,
+    });
+
+    if (field.inputType === "boolean") {
+      return (
+        <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          <input
+            type="checkbox"
+            className="h-5 w-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 dark:border-slate-600"
+            checked={Boolean(value)}
+            onChange={(event) =>
+              setResourceFieldValue(field.key, event.target.checked)
+            }
+          />
+          <span className="font-medium">{fieldLabel}</span>
+        </label>
+      );
+    }
+
+    if (field.inputType === "select") {
+      const options = (field.options || []).map((option) => ({
+        value: option.value,
+        label: t(option.labelKey, {
+          defaultValue: option.defaultLabel || option.value,
+        }),
+      }));
+
+      return (
+        <label className="grid gap-1 text-sm">
+          <span className="font-medium text-slate-700 dark:text-slate-200">
+            {fieldLabel}
+          </span>
+          <Select
+            value={value}
+            options={options}
+            size="md"
+            onChange={(nextValue) => setResourceFieldValue(field.key, nextValue)}
+          />
+        </label>
+      );
+    }
+
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-          <Icon size={16} className="text-cyan-600 dark:text-cyan-400" />
-          <span>{label}</span>
-        </div>
+      <label className="grid gap-1 text-sm">
+        <span className="font-medium text-slate-700 dark:text-slate-200">
+          {fieldLabel}
+        </span>
         <div className="flex items-center gap-2">
           <input
-            type="number"
-            min={min ?? 0}
-            max={max ?? 999999}
-            step={step ?? 1}
-            value={form[field]}
-            className={getFieldClassName(field)}
-            onChange={(e) => setField(field, e.target.value)}
+            type={field.inputType === "time" ? "time" : "number"}
+            min={field.inputType === "number" ? field.min : undefined}
+            max={field.inputType === "number" ? field.max : undefined}
+            step={field.inputType === "number" ? field.step || 1 : undefined}
+            value={value}
+            className={getFieldClassName(field.key)}
+            onChange={(event) =>
+              setResourceFieldValue(field.key, event.target.value)
+            }
           />
-          {unit && (
+          {field.inputType === "number" && field.unitKey ? (
             <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
-              {unit}
+              {t(field.unitKey, { defaultValue: "" })}
             </span>
-          )}
+          ) : null}
         </div>
-        {renderFieldError(field)}
-      </div>
+      </label>
     );
   };
 
+  if (featureFields.length === 0) {
+    return (
+      <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+        {t("propertyForm.wizard.noSpecificFeatures", {
+          defaultValue:
+            "Este tipo de recurso no requiere caracteristicas adicionales en este paso.",
+        })}
+      </p>
+    );
+  }
+
   return (
-    <div className="space-y-5">
-      {/* Primary features grid */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {featureCard(BedDouble, t("propertyForm.fields.bedrooms"), "bedrooms", {
-          min: 0,
-          max: 50,
-        })}
-        {featureCard(Bath, t("propertyForm.fields.bathrooms"), "bathrooms", {
-          min: 0,
-          max: 50,
-          step: 0.5,
-        })}
-        {featureCard(
-          Car,
-          t("propertyForm.fields.parkingSpaces"),
-          "parkingSpaces",
-          {
-            min: 0,
-            max: 20,
-          },
-        )}
-      </div>
-
-      {/* Area fields */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {featureCard(Ruler, t("propertyForm.fields.totalArea"), "totalArea", {
-          min: 0,
-          max: 999999,
-          step: 0.01,
-          unit: "m²",
-        })}
-        {featureCard(Ruler, t("propertyForm.fields.builtArea"), "builtArea", {
-          min: 0,
-          max: 999999,
-          step: 0.01,
-          unit: "m²",
-        })}
-      </div>
-
-      {/* Building details */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {featureCard(Building2, t("propertyForm.fields.floors"), "floors", {
-          min: 1,
-          max: 200,
-        })}
-        {featureCard(
-          Calendar,
-          t("propertyForm.fields.yearBuilt"),
-          "yearBuilt",
-          {
-            min: 1800,
-            max: 2100,
-          },
-        )}
-      </div>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {featureFields.map((field) => (
+        <div
+          key={field.key}
+          className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-800/50"
+        >
+          {renderField(field)}
+          {renderFieldError(field.key)}
+        </div>
+      ))}
     </div>
   );
 };

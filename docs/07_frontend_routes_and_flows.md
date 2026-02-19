@@ -132,6 +132,8 @@ Uso obligatorio en:
 - Si `module.booking.hourly` esta OFF: ocultar opcion por horas.
 - Si `module.payments.online` esta OFF: deshabilitar checkout online.
 - Wizard/editor debe filtrar `category` y `commercialMode` por `resourceType` usando taxonomia canonica.
+- Wizard/editor debe resolver campos dinamicos por perfil `resourceType + category + commercialMode` (sin set fijo inmobiliario).
+- Pasos `features`, `rentalTerms` y `vacationRules` deben ocultarse automaticamente cuando el perfil activo no tenga campos aplicables.
 - No se permiten combinaciones cruzadas invalidadas por matriz (ejemplo: `resourceType=vehicle` con `category=house`).
 
 Nota: backend vuelve a validar siempre.
@@ -147,5 +149,5 @@ Nota: backend vuelve a validar siempre.
 
 ---
 
-Ultima actualizacion: 2026-02-18
-Version: 3.0.0
+Ultima actualizacion: 2026-02-19
+Version: 3.1.0

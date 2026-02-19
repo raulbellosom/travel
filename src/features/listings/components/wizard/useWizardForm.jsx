@@ -18,6 +18,14 @@ import {
   sanitizeCategory,
   sanitizeCommercialMode,
 } from "../../../../utils/resourceTaxonomy";
+import {
+  coerceResourceFieldValueForPayload,
+  getResourceFormFieldDefinition,
+  getResourceFormProfile,
+  parseResourceAttributes,
+  RESOURCE_ATTRIBUTE_FIELD_KEYS,
+  toUiFieldValue,
+} from "../../../../utils/resourceFormProfile";
 
 let locationOptionsServicePromise = null;
 
@@ -81,6 +89,24 @@ const ALLOWED_PRICING_MODELS = Object.freeze({
   rent_long_term: ["per_month", "total", "per_m2"],
   rent_short_term: ["per_night", "per_day", "per_person", "total"],
   rent_hourly: ["per_hour", "per_event", "per_person", "total"],
+});
+
+const ROOT_FIELD_PAYLOAD_DEFAULTS = Object.freeze({
+  bedrooms: 0,
+  bathrooms: 0,
+  parkingSpaces: 0,
+  totalArea: null,
+  builtArea: null,
+  floors: 1,
+  yearBuilt: null,
+  maxGuests: 1,
+  furnished: null,
+  petsAllowed: false,
+  rentPeriod: null,
+  minStayNights: 1,
+  maxStayNights: 365,
+  checkInTime: "15:00",
+  checkOutTime: "11:00",
 });
 
 const normalizeCategoryValue = (
@@ -423,6 +449,69 @@ export const useWizardForm = ({
       }
     },
     [clearError],
+  );
+
+  const resourceFormProfile = useMemo(
+    () =>
+      getResourceFormProfile({
+        resourceType: form.resourceType,
+        category: form.category || form.propertyType,
+        commercialMode: form.commercialMode || form.operationType,
+      }),
+    [form.category, form.commercialMode, form.operationType, form.propertyType, form.resourceType],
+  );
+
+  const resourceAttributes = useMemo(
+    () => parseResourceAttributes(form.attributes),
+    [form.attributes],
+  );
+
+  const getResourceFieldValue = useCallback(
+    (fieldKey) => {
+      const field = getResourceFormFieldDefinition(fieldKey);
+      if (!field) return form[fieldKey];
+
+      const rawValue =
+        field.source === "attributes"
+          ? resourceAttributes[field.key]
+          : form[field.key];
+
+      return toUiFieldValue(field, rawValue);
+    },
+    [form, resourceAttributes],
+  );
+
+  const setResourceFieldValue = useCallback(
+    (fieldKey, value) => {
+      const field = getResourceFormFieldDefinition(fieldKey);
+      if (!field || field.source !== "attributes") {
+        setField(fieldKey, value);
+        return;
+      }
+
+      setForm((prev) => {
+        const currentAttributes = parseResourceAttributes(prev.attributes);
+        const nextAttributes = { ...currentAttributes };
+
+        if (field.inputType === "boolean") {
+          nextAttributes[field.key] = Boolean(value);
+        } else {
+          const normalizedValue = String(value ?? "").trim();
+          if (!normalizedValue) {
+            delete nextAttributes[field.key];
+          } else {
+            nextAttributes[field.key] = normalizedValue;
+          }
+        }
+
+        return {
+          ...prev,
+          attributes: normalizeAttributes(nextAttributes),
+        };
+      });
+      clearError(field.key);
+    },
+    [clearError, setField],
   );
 
   /* ── slug auto-generate ────────────────────────────── */
@@ -942,33 +1031,123 @@ export const useWizardForm = ({
       // city
       if (shouldValidate("city") && !validCity)
         nextErrors.city = t("propertyForm.validation.cityRequired");
-      // bedrooms
-      if (shouldValidate("bedrooms")) {
-        const v = parseNumber(form.bedrooms, Number.NaN);
-        if (!Number.isFinite(v) || v < 0)
-          nextErrors.bedrooms = t("propertyForm.validation.bedroomsMin");
-      }
-      // bathrooms
-      if (shouldValidate("bathrooms")) {
-        const v = parseNumber(form.bathrooms, Number.NaN);
-        if (!Number.isFinite(v) || v < 0)
-          nextErrors.bathrooms = t("propertyForm.validation.bathroomsMin");
-      }
-      // maxGuests (vacation + hourly booking modes)
+      const bookingRuleKeys = new Set(
+        resourceFormProfile.vacationRules.map((field) => field.key),
+      );
+      const attributeValues = parseResourceAttributes(form.attributes);
+
+      resourceFormProfile.allFields.forEach((field) => {
+        if (!shouldValidate(field.key)) return;
+
+        const rawValue =
+          field.source === "attributes"
+            ? attributeValues[field.key]
+            : form[field.key];
+        const uiValue = toUiFieldValue(field, rawValue);
+        const hasUiValue =
+          uiValue !== "" && uiValue !== null && uiValue !== undefined;
+        const fieldLabel = t(field.labelKey, { defaultValue: field.key });
+
+        if (field.inputType === "number") {
+          const isRequiredGuestsField =
+            field.key === "maxGuests" && bookingRuleKeys.has("maxGuests");
+
+          if (!hasUiValue && isRequiredGuestsField) {
+            nextErrors.maxGuests = t("propertyForm.validation.maxGuestsRequired");
+            return;
+          }
+
+          if (!hasUiValue) return;
+
+          const numericValue = parseNumber(uiValue, Number.NaN);
+          if (!Number.isFinite(numericValue)) {
+            nextErrors[field.key] = t(
+              "propertyForm.validation.fieldNumberInvalid",
+              {
+                field: fieldLabel,
+                defaultValue: `Ingresa un valor numerico valido para ${fieldLabel}.`,
+              },
+            );
+            return;
+          }
+
+          const hasMin = Number.isFinite(field.min);
+          const hasMax = Number.isFinite(field.max);
+          if ((hasMin && numericValue < field.min) || (hasMax && numericValue > field.max)) {
+            if (field.key === "bedrooms") {
+              nextErrors.bedrooms = t("propertyForm.validation.bedroomsMin");
+              return;
+            }
+            if (field.key === "bathrooms") {
+              nextErrors.bathrooms = t("propertyForm.validation.bathroomsMin");
+              return;
+            }
+            if (field.key === "maxGuests") {
+              nextErrors.maxGuests = t("propertyForm.validation.maxGuestsRange");
+              return;
+            }
+            nextErrors[field.key] = t("propertyForm.validation.fieldRange", {
+              field: fieldLabel,
+              min: hasMin ? field.min : "-",
+              max: hasMax ? field.max : "-",
+              defaultValue: `${fieldLabel} debe estar entre ${hasMin ? field.min : "-"} y ${hasMax ? field.max : "-"}.`,
+            });
+          }
+          return;
+        }
+
+        if (field.inputType === "select") {
+          const normalizedValue = String(uiValue || "").trim();
+          if (!normalizedValue) return;
+
+          const options = Array.isArray(field.options) ? field.options : [];
+          if (options.length === 0) return;
+
+          if (!options.some((option) => option.value === normalizedValue)) {
+            nextErrors[field.key] = t("propertyForm.validation.fieldOptionInvalid", {
+              field: fieldLabel,
+              defaultValue: `${fieldLabel} no tiene una opcion valida.`,
+            });
+          }
+          return;
+        }
+
+        if (field.inputType === "time") {
+          const normalizedValue = String(uiValue || "").trim();
+          if (!normalizedValue) return;
+          if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(normalizedValue)) {
+            nextErrors[field.key] = t("propertyForm.validation.fieldTimeInvalid", {
+              field: fieldLabel,
+              defaultValue: `${fieldLabel} debe tener formato HH:mm.`,
+            });
+          }
+        }
+      });
+
       if (
-        shouldValidate("maxGuests") &&
-        ["vacation_rental", "rent_hourly"].includes(form.operationType)
+        (shouldValidate("bookingMinUnits") || shouldValidate("bookingMaxUnits")) &&
+        bookingRuleKeys.has("bookingMinUnits") &&
+        bookingRuleKeys.has("bookingMaxUnits")
       ) {
-        const v = parseNumber(form.maxGuests, Number.NaN);
-        if (!Number.isFinite(v))
-          nextErrors.maxGuests = t("propertyForm.validation.maxGuestsRequired");
-        else if (v < 1 || v > 500)
-          nextErrors.maxGuests = t("propertyForm.validation.maxGuestsRange");
+        const minUnits = parseNumber(attributeValues.bookingMinUnits, Number.NaN);
+        const maxUnits = parseNumber(attributeValues.bookingMaxUnits, Number.NaN);
+        if (
+          Number.isFinite(minUnits) &&
+          Number.isFinite(maxUnits) &&
+          minUnits > maxUnits
+        ) {
+          nextErrors.bookingMaxUnits = t(
+            "propertyForm.validation.maxMustBeGreaterThanMin",
+            {
+              defaultValue: "El maximo debe ser mayor o igual al minimo.",
+            },
+          );
+        }
       }
 
       return nextErrors;
     },
-    [form, resolveLocationValues, slugStatus.state, t],
+    [form, resolveLocationValues, resourceFormProfile, slugStatus.state, t],
   );
 
   /* ── Build payload ─────────────────────────────────── */
@@ -991,6 +1170,83 @@ export const useWizardForm = ({
       commercialMode,
     );
     const bookingType = normalizeBookingType(form.bookingType, commercialMode);
+    const profile = getResourceFormProfile({
+      resourceType,
+      category,
+      commercialMode,
+    });
+    const activeRootFieldKeys = new Set(profile.rootFieldKeys);
+    const activeAttributeFieldKeys = new Set(profile.attributeFieldKeys);
+    const isRootFieldActive = (fieldKey) => activeRootFieldKeys.has(fieldKey);
+
+    const attributesPayload = {
+      ...parseResourceAttributes(form.attributes),
+    };
+
+    RESOURCE_ATTRIBUTE_FIELD_KEYS.forEach((fieldKey) => {
+      const field = getResourceFormFieldDefinition(fieldKey);
+      if (!field) return;
+
+      if (!activeAttributeFieldKeys.has(fieldKey)) {
+        delete attributesPayload[fieldKey];
+        return;
+      }
+
+      const rawValue = attributesPayload[fieldKey];
+      const coercedValue = coerceResourceFieldValueForPayload(field, rawValue);
+      if (coercedValue === null || coercedValue === "") {
+        delete attributesPayload[fieldKey];
+      } else {
+        attributesPayload[fieldKey] = coercedValue;
+      }
+    });
+
+    const bedrooms = isRootFieldActive("bedrooms")
+      ? clampToRange(parseNumber(form.bedrooms, 0), 0, 50)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.bedrooms;
+    const bathrooms = isRootFieldActive("bathrooms")
+      ? clampToRange(parseNumber(form.bathrooms, 0), 0, 50)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.bathrooms;
+    const parkingSpaces = isRootFieldActive("parkingSpaces")
+      ? clampToRange(parseNumber(form.parkingSpaces, 0), 0, 20)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.parkingSpaces;
+    const totalArea = isRootFieldActive("totalArea")
+      ? parseNumber(form.totalArea, null)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.totalArea;
+    const builtArea = isRootFieldActive("builtArea")
+      ? parseNumber(form.builtArea, null)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.builtArea;
+    const floors = isRootFieldActive("floors")
+      ? clampToRange(parseNumber(form.floors, 1), 1, 200)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.floors;
+    const yearBuilt = isRootFieldActive("yearBuilt")
+      ? parseNumber(form.yearBuilt, null)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.yearBuilt;
+    const maxGuests = isRootFieldActive("maxGuests")
+      ? clampToRange(parseNumber(form.maxGuests, 1), 1, 500)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.maxGuests;
+    const furnished = isRootFieldActive("furnished")
+      ? String(form.furnished || "").trim() || null
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.furnished;
+    const petsAllowed = isRootFieldActive("petsAllowed")
+      ? Boolean(form.petsAllowed)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.petsAllowed;
+    const rentPeriod =
+      commercialMode === "rent_long_term" && isRootFieldActive("rentPeriod")
+        ? String(form.rentPeriod || "monthly")
+        : ROOT_FIELD_PAYLOAD_DEFAULTS.rentPeriod;
+    const minStayNights = isRootFieldActive("minStayNights")
+      ? clampToRange(parseNumber(form.minStayNights, 1), 1, 365)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.minStayNights;
+    const maxStayNights = isRootFieldActive("maxStayNights")
+      ? clampToRange(parseNumber(form.maxStayNights, 365), 1, 365)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.maxStayNights;
+    const checkInTime = isRootFieldActive("checkInTime")
+      ? String(form.checkInTime || ROOT_FIELD_PAYLOAD_DEFAULTS.checkInTime)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.checkInTime;
+    const checkOutTime = isRootFieldActive("checkOutTime")
+      ? String(form.checkOutTime || ROOT_FIELD_PAYLOAD_DEFAULTS.checkOutTime)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.checkOutTime;
 
     return {
       slug: normalizeSlug(form.slug),
@@ -1004,7 +1260,7 @@ export const useWizardForm = ({
       pricingModel,
       pricePerUnit: toLegacyPricePerUnit(pricingModel),
       bookingType,
-      attributes: normalizeAttributes(form.attributes || "{}"),
+      attributes: normalizeAttributes(attributesPayload),
       price: clampToRange(parseNumber(form.price, 0), 0, 999999999),
       currency: form.currency || "MXN",
       priceNegotiable: Boolean(form.priceNegotiable),
@@ -1013,24 +1269,21 @@ export const useWizardForm = ({
       postalCode: String(form.postalCode || "").trim(),
       latitude: parseNumber(form.latitude, null),
       longitude: parseNumber(form.longitude, null),
-      bedrooms: clampToRange(parseNumber(form.bedrooms, 0), 0, 50),
-      bathrooms: clampToRange(parseNumber(form.bathrooms, 0), 0, 50),
-      parkingSpaces: clampToRange(parseNumber(form.parkingSpaces, 0), 0, 20),
-      totalArea: parseNumber(form.totalArea, null),
-      builtArea: parseNumber(form.builtArea, null),
-      floors: clampToRange(parseNumber(form.floors, 1), 1, 200),
-      yearBuilt: parseNumber(form.yearBuilt, null),
-      maxGuests: clampToRange(parseNumber(form.maxGuests, 1), 1, 500),
-      furnished: form.furnished || null,
-      petsAllowed: Boolean(form.petsAllowed),
-      rentPeriod:
-        commercialMode === "rent_long_term"
-          ? form.rentPeriod || "monthly"
-          : null,
-      minStayNights: clampToRange(parseNumber(form.minStayNights, 1), 1, 365),
-      maxStayNights: clampToRange(parseNumber(form.maxStayNights, 365), 1, 365),
-      checkInTime: form.checkInTime || "15:00",
-      checkOutTime: form.checkOutTime || "11:00",
+      bedrooms,
+      bathrooms,
+      parkingSpaces,
+      totalArea,
+      builtArea,
+      floors,
+      yearBuilt,
+      maxGuests,
+      furnished,
+      petsAllowed,
+      rentPeriod,
+      minStayNights,
+      maxStayNights,
+      checkInTime,
+      checkOutTime,
       videoUrl: String(form.videoUrl || "").trim(),
       virtualTourUrl: String(form.virtualTourUrl || "").trim(),
       country: validCountry?.value || "MX",
@@ -1088,6 +1341,10 @@ export const useWizardForm = ({
     form,
     setForm,
     setField,
+    resourceFormProfile,
+    resourceAttributes,
+    getResourceFieldValue,
+    setResourceFieldValue,
     errors,
     setErrors,
     clearError,

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
@@ -82,8 +82,19 @@ const PropertyWizard = ({
     () =>
       getActiveSteps(form.operationType, {
         isEnabled: modulesApi.isEnabled,
+      }, {
+        resourceType: form.resourceType,
+        category: form.category || form.propertyType,
+        commercialMode: form.commercialMode || form.operationType,
       }),
-    [form.operationType, modulesApi.isEnabled],
+    [
+      form.category,
+      form.commercialMode,
+      form.operationType,
+      form.propertyType,
+      form.resourceType,
+      modulesApi.isEnabled,
+    ],
   );
 
   const currentStep = activeSteps[currentStepIndex] || activeSteps[0];
@@ -277,7 +288,7 @@ const PropertyWizard = ({
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-              <motion.div
+              <Motion.div
                 className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-sky-500"
                 initial={false}
                 animate={{ width: `${progressPercent}%` }}
@@ -335,7 +346,7 @@ const PropertyWizard = ({
 
             {/* Progress bar */}
             <div className="mb-6 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-              <motion.div
+              <Motion.div
                 className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-sky-500"
                 initial={false}
                 animate={{ width: `${progressPercent}%` }}
@@ -397,13 +408,13 @@ const PropertyWizard = ({
                         {t(step.titleKey)}
                       </span>
                       {isCurrent && (
-                        <motion.span
+                        <Motion.span
                           initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
                           className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400"
                         >
                           {t(step.descriptionKey)}
-                        </motion.span>
+                        </Motion.span>
                       )}
                     </div>
                   </button>
@@ -437,7 +448,7 @@ const PropertyWizard = ({
           {/* Step content with animation */}
           <div className="relative min-h-[360px] overflow-hidden px-5 py-6">
             <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
+              <Motion.div
                 key={currentStep.id}
                 custom={direction}
                 variants={slideVariants}
@@ -447,7 +458,7 @@ const PropertyWizard = ({
                 transition={slideTransition}
               >
                 {renderStepContent()}
-              </motion.div>
+              </Motion.div>
             </AnimatePresence>
           </div>
 

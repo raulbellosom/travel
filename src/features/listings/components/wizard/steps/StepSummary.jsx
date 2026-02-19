@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+﻿import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Home,
@@ -13,31 +13,27 @@ import {
   FileText,
 } from "lucide-react";
 import LazyImage from "../../../../../components/common/atoms/LazyImage";
-import {
-  OPERATION_TYPES,
-  PRICING_MODEL_OPTIONS,
-  FURNISHED_OPTIONS,
-  RENT_PERIOD_OPTIONS,
-} from "../wizardConfig";
+import { OPERATION_TYPES, PRICING_MODEL_OPTIONS } from "../wizardConfig";
 import {
   getCategoryTranslationKey,
   normalizeCategory,
   sanitizeCategory,
 } from "../../../../../utils/resourceTaxonomy";
 import { normalizeResourceType } from "../../../../../utils/resourceModel";
+import {
+  formatResourceFieldValue,
+  getResourceFieldLabel,
+  getResourceFormProfile,
+  parseResourceAttributes,
+  toUiFieldValue,
+} from "../../../../../utils/resourceFormProfile";
 
-/**
- * Helper: resolve label from config options array.
- */
 const resolveLabel = (options, value, t) => {
-  const found = options.find((o) => o.value === value);
-  if (!found) return value || "—";
+  const found = options.find((option) => option.value === value);
+  if (!found) return value || "-";
   return found.key ? t(found.key) : found.label || value;
 };
 
-/**
- * A single summary section card.
- */
 const SummarySection = ({ icon: Icon, title, onEdit, children }) => (
   <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800/60">
     <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
@@ -47,36 +43,66 @@ const SummarySection = ({ icon: Icon, title, onEdit, children }) => (
           {title}
         </h3>
       </div>
-      {onEdit && (
+      {onEdit ? (
         <button
           type="button"
           onClick={onEdit}
           className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-cyan-600 transition hover:bg-cyan-50 dark:text-cyan-400 dark:hover:bg-cyan-900/20"
         >
           <Pencil className="h-3 w-3" />
-          Editar
+          {"Editar"}
         </button>
-      )}
+      ) : null}
     </div>
     <div className="px-4 py-3">{children}</div>
   </div>
 );
 
-/**
- * A labelled value row.
- */
 const SummaryRow = ({ label, value }) => (
   <div className="flex items-start justify-between gap-4 py-1 text-sm">
     <span className="shrink-0 text-slate-500 dark:text-slate-400">{label}</span>
     <span className="text-right font-medium text-slate-800 dark:text-slate-100">
-      {value || "—"}
+      {value || "-"}
     </span>
   </div>
 );
 
-/**
- * Step: Summary — Read-only review of all entered data before saving as draft.
- */
+const DynamicRows = ({ fields, form, attributes, profile, t }) => {
+  const rows = fields
+    .map((field) => {
+      const rawValue =
+        field.source === "attributes" ? attributes[field.key] : form[field.key];
+      const uiValue = toUiFieldValue(field, rawValue);
+      const formattedValue = formatResourceFieldValue(field, uiValue, t);
+      if (formattedValue === "-" && field.inputType !== "boolean") {
+        return null;
+      }
+
+      return {
+        key: field.key,
+        label: getResourceFieldLabel(field, t, {
+          commercialMode: profile.commercialMode,
+        }),
+        value: formattedValue,
+      };
+    })
+    .filter(Boolean);
+
+  if (rows.length === 0) {
+    return (
+      <p className="text-xs text-slate-400 dark:text-slate-500">
+        {t("propertyForm.wizard.noDataCaptured", {
+          defaultValue: "Aun no hay datos capturados en esta seccion.",
+        })}
+      </p>
+    );
+  }
+
+  return rows.map((row) => (
+    <SummaryRow key={row.key} label={row.label} value={row.value} />
+  ));
+};
+
 const StepSummary = ({ formHook, onEditStep }) => {
   const { t } = useTranslation();
   const {
@@ -104,14 +130,27 @@ const StepSummary = ({ formHook, onEditStep }) => {
     form.pricingModel || form.pricePerUnit,
     t,
   );
-  const furnishedLabel = resolveLabel(FURNISHED_OPTIONS, form.furnished, t);
-  const rentPeriodLabel = resolveLabel(RENT_PERIOD_OPTIONS, form.rentPeriod, t);
+
+  const profile = useMemo(
+    () =>
+      getResourceFormProfile({
+        resourceType: form.resourceType,
+        category: form.category || form.propertyType,
+        commercialMode: form.commercialMode || form.operationType,
+      }),
+    [form.category, form.commercialMode, form.operationType, form.propertyType, form.resourceType],
+  );
+
+  const attributes = useMemo(
+    () => parseResourceAttributes(form.attributes),
+    [form.attributes],
+  );
 
   const totalImages =
     (normalizedExistingImages?.length || 0) + (pendingImageItems?.length || 0);
 
   const formattedPrice = useMemo(() => {
-    if (!form.price) return "—";
+    if (!form.price) return "-";
     const num = Number(form.price);
     if (!Number.isFinite(num)) return form.price;
     return `$${num.toLocaleString("es-MX", { minimumFractionDigits: 0 })} ${form.currency}`;
@@ -127,30 +166,28 @@ const StepSummary = ({ formHook, onEditStep }) => {
 
   return (
     <div className="space-y-4">
-      {/* Draft banner */}
       <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
         <FileText className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div>
           <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-            {t("propertyForm.wizard.draftNotice", "Se guardará como borrador")}
+            {t("propertyForm.wizard.draftNotice", "Se guardara como borrador")}
           </p>
           <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
             {t(
               "propertyForm.wizard.draftNoticeBody",
-              "Revisa la información antes de guardar. Podrás publicar tu propiedad después desde el panel de edición.",
+              "Revisa la informacion antes de guardar. Podras publicar despues desde el panel de edicion.",
             )}
           </p>
         </div>
       </div>
 
-      {/* Type & Info */}
       <SummarySection
         icon={Home}
-        title={t("propertyForm.wizard.steps.typeAndInfo", "Tipo e información")}
+        title={t("propertyForm.wizard.steps.typeAndInfo", "Tipo e informacion")}
         onEdit={() => goTo("typeAndInfo")}
       >
         <SummaryRow
-          label={t("propertyForm.fields.operationType", "Operación")}
+          label={t("propertyForm.fields.operationType", "Operacion")}
           value={operationLabel}
         />
         <SummaryRow
@@ -164,164 +201,102 @@ const StepSummary = ({ formHook, onEditStep }) => {
           value={categoryLabel}
         />
         <SummaryRow
-          label={t("propertyForm.fields.title", "Título")}
+          label={t("propertyForm.fields.title", "Titulo")}
           value={form.title}
         />
         <SummaryRow label="Slug" value={form.slug} />
-        {form.description && (
+        {form.description ? (
           <div className="mt-2 rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-700/40 dark:text-slate-300">
             {form.description.length > 200
-              ? `${form.description.slice(0, 200)}…`
+              ? `${form.description.slice(0, 200)}...`
               : form.description}
           </div>
-        )}
+        ) : null}
       </SummarySection>
 
-      {/* Location */}
       <SummarySection
         icon={MapPin}
-        title={t("propertyForm.wizard.steps.location", "Ubicación")}
+        title={t("propertyForm.wizard.steps.location", "Ubicacion")}
         onEdit={() => goTo("location")}
       >
         <SummaryRow
-          label={t("propertyForm.fields.location", "Ubicación")}
+          label={t("propertyForm.fields.location", "Ubicacion")}
           value={locationParts}
         />
-        {form.streetAddress && (
+        {form.streetAddress ? (
           <SummaryRow
-            label={t("propertyForm.fields.streetAddress", "Dirección")}
+            label={t("propertyForm.fields.streetAddress", "Direccion")}
             value={form.streetAddress}
           />
-        )}
-        {form.neighborhood && (
+        ) : null}
+        {form.neighborhood ? (
           <SummaryRow
             label={t("propertyForm.fields.neighborhood", "Colonia")}
             value={form.neighborhood}
           />
-        )}
-        {form.postalCode && (
+        ) : null}
+        {form.postalCode ? (
           <SummaryRow
-            label={t("propertyForm.fields.postalCode", "C.P.")}
+            label={t("propertyForm.fields.postalCode", "CP")}
             value={form.postalCode}
           />
-        )}
+        ) : null}
       </SummarySection>
 
-      {/* Features */}
-      <SummarySection
-        icon={Building2}
-        title={t("propertyForm.wizard.steps.features", "Características")}
-        onEdit={() => goTo("features")}
-      >
-        <div className="grid grid-cols-2 gap-x-4">
-          <SummaryRow
-            label={t("propertyForm.fields.bedrooms", "Recámaras")}
-            value={form.bedrooms}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.bathrooms", "Baños")}
-            value={form.bathrooms}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.parkingSpaces", "Estacionamiento")}
-            value={form.parkingSpaces}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.floors", "Pisos")}
-            value={form.floors}
-          />
-          {form.totalArea && (
-            <SummaryRow
-              label={t("propertyForm.fields.totalArea", "Área total")}
-              value={`${form.totalArea} m²`}
+      {profile.features.length > 0 ? (
+        <SummarySection
+          icon={Building2}
+          title={t("propertyForm.wizard.steps.features", "Caracteristicas")}
+          onEdit={() => goTo("features")}
+        >
+          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+            <DynamicRows
+              fields={profile.features}
+              form={form}
+              attributes={attributes}
+              profile={profile}
+              t={t}
             />
-          )}
-          {form.builtArea && (
-            <SummaryRow
-              label={t("propertyForm.fields.builtArea", "Área construida")}
-              value={`${form.builtArea} m²`}
-            />
-          )}
-          {form.yearBuilt && (
-            <SummaryRow
-              label={t("propertyForm.fields.yearBuilt", "Año")}
-              value={form.yearBuilt}
-            />
-          )}
-        </div>
-      </SummarySection>
+          </div>
+        </SummarySection>
+      ) : null}
 
-      {/* Rental Terms (rent only) */}
-      {form.commercialMode === "rent_long_term" && (
+      {profile.rentalTerms.length > 0 ? (
         <SummarySection
           icon={ClipboardList}
-          title={t(
-            "propertyForm.wizard.steps.rentalTerms",
-            "Términos de renta",
-          )}
+          title={t("propertyForm.wizard.steps.rentalTerms", "Terminos de renta")}
           onEdit={() => goTo("rentalTerms")}
         >
-          <SummaryRow
-            label={t("propertyForm.fields.rentPeriod", "Periodo")}
-            value={rentPeriodLabel}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.furnished", "Amueblado")}
-            value={furnishedLabel}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.petsAllowed", "Mascotas")}
-            value={
-              form.petsAllowed ? t("common.yes", "Sí") : t("common.no", "No")
-            }
-          />
+          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+            <DynamicRows
+              fields={profile.rentalTerms}
+              form={form}
+              attributes={attributes}
+              profile={profile}
+              t={t}
+            />
+          </div>
         </SummarySection>
-      )}
+      ) : null}
 
-      {/* Vacation Rules (vacation_rental only) */}
-      {["rent_short_term", "rent_hourly"].includes(form.commercialMode) && (
+      {profile.vacationRules.length > 0 ? (
         <SummarySection
           icon={CalendarCheck}
-          title={t(
-            "propertyForm.wizard.steps.vacationRules",
-            "Reglas vacacionales",
-          )}
+          title={t("propertyForm.wizard.steps.vacationRules", "Reglas de reserva")}
           onEdit={() => goTo("vacationRules")}
         >
-          <SummaryRow
-            label={t("propertyForm.fields.maxGuests", "Huéspedes máximo")}
-            value={form.maxGuests}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.minStayNights", "Min. noches")}
-            value={form.minStayNights}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.maxStayNights", "Máx. noches")}
-            value={form.maxStayNights}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.checkInTime", "Check-in")}
-            value={form.checkInTime}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.checkOutTime", "Check-out")}
-            value={form.checkOutTime}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.furnished", "Amueblado")}
-            value={furnishedLabel}
-          />
-          <SummaryRow
-            label={t("propertyForm.fields.petsAllowed", "Mascotas")}
-            value={
-              form.petsAllowed ? t("common.yes", "Sí") : t("common.no", "No")
-            }
-          />
+          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+            <DynamicRows
+              fields={profile.vacationRules}
+              form={form}
+              attributes={attributes}
+              profile={profile}
+              t={t}
+            />
+          </div>
         </SummarySection>
-      )}
+      ) : null}
 
-      {/* Pricing */}
       <SummarySection
         icon={DollarSign}
         title={t("propertyForm.wizard.steps.pricing", "Precio")}
@@ -338,12 +313,11 @@ const StepSummary = ({ formHook, onEditStep }) => {
         <SummaryRow
           label={t("propertyForm.fields.priceNegotiable", "Negociable")}
           value={
-            form.priceNegotiable ? t("common.yes", "Sí") : t("common.no", "No")
+            form.priceNegotiable ? t("common.yes", "Si") : t("common.no", "No")
           }
         />
       </SummarySection>
 
-      {/* Amenities */}
       <SummarySection
         icon={Sparkles}
         title={t("propertyForm.wizard.steps.amenities", "Amenidades")}
@@ -370,57 +344,53 @@ const StepSummary = ({ formHook, onEditStep }) => {
           </div>
         ) : (
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            {t(
-              "propertyForm.noAmenitiesSelected",
-              "No se han seleccionado amenidades",
-            )}
+            {t("propertyForm.noAmenitiesSelected", "No se han seleccionado amenidades")}
           </p>
         )}
       </SummarySection>
 
-      {/* Images */}
       <SummarySection
         icon={Camera}
-        title={t("propertyForm.wizard.steps.images", "Imágenes y medios")}
+        title={t("propertyForm.wizard.steps.images", "Imagenes y medios")}
         onEdit={() => goTo("images")}
       >
         <SummaryRow
-          label={t("propertyForm.images.count", "Imágenes")}
-          value={totalImages > 0 ? totalImages : "—"}
+          label={t("propertyForm.images.count", "Imagenes")}
+          value={totalImages > 0 ? totalImages : "-"}
         />
-        {form.videoUrl && (
+        {form.videoUrl ? (
           <SummaryRow
             label={t("propertyForm.fields.videoUrl", "Video")}
             value={form.videoUrl}
           />
-        )}
-        {form.virtualTourUrl && (
+        ) : null}
+        {form.virtualTourUrl ? (
           <SummaryRow
             label={t("propertyForm.fields.virtualTourUrl", "Tour virtual")}
             value={form.virtualTourUrl}
           />
-        )}
-        {/* Thumbnail strip */}
+        ) : null}
+
         {(pendingImageItems?.length > 0 ||
-          normalizedExistingImages?.length > 0) && (
+          normalizedExistingImages?.length > 0) ? (
           <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
             {[...normalizedExistingImages, ...pendingImageItems]
               .slice(0, 6)
-              .map((img, idx) => (
+              .map((image, index) => (
                 <LazyImage
-                  key={img.$id || img.id || idx}
-                  src={img.url || img.previewUrl}
+                  key={image.$id || image.id || index}
+                  src={image.url || image.previewUrl}
                   alt=""
                   className="h-14 w-14 shrink-0 rounded-lg object-cover"
                 />
               ))}
-            {totalImages > 6 && (
+            {totalImages > 6 ? (
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                 +{totalImages - 6}
               </div>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
       </SummarySection>
     </div>
   );

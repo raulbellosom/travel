@@ -239,6 +239,24 @@ Notas de aplicabilidad por modo comercial:
 - Para `rent_short_term`, la periodicidad se define con `pricingModel` (`per_night`/`per_day`) y reglas en `rate_plans`.
 - Para `rent_hourly`, la periodicidad se define con `pricingModel` (`per_hour`/`per_event`) y `bookingType` (`time_slot`/`fixed_event`).
 
+### Contrato operativo de `attributes` (wizard dinamico)
+
+`attributes` almacena campos especificos por vertical para evitar forzar columnas fijas no aplicables.
+
+Convencion UI v1:
+
+- `vehicle`: `vehicleSeats`, `vehicleDoors`, `vehicleTransmission`, `vehicleFuelType`, `vehicleLuggageCapacity`.
+- `service`: `serviceDurationMinutes`, `serviceStaffCount`, `serviceAtClientLocation`, `serviceIncludesMaterials`, `serviceResponseTimeHours`.
+- `experience`: `experienceDurationMinutes`, `experienceMinParticipants`, `experienceMaxParticipants`, `experienceDifficulty`, `experienceIncludesEquipment`, `experienceMinAge`.
+- `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
+- booking generico no-inmobiliario: `bookingMinUnits`, `bookingMaxUnits`, `availabilityStartTime`, `availabilityEndTime`.
+
+Reglas:
+
+- Backend conserva `attributes` como JSON serializado flexible (sin schema rigido de subclaves).
+- Frontend debe limpiar subclaves dinamicas fuera de perfil activo al construir payload.
+- Campos root no aplicables pueden mantenerse en default tecnico sin afectar el comportamiento del recurso.
+
 ### Taxonomia controlada (obligatoria)
 
 `category` permanece como `string`, pero su valor se valida contra catalogos controlados por `resourceType`.
@@ -914,6 +932,20 @@ Formato obligatorio:
 
 - Dependencias del catalogo historico y campos de identificacion anteriores en el schema operativo.
 
+## Migration: 2026-02-19-dynamic-resource-form-profile
+
+### Added
+
+- Contrato operativo documentado para `attributes` con subclaves dinamicas por vertical (`vehicle`,`service`,`experience`,`venue`).
+
+### Modified
+
+- Reglas de formulario frontend para resolver campos por perfil `resourceType + category + commercialMode`.
+
+### Removed
+
+- Supuesto de formulario fijo orientado exclusivamente a inmueble en el flujo de creacion de resources.
+
 ---
 
 ## Estado del Documento
@@ -923,5 +955,5 @@ Formato obligatorio:
 
 ---
 
-Ultima actualizacion: 2026-02-18
+Ultima actualizacion: 2026-02-19
 Schema Mode: resource-only

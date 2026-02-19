@@ -29,6 +29,8 @@ Migracion progresiva por fases, con doble lectura/escritura temporal y rollback 
 ## Fase 3 - Frontend resource-first
 
 - Wizard/editor con `resourceType/category/commercialMode/pricingModel`.
+- Perfil dinamico de campos por `resourceType + category + commercialMode`.
+- Campos no inmobiliarios serializados en `attributes` para vehicle/service/experience/venue.
 - `getResourceBehavior` como fuente unica.
 - Mantener rutas SEO legacy (`/propiedades/:slug`).
 
@@ -86,5 +88,5 @@ Si release falla:
 
 ---
 
-Ultima actualizacion: 2026-02-18
-Version: 1.0.0
+Ultima actualizacion: 2026-02-19
+Version: 1.1.0

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Loader2, Save, X } from "lucide-react";
 import { useWizardForm, buildFormState } from "../wizard/useWizardForm";
 import { getActiveSteps } from "../wizard/wizardConfig";
@@ -76,8 +76,19 @@ const PropertyEditor = ({
     () =>
       getActiveSteps(form.operationType, {
         isEnabled: modulesApi.isEnabled,
+      }, {
+        resourceType: form.resourceType,
+        category: form.category || form.propertyType,
+        commercialMode: form.commercialMode || form.operationType,
       }).filter((step) => step.id !== "summary"),
-    [form.operationType, modulesApi.isEnabled],
+    [
+      form.category,
+      form.commercialMode,
+      form.operationType,
+      form.propertyType,
+      form.resourceType,
+      modulesApi.isEnabled,
+    ],
   );
 
   useEffect(() => {
@@ -199,7 +210,7 @@ const PropertyEditor = ({
 
       <div className="min-h-[400px] rounded-b-2xl border border-t-0 border-slate-200 bg-white p-4 sm:p-6 dark:border-slate-700 dark:bg-slate-900">
         <AnimatePresence mode="wait">
-          <motion.div
+          <Motion.div
             key={activeTab}
             variants={fadeVariants}
             initial="hidden"
@@ -208,13 +219,13 @@ const PropertyEditor = ({
             transition={{ duration: 0.15 }}
           >
             {renderTabContent()}
-          </motion.div>
+          </Motion.div>
         </AnimatePresence>
       </div>
 
       <AnimatePresence>
         {isDirty && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
@@ -250,7 +261,7 @@ const PropertyEditor = ({
                 {t("editPropertyPage.submit", "Guardar cambios")}
               </button>
             </div>
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
 

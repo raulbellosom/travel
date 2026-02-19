@@ -1275,8 +1275,8 @@
         "featuresDesc": "Detalla las características físicas de la propiedad.",
         "rentalTerms": "Términos de renta",
         "rentalTermsDesc": "Configura los términos específicos para renta.",
-        "vacationRules": "Reglas vacacionales",
-        "vacationRulesDesc": "Define las reglas para renta vacacional.",
+        "vacationRules": "Reglas de reserva",
+        "vacationRulesDesc": "Define reglas operativas para reservas por fecha u horario.",
         "pricing": "Precio",
         "pricingDesc": "Establece el precio y condiciones económicas.",
         "amenities": "Amenidades",
@@ -1288,7 +1288,11 @@
       },
       "stepOf": "Paso {{current}} de {{total}}",
       "rentalTermsHint": "Configura los términos que aplican para propiedades de renta tradicional.",
-      "vacationRulesHint": "Define las reglas para huéspedes en renta vacacional.",
+      "vacationRulesHint": "Configura reglas de disponibilidad, capacidad y ventanas de reserva.",
+      "noSpecificFeatures": "Este tipo de recurso no requiere características adicionales en este paso.",
+      "noSpecificRentalTerms": "Este tipo de recurso no requiere términos adicionales para renta larga.",
+      "noSpecificBookingRules": "Este tipo de recurso no requiere reglas adicionales de reserva.",
+      "noDataCaptured": "Aún no hay datos capturados en esta sección.",
       "placeholders": {
         "title": "Ejemplo: Villa frente al mar con alberca en Puerto Vallarta",
         "description": "Describe la ubicación, atributos principales, perfil ideal y servicios cercanos.",
@@ -1350,7 +1354,32 @@
       "checkInTime": "Hora de check-in",
       "checkOutTime": "Hora de check-out",
       "floors": "Pisos",
-      "yearBuilt": "Año de construcción"
+      "yearBuilt": "Año de construcción",
+      "bookingMinUnits": "Minimo de unidades de reserva",
+      "bookingMaxUnits": "Maximo de unidades de reserva",
+      "availabilityStartTime": "Hora de inicio disponible",
+      "availabilityEndTime": "Hora de cierre disponible",
+      "vehicleSeats": "Capacidad de pasajeros",
+      "vehicleDoors": "Numero de puertas",
+      "vehicleTransmission": "Transmision",
+      "vehicleFuelType": "Tipo de combustible",
+      "vehicleLuggageCapacity": "Capacidad de equipaje",
+      "serviceDurationMinutes": "Duracion del servicio",
+      "serviceStaffCount": "Personal incluido",
+      "serviceAtClientLocation": "Servicio a domicilio",
+      "serviceIncludesMaterials": "Incluye materiales",
+      "serviceResponseTimeHours": "Tiempo de respuesta",
+      "experienceDurationMinutes": "Duracion de la experiencia",
+      "experienceMinParticipants": "Participantes minimos",
+      "experienceMaxParticipants": "Participantes maximos",
+      "experienceDifficulty": "Nivel de dificultad",
+      "experienceIncludesEquipment": "Incluye equipo",
+      "experienceMinAge": "Edad minima",
+      "venueCapacitySeated": "Capacidad sentados",
+      "venueCapacityStanding": "Capacidad de pie",
+      "venueHasStage": "Cuenta con escenario",
+      "venueOpeningTime": "Hora de apertura",
+      "venueClosingTime": "Hora de cierre"
     },
     "helper": {
       "description": "Minimo 20 caracteres. Explica valor diferencial, ubicacion y beneficios."
@@ -1436,6 +1465,11 @@
       "bathroomsMin": "Los banos no pueden ser negativos.",
       "maxGuestsRequired": "Ingresa el maximo de huespedes.",
       "maxGuestsRange": "El maximo de huespedes debe estar entre 1 y 500.",
+      "fieldNumberInvalid": "Ingresa un valor numerico valido para {{field}}.",
+      "fieldRange": "{{field}} debe estar entre {{min}} y {{max}}.",
+      "fieldOptionInvalid": "{{field}} no tiene una opcion valida.",
+      "fieldTimeInvalid": "{{field}} debe tener formato HH:mm.",
+      "maxMustBeGreaterThanMin": "El maximo debe ser mayor o igual al minimo.",
       "errorSummary": "{{count}} campos requieren atencion.",
       "ready": "Formulario listo para guardar."
     },
@@ -1538,7 +1572,34 @@
         "weekly": "Semanal",
         "monthly": "Mensual",
         "yearly": "Anual"
+      },
+      "vehicleTransmission": {
+        "automatic": "Automatica",
+        "manual": "Manual",
+        "semiAutomatic": "Semiautomatica"
+      },
+      "vehicleFuelType": {
+        "gasoline": "Gasolina",
+        "diesel": "Diesel",
+        "electric": "Electrico",
+        "hybrid": "Hibrido"
+      },
+      "experienceDifficulty": {
+        "easy": "Facil",
+        "intermediate": "Intermedio",
+        "challenging": "Desafiante",
+        "expert": "Experto"
       }
+    },
+    "units": {
+      "squareMeters": "m2",
+      "seats": "asientos",
+      "doors": "puertas",
+      "pieces": "piezas",
+      "minutes": "min",
+      "hours": "hrs",
+      "people": "personas",
+      "years": "anos"
     },
     "amenitiesLoading": "Cargando amenidades...",
     "amenitiesPlaceholder": "Buscar amenidad...",
