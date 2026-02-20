@@ -140,10 +140,18 @@
     "socialProof": {
       "title": "Diseñado para escalar",
       "subtitle": "Herramientas pensadas para el profesional inmobiliario moderno",
-      "stat1": { "label": "Uptime garantizado" },
-      "stat2": { "label": "Propiedades gestionadas" },
-      "stat3": { "label": "Tiempo de carga" },
-      "stat4": { "label": "Más productividad" }
+      "stat1": {
+        "label": "Uptime garantizado"
+      },
+      "stat2": {
+        "label": "Propiedades gestionadas"
+      },
+      "stat3": {
+        "label": "Tiempo de carga"
+      },
+      "stat4": {
+        "label": "Más productividad"
+      }
     },
     "finalCta": {
       "badge": "Comienza gratis, sin tarjeta de crédito",
@@ -231,7 +239,6 @@
       "newDevelopments": "Nuevos desarrollos"
     }
   },
-
   "publicSearch": {
     "placeholder": "Buscar propiedades, ciudades, características…",
     "searchFor": "Buscar",
@@ -1268,15 +1275,11 @@
       "draftNoticeBody": "Revisa la información antes de guardar. Podrás publicar tu propiedad después desde el panel de edición.",
       "steps": {
         "typeAndInfo": "Tipo e información",
-        "typeAndInfoDesc": "Define el tipo de operación, tipo de propiedad y datos básicos.",
+        "typeAndInfoDesc": "Define tipo de recurso, modo comercial y datos base.",
         "location": "Ubicación",
         "locationDesc": "Selecciona la ubicación y dirección de la propiedad.",
         "features": "Características",
         "featuresDesc": "Detalla las características físicas de la propiedad.",
-        "rentalTerms": "Términos de renta",
-        "rentalTermsDesc": "Configura los términos específicos para renta.",
-        "vacationRules": "Reglas de reserva",
-        "vacationRulesDesc": "Define reglas operativas para reservas por fecha u horario.",
         "pricing": "Precio",
         "pricingDesc": "Establece el precio y condiciones económicas.",
         "amenities": "Amenidades",
@@ -1284,21 +1287,25 @@
         "images": "Imágenes y medios",
         "imagesDesc": "Agrega fotos, video y tour virtual.",
         "summary": "Resumen",
-        "summaryDesc": "Revisa toda la información antes de guardar."
+        "summaryDesc": "Revisa toda la información antes de guardar.",
+        "commercialConditions": "Condiciones comerciales",
+        "commercialConditionsDesc": "Define condiciones de oferta segun el modo comercial seleccionado."
       },
       "stepOf": "Paso {{current}} de {{total}}",
-      "rentalTermsHint": "Configura los términos que aplican para propiedades de renta tradicional.",
-      "vacationRulesHint": "Configura reglas de disponibilidad, capacidad y ventanas de reserva.",
       "noSpecificFeatures": "Este tipo de recurso no requiere características adicionales en este paso.",
-      "noSpecificRentalTerms": "Este tipo de recurso no requiere términos adicionales para renta larga.",
-      "noSpecificBookingRules": "Este tipo de recurso no requiere reglas adicionales de reserva.",
       "noDataCaptured": "Aún no hay datos capturados en esta sección.",
       "placeholders": {
         "title": "Ejemplo: Villa frente al mar con alberca en Puerto Vallarta",
         "description": "Describe la ubicación, atributos principales, perfil ideal y servicios cercanos.",
         "streetAddress": "Calle y número",
         "neighborhood": "Colonia o zona"
-      }
+      },
+      "commercialConditionsHint": {
+        "longTerm": "Define condiciones de contrato para renta de mediano o largo plazo.",
+        "shortTerm": "Configura reglas de estancia y operacion para reservas por fecha.",
+        "hourly": "Configura ventanas y limites de reserva para ofertas por hora/evento."
+      },
+      "noSpecificCommercialConditions": "Este tipo de recurso no requiere condiciones comerciales adicionales."
     },
     "tabs": {
       "helper": "Puedes saltar entre secciones y guardar cuando termines.",
@@ -1380,7 +1387,8 @@
       "venueCapacityStanding": "Capacidad de pie",
       "venueHasStage": "Cuenta con escenario",
       "venueOpeningTime": "Hora de apertura",
-      "venueClosingTime": "Hora de cierre"
+      "venueClosingTime": "Hora de cierre",
+      "minimumContractDuration": "Duracion minima de contrato"
     },
     "helper": {
       "description": "Minimo 20 caracteres. Explica valor diferencial, ubicacion y beneficios."
@@ -1472,7 +1480,9 @@
       "fieldTimeInvalid": "{{field}} debe tener formato HH:mm.",
       "maxMustBeGreaterThanMin": "El maximo debe ser mayor o igual al minimo.",
       "errorSummary": "{{count}} campos requieren atencion.",
-      "ready": "Formulario listo para guardar."
+      "ready": "Formulario listo para guardar.",
+      "categoryRequired": "Selecciona una categoria.",
+      "commercialModeRequired": "Selecciona un modo comercial."
     },
     "locationCombobox": {
       "countryPlaceholder": "Escribe para buscar pais...",
@@ -1591,6 +1601,12 @@
         "intermediate": "Intermedio",
         "challenging": "Desafiante",
         "expert": "Experto"
+      },
+      "commercialMode": {
+        "sale": "Venta",
+        "rentLongTerm": "Renta larga",
+        "rentShortTerm": "Renta corta",
+        "rentHourly": "Renta por hora"
       }
     },
     "units": {
@@ -1601,7 +1617,8 @@
       "minutes": "min",
       "hours": "hrs",
       "people": "personas",
-      "years": "anos"
+      "years": "anos",
+      "months": "meses"
     },
     "amenitiesLoading": "Cargando amenidades...",
     "amenitiesPlaceholder": "Buscar amenidad...",
@@ -1800,7 +1817,15 @@
     "close": "Cerrar modal"
   },
   "dateRangePicker": {
-    "dayHeaders": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+    "dayHeaders": [
+      "Do",
+      "Lu",
+      "Ma",
+      "Mi",
+      "Ju",
+      "Vi",
+      "Sa"
+    ],
     "placeholders": {
       "single": "Selecciona fecha",
       "range": "Selecciona fechas"

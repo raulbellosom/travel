@@ -215,7 +215,6 @@ Purpose: catalogo principal de recursos comercializables.
 | `maxGuests`           | integer  | -     | no       | 1             | min `1`, max `500`                                                                     |
 | `furnished`           | enum     | -     | no       | `unspecified` | `unspecified`,`unfurnished`,`semi_furnished`,`furnished`                               |
 | `petsAllowed`         | boolean  | -     | no       | false         | -                                                                                      |
-| `rentPeriod`          | enum     | -     | no       | -             | `daily`,`weekly`,`monthly`,`yearly`                                                    |
 | `minStayNights`       | integer  | -     | no       | 1             | min `1`, max `365`                                                                     |
 | `maxStayNights`       | integer  | -     | no       | 365           | min `1`, max `365`                                                                     |
 | `checkInTime`         | string   | 5     | no       | `15:00`       | regex `^[0-2][0-9]:[0-5][0-9]$`                                                        |
@@ -235,8 +234,8 @@ Purpose: catalogo principal de recursos comercializables.
 
 Notas de aplicabilidad por modo comercial:
 
-- `rentPeriod` aplica solo cuando `commercialMode = rent_long_term`.
 - `yearBuilt` aplica a inmuebles; en `vehicle` se usa `attributes.vehicleModelYear`.
+- `minimumContractDuration` se captura en `attributes.minimumContractDuration` para `rent_long_term`.
 - Para `rent_short_term`, la periodicidad se define con `pricingModel` (ejemplo: `per_day`/`per_night`) y reglas en `rate_plans`.
 - Para `rent_hourly`, la periodicidad se define con `pricingModel` (ejemplo: `per_hour`/`per_event`) y `bookingType` (`time_slot`/`fixed_event`).
 - Los `pricingModel` visibles en UI se validan por combinacion `resourceType + commercialMode` para evitar opciones ilogicas.
@@ -251,6 +250,7 @@ Convencion UI v1:
 - `service`: `serviceDurationMinutes`, `serviceStaffCount`, `serviceAtClientLocation`, `serviceIncludesMaterials`, `serviceResponseTimeHours`.
 - `experience`: `experienceDurationMinutes`, `experienceMinParticipants`, `experienceMaxParticipants`, `experienceDifficulty`, `experienceIncludesEquipment`, `experienceMinAge`.
 - `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
+- comerciales (renta larga): `minimumContractDuration`.
 - booking generico no-inmobiliario: `bookingMinUnits`, `bookingMaxUnits`, `availabilityStartTime`, `availabilityEndTime`.
 
 Reglas:
@@ -263,42 +263,42 @@ Reglas:
 
 `category` permanece como `string`, pero su valor se valida contra catalogos controlados por `resourceType`.
 
-| resourceType | categories permitidas |
-| --- | --- |
-| `property` | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse` |
-| `service` | `cleaning`,`dj`,`chef`,`photography`,`catering`,`maintenance` |
-| `vehicle` | `car`,`suv`,`pickup`,`van`,`motorcycle`,`boat` |
-| `experience` | `tour`,`class`,`workshop`,`adventure`,`wellness`,`gastronomy` |
-| `venue` | `event_hall`,`commercial_local`,`studio`,`coworking`,`meeting_room` |
+| resourceType | categories permitidas                                               |
+| ------------ | ------------------------------------------------------------------- |
+| `property`   | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse`        |
+| `service`    | `cleaning`,`dj`,`chef`,`photography`,`catering`,`maintenance`       |
+| `vehicle`    | `car`,`suv`,`pickup`,`van`,`motorcycle`,`boat`                      |
+| `experience` | `tour`,`class`,`workshop`,`adventure`,`wellness`,`gastronomy`       |
+| `venue`      | `event_hall`,`commercial_local`,`studio`,`coworking`,`meeting_room` |
 
 `commercialMode` tambien se valida por `resourceType`:
 
-| resourceType | commercialMode permitido |
-| --- | --- |
-| `property` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
-| `service` | `rent_short_term`,`rent_hourly` |
-| `vehicle` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
-| `experience` | `rent_short_term`,`rent_hourly` |
-| `venue` | `rent_short_term`,`rent_hourly` |
+| resourceType | commercialMode permitido                                |
+| ------------ | ------------------------------------------------------- |
+| `property`   | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `service`    | `rent_short_term`,`rent_hourly`                         |
+| `vehicle`    | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `experience` | `rent_short_term`,`rent_hourly`                         |
+| `venue`      | `rent_short_term`,`rent_hourly`                         |
 
 `pricingModel` tambien se valida por combinacion `resourceType + commercialMode`:
 
-| resourceType | commercialMode | pricingModel permitido |
-| --- | --- | --- |
-| `property` | `sale` | `total`,`per_m2` |
-| `property` | `rent_long_term` | `per_month`,`per_day`,`total`,`per_m2` |
-| `property` | `rent_short_term` | `per_day`,`per_night`,`total` |
-| `property` | `rent_hourly` | `per_hour`,`per_event`,`total` |
-| `vehicle` | `sale` | `total` |
-| `vehicle` | `rent_long_term` | `per_month`,`per_day`,`total` |
-| `vehicle` | `rent_short_term` | `per_day`,`total` |
-| `vehicle` | `rent_hourly` | `per_hour`,`total` |
-| `service` | `rent_short_term` | `per_day`,`per_person`,`per_event`,`total` |
-| `service` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`total` |
-| `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`total` |
-| `experience` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`total` |
-| `venue` | `rent_short_term` | `per_day`,`per_event`,`total` |
-| `venue` | `rent_hourly` | `per_hour`,`per_event`,`total` |
+| resourceType | commercialMode    | pricingModel permitido                      |
+| ------------ | ----------------- | ------------------------------------------- |
+| `property`   | `sale`            | `total`,`per_m2`                            |
+| `property`   | `rent_long_term`  | `per_month`,`per_day`,`total`,`per_m2`      |
+| `property`   | `rent_short_term` | `per_day`,`per_night`,`total`               |
+| `property`   | `rent_hourly`     | `per_hour`,`per_event`,`total`              |
+| `vehicle`    | `sale`            | `total`                                     |
+| `vehicle`    | `rent_long_term`  | `per_month`,`per_day`,`total`               |
+| `vehicle`    | `rent_short_term` | `per_day`,`total`                           |
+| `vehicle`    | `rent_hourly`     | `per_hour`,`total`                          |
+| `service`    | `rent_short_term` | `per_day`,`per_person`,`per_event`,`total`  |
+| `service`    | `rent_hourly`     | `per_hour`,`per_person`,`per_event`,`total` |
+| `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`total`  |
+| `experience` | `rent_hourly`     | `per_hour`,`per_person`,`per_event`,`total` |
+| `venue`      | `rent_short_term` | `per_day`,`per_event`,`total`               |
+| `venue`      | `rent_hourly`     | `per_hour`,`per_event`,`total`              |
 
 ### Indexes
 
@@ -340,6 +340,7 @@ Purpose: metadata de imagen por recurso.
 | `isMain`     | boolean | -    | no       | false   | -                                   |
 | `width`      | integer | -    | no       | -       | min `1`, max `10000`                |
 | `height`     | integer | -    | no       | -       | min `1`, max `10000`                |
+| `fileSize`   | integer | -    | no       | -       | min `1`, max `2147483647`           |
 | `enabled`    | boolean | -    | no       | true    | -                                   |
 
 ### Indexes
@@ -973,15 +974,17 @@ Formato obligatorio:
 
 - Matriz documentada de `pricingModel` por `resourceType + commercialMode`.
 - Convencion `attributes.vehicleModelYear` para vehiculos en wizard/editor.
+- Convencion `attributes.minimumContractDuration` para renta larga.
 
 ### Modified
 
-- `rentPeriod` ampliado a `daily`,`weekly`,`monthly`,`yearly`.
-- Reglas de periodicidad de renta ajustadas para incluir escenarios por dia y por hora segun vertical.
+- `pricingModel` consolidado como unica fuente de periodicidad de cobro en wizard/editor.
+- Flujo comercial unificado en paso `commercialConditions` (sin `rentalTerms`/`vacationRules`).
 
 ### Removed
 
-- Supuesto de `pricingModel` uniforme solo por `commercialMode`.
+- `rentPeriod` del contrato de captura del wizard/editor.
+- Duplicidad conceptual entre reglas comerciales y pricing.
 
 ---
 
@@ -992,5 +995,5 @@ Formato obligatorio:
 
 ---
 
-Ultima actualizacion: 2026-02-19
+Ultima actualizacion: 2026-02-20
 Schema Mode: resource-only

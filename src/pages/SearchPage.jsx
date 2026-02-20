@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   X,
@@ -24,6 +24,18 @@ import {
   Sparkles,
   ArrowUpDown,
   Tag,
+  Wrench,
+  Compass,
+  CalendarHeart,
+  LayoutGrid,
+  Bike,
+  Ship,
+  Camera,
+  Ticket,
+  GraduationCap,
+  Dumbbell,
+  Users,
+  TreePine,
 } from "lucide-react";
 
 import { propertiesService } from "../services/propertiesService";
@@ -36,8 +48,21 @@ import LazyImage from "../components/common/atoms/LazyImage";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import LoadingSpinner from "../components/loaders/LoadingSpinner";
 import { DEFAULT_AMENITIES_CATALOG } from "../data/amenitiesCatalog";
+import {
+  CATEGORY_BY_RESOURCE_TYPE,
+  COMMERCIAL_MODE_BY_RESOURCE_TYPE,
+} from "../utils/resourceTaxonomy";
 
 /* ─────────────────────────── constants ─────────────────────────── */
+
+const RESOURCE_TYPE_OPTIONS = [
+  { value: "", labelKey: "search.allResourceTypes", fallback: "All resources", icon: LayoutGrid },
+  { value: "property", labelKey: "common.enums.resourceType.property", fallback: "Property", icon: Home },
+  { value: "vehicle", labelKey: "common.enums.resourceType.vehicle", fallback: "Vehicle", icon: Car },
+  { value: "service", labelKey: "common.enums.resourceType.service", fallback: "Service", icon: Wrench },
+  { value: "experience", labelKey: "common.enums.resourceType.experience", fallback: "Experience", icon: Compass },
+  { value: "venue", labelKey: "common.enums.resourceType.venue", fallback: "Venue", icon: CalendarHeart },
+];
 
 const OPERATION_OPTIONS = [
   { value: "", labelKey: "search.allOperations", fallback: "All" },
@@ -48,7 +73,68 @@ const OPERATION_OPTIONS = [
     labelKey: "common.enums.operation.vacation_rental",
     fallback: "Vacation",
   },
+  {
+    value: "rent_hourly",
+    labelKey: "common.enums.operation.rent_hourly",
+    fallback: "Hourly",
+  },
 ];
+
+const CATEGORY_ICON_MAP = {
+  house: Home,
+  apartment: Building2,
+  land: Square,
+  commercial: Store,
+  office: Building2,
+  warehouse: Warehouse,
+  car: Car,
+  suv: Car,
+  pickup: Car,
+  van: Car,
+  motorcycle: Bike,
+  boat: Ship,
+  cleaning: Wrench,
+  dj: Wrench,
+  chef: Wrench,
+  photography: Camera,
+  catering: Wrench,
+  maintenance: Wrench,
+  tour: Compass,
+  class: GraduationCap,
+  workshop: GraduationCap,
+  adventure: TreePine,
+  wellness: Dumbbell,
+  gastronomy: Wrench,
+  event_hall: CalendarHeart,
+  commercial_local: Store,
+  studio: Building2,
+  coworking: Users,
+  meeting_room: Users,
+};
+
+/** Build category options dynamically based on selected resource type */
+const buildCategoryOptions = (resourceType, t) => {
+  const categories = resourceType
+    ? CATEGORY_BY_RESOURCE_TYPE[resourceType] || []
+    : Object.values(CATEGORY_BY_RESOURCE_TYPE).flat();
+
+  const options = [
+    { value: "", labelKey: "search.allCategories", fallback: t("client:search.allCategories", "All categories"), icon: LayoutGrid },
+  ];
+
+  const seen = new Set();
+  categories.forEach((cat) => {
+    if (seen.has(cat)) return;
+    seen.add(cat);
+    options.push({
+      value: cat,
+      label: t(`client:common.enums.category.${cat}`, cat),
+      icon: CATEGORY_ICON_MAP[cat] || LayoutGrid,
+    });
+  });
+
+  return options;
+};
 
 const PROPERTY_TYPE_OPTIONS = [
   { value: "", labelKey: "search.allTypes", fallback: "All", icon: Home },
@@ -115,7 +201,7 @@ const PARKING_OPTIONS = [
 ];
 
 const FURNISHED_OPTIONS = [
-  { value: "", labelKey: "search.any", fallback: "Any" },
+  { value: "", labelKey: "search.anyOption", fallback: "Cualquiera" },
   { value: "furnished", labelKey: "search.furnished", fallback: "Furnished" },
   {
     value: "semi_furnished",
@@ -156,7 +242,7 @@ const PRICE_PRESETS = [
 
 /** Chip shown for each active filter */
 const FilterChip = ({ label, onRemove }) => (
-  <motion.button
+  <Motion.button
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.9 }}
@@ -166,7 +252,7 @@ const FilterChip = ({ label, onRemove }) => (
   >
     <span>{label}</span>
     <X size={12} />
-  </motion.button>
+  </Motion.button>
 );
 
 /** Select-style dropdown filter */
@@ -189,11 +275,9 @@ const FilterSelect = ({ label, value, options, onChange, icon: Icon }) => (
 /* ═════════════════════════ MAIN COMPONENT ═════════════════════════ */
 
 const SearchPage = () => {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef(null);
-  const mobileSearchInputRef = useRef(null);
 
   // ── UI state ──
   const [loading, setLoading] = useState(true);
@@ -219,6 +303,7 @@ const SearchPage = () => {
       search: searchParams.get("q") || "",
       city: searchParams.get("city") || "",
       state: searchParams.get("state") || "",
+      resourceType: searchParams.get("resourceType") || "",
       operationType: searchParams.get("operationType") || "",
       propertyType: searchParams.get("propertyType") || "",
       minPrice: searchParams.get("minPrice") || "",
@@ -241,6 +326,7 @@ const SearchPage = () => {
   // ── Count active filters (excluding search, page, sort) ──
   const activeFilterCount = useMemo(() => {
     let count = 0;
+    if (filters.resourceType) count++;
     if (filters.operationType) count++;
     if (filters.propertyType) count++;
     if (filters.city) count++;
@@ -337,6 +423,17 @@ const SearchPage = () => {
         key: "q",
         label: `"${filters.search}"`,
       });
+    if (filters.resourceType) {
+      const rt = RESOURCE_TYPE_OPTIONS.find(
+        (o) => o.value === filters.resourceType,
+      );
+      chips.push({
+        key: "resourceType",
+        label: rt
+          ? t(`client:${rt.labelKey}`, rt.fallback)
+          : filters.resourceType,
+      });
+    }
     if (filters.operationType) {
       const op = OPERATION_OPTIONS.find(
         (o) => o.value === filters.operationType,
@@ -407,6 +504,10 @@ const SearchPage = () => {
   }, [filters, t]);
 
   // ── Translated options ──
+  const tResourceTypes = RESOURCE_TYPE_OPTIONS.map((o) => ({
+    ...o,
+    label: t(`client:${o.labelKey}`, o.fallback),
+  }));
   const tOperations = OPERATION_OPTIONS.map((o) => ({
     ...o,
     label: t(`client:${o.labelKey}`, o.fallback),
@@ -415,6 +516,10 @@ const SearchPage = () => {
     ...o,
     label: t(`client:${o.labelKey}`, o.fallback),
   }));
+  const tCategories = useMemo(
+    () => buildCategoryOptions(filters.resourceType, t),
+    [filters.resourceType, t],
+  );
   const tSortOptions = SORT_OPTIONS.map((o) => ({
     ...o,
     label: t(`client:${o.labelKey}`, o.fallback),
@@ -424,10 +529,25 @@ const SearchPage = () => {
     label: t(`client:${o.labelKey}`, o.fallback),
   }));
 
+  // Determine if property-specific filters should show
+  const showPropertyFilters = !filters.resourceType || filters.resourceType === "property";
+
   /* ──────────────────── FILTER SIDEBAR (shared) ──────────────────── */
 
   const FiltersContent = ({ onClose }) => (
     <div className="space-y-6">
+      {/* Tipo de recurso */}
+      <FilterSelect
+        label={t("client:search.resourceType")}
+        value={filters.resourceType}
+        options={tResourceTypes}
+        onChange={(v) => {
+          // When resource type changes, clear category filter
+          updateFilters({ resourceType: v, propertyType: "" });
+        }}
+        icon={LayoutGrid}
+      />
+
       {/* Tipo de operación */}
       <FilterSelect
         label={t("client:search.operationType")}
@@ -436,11 +556,11 @@ const SearchPage = () => {
         onChange={(v) => updateFilter("operationType", v)}
       />
 
-      {/* Tipo de propiedad */}
+      {/* Categoría (dynamic based on resource type) */}
       <FilterSelect
-        label={t("client:search.propertyType")}
+        label={t("client:search.category")}
         value={filters.propertyType}
-        options={tPropertyTypes}
+        options={tCategories}
         onChange={(v) => updateFilter("propertyType", v)}
         icon={Home}
       />
@@ -495,7 +615,8 @@ const SearchPage = () => {
         </div>
       </div>
 
-      {/* Recámaras */}
+      {/* Recámaras — only for properties */}
+      {showPropertyFilters && (
       <div className="space-y-2">
         <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           <BedDouble size={13} className="mr-1 inline" />
@@ -523,8 +644,10 @@ const SearchPage = () => {
           })}
         </div>
       </div>
+      )}
 
-      {/* Baños */}
+      {/* Baños — only for properties */}
+      {showPropertyFilters && (
       <div className="space-y-2">
         <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           <Bath size={13} className="mr-1 inline" />
@@ -552,8 +675,10 @@ const SearchPage = () => {
           })}
         </div>
       </div>
+      )}
 
-      {/* Estacionamiento */}
+      {/* Estacionamiento — only for properties/venues */}
+      {(showPropertyFilters || filters.resourceType === "venue") && (
       <div className="space-y-2">
         <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           <Car size={13} className="mr-1 inline" />
@@ -581,8 +706,10 @@ const SearchPage = () => {
           })}
         </div>
       </div>
+      )}
 
-      {/* Amueblado */}
+      {/* Amueblado — only for properties */}
+      {showPropertyFilters && (
       <FilterSelect
         label={t("client:search.furnished")}
         value={filters.furnished}
@@ -590,6 +717,7 @@ const SearchPage = () => {
         onChange={(v) => updateFilter("furnished", v)}
         icon={Armchair}
       />
+      )}
 
       {/* Toggles */}
       <div className="space-y-3">
@@ -664,24 +792,24 @@ const SearchPage = () => {
         <div className="absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl z-[1]" />
 
         <div className="container relative mx-auto px-4 sm:px-6">
-          <motion.h1
+          <Motion.h1
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-2 text-center text-2xl font-extrabold text-white sm:text-3xl"
           >
             {t("client:search.heroTitle")}
-          </motion.h1>
-          <motion.p
+          </Motion.h1>
+          <Motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
             className="mx-auto mb-6 max-w-lg text-center text-sm text-slate-300 sm:text-base"
           >
             {t("client:search.heroSubtitle")}
-          </motion.p>
+          </Motion.p>
 
           {/* Search bar */}
-          <motion.form
+          <Motion.form
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -708,33 +836,35 @@ const SearchPage = () => {
             >
               {t("client:search.button")}
             </Button>
-          </motion.form>
+          </Motion.form>
 
-          {/* Operation type quick tabs */}
-          <motion.div
+          {/* Resource type quick tabs */}
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
-            className="mx-auto mt-5 flex max-w-lg justify-center gap-2"
+            className="mx-auto mt-5 flex max-w-2xl flex-wrap justify-center gap-2"
           >
-            {OPERATION_OPTIONS.map((op) => {
-              const isActive = filters.operationType === op.value;
+            {RESOURCE_TYPE_OPTIONS.map((rt) => {
+              const isActive = filters.resourceType === rt.value;
+              const Icon = rt.icon;
               return (
                 <button
-                  key={op.value}
+                  key={rt.value}
                   type="button"
-                  onClick={() => updateFilter("operationType", op.value)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-bold transition sm:text-sm ${
+                  onClick={() => updateFilters({ resourceType: rt.value, propertyType: "" })}
+                  className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition sm:text-sm ${
                     isActive
                       ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/30"
                       : "bg-white/10 text-white/80 hover:bg-white/20"
                   }`}
                 >
-                  {t(`client:${op.labelKey}`, op.fallback)}
+                  {Icon && <Icon size={14} />}
+                  {t(`client:${rt.labelKey}`, rt.fallback)}
                 </button>
               );
             })}
-          </motion.div>
+          </Motion.div>
         </div>
       </section>
 
@@ -761,24 +891,26 @@ const SearchPage = () => {
           <main className="min-w-0 flex-1">
             {/* Mobile: quick filters + "Más filtros" button */}
             <div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
-              {/* Quick property type pills */}
+              {/* Quick resource type pills */}
               <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                {PROPERTY_TYPE_OPTIONS.slice(0, 5).map((pt) => {
-                  const isActive = filters.propertyType === pt.value;
+                {RESOURCE_TYPE_OPTIONS.map((rt) => {
+                  const isActive = filters.resourceType === rt.value;
+                  const Icon = rt.icon;
                   return (
                     <button
-                      key={pt.value}
+                      key={rt.value}
                       type="button"
                       onClick={() =>
-                        updateFilter("propertyType", isActive ? "" : pt.value)
+                        updateFilters({ resourceType: isActive ? "" : rt.value, propertyType: "" })
                       }
-                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                      className={`flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold transition ${
                         isActive
                           ? "bg-cyan-600 text-white"
                           : "bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
-                      {t(`client:${pt.labelKey}`, pt.fallback)}
+                      {Icon && <Icon size={12} />}
+                      {t(`client:${rt.labelKey}`, rt.fallback)}
                     </button>
                   );
                 })}
@@ -803,7 +935,7 @@ const SearchPage = () => {
             {/* Active filter chips */}
             <AnimatePresence>
               {activeChips.length > 0 && (
-                <motion.div
+                <Motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -826,7 +958,7 @@ const SearchPage = () => {
                       {t("client:search.clearAll")}
                     </button>
                   )}
-                </motion.div>
+                </Motion.div>
               )}
             </AnimatePresence>
 
@@ -843,7 +975,7 @@ const SearchPage = () => {
                     <strong className="text-slate-900 dark:text-white">
                       {total}
                     </strong>{" "}
-                    {t("client:search.resultsCount")}
+                    {t("client:search.resultsLabel", "resultados")}
                   </span>
                 )}
               </p>
@@ -851,17 +983,16 @@ const SearchPage = () => {
               {/* Sort dropdown */}
               <div className="flex items-center gap-2">
                 <ArrowUpDown size={14} className="text-slate-400" />
-                <select
+                <Select
                   value={filters.sort}
-                  onChange={(e) => updateFilter("sort", e.target.value)}
-                  className="appearance-none rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition focus:border-cyan-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:focus:border-cyan-400"
-                >
-                  {tSortOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => updateFilter("sort", value)}
+                  options={tSortOptions.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                  size="sm"
+                  className="min-w-[190px]"
+                />
               </div>
             </div>
 
@@ -915,14 +1046,14 @@ const SearchPage = () => {
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {properties.map((property, index) => (
-                  <motion.div
+                  <Motion.div
                     key={property.$id}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.03 }}
                   >
                     <PropertyCard property={property} />
-                  </motion.div>
+                  </Motion.div>
                 ))}
               </div>
             )}
@@ -989,7 +1120,7 @@ const SearchPage = () => {
         {isMobileFiltersOpen && (
           <>
             {/* Backdrop */}
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -997,7 +1128,7 @@ const SearchPage = () => {
               className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm lg:hidden"
             />
             {/* Drawer */}
-            <motion.div
+            <Motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -1034,7 +1165,7 @@ const SearchPage = () => {
                   {t("client:search.showResults")} ({total})
                 </Button>
               </div>
-            </motion.div>
+            </Motion.div>
           </>
         )}
       </AnimatePresence>

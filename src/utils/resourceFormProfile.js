@@ -1,5 +1,5 @@
 ﻿import { normalizeCommercialMode, normalizeResourceType } from "./resourceModel";
-import { sanitizeCategory } from "./resourceTaxonomy";
+import { sanitizeCategory, sanitizeCommercialMode } from "./resourceTaxonomy";
 
 const createField = (config) => Object.freeze(config);
 
@@ -145,30 +145,16 @@ export const RESOURCE_FORM_FIELD_DEFINITIONS = Object.freeze({
     labelKey: "propertyForm.fields.petsAllowed",
     defaultValue: false,
   }),
-  rentPeriod: createField({
-    key: "rentPeriod",
-    source: "root",
-    inputType: "select",
-    labelKey: "propertyForm.fields.rentPeriod",
-    defaultValue: "monthly",
-    options: Object.freeze([
-      Object.freeze({
-        value: "daily",
-        labelKey: "propertyForm.options.rentPeriod.daily",
-      }),
-      Object.freeze({
-        value: "weekly",
-        labelKey: "propertyForm.options.rentPeriod.weekly",
-      }),
-      Object.freeze({
-        value: "monthly",
-        labelKey: "propertyForm.options.rentPeriod.monthly",
-      }),
-      Object.freeze({
-        value: "yearly",
-        labelKey: "propertyForm.options.rentPeriod.yearly",
-      }),
-    ]),
+  minimumContractDuration: createField({
+    key: "minimumContractDuration",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.minimumContractDuration",
+    defaultValue: "",
+    min: 1,
+    max: 120,
+    step: 1,
+    unitKey: "propertyForm.units.months",
   }),
   vehicleModelYear: createField({
     key: "vehicleModelYear",
@@ -582,48 +568,31 @@ const FEATURES_BY_RESOURCE_TYPE = Object.freeze({
   ]),
 });
 
-const LONG_TERM_FIELDS_BY_RESOURCE_TYPE = Object.freeze({
-  property: Object.freeze(["rentPeriod", "furnished", "petsAllowed"]),
-  vehicle: Object.freeze(["rentPeriod"]),
-  service: Object.freeze([]),
-  experience: Object.freeze([]),
-  venue: Object.freeze([]),
-});
-
-const BOOKING_RULE_FIELDS_BY_TYPE_AND_MODE = Object.freeze({
+const COMMERCIAL_CONDITION_FIELDS_BY_TYPE_AND_MODE = Object.freeze({
   property: Object.freeze({
+    rent_long_term: Object.freeze([
+      "furnished",
+      "petsAllowed",
+      "minimumContractDuration",
+    ]),
     rent_short_term: Object.freeze([
       "maxGuests",
       "minStayNights",
       "maxStayNights",
       "checkInTime",
       "checkOutTime",
-      "furnished",
-      "petsAllowed",
     ]),
     rent_hourly: Object.freeze([
-      "maxGuests",
       "bookingMinUnits",
       "bookingMaxUnits",
       "availabilityStartTime",
       "availabilityEndTime",
-      "furnished",
-      "petsAllowed",
     ]),
   }),
   vehicle: Object.freeze({
-    rent_short_term: Object.freeze([
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
-    rent_hourly: Object.freeze([
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
+    rent_long_term: Object.freeze([]),
+    rent_short_term: Object.freeze([]),
+    rent_hourly: Object.freeze([]),
   }),
   service: Object.freeze({
     rent_short_term: Object.freeze([
@@ -645,16 +614,12 @@ const BOOKING_RULE_FIELDS_BY_TYPE_AND_MODE = Object.freeze({
       "bookingMaxUnits",
       "availabilityStartTime",
       "availabilityEndTime",
-      "experienceMinParticipants",
-      "experienceMaxParticipants",
     ]),
     rent_hourly: Object.freeze([
       "bookingMinUnits",
       "bookingMaxUnits",
       "availabilityStartTime",
       "availabilityEndTime",
-      "experienceMinParticipants",
-      "experienceMaxParticipants",
     ]),
   }),
   venue: Object.freeze({
@@ -664,8 +629,6 @@ const BOOKING_RULE_FIELDS_BY_TYPE_AND_MODE = Object.freeze({
       "bookingMaxUnits",
       "availabilityStartTime",
       "availabilityEndTime",
-      "venueOpeningTime",
-      "venueClosingTime",
     ]),
     rent_hourly: Object.freeze([
       "maxGuests",
@@ -673,8 +636,6 @@ const BOOKING_RULE_FIELDS_BY_TYPE_AND_MODE = Object.freeze({
       "bookingMaxUnits",
       "availabilityStartTime",
       "availabilityEndTime",
-      "venueOpeningTime",
-      "venueClosingTime",
     ]),
   }),
 });
@@ -690,14 +651,9 @@ const resolveFeatureFieldKeys = (resourceType, category) => {
   return FEATURES_BY_RESOURCE_TYPE[resourceType] || [];
 };
 
-const resolveRentalTermFieldKeys = (resourceType, commercialMode) => {
-  if (commercialMode !== "rent_long_term") return [];
-  return LONG_TERM_FIELDS_BY_RESOURCE_TYPE[resourceType] || [];
-};
-
-const resolveBookingRuleFieldKeys = (resourceType, commercialMode) => {
-  if (!["rent_short_term", "rent_hourly"].includes(commercialMode)) return [];
-  const fieldsByMode = BOOKING_RULE_FIELDS_BY_TYPE_AND_MODE[resourceType] || {};
+const resolveCommercialConditionFieldKeys = (resourceType, commercialMode) => {
+  const fieldsByMode =
+    COMMERCIAL_CONDITION_FIELDS_BY_TYPE_AND_MODE[resourceType] || {};
   return fieldsByMode[commercialMode] || [];
 };
 
@@ -741,29 +697,25 @@ export const getResourceFormProfile = ({
   resourceType,
   category,
   commercialMode,
-  operationType,
 } = {}) => {
   const normalizedType = normalizeResourceType(resourceType);
   const normalizedCategory = sanitizeCategory(normalizedType, category);
-  const normalizedCommercial = normalizeCommercialMode(
-    commercialMode || operationType || "sale",
+  const normalizedCommercial = sanitizeCommercialMode(
+    normalizedType,
+    normalizeCommercialMode(commercialMode || "sale"),
   );
 
   const featureKeys = toUniqueKeys(
     resolveFeatureFieldKeys(normalizedType, normalizedCategory),
   );
-  const rentalTermKeys = toUniqueKeys(
-    resolveRentalTermFieldKeys(normalizedType, normalizedCommercial),
-  );
-  const vacationRuleKeys = toUniqueKeys(
-    resolveBookingRuleFieldKeys(normalizedType, normalizedCommercial),
+  const commercialConditionKeys = toUniqueKeys(
+    resolveCommercialConditionFieldKeys(normalizedType, normalizedCommercial),
   );
 
   const features = mapFieldKeys(featureKeys);
-  const rentalTerms = mapFieldKeys(rentalTermKeys);
-  const vacationRules = mapFieldKeys(vacationRuleKeys);
+  const commercialConditions = mapFieldKeys(commercialConditionKeys);
 
-  const allFields = [...features, ...rentalTerms, ...vacationRules];
+  const allFields = [...features, ...commercialConditions];
   const allFieldKeys = toUniqueKeys(allFields.map((field) => field.key));
 
   return {
@@ -771,8 +723,7 @@ export const getResourceFormProfile = ({
     category: normalizedCategory,
     commercialMode: normalizedCommercial,
     features,
-    rentalTerms,
-    vacationRules,
+    commercialConditions,
     allFields,
     allFieldKeys,
     rootFieldKeys: toUniqueKeys(

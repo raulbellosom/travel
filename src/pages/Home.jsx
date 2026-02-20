@@ -47,8 +47,8 @@ const Home = () => {
           "client:home.houses.subtitle",
           "Descubre casas espaciosas perfectas para tu familia.",
         )}
-        filters={{ propertyType: "house", operationType: "sale" }}
-        viewAllLink="/buscar?propertyType=house&operationType=sale"
+        filters={{ resourceType: "property", category: "house", operationType: "sale" }}
+        viewAllLink="/buscar?resourceType=property&category=house&operationType=sale"
         limit={3}
         bgClass="bg-slate-50 dark:bg-slate-900/50"
       />
@@ -60,8 +60,63 @@ const Home = () => {
           "client:home.apartments.subtitle",
           "Espacios modernos y cómodos en las mejores ubicaciones.",
         )}
-        filters={{ propertyType: "apartment" }}
-        viewAllLink="/buscar?propertyType=apartment"
+        filters={{ resourceType: "property", category: "apartment" }}
+        viewAllLink="/buscar?resourceType=property&category=apartment"
+        limit={3}
+        bgClass="bg-white dark:bg-slate-900/30"
+      />
+
+      {/* Vehicles */}
+      <PropertyGridSection
+        title={t("client:home.vehicles.title", "Vehículos")}
+        subtitle={t(
+          "client:home.vehicles.subtitle",
+          "Autos, SUVs, motos y más disponibles para ti.",
+        )}
+        filters={{ resourceType: "vehicle" }}
+        viewAllLink="/buscar?resourceType=vehicle"
+        limit={3}
+        bgClass="bg-slate-50 dark:bg-slate-900/50"
+      />
+
+      {/* Services */}
+      <PropertyGridSection
+        badge={t("client:home.servicesSection.badge", "SERVICIOS")}
+        title={t("client:home.servicesSection.title", "Servicios Profesionales")}
+        subtitle={t(
+          "client:home.servicesSection.subtitle",
+          "Limpieza, chef, DJ, fotografía, catering y más a tu alcance.",
+        )}
+        filters={{ resourceType: "service" }}
+        viewAllLink="/buscar?resourceType=service"
+        limit={3}
+        bgClass="bg-white dark:bg-slate-900/30"
+      />
+
+      {/* Experiences */}
+      <PropertyGridSection
+        badge={t("client:home.experiencesSection.badge", "EXPERIENCIAS")}
+        title={t("client:home.experiencesSection.title", "Experiencias Únicas")}
+        subtitle={t(
+          "client:home.experiencesSection.subtitle",
+          "Tours, talleres, aventuras, bienestar y gastronomía.",
+        )}
+        filters={{ resourceType: "experience" }}
+        viewAllLink="/buscar?resourceType=experience"
+        limit={3}
+        bgClass="bg-slate-50 dark:bg-slate-900/50"
+      />
+
+      {/* Venues */}
+      <PropertyGridSection
+        badge={t("client:home.venuesSection.badge", "SALONES")}
+        title={t("client:home.venuesSection.title", "Salones y Espacios")}
+        subtitle={t(
+          "client:home.venuesSection.subtitle",
+          "Salones de eventos, coworking, estudios y salas de juntas.",
+        )}
+        filters={{ resourceType: "venue" }}
+        viewAllLink="/buscar?resourceType=venue"
         limit={3}
         bgClass="bg-white dark:bg-slate-900/30"
       />

@@ -20,8 +20,21 @@ const isInternalMessage = (message) => {
   return INTERNAL_MESSAGE_PATTERNS.some((pattern) => pattern.test(message));
 };
 
+const normalizeKnownMessage = (message) => {
+  if (!message) return "";
+
+  if (
+    /attribute\s+"longitude".*range between -90 and 90/i.test(message) ||
+    /attribute\s+"longitude".*min.*-90.*max.*90/i.test(message)
+  ) {
+    return "La base de datos tiene el campo longitude mal configurado. Debe permitir valores entre -180 y 180.";
+  }
+
+  return message;
+};
+
 export const getErrorMessage = (error, fallback = "Ocurrio un error inesperado.") => {
-  const message = extractErrorMessage(error);
+  const message = normalizeKnownMessage(extractErrorMessage(error));
   if (!message) return fallback;
   return isInternalMessage(message) ? fallback : message;
 };

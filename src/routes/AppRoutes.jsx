@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "../contexts/AuthContext";
 import { UIProvider } from "../contexts/UIContext";
+import { ToastProvider } from "../contexts/ToastContext";
 import InternalRoute from "./InternalRoute";
 import OwnerRoute from "./OwnerRoute";
 import RootRoute from "./RootRoute";
@@ -117,8 +118,9 @@ const AppRoutes = () => {
       <ScrollToTop />
       <AuthProvider>
         <UIProvider>
-          <ChatProvider>
-            <Suspense fallback={<RoutesFallback />}>
+          <ToastProvider>
+            <ChatProvider>
+              <Suspense fallback={<RoutesFallback />}>
               {env.features.marketingSite ? (
                 <Routes>
                   {/* Marketing Mode: Only Landing + Redirects */}
@@ -557,11 +559,12 @@ const AppRoutes = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               )}
-            </Suspense>
-            <Suspense fallback={null}>
-              <ChatBubble />
-            </Suspense>
-          </ChatProvider>
+              </Suspense>
+              <Suspense fallback={null}>
+                <ChatBubble />
+              </Suspense>
+            </ChatProvider>
+          </ToastProvider>
         </UIProvider>
       </AuthProvider>
     </BrowserRouter>

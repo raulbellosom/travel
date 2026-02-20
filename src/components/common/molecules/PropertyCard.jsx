@@ -13,6 +13,21 @@ import {
   Store,
   Warehouse,
   Star,
+  Car,
+  Bike,
+  Ship,
+  Wrench,
+  Camera,
+  UtensilsCrossed,
+  Compass,
+  Ticket,
+  Dumbbell,
+  GraduationCap,
+  TreePine,
+  CalendarHeart,
+  Users,
+  Clock,
+  Armchair,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -101,54 +116,91 @@ const PropertyCard = ({ property, className }) => {
     }).format(price);
   };
 
-  // Determine property type icon
-  const getPropertyIcon = (type) => {
-    const normalized = normalizeEnumValue(type);
-    switch (normalized) {
-      case "apartment":
-      case "condo":
-        return Building2;
-      case "land":
-      case "lot":
-        return Square;
-      case "commercial":
-      case "office":
+  // Determine icon based on resource type and category
+  const getResourceIcon = (resourceType, category) => {
+    const type = normalizeEnumValue(resourceType);
+    const cat = normalizeEnumValue(category);
+
+    switch (type) {
+      case "vehicle":
+        if (cat === "motorcycle") return Bike;
+        if (cat === "boat") return Ship;
+        return Car;
+      case "service":
+        if (cat === "photography") return Camera;
+        if (cat === "chef" || cat === "catering") return UtensilsCrossed;
+        return Wrench;
+      case "experience":
+        if (cat === "tour") return Compass;
+        if (cat === "adventure") return TreePine;
+        if (cat === "wellness") return Dumbbell;
+        if (cat === "class" || cat === "workshop") return GraduationCap;
+        return Ticket;
+      case "venue":
+        if (cat === "event_hall") return CalendarHeart;
+        if (cat === "coworking" || cat === "meeting_room") return Users;
         return Store;
-      case "industrial":
-      case "warehouse":
-        return Warehouse;
-      default:
+      default: // property
+        if (cat === "apartment" || cat === "condo") return Building2;
+        if (cat === "land" || cat === "lot") return Square;
+        if (cat === "commercial" || cat === "office") return Store;
+        if (cat === "warehouse" || cat === "industrial") return Warehouse;
         return Home;
     }
   };
 
+  const resourceType = resource?.resourceType || "property";
   const propertyTypeRaw = resource?.category || property?.propertyType || property?.type;
-  const operationRaw = resource?.operationType || property?.operationType || property?.operation;
+  // Use commercialMode from resource behavior for more accurate operation label
+  const commercialModeRaw = resource?.commercialMode || resource?.operationType || property?.operationType || property?.operation;
 
-  const formattedPropertyType = propertyTypeRaw
+  // Format the category label using the category enum
+  const formattedCategory = propertyTypeRaw
     ? t(
-        `client:common.enums.propertyType.${normalizeEnumValue(propertyTypeRaw)}`,
+        `client:common.enums.category.${normalizeEnumValue(propertyTypeRaw)}`,
         {
-          defaultValue: humanizeEnumValue(propertyTypeRaw),
+          defaultValue: t(
+            `client:common.enums.propertyType.${normalizeEnumValue(propertyTypeRaw)}`,
+            { defaultValue: humanizeEnumValue(propertyTypeRaw) },
+          ),
         },
       )
-    : t("client:common.enums.propertyType.property");
+    : t(`client:common.enums.resourceType.${normalizeEnumValue(resourceType)}`, {
+        defaultValue: humanizeEnumValue(resourceType),
+      });
 
-  const formattedOperationType = operationRaw
-    ? t(`client:common.enums.operation.${normalizeEnumValue(operationRaw)}`, {
-        defaultValue: humanizeEnumValue(operationRaw),
+  const formattedOperationType = commercialModeRaw
+    ? t(`client:common.enums.operation.${normalizeEnumValue(commercialModeRaw)}`, {
+        defaultValue: humanizeEnumValue(commercialModeRaw),
       })
     : "";
 
-  const isNightlyOperation =
-    resource?.pricingModel === "per_night" ||
-    normalizeEnumValue(operationRaw) === "vacation_rental" ||
-    normalizeEnumValue(operationRaw) === "rent_short";
+  // Price label based on pricing model
+  const pricingModel = resource?.pricingModel || "total";
+  const priceLabelMap = {
+    per_night: "client:pricing.pricePerNight",
+    per_day: "client:pricing.pricePerDay",
+    per_hour: "client:pricing.pricePerHour",
+    per_month: "client:pricing.pricePerMonth",
+    per_person: "client:pricing.pricePerPerson",
+    per_event: "client:pricing.pricePerEvent",
+    per_m2: "client:pricing.pricePerM2",
+  };
+  const priceDisplayLabel = priceLabelMap[pricingModel]
+    ? t(priceLabelMap[pricingModel])
+    : t("client:pricing.label", "Precio");
 
-  const PropertyIcon = getPropertyIcon(propertyTypeRaw);
+  const ResourceIcon = getResourceIcon(resourceType, propertyTypeRaw);
 
   // Choose which area to display (built vs total)
   const displayArea = property.builtArea || property.totalArea || 0;
+
+  // Determine which features to show based on resource type
+  const isProperty = resourceType === "property";
+  const isVehicle = resourceType === "vehicle";
+  const isService = resourceType === "service";
+  const isExperience = resourceType === "experience";
+  const isVenue = resourceType === "venue";
 
   return (
     <motion.div
@@ -270,8 +322,8 @@ const PropertyCard = ({ property, className }) => {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-medium text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">
-              <PropertyIcon size={14} />
-              {formattedPropertyType}
+              <ResourceIcon size={14} />
+              {formattedCategory}
             </span>
             {/* Rating or other metadata could go here */}
           </div>
@@ -297,50 +349,210 @@ const PropertyCard = ({ property, className }) => {
             </p>
           </div>
 
-          {/* Features Grid */}
+          {/* Features Grid — type-aware */}
           <div className="mt-4 grid grid-cols-3 gap-2 border-y border-slate-100 py-3 dark:border-slate-800">
-            <div className="flex flex-col items-center justify-center gap-1 text-center">
-              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                <BedDouble size={16} />
-                <span className="text-xs font-medium uppercase">
-                  {t("client:property.bedrooms", "Hab")}
-                </span>
-              </div>
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                {property.bedrooms || 0}
-              </span>
-            </div>
+            {isProperty && (
+              <>
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <BedDouble size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:property.bedrooms", "Recámaras")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.bedrooms || 0}
+                  </span>
+                </div>
 
-            <div className="flex flex-col items-center justify-center gap-1 text-center border-x border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                <Bath size={16} />
-                <span className="text-xs font-medium uppercase">
-                  {t("client:property.bathrooms", "Baños")}
-                </span>
-              </div>
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                {property.bathrooms || 0}
-              </span>
-            </div>
+                <div className="flex flex-col items-center justify-center gap-1 text-center border-x border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Bath size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:property.bathrooms", "Baños")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.bathrooms || 0}
+                  </span>
+                </div>
 
-            <div className="flex flex-col items-center justify-center gap-1 text-center">
-              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                <Square size={16} />
-                <span className="text-xs font-medium uppercase">m²</span>
-              </div>
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                {displayArea}
-              </span>
-            </div>
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Square size={16} />
+                    <span className="text-xs font-medium uppercase">m²</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {displayArea}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {isVehicle && (
+              <>
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Car size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.type", "Tipo")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {formattedCategory}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center border-x border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Users size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.passengers", "Pasajeros")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.maxGuests || "—"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Armchair size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.mode", "Modo")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200 text-[11px]">
+                    {formattedOperationType || "—"}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {isService && (
+              <>
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Wrench size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.type", "Tipo")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {formattedCategory}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center border-x border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Clock size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.duration", "Duración")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.slotDurationMinutes ? `${property.slotDurationMinutes} min` : "—"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <MapPin size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.location", "Lugar")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.city || "—"}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {isExperience && (
+              <>
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Ticket size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.type", "Tipo")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {formattedCategory}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center border-x border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Users size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.maxGuests", "Máx.")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.maxGuests || "—"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Clock size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.duration", "Duración")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.slotDurationMinutes ? `${property.slotDurationMinutes} min` : "—"}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {isVenue && (
+              <>
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Store size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.type", "Tipo")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {formattedCategory}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center border-x border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Users size={16} />
+                    <span className="text-xs font-medium uppercase">
+                      {t("client:resource.capacity", "Capacidad")}
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {property.maxGuests || "—"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 text-center">
+                  <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                    <Square size={16} />
+                    <span className="text-xs font-medium uppercase">m²</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {displayArea || "—"}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         <div className="mt-4 flex items-end justify-between">
           <div>
             <p className="text-xs text-slate-400 font-medium uppercase mb-0.5">
-              {isNightlyOperation
-                ? t("client:pricing.pricePerNight", "Precio por noche")
-                : t("client:pricing.label", "Precio")}
+              {priceDisplayLabel}
             </p>
             <p className="text-xl font-black text-slate-900 dark:text-white">
               {formatPrice(property.price, property.currency)}

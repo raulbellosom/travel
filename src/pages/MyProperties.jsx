@@ -21,7 +21,7 @@ import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
 import { hasRoleAtLeast } from "../utils/roles";
-import { TablePagination } from "../components/common";
+import { Select, TablePagination } from "../components/common";
 import LazyImage from "../components/common/atoms/LazyImage";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
@@ -454,6 +454,17 @@ const MyProperties = () => {
     [locale],
   );
 
+  const propertyStatusSelectOptions = useMemo(
+    () =>
+      PROPERTY_STATUS_OPTIONS.map((status) => ({
+        value: status,
+        label: t(`propertyStatus.${status}`, {
+          defaultValue: status,
+        }),
+      })),
+    [t],
+  );
+
   const renderRowActionTrigger = (item, triggerId) => (
     <button
       ref={(element) => {
@@ -697,23 +708,15 @@ const MyProperties = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <select
+                          <Select
                             value={item.status || "draft"}
-                            onChange={(event) =>
-                              handleStatusChange(item, event.target.value)
-                            }
+                            onChange={(value) => handleStatusChange(item, value)}
                             disabled={busyId === item.$id}
-                            className="min-h-10 min-w-36 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                            options={propertyStatusSelectOptions}
+                            size="sm"
+                            className="min-w-36"
                             aria-label={t("myPropertiesPage.table.status")}
-                          >
-                            {PROPERTY_STATUS_OPTIONS.map((status) => (
-                              <option key={status} value={status}>
-                                {t(`propertyStatus.${status}`, {
-                                  defaultValue: status,
-                                })}
-                              </option>
-                            ))}
-                          </select>
+                          />
                           {busyId === item.$id ? (
                             <Loader2
                               size={14}

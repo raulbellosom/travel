@@ -116,7 +116,9 @@ Reglas operativas:
 - `yearBuilt` queda para inmuebles; `vehicle` usa `attributes.vehicleModelYear`.
 - Campos especificos no inmobiliarios se serializan en `attributes` (JSON).
 - Al cambiar de tipo/categoria/modo, el payload limpia campos dinamicos fuera de perfil para evitar combinaciones ilogicas (ejemplo: `vehicle` con `bedrooms`).
-- Los pasos `features`, `rentalTerms` y `vacationRules` se renderizan solo si el perfil tiene campos.
+- Los pasos `features` y `commercialConditions` se renderizan solo si el perfil tiene campos.
+- `pricingModel` define la periodicidad de cobro; no existe selector duplicado de periodo.
+- `minimumContractDuration` se captura como `attributes.minimumContractDuration` para renta larga.
 
 Catalogo inicial de atributos dinamicos (`attributes`) en UI:
 
@@ -176,7 +178,8 @@ Se consume en:
 - booking: `manual_contact`
 - CTA: solicitar informacion
 - pagos online: no
-- `rentPeriod` habilita `daily`,`weekly`,`monthly`,`yearly`
+- condiciones comerciales: `furnished`, `petsAllowed`, `minimumContractDuration`
+- periodicidad de cobro unificada por `pricingModel` (`per_month`,`per_day`,`total`,`per_m2` segun tipo)
 
 ### rent_short_term
 
@@ -197,7 +200,10 @@ Se consume en:
 
 Durante migracion:
 
-- mantener aliases `operationType`, `propertyType`, `pricePerUnit`, `propertyId`.
+- retirar `operationType` del contrato de wizard/editor (solo `commercialMode`).
+- retirar `rentPeriod` del contrato de wizard/editor.
+- mantener normalizacion defensiva de payload legacy en capas de lectura/migracion.
+- mantener aliases `propertyType`, `pricePerUnit`, `propertyId` solo mientras exista deuda tecnica externa.
 - persistir `resourceId` como fuente canonica.
 - conservar ruta publica `/propiedades/:slug`.
 
@@ -210,5 +216,5 @@ Durante migracion:
 
 ---
 
-Ultima actualizacion: 2026-02-19
-Version: 1.2.0
+Ultima actualizacion: 2026-02-20
+Version: 1.3.0

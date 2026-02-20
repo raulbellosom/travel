@@ -25,7 +25,6 @@ import {
 import { cn } from "../../utils/cn";
 import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
-import { getConversationsRoute } from "../../utils/internalRoutes";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
 import PublicSearch from "../navigation/PublicSearch";
@@ -101,6 +100,17 @@ const PublicNavbar = () => {
     },
     [changeTheme, isDarkMode, toggleSwitchTheme],
   );
+
+  const nextThemeMobile =
+    currentTheme === "system"
+      ? "light"
+      : currentTheme === "light"
+        ? "dark"
+        : "system";
+
+  const handleThemeCycleMobile = useCallback(() => {
+    changeTheme(nextThemeMobile);
+  }, [changeTheme, nextThemeMobile]);
 
   const themes = useMemo(
     () => [
@@ -372,7 +382,7 @@ const PublicNavbar = () => {
               )}
             </div>
 
-            <div className="relative z-50 flex items-center gap-2 lg:hidden">
+            <div className="relative z-50 flex items-center gap-1.5 lg:hidden">
               <PublicSearch
                 showDesktopInput={false}
                 showMobileTrigger={!isMobileMenuOpen}
@@ -385,18 +395,67 @@ const PublicNavbar = () => {
               />
 
               {!isMobileSearchOpen && (
-                <button
-                  className={cn(
-                    "rounded-lg p-2 transition-colors",
-                    solidNav || isMobileMenuOpen
-                      ? "text-slate-800 dark:text-white"
-                      : "text-white",
+                <>
+                  <button
+                    onClick={onToggleLanguage}
+                    className={cn(
+                      circleBase,
+                      solidNav ? circleScrolled : circleTransparent,
+                    )}
+                    aria-label={t("dashboardNavbar.toggleLanguage")}
+                  >
+                    <span className="text-[10px] font-semibold uppercase tracking-wide">
+                      {String(nextLanguage || "en").toUpperCase()}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={handleThemeCycleMobile}
+                    className={cn(
+                      circleBase,
+                      solidNav ? circleScrolled : circleTransparent,
+                    )}
+                    aria-label={t("dashboardNavbar.toggleThemeTo", {
+                      theme: t(`theme.${nextThemeMobile}`),
+                    })}
+                  >
+                    <ThemeIcon size={15} />
+                  </button>
+
+                  {user ? (
+                    <UserDropdown user={user} onLogout={onLogout} />
+                  ) : (
+                    <Link
+                      to="/login"
+                      className={cn(
+                        circleBase,
+                        solidNav ? circleScrolled : circleTransparent,
+                      )}
+                      aria-label={t("nav.login", "Iniciar Sesión")}
+                    >
+                      <LogIn size={18} />
+                    </Link>
                   )}
-                  onClick={() => setIsMobileMenuOpen((previous) => !previous)}
-                  aria-label={t("nav.menu", "Menu")}
-                >
-                  {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                </button>
+
+                  <button
+                    className={cn(
+                      "rounded-lg p-1.5 transition-colors",
+                      solidNav || isMobileMenuOpen
+                        ? "text-slate-800 dark:text-white"
+                        : "text-white",
+                    )}
+                    onClick={() =>
+                      setIsMobileMenuOpen((previous) => !previous)
+                    }
+                    aria-label={t("nav.menu", "Menu")}
+                  >
+                    {isMobileMenuOpen ? (
+                      <X size={22} />
+                    ) : (
+                      <Menu size={22} />
+                    )}
+                  </button>
+                </>
               )}
             </div>
           </nav>
@@ -437,29 +496,20 @@ const PublicNavbar = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-6 p-6">
-                <div className="mb-2">
-                  <PublicSearch
-                    showDesktopInput
-                    showDesktopInputOnMobile
-                    showMobileTrigger={false}
-                    desktopContainerClassName="max-w-none"
-                  />
-                </div>
-
+              <div className="flex flex-col gap-4 p-5">
                 {navLinks.map((link) => (
                   <div
                     key={link.name}
-                    className="border-b border-slate-100 pb-4 dark:border-slate-800"
+                    className="border-b border-slate-100 pb-4 last:border-0 dark:border-slate-800"
                   >
                     <Link
                       to={link.path}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="mb-3 block text-xl font-bold text-slate-900 dark:text-white"
+                      className="mb-2.5 block text-base font-bold text-slate-900 dark:text-white"
                     >
                       {link.name}
                     </Link>
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       {link.items.map((item) => {
                         const Icon = item.icon;
                         return (
@@ -467,111 +517,19 @@ const PublicNavbar = () => {
                             key={item.to}
                             to={item.to}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 transition-colors hover:bg-cyan-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-slate-600 transition-colors hover:bg-cyan-50 dark:text-slate-300 dark:hover:bg-slate-800"
                           >
                             <Icon
-                              size={18}
+                              size={15}
                               className="shrink-0 text-cyan-600 dark:text-cyan-400"
                             />
-                            <span>{item.label}</span>
+                            <span className="truncate">{item.label}</span>
                           </Link>
                         );
                       })}
                     </div>
                   </div>
                 ))}
-
-                <div className="flex items-center gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
-                  <button
-                    onClick={onToggleLanguage}
-                    className={cn(circleBase, circleMobile)}
-                    aria-label={t("client:navbar.toggleLanguage")}
-                  >
-                    <span className="text-[11px] font-semibold uppercase tracking-wide">
-                      {String(nextLanguage || "en").toUpperCase()}
-                    </span>
-                  </button>
-
-                  {themes.map((themeOption) => {
-                    const Icon = themeOption.icon;
-                    const isSelected = theme === themeOption.value;
-                    return (
-                      <button
-                        key={themeOption.value}
-                        onClick={() => handleThemeChange(themeOption.value)}
-                        className={cn(
-                          circleBase,
-                          isSelected
-                            ? "border-cyan-300 bg-cyan-100 text-cyan-700 dark:border-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400"
-                            : circleMobile,
-                        )}
-                        aria-label={themeOption.name}
-                        title={themeOption.name}
-                      >
-                        <Icon size={16} />
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-2 flex flex-col gap-4">
-                  {user ? (
-                    <>
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {user?.name ||
-                            t("client:navbar.userMenu.defaultUser", "Usuario")}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-300">
-                          {user?.email}
-                        </p>
-                      </div>
-                      <Link
-                        to="/profile"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="w-full rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
-                      >
-                        {t("client:navbar.userMenu.profile", "Editar Perfil")}
-                      </Link>
-                      <Link
-                        to={getConversationsRoute(user)}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="w-full rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
-                      >
-                        {t("navbar.userMenu.conversations", "Mis conversaciones")}
-                      </Link>
-                      <Link
-                        to="/dashboard"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="w-full rounded-xl bg-cyan-500 py-3 text-center font-bold text-white"
-                      >
-                        {t("client:nav.dashboard", "Mi Panel")}
-                      </Link>
-                      <button
-                        onClick={onLogout}
-                        className="w-full rounded-xl border border-rose-300 py-3 text-center font-bold text-rose-600"
-                      >
-                        {t("client:nav.logout", "Cerrar Sesion")}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        to="/login"
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-center font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
-                      >
-                        <LogIn size={20} />
-                        {t("client:nav.login", "Iniciar Sesion")}
-                      </Link>
-                      <Link
-                        to="/register"
-                        className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-center font-bold text-white"
-                      >
-                        {t("client:nav.register", "Registrarse")}
-                      </Link>
-                    </>
-                  )}
-                </div>
               </div>
             </Motion.div>
           </>

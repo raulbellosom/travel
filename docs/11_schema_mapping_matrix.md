@@ -27,9 +27,9 @@ Regla:
 | Legacy | Canonico | Notas |
 | --- | --- | --- |
 | `properties.$id` | `resources.$id` | id principal de recurso |
-| `operationType` | `commercialMode` | `sale -> sale`, `rent -> rent_long_term`, `vacation_rental -> rent_short_term` (renta corta), `hourly -> rent_hourly` |
+| `operationType` | `commercialMode` | legacy en lectura/migracion; removido del contrato activo de wizard/editor |
 | `propertyType` | `category` | mapeo semantico por tipo |
-| `pricePerUnit` | `pricingModel` | alias temporal permitido; UI valida por `resourceType + commercialMode` |
+| `pricePerUnit` | `pricingModel` | legacy en lectura/migracion; `pricingModel` es la unica fuente activa en wizard/editor |
 | campos especificos por vertical | `attributes` (JSON) | vehicle/service/experience/venue usan perfil dinamico en frontend |
 | `propertyId` | `resourceId` | canonico en leads/reservations/chat |
 | `propertyTitle` | `resourceTitle` | denormalizado para UI/chat |
@@ -64,7 +64,7 @@ Nota de alcance para `propertyType -> category`:
 - `commercialMode`: `sale`, `rent_long_term`, `rent_short_term`, `rent_hourly`
 - `pricingModel`: `total`, `per_month`, `per_night`, `per_day`, `per_hour`, `per_person`, `per_event`, `per_m2`
 - `bookingType`: `manual_contact`, `date_range`, `time_slot`, `fixed_event`
-- `rentPeriod` (cuando `commercialMode=rent_long_term`): `daily`, `weekly`, `monthly`, `yearly`
+- `minimumContractDuration` (renta larga): `attributes.minimumContractDuration` (numero)
 
 ### instance_settings
 
@@ -86,5 +86,5 @@ Nota de alcance para `propertyType -> category`:
 
 ---
 
-Ultima actualizacion: 2026-02-19
-Version: 2.2.0
+Ultima actualizacion: 2026-02-20
+Version: 2.3.0

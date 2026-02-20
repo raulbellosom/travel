@@ -22,6 +22,7 @@ import {
 import Combobox from "../../../components/common/molecules/Combobox";
 import { Select } from "../../../components/common";
 import { getAmenityIcon } from "../../../data/amenitiesCatalog";
+import { getAmenityRelevanceScore } from "../amenityRelevance";
 import { propertiesService } from "../../../services/propertiesService";
 import { isValidSlug, normalizeSlug } from "../../../utils/slug";
 import { locationOptionsService } from "../services/locationOptionsService";
@@ -377,11 +378,21 @@ const PropertyForm = ({
         return {
           value: item.$id,
           label,
+          relevanceScore: getAmenityRelevanceScore({
+            item,
+            resourceType: "property",
+            category: form.propertyType,
+          }),
           searchText: `${item.slug || ""} ${item.name_es || ""} ${item.name_en || ""}`.trim(),
         };
       })
-      .sort((left, right) => left.label.localeCompare(right.label));
-  }, [amenitiesOptions, amenityNameField, form.amenityIds]);
+      .sort((a, b) => {
+        if (b.relevanceScore !== a.relevanceScore) {
+          return b.relevanceScore - a.relevanceScore;
+        }
+        return a.label.localeCompare(b.label);
+      });
+  }, [amenitiesOptions, amenityNameField, form.amenityIds, form.propertyType]);
 
   useEffect(() => {
     if (mode !== "create" || slugManuallyEdited) return;
@@ -1260,6 +1271,7 @@ const PropertyForm = ({
                   placeholder={t("propertyForm.amenities.searchPlaceholder")}
                   noResultsText={t("propertyForm.amenities.searchEmpty")}
                   onChange={handleAmenitySelect}
+                  keepOpenAfterSelect={true}
                 />
               </label>
             ) : null}

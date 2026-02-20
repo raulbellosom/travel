@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft, Eye, X } from "lucide-react";
 import PropertyEditor from "../features/listings/components/editor/PropertyEditor";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
+import { useToast } from "../hooks/useToast";
 import {
   INTERNAL_ROUTES,
   getInternalPropertyDetailRoute,
@@ -23,6 +24,7 @@ const EditProperty = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -53,7 +55,14 @@ const EditProperty = () => {
       })
       .catch((err) => {
         if (!mounted) return;
-        setError(getErrorMessage(err, t("editPropertyPage.errors.load")));
+        const message = getErrorMessage(err, t("editPropertyPage.errors.load"));
+        setError(message);
+        showToast({
+          type: "error",
+          title: t("editPropertyPage.errors.load"),
+          message,
+          durationMs: 7000,
+        });
       })
       .finally(() => {
         if (!mounted) return;
@@ -63,12 +72,18 @@ const EditProperty = () => {
     return () => {
       mounted = false;
     };
-  }, [id, t]);
+  }, [id, showToast, t]);
 
   const handleSubmit = async (values) => {
     if (!id || !user?.$id) return;
     setSaving(true);
     setError("");
+    showToast({
+      type: "info",
+      title: t("editPropertyPage.title"),
+      message: t("editPropertyPage.messages.saving", "Guardando cambios..."),
+      durationMs: 1800,
+    });
     try {
       const { amenityIds = [], imageFiles = [], ...propertyData } = values;
 
@@ -103,9 +118,24 @@ const EditProperty = () => {
         });
       }
 
+      showToast({
+        type: "success",
+        title: t("editPropertyPage.title"),
+        message: t(
+          "editPropertyPage.messages.saved",
+          "Cambios guardados correctamente.",
+        ),
+      });
       navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err, t("editPropertyPage.errors.save")));
+      const message = getErrorMessage(err, t("editPropertyPage.errors.save"));
+      setError(message);
+      showToast({
+        type: "error",
+        title: t("editPropertyPage.errors.save"),
+        message,
+        durationMs: 7000,
+      });
     } finally {
       setSaving(false);
     }
@@ -162,7 +192,17 @@ const EditProperty = () => {
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-          {error}
+          <div className="flex items-start justify-between gap-3">
+            <p className="break-words">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="rounded-md p-1 opacity-80 transition hover:bg-red-100 hover:opacity-100 dark:hover:bg-red-900/40"
+              aria-label={t("common.close", "Cerrar")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       ) : null}
 

@@ -10,8 +10,6 @@ import {
   normalizeCommercialMode,
   normalizePricingModel,
   normalizeResourceType,
-  toLegacyOperationType,
-  toLegacyPricePerUnit,
 } from "../../../../utils/resourceModel";
 import {
   isAllowedCategory,
@@ -25,8 +23,10 @@ import {
   getResourceFormProfile,
   parseResourceAttributes,
   RESOURCE_ATTRIBUTE_FIELD_KEYS,
+  RESOURCE_FORM_FIELD_DEFINITIONS,
   toUiFieldValue,
 } from "../../../../utils/resourceFormProfile";
+import { getAmenityRelevanceScore } from "../../amenityRelevance";
 
 let locationOptionsServicePromise = null;
 
@@ -43,7 +43,7 @@ const loadLocationOptionsService = async () => {
   return locationOptionsServicePromise;
 };
 
-/* ── helpers ────────────────────────────────────────────────────── */
+/* â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const toInputString = (value, fallback = "") => {
   if (value === null || value === undefined || value === "") return fallback;
@@ -96,12 +96,17 @@ const ROOT_FIELD_PAYLOAD_DEFAULTS = Object.freeze({
   maxGuests: 1,
   furnished: null,
   petsAllowed: false,
-  rentPeriod: null,
   minStayNights: 1,
   maxStayNights: 365,
   checkInTime: "15:00",
   checkOutTime: "11:00",
 });
+
+const ROOT_RESOURCE_FIELD_DEFINITIONS = Object.freeze(
+  Object.values(RESOURCE_FORM_FIELD_DEFINITIONS).filter(
+    (field) => field?.source === "root",
+  ),
+);
 
 const normalizeCategoryValue = (
   resourceType,
@@ -138,14 +143,12 @@ const buildCommercialState = (
   const bookingType = normalizeBookingType(draft.bookingType, commercialMode);
   return {
     commercialMode,
-    operationType: toLegacyOperationType(commercialMode),
     pricingModel,
-    pricePerUnit: toLegacyPricePerUnit(pricingModel),
     bookingType,
   };
 };
 
-/* ── build form state ────────────────────────────────────────── */
+/* â”€â”€ build form state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export const buildFormState = (initialValues = {}) => {
   const merged = {
@@ -163,7 +166,7 @@ export const buildFormState = (initialValues = {}) => {
   );
   const commercialState = buildCommercialState(
     merged,
-    merged.commercialMode || merged.operationType || WIZARD_DEFAULTS.operationType,
+    merged.commercialMode || WIZARD_DEFAULTS.commercialMode,
     resourceType,
   );
   const initialAttributes = parseResourceAttributes(merged.attributes || "{}");
@@ -192,9 +195,7 @@ export const buildFormState = (initialValues = {}) => {
     category,
     propertyType: category,
     commercialMode: commercialState.commercialMode,
-    operationType: commercialState.operationType,
     pricingModel: commercialState.pricingModel,
-    pricePerUnit: commercialState.pricePerUnit,
     bookingType: commercialState.bookingType,
     attributes: normalizeAttributes(initialAttributes),
     slug: normalizeSlug(merged.slug || ""),
@@ -218,7 +219,6 @@ export const buildFormState = (initialValues = {}) => {
     maxGuests: toInputString(merged.maxGuests, "1"),
     furnished: String(merged.furnished || ""),
     petsAllowed: Boolean(merged.petsAllowed),
-    rentPeriod: String(merged.rentPeriod || "monthly"),
     minStayNights: toInputString(merged.minStayNights, "1"),
     maxStayNights: toInputString(merged.maxStayNights, "365"),
     checkInTime: String(merged.checkInTime || "15:00"),
@@ -234,10 +234,10 @@ export const buildFormState = (initialValues = {}) => {
   };
 };
 
-/* ── main hook ──────────────────────────────────────────────── */
+/* â”€â”€ main hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /**
- * useWizardForm — shared form state, validation, slug checking,
+ * useWizardForm â€” shared form state, validation, slug checking,
  * location cascade, amenity picker and image upload for the
  * property creation wizard and edit form.
  */
@@ -260,7 +260,7 @@ export const useWizardForm = ({
     [initialValues],
   );
 
-  /* ── state ─────────────────────────────────────────────── */
+  /* â”€â”€ state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const [form, setForm] = useState(mergedInitialValues);
   const [errors, setErrors] = useState({});
@@ -297,7 +297,7 @@ export const useWizardForm = ({
     [mergedInitialValues.slug],
   );
 
-  /* ── cleanup ───────────────────────────────────────────── */
+  /* â”€â”€ cleanup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const clearPendingImages = useCallback(() => {
     setPendingImageItems((prev) => {
@@ -318,7 +318,7 @@ export const useWizardForm = ({
     [],
   );
 
-  /* ── reset on initialValues change ─────────────────── */
+  /* â”€â”€ reset on initialValues change â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   useEffect(() => {
     setForm(mergedInitialValues);
@@ -351,7 +351,7 @@ export const useWizardForm = ({
     }
   }, [isLocationOptionsLoading, locationService]);
 
-  /* ── field helpers ─────────────────────────────────── */
+  /* â”€â”€ field helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const clearError = useCallback((field) => {
     setErrors((prev) => {
@@ -365,7 +365,7 @@ export const useWizardForm = ({
   const setField = useCallback(
     (field, value) => {
       setForm((prev) => {
-        if (field === "operationType" || field === "commercialMode") {
+        if (field === "commercialMode") {
           return {
             ...prev,
             ...buildCommercialState(prev, value, prev.resourceType),
@@ -385,16 +385,15 @@ export const useWizardForm = ({
           };
         }
 
-        if (field === "pricingModel" || field === "pricePerUnit") {
+        if (field === "pricingModel") {
           const pricingModel = pickAllowedPricingModel(
             value,
-            prev.commercialMode || prev.operationType || "sale",
+            prev.commercialMode || "sale",
             prev.resourceType,
           );
           return {
             ...prev,
             pricingModel,
-            pricePerUnit: toLegacyPricePerUnit(pricingModel),
           };
         }
 
@@ -403,7 +402,7 @@ export const useWizardForm = ({
             ...prev,
             bookingType: normalizeBookingType(
               value,
-              prev.commercialMode || prev.operationType || "sale",
+              prev.commercialMode || "sale",
             ),
           };
         }
@@ -417,7 +416,7 @@ export const useWizardForm = ({
           );
           const commercialState = buildCommercialState(
             prev,
-            prev.commercialMode || prev.operationType || WIZARD_DEFAULTS.operationType,
+            prev.commercialMode || WIZARD_DEFAULTS.commercialMode,
             nextResourceType,
           );
           return {
@@ -439,22 +438,17 @@ export const useWizardForm = ({
         return { ...prev, [field]: value };
       });
       clearError(field);
-      if (field === "operationType" || field === "commercialMode") {
-        clearError("operationType");
+      if (field === "commercialMode") {
         clearError("commercialMode");
       }
       if (field === "propertyType" || field === "category") {
-        clearError("propertyType");
         clearError("category");
       }
-      if (field === "pricingModel" || field === "pricePerUnit") {
+      if (field === "pricingModel") {
         clearError("pricingModel");
-        clearError("pricePerUnit");
       }
       if (field === "resourceType") {
-        clearError("propertyType");
         clearError("category");
-        clearError("operationType");
         clearError("commercialMode");
       }
     },
@@ -466,14 +460,22 @@ export const useWizardForm = ({
       getResourceFormProfile({
         resourceType: form.resourceType,
         category: form.category || form.propertyType,
-        commercialMode: form.commercialMode || form.operationType,
+        commercialMode: form.commercialMode,
       }),
-    [form.category, form.commercialMode, form.operationType, form.propertyType, form.resourceType],
+    [form.category, form.commercialMode, form.propertyType, form.resourceType],
   );
 
   const resourceAttributes = useMemo(
     () => parseResourceAttributes(form.attributes),
     [form.attributes],
+  );
+  const activeRootFieldKeySignature = useMemo(
+    () => resourceFormProfile.rootFieldKeys.join("|"),
+    [resourceFormProfile.rootFieldKeys],
+  );
+  const activeAttributeFieldKeySignature = useMemo(
+    () => resourceFormProfile.attributeFieldKeys.join("|"),
+    [resourceFormProfile.attributeFieldKeys],
   );
 
   const getResourceFieldValue = useCallback(
@@ -523,8 +525,71 @@ export const useWizardForm = ({
     },
     [clearError, setField],
   );
+  useEffect(() => {
+    const activeRootFieldKeys = new Set(resourceFormProfile.rootFieldKeys);
+    const activeAttributeFieldKeys = new Set(resourceFormProfile.attributeFieldKeys);
 
-  /* ── slug auto-generate ────────────────────────────── */
+    setForm((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      ROOT_RESOURCE_FIELD_DEFINITIONS.forEach((field) => {
+        if (activeRootFieldKeys.has(field.key)) return;
+        const defaultValue =
+          field.inputType === "boolean"
+            ? Boolean(field.defaultValue)
+            : field.defaultValue ?? "";
+        if (next[field.key] === defaultValue) return;
+        next[field.key] = defaultValue;
+        changed = true;
+      });
+
+      const nextAttributes = parseResourceAttributes(prev.attributes);
+      let attributesChanged = false;
+      RESOURCE_ATTRIBUTE_FIELD_KEYS.forEach((fieldKey) => {
+        if (activeAttributeFieldKeys.has(fieldKey)) return;
+        if (!Object.prototype.hasOwnProperty.call(nextAttributes, fieldKey)) return;
+        delete nextAttributes[fieldKey];
+        attributesChanged = true;
+      });
+
+      if (attributesChanged) {
+        const normalizedAttributes = normalizeAttributes(nextAttributes);
+        if (next.attributes !== normalizedAttributes) {
+          next.attributes = normalizedAttributes;
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+
+    setErrors((prev) => {
+      const dynamicKeys = new Set(Object.keys(RESOURCE_FORM_FIELD_DEFINITIONS));
+      let changed = false;
+      const next = { ...prev };
+      Object.keys(prev).forEach((errorKey) => {
+        if (!dynamicKeys.has(errorKey)) return;
+        if (
+          activeRootFieldKeys.has(errorKey) ||
+          activeAttributeFieldKeys.has(errorKey)
+        ) {
+          return;
+        }
+        delete next[errorKey];
+        changed = true;
+      });
+      return changed ? next : prev;
+    });
+  }, [
+    activeAttributeFieldKeySignature,
+    activeRootFieldKeySignature,
+    resourceFormProfile.attributeFieldKeys,
+    resourceFormProfile.rootFieldKeys,
+  ]);
+
+
+  /* â”€â”€ slug auto-generate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   useEffect(() => {
     if (mode !== "create" || slugManuallyEdited) return;
@@ -534,7 +599,7 @@ export const useWizardForm = ({
     clearError("slug");
   }, [form.title, form.slug, mode, slugManuallyEdited, clearError]);
 
-  /* ── slug availability check ───────────────────────── */
+  /* â”€â”€ slug availability check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   useEffect(() => {
     const candidate = normalizeSlug(form.slug);
@@ -601,7 +666,7 @@ export const useWizardForm = ({
     }
   }, [form.slug, initialSlug, mode, resolvedPropertyId]);
 
-  /* ── Title / Slug handlers ─────────────────────────── */
+  /* â”€â”€ Title / Slug handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const handleTitleChange = useCallback(
     (value) => {
@@ -632,7 +697,7 @@ export const useWizardForm = ({
     setField("slug", generated);
   }, [form.title, setField]);
 
-  /* ── Location ──────────────────────────────────────── */
+  /* â”€â”€ Location â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const selectedCountry = useMemo(() => {
     if (!locationService) return null;
@@ -707,7 +772,7 @@ export const useWizardForm = ({
     [setField],
   );
 
-  /* ── Amenities ─────────────────────────────────────── */
+  /* â”€â”€ Amenities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const selectedAmenities = useMemo(() => {
     const byId = new Map(
@@ -730,12 +795,29 @@ export const useWizardForm = ({
         return {
           value: item.$id,
           label,
+          relevanceScore: getAmenityRelevanceScore({
+            item,
+            resourceType: form.resourceType,
+            category: form.category || form.propertyType,
+          }),
           searchText:
             `${item.slug || ""} ${item.name_es || ""} ${item.name_en || ""}`.trim(),
         };
       })
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [amenitiesOptions, amenityNameField, form.amenityIds]);
+      .sort((a, b) => {
+        if (b.relevanceScore !== a.relevanceScore) {
+          return b.relevanceScore - a.relevanceScore;
+        }
+        return a.label.localeCompare(b.label);
+      });
+  }, [
+    amenitiesOptions,
+    amenityNameField,
+    form.amenityIds,
+    form.category,
+    form.propertyType,
+    form.resourceType,
+  ]);
 
   const resetAmenityPicker = useCallback(() => {
     setAmenityPickerValue("");
@@ -766,7 +848,7 @@ export const useWizardForm = ({
     }));
   }, []);
 
-  /* ── Images ────────────────────────────────────────── */
+  /* â”€â”€ Images â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const normalizedExistingImages = useMemo(
     () =>
@@ -942,7 +1024,7 @@ export const useWizardForm = ({
     };
   }, [form.city, form.country, form.state, locationService]);
 
-  /* ── Validation ────────────────────────────────────── */
+  /* â”€â”€ Validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const validate = useCallback(
     (fields = []) => {
@@ -959,7 +1041,7 @@ export const useWizardForm = ({
         .trim()
         .toLowerCase();
       const commercialModeValue = normalizeCommercialMode(
-        form.commercialMode || form.operationType || "",
+        form.commercialMode || "",
       );
 
       const { validCountry, validState, validCity } = resolveLocationValues();
@@ -990,36 +1072,28 @@ export const useWizardForm = ({
       }
       // category/propertyType
       if (
-        (shouldValidate("propertyType") || shouldValidate("category")) &&
+        shouldValidate("category") &&
         !categoryValue
       )
-        nextErrors.propertyType = t(
-          "propertyForm.validation.propertyTypeRequired",
-        );
-      else if (
-        shouldValidate("propertyType") ||
-        shouldValidate("category")
-      ) {
+        nextErrors.category = t("propertyForm.validation.categoryRequired");
+      else if (shouldValidate("category")) {
         if (!isAllowedCategory(resourceType, categoryValue)) {
-          nextErrors.propertyType = t(
+          nextErrors.category = t(
             "propertyForm.validation.categoryInvalidForResourceType",
           );
         }
       }
-      // commercialMode/operationType
+      // commercialMode
       if (
-        (shouldValidate("operationType") || shouldValidate("commercialMode")) &&
-        !String(form.commercialMode || form.operationType || "").trim()
+        shouldValidate("commercialMode") &&
+        !String(form.commercialMode || "").trim()
       )
-        nextErrors.operationType = t(
-          "propertyForm.validation.operationTypeRequired",
+        nextErrors.commercialMode = t(
+          "propertyForm.validation.commercialModeRequired",
         );
-      else if (
-        shouldValidate("operationType") ||
-        shouldValidate("commercialMode")
-      ) {
+      else if (shouldValidate("commercialMode")) {
         if (!isAllowedCommercialMode(resourceType, commercialModeValue)) {
-          nextErrors.operationType = t(
+          nextErrors.commercialMode = t(
             "propertyForm.validation.commercialModeInvalidForResourceType",
           );
         }
@@ -1041,8 +1115,8 @@ export const useWizardForm = ({
       // city
       if (shouldValidate("city") && !validCity)
         nextErrors.city = t("propertyForm.validation.cityRequired");
-      const bookingRuleKeys = new Set(
-        resourceFormProfile.vacationRules.map((field) => field.key),
+      const commercialConditionKeys = new Set(
+        resourceFormProfile.commercialConditions.map((field) => field.key),
       );
       const attributeValues = parseResourceAttributes(form.attributes);
 
@@ -1060,7 +1134,7 @@ export const useWizardForm = ({
 
         if (field.inputType === "number") {
           const isRequiredGuestsField =
-            field.key === "maxGuests" && bookingRuleKeys.has("maxGuests");
+            field.key === "maxGuests" && commercialConditionKeys.has("maxGuests");
 
           if (!hasUiValue && isRequiredGuestsField) {
             nextErrors.maxGuests = t("propertyForm.validation.maxGuestsRequired");
@@ -1136,8 +1210,8 @@ export const useWizardForm = ({
 
       if (
         (shouldValidate("bookingMinUnits") || shouldValidate("bookingMaxUnits")) &&
-        bookingRuleKeys.has("bookingMinUnits") &&
-        bookingRuleKeys.has("bookingMaxUnits")
+        commercialConditionKeys.has("bookingMinUnits") &&
+        commercialConditionKeys.has("bookingMaxUnits")
       ) {
         const minUnits = parseNumber(attributeValues.bookingMinUnits, Number.NaN);
         const maxUnits = parseNumber(attributeValues.bookingMaxUnits, Number.NaN);
@@ -1160,7 +1234,7 @@ export const useWizardForm = ({
     [form, resolveLocationValues, resourceFormProfile, slugStatus.state, t],
   );
 
-  /* ── Build payload ─────────────────────────────────── */
+  /* â”€â”€ Build payload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const buildPayload = useCallback(() => {
     const { validCountry, validState, validCity } = resolveLocationValues();
@@ -1173,10 +1247,10 @@ export const useWizardForm = ({
     );
     const commercialMode = sanitizeCommercialMode(
       resourceType,
-      form.commercialMode || form.operationType || "sale",
+      form.commercialMode || "sale",
     );
     const pricingModel = pickAllowedPricingModel(
-      form.pricingModel || form.pricePerUnit || "total",
+      form.pricingModel || "total",
       commercialMode,
       resourceType,
     );
@@ -1242,10 +1316,6 @@ export const useWizardForm = ({
     const petsAllowed = isRootFieldActive("petsAllowed")
       ? Boolean(form.petsAllowed)
       : ROOT_FIELD_PAYLOAD_DEFAULTS.petsAllowed;
-    const rentPeriod =
-      commercialMode === "rent_long_term" && isRootFieldActive("rentPeriod")
-        ? String(form.rentPeriod || "monthly")
-        : ROOT_FIELD_PAYLOAD_DEFAULTS.rentPeriod;
     const minStayNights = isRootFieldActive("minStayNights")
       ? clampToRange(parseNumber(form.minStayNights, 1), 1, 365)
       : ROOT_FIELD_PAYLOAD_DEFAULTS.minStayNights;
@@ -1267,9 +1337,7 @@ export const useWizardForm = ({
       category,
       propertyType: category,
       commercialMode,
-      operationType: toLegacyOperationType(commercialMode),
       pricingModel,
-      pricePerUnit: toLegacyPricePerUnit(pricingModel),
       bookingType,
       attributes: normalizeAttributes(attributesPayload),
       price: clampToRange(parseNumber(form.price, 0), 0, 999999999),
@@ -1290,7 +1358,6 @@ export const useWizardForm = ({
       maxGuests,
       furnished,
       petsAllowed,
-      rentPeriod,
       minStayNights,
       maxStayNights,
       checkInTime,
@@ -1300,14 +1367,17 @@ export const useWizardForm = ({
       country: validCountry?.value || "MX",
       state: validState?.value || "",
       city: validCity?.value || "",
-      status: "draft",
+      status:
+        mode === "create"
+          ? "draft"
+          : String(form.status || mergedInitialValues.status || "draft"),
       featured: Boolean(form.featured),
       amenityIds: Array.from(new Set(form.amenityIds || [])),
       imageFiles: pendingImageItems.map((i) => i.file).filter(Boolean),
     };
-  }, [form, pendingImageItems, resolveLocationValues]);
+  }, [form, mergedInitialValues.status, mode, pendingImageItems, resolveLocationValues]);
 
-  /* ── Slug status view ──────────────────────────────── */
+  /* â”€â”€ Slug status view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const slugStatusView = useMemo(() => {
     const s = slugStatus.state;
@@ -1346,7 +1416,7 @@ export const useWizardForm = ({
     );
   }, [slugStatus.state, t]);
 
-  /* ── return ────────────────────────────────────────── */
+  /* â”€â”€ return â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   return {
     form,
@@ -1423,7 +1493,7 @@ export const useWizardForm = ({
     renderFieldError: (field) =>
       errors[field] ? (
         <p className="inline-flex items-start gap-1 text-xs text-red-600 dark:text-red-300">
-          <span className="mt-0.5 inline-block h-3 w-3 shrink-0">⚠</span>
+          <span className="mt-0.5 inline-block h-3 w-3 shrink-0">!</span>
           <span>{errors[field]}</span>
         </p>
       ) : null,

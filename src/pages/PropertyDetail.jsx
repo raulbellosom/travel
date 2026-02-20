@@ -33,6 +33,19 @@ import {
   Home,
   Ruler,
   CalendarDays,
+  Wrench,
+  Compass,
+  Bike,
+  Ship,
+  Armchair,
+  LayoutGrid,
+  CalendarHeart,
+  Ticket,
+  GraduationCap,
+  Dumbbell,
+  TreePine,
+  UtensilsCrossed,
+  Tag,
 } from "lucide-react";
 import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
@@ -112,10 +125,10 @@ const PropertyDetail = () => {
   usePageSeo({
     title: property?.title
       ? `${property.title} | Inmobo`
-      : "Inmobo | Detalle de propiedad",
+      : "Inmobo | Detalle de recurso",
     description: property?.description
       ? String(property.description).slice(0, 155)
-      : "Detalle de propiedad con galería, amenidades y contacto.",
+      : "Detalle de recurso con galería, amenidades y contacto.",
     robots: "index, follow",
   });
 
@@ -180,23 +193,34 @@ const PropertyDetail = () => {
 
   const priceSuffix = useMemo(() => {
     if (!property) return "";
-    if (resourceBehavior.priceLabel === "night")
-      return t("client:propertyDetail.price.perNight");
-    if (resourceBehavior.priceLabel === "hour")
-      return t("client:pricing.perHour", { defaultValue: " /hora" });
-    if (isRent(opType))
-      return getRentPeriodSuffix(property.rentPeriod, t);
-    return "";
-  }, [opType, property, resourceBehavior.priceLabel, t]);
+    const pm = resourceBehavior.pricingModel;
+    const suffixMap = {
+      per_month: t("client:pricing.perMonth", { defaultValue: " /mes" }),
+      per_night: t("client:pricing.perNight", { defaultValue: " /noche" }),
+      per_day: t("client:pricing.perDay", { defaultValue: " /día" }),
+      per_hour: t("client:pricing.perHour", { defaultValue: " /hora" }),
+      per_person: t("client:pricing.perPerson", { defaultValue: " /persona" }),
+      per_event: t("client:pricing.perEvent", { defaultValue: " /evento" }),
+      per_m2: t("client:pricing.perM2", { defaultValue: " /m²" }),
+    };
+    return suffixMap[pm] || "";
+  }, [property, resourceBehavior.pricingModel, t]);
 
   const priceLabel = useMemo(() => {
     if (!property) return "";
-    if (isSale(opType)) return t("client:propertyDetail.price.sale");
-    if (isHourly(opType))
-      return t("client:pricing.perHour", { defaultValue: "Precio por hora" });
-    if (isRent(opType)) return t("client:propertyDetail.price.rent");
-    return t("client:propertyDetail.price.vacationRental");
-  }, [opType, property, t]);
+    const pm = resourceBehavior.pricingModel;
+    const labelMap = {
+      total: t("client:common.enums.pricingModel.total", { defaultValue: "Precio total" }),
+      per_month: t("client:common.enums.pricingModel.per_month", { defaultValue: "Precio mensual" }),
+      per_night: t("client:common.enums.pricingModel.per_night", { defaultValue: "Precio por noche" }),
+      per_day: t("client:common.enums.pricingModel.per_day", { defaultValue: "Precio por día" }),
+      per_hour: t("client:common.enums.pricingModel.per_hour", { defaultValue: "Precio por hora" }),
+      per_person: t("client:common.enums.pricingModel.per_person", { defaultValue: "Precio por persona" }),
+      per_event: t("client:common.enums.pricingModel.per_event", { defaultValue: "Precio por evento" }),
+      per_m2: t("client:common.enums.pricingModel.per_m2", { defaultValue: "Precio por m²" }),
+    };
+    return labelMap[pm] || labelMap.total;
+  }, [property, resourceBehavior.pricingModel, t]);
 
   const ownerName = useMemo(() => {
     const name = `${owner?.firstName || ""} ${owner?.lastName || ""}`.trim();
@@ -530,10 +554,12 @@ const PropertyDetail = () => {
           <ChevronRight size={14} className="shrink-0" />
           <li>
             <Link
-              to="/buscar?page=1"
+              to={`/buscar?resourceType=${resourceBehavior.resourceType}&page=1`}
               className="transition hover:text-cyan-600 dark:hover:text-cyan-400"
             >
-              {t("client:propertyDetail.breadcrumb.properties")}
+              {t(`client:common.enums.resourceType.${resourceBehavior.resourceType}`, {
+                defaultValue: t("client:propertyDetail.breadcrumb.properties"),
+              })}
             </Link>
           </li>
           <ChevronRight size={14} className="shrink-0" />
@@ -757,13 +783,23 @@ const PropertyDetail = () => {
                     .join(", ")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Building2
+                  <Tag
                     size={16}
                     className="text-cyan-600 dark:text-cyan-400"
                   />
                   {t(
-                    `client:common.enums.propertyType.${property.propertyType}`,
-                    { defaultValue: property.propertyType },
+                    `client:common.enums.category.${resourceBehavior.category}`,
+                    { defaultValue: resourceBehavior.category },
+                  )}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <LayoutGrid
+                    size={16}
+                    className="text-cyan-600 dark:text-cyan-400"
+                  />
+                  {t(
+                    `client:common.enums.resourceType.${resourceBehavior.resourceType}`,
+                    { defaultValue: resourceBehavior.resourceType },
                   )}
                 </span>
               </div>
@@ -801,57 +837,171 @@ const PropertyDetail = () => {
 
             {/* ── Quick Stats Grid ──────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              <StatCard
-                icon={BedDouble}
-                label={t("client:propertyDetail.stats.bedrooms")}
-                value={property.bedrooms}
-              />
-              <StatCard
-                icon={Bath}
-                label={t("client:propertyDetail.stats.bathrooms")}
-                value={property.bathrooms}
-              />
-              {property.totalArea > 0 && (
-                <StatCard
-                  icon={Ruler}
-                  label={t("client:propertyDetail.stats.totalArea")}
-                  value={`${property.totalArea} m²`}
-                />
+              {/* ── Property stats ── */}
+              {resourceBehavior.resourceType === "property" && (
+                <>
+                  <StatCard
+                    icon={BedDouble}
+                    label={t("client:propertyDetail.stats.bedrooms")}
+                    value={property.bedrooms}
+                  />
+                  <StatCard
+                    icon={Bath}
+                    label={t("client:propertyDetail.stats.bathrooms")}
+                    value={property.bathrooms}
+                  />
+                  {property.totalArea > 0 && (
+                    <StatCard
+                      icon={Ruler}
+                      label={t("client:propertyDetail.stats.totalArea")}
+                      value={`${property.totalArea} m²`}
+                    />
+                  )}
+                  {property.builtArea > 0 && (
+                    <StatCard
+                      icon={Landmark}
+                      label={t("client:propertyDetail.stats.builtArea")}
+                      value={`${property.builtArea} m²`}
+                    />
+                  )}
+                  {property.parkingSpaces > 0 && (
+                    <StatCard
+                      icon={Car}
+                      label={t("client:propertyDetail.stats.parkingSpaces")}
+                      value={property.parkingSpaces}
+                    />
+                  )}
+                  {property.floors > 0 && !isVacation(opType) && (
+                    <StatCard
+                      icon={Layers}
+                      label={t("client:propertyDetail.stats.floors")}
+                      value={property.floors}
+                    />
+                  )}
+                  {property.yearBuilt && isSale(opType) && (
+                    <StatCard
+                      icon={CalendarDays}
+                      label={t("client:propertyDetail.stats.yearBuilt")}
+                      value={property.yearBuilt}
+                    />
+                  )}
+                  {isVacation(opType) && property.maxGuests > 0 && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:propertyDetail.stats.maxGuests")}
+                      value={property.maxGuests}
+                    />
+                  )}
+                </>
               )}
-              {property.builtArea > 0 && (
-                <StatCard
-                  icon={Landmark}
-                  label={t("client:propertyDetail.stats.builtArea")}
-                  value={`${property.builtArea} m²`}
-                />
+
+              {/* ── Vehicle stats ── */}
+              {resourceBehavior.resourceType === "vehicle" && (
+                <>
+                  <StatCard
+                    icon={Car}
+                    label={t("client:resource.type", { defaultValue: "Tipo" })}
+                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                  />
+                  {property.maxGuests > 0 && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:resource.passengers", { defaultValue: "Pasajeros" })}
+                      value={property.maxGuests}
+                    />
+                  )}
+                  {property.totalArea > 0 && (
+                    <StatCard
+                      icon={Ruler}
+                      label={t("client:propertyDetail.stats.totalArea")}
+                      value={`${property.totalArea} m²`}
+                    />
+                  )}
+                  <StatCard
+                    icon={LayoutGrid}
+                    label={t("client:resource.mode", { defaultValue: "Modalidad" })}
+                    value={t(`client:common.enums.operation.${resourceBehavior.commercialMode}`, { defaultValue: resourceBehavior.commercialMode })}
+                  />
+                </>
               )}
-              {property.parkingSpaces > 0 && (
-                <StatCard
-                  icon={Car}
-                  label={t("client:propertyDetail.stats.parkingSpaces")}
-                  value={property.parkingSpaces}
-                />
+
+              {/* ── Service stats ── */}
+              {resourceBehavior.resourceType === "service" && (
+                <>
+                  <StatCard
+                    icon={Wrench}
+                    label={t("client:resource.type", { defaultValue: "Tipo" })}
+                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                  />
+                  <StatCard
+                    icon={Clock}
+                    label={t("client:resource.duration", { defaultValue: "Duración" })}
+                    value={property.minStayNights ? `${property.minStayNights}h` : "—"}
+                  />
+                  <StatCard
+                    icon={MapPin}
+                    label={t("client:resource.location", { defaultValue: "Ubicación" })}
+                    value={property.city || property.state || "—"}
+                  />
+                </>
               )}
-              {property.floors > 0 && !isVacation(opType) && (
-                <StatCard
-                  icon={Layers}
-                  label={t("client:propertyDetail.stats.floors")}
-                  value={property.floors}
-                />
+
+              {/* ── Experience stats ── */}
+              {resourceBehavior.resourceType === "experience" && (
+                <>
+                  <StatCard
+                    icon={Compass}
+                    label={t("client:resource.type", { defaultValue: "Tipo" })}
+                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                  />
+                  {property.maxGuests > 0 && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:resource.maxGuests", { defaultValue: "Máx. personas" })}
+                      value={property.maxGuests}
+                    />
+                  )}
+                  <StatCard
+                    icon={Clock}
+                    label={t("client:resource.duration", { defaultValue: "Duración" })}
+                    value={property.minStayNights ? `${property.minStayNights}h` : "—"}
+                  />
+                  <StatCard
+                    icon={MapPin}
+                    label={t("client:resource.location", { defaultValue: "Ubicación" })}
+                    value={property.city || property.state || "—"}
+                  />
+                </>
               )}
-              {property.yearBuilt && isSale(opType) && (
-                <StatCard
-                  icon={CalendarDays}
-                  label={t("client:propertyDetail.stats.yearBuilt")}
-                  value={property.yearBuilt}
-                />
-              )}
-              {isVacation(opType) && property.maxGuests > 0 && (
-                <StatCard
-                  icon={Users}
-                  label={t("client:propertyDetail.stats.maxGuests")}
-                  value={property.maxGuests}
-                />
+
+              {/* ── Venue stats ── */}
+              {resourceBehavior.resourceType === "venue" && (
+                <>
+                  <StatCard
+                    icon={CalendarHeart}
+                    label={t("client:resource.type", { defaultValue: "Tipo" })}
+                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                  />
+                  {property.maxGuests > 0 && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:resource.capacity", { defaultValue: "Capacidad" })}
+                      value={property.maxGuests}
+                    />
+                  )}
+                  {property.totalArea > 0 && (
+                    <StatCard
+                      icon={Ruler}
+                      label={t("client:propertyDetail.stats.totalArea")}
+                      value={`${property.totalArea} m²`}
+                    />
+                  )}
+                  <StatCard
+                    icon={MapPin}
+                    label={t("client:resource.location", { defaultValue: "Ubicación" })}
+                    value={property.city || property.state || "—"}
+                  />
+                </>
               )}
             </div>
 
@@ -866,7 +1016,7 @@ const PropertyDetail = () => {
             </section>
 
             {/* ── Type-specific details ─────────────────── */}
-            {(isRent(opType) || isVacation(opType)) && (
+            {resourceBehavior.resourceType === "property" && (isRent(opType) || isVacation(opType)) && (
               <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
                 <SectionHeading className="mt-0!">
                   {isRent(opType)
@@ -973,7 +1123,7 @@ const PropertyDetail = () => {
             )}
 
             {/* Sale-specific features */}
-            {isSale(opType) && (property.furnished || property.yearBuilt) && (
+            {resourceBehavior.resourceType === "property" && isSale(opType) && (property.furnished || property.yearBuilt) && (
               <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
                 <SectionHeading className="mt-0!">
                   {t("client:propertyDetail.sections.features")}

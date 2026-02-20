@@ -10,8 +10,7 @@ import Modal, {
 import StepTypeAndInfo from "../wizard/steps/StepTypeAndInfo";
 import StepLocation from "../wizard/steps/StepLocation";
 import StepFeatures from "../wizard/steps/StepFeatures";
-import StepRentalTerms from "../wizard/steps/StepRentalTerms";
-import StepVacationRules from "../wizard/steps/StepVacationRules";
+import StepCommercialConditions from "../wizard/steps/StepCommercialConditions";
 import StepPricing from "../wizard/steps/StepPricing";
 import StepAmenities from "../wizard/steps/StepAmenities";
 import StepImages from "../wizard/steps/StepImages";
@@ -74,17 +73,16 @@ const PropertyEditor = ({
 
   const activeTabs = useMemo(
     () =>
-      getActiveSteps(form.operationType, {
+      getActiveSteps(form.commercialMode, {
         isEnabled: modulesApi.isEnabled,
       }, {
         resourceType: form.resourceType,
         category: form.category || form.propertyType,
-        commercialMode: form.commercialMode || form.operationType,
+        commercialMode: form.commercialMode,
       }).filter((step) => step.id !== "summary"),
     [
       form.category,
       form.commercialMode,
-      form.operationType,
       form.propertyType,
       form.resourceType,
       modulesApi.isEnabled,
@@ -160,10 +158,8 @@ const PropertyEditor = ({
         return <StepLocation formHook={formHook} />;
       case "features":
         return <StepFeatures formHook={formHook} />;
-      case "rentalTerms":
-        return <StepRentalTerms formHook={formHook} />;
-      case "vacationRules":
-        return <StepVacationRules formHook={formHook} />;
+      case "commercialConditions":
+        return <StepCommercialConditions formHook={formHook} />;
       case "pricing":
         return <StepPricing formHook={formHook} />;
       case "amenities":

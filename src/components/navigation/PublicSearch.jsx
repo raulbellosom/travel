@@ -371,7 +371,7 @@ const PublicSearch = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[95] bg-slate-950/55 p-3 backdrop-blur-sm sm:hidden"
+          className="fixed inset-0 z-[110] bg-slate-950/55 p-3 backdrop-blur-sm sm:hidden"
         >
           <Motion.section
             initial={{ opacity: 0, y: 16, scale: 0.98 }}

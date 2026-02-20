@@ -30,13 +30,23 @@
   },
   "categories": {
     "title": "Explora por Categoría",
-    "subtitle": "Encuentra el tipo de propiedad que se adapta a tu estilo de vida.",
-    "view": "Ver propiedades"
+    "subtitle": "Encuentra el recurso que se adapta a lo que necesitas.",
+    "view": "Ver"
   },
   "search": {
-    "heroTitle": "Encuentra Tu Propiedad Ideal",
-    "heroSubtitle": "Explora nuestro catálogo exclusivo de propiedades en venta, renta y vacaciones.",
-    "inputPlaceholder": "Busca por ciudad, colonia o nombre de propiedad...",
+    "heroTitle": "Encuentra Lo Que Buscas",
+    "heroSubtitle": "Explora nuestro catálogo de propiedades, vehículos, servicios, experiencias y salones.",
+    "inputPlaceholder": "Busca por ciudad, nombre o tipo de recurso...",
+    "resultsLabel": "resultados",
+    "resourceType": "Tipo de Recurso",
+    "allResourceTypes": "Todos",
+    "category": "Categoría",
+    "sortRecent": "Más recientes",
+    "sortPriceAsc": "Precio: menor a mayor",
+    "sortPriceDesc": "Precio: mayor a menor",
+    "allCategories": "Todas las categorías",
+    "semiFurnished": "Semi-amueblado",
+    "unfurnished": "Sin amueblar",
     "button": "Buscar",
     "filters": "Filtros",
     "operationType": "Tipo de Operación",
@@ -94,6 +104,44 @@
     },
     "actions": {
       "clearFilters": "Limpiar filtros"
+    },
+    "houses": {
+      "title": "Casas en Venta",
+      "subtitle": "Descubre casas espaciosas perfectas para tu familia."
+    },
+    "apartments": {
+      "title": "Departamentos",
+      "subtitle": "Espacios modernos y cómodos en las mejores ubicaciones."
+    },
+    "vehicles": {
+      "title": "Vehículos",
+      "subtitle": "Autos, SUVs, motos y más disponibles para ti."
+    },
+    "servicesSection": {
+      "badge": "SERVICIOS",
+      "title": "Servicios Profesionales",
+      "subtitle": "Limpieza, chef, DJ, fotografía, catering y más a tu alcance."
+    },
+    "experiencesSection": {
+      "badge": "EXPERIENCIAS",
+      "title": "Experiencias Únicas",
+      "subtitle": "Tours, talleres, aventuras, bienestar y gastronomía."
+    },
+    "venuesSection": {
+      "badge": "SALONES",
+      "title": "Salones y Espacios",
+      "subtitle": "Salones de eventos, coworking, estudios y salas de juntas."
+    },
+    "pool": {
+      "title": "Propiedades con Alberca",
+      "subtitle": "Disfruta del lujo de tu propia alberca."
+    },
+    "oceanView": {
+      "title": "Vista al Mar",
+      "subtitle": "Despierta con las mejores vistas panorámicas al océano."
+    },
+    "amenities": {
+      "badge": "AMENIDADES"
     }
   },
   "common": {
@@ -108,14 +156,68 @@
       "operation": {
         "sale": "Venta",
         "rent": "Renta",
-        "vacation_rental": "Renta Vacacional"
+        "vacation_rental": "Renta Corta",
+        "rent_hourly": "Renta por Hora",
+        "rent_long_term": "Renta Mensual",
+        "rent_short_term": "Renta por Día"
       },
       "propertyType": {
         "house": "Casa",
         "apartment": "Departamento",
         "land": "Terreno",
         "commercial": "Comercial",
-        "industrial": "Industrial"
+        "industrial": "Industrial",
+        "office": "Oficina",
+        "warehouse": "Bodega",
+        "property": "Propiedad"
+      },
+      "resourceType": {
+        "property": "Propiedad",
+        "service": "Servicio",
+        "vehicle": "Vehículo",
+        "experience": "Experiencia",
+        "venue": "Salón"
+      },
+      "category": {
+        "house": "Casa",
+        "apartment": "Departamento",
+        "land": "Terreno",
+        "commercial": "Comercial",
+        "office": "Oficina",
+        "warehouse": "Bodega",
+        "cleaning": "Limpieza",
+        "dj": "DJ",
+        "chef": "Chef",
+        "photography": "Fotografía",
+        "catering": "Catering",
+        "maintenance": "Mantenimiento",
+        "car": "Auto",
+        "suv": "SUV",
+        "pickup": "Pickup",
+        "van": "Van",
+        "motorcycle": "Motocicleta",
+        "boat": "Lancha",
+        "tour": "Tour",
+        "class": "Clase",
+        "workshop": "Taller",
+        "adventure": "Aventura",
+        "wellness": "Bienestar",
+        "gastronomy": "Gastronomía",
+        "event_hall": "Salón de eventos",
+        "commercial_local": "Local comercial",
+        "studio": "Estudio",
+        "coworking": "Coworking",
+        "meeting_room": "Sala de juntas"
+      },
+      "pricingModel": {
+        "total": "Precio total",
+        "per_month": "Por mes",
+        "per_night": "Por noche",
+        "per_day": "Por día",
+        "per_hour": "Por hora",
+        "per_person": "Por persona",
+        "per_event": "Por evento",
+        "per_m2": "Por m²"
       }
     }
   },
@@ -124,9 +226,30 @@
     "bathrooms": "baños",
     "from": "Desde"
   },
+  "resource": {
+    "type": "Tipo",
+    "passengers": "Pasajeros",
+    "mode": "Modo",
+    "duration": "Duración",
+    "location": "Lugar",
+    "maxGuests": "Máx.",
+    "capacity": "Capacidad"
+  },
   "pricing": {
     "perNight": "por noche",
     "pricePerNight": "Precio por noche",
+    "perDay": "por día",
+    "pricePerDay": "Precio por día",
+    "perHour": "por hora",
+    "pricePerHour": "Precio por hora",
+    "perMonth": "por mes",
+    "pricePerMonth": "Precio por mes",
+    "perPerson": "por persona",
+    "pricePerPerson": "Precio por persona",
+    "perEvent": "por evento",
+    "pricePerEvent": "Precio por evento",
+    "perM2": "por m²",
+    "pricePerM2": "Precio por m²",
     "label": "Precio",
     "contactForPrice": "Consultar precio"
   },
@@ -145,6 +268,9 @@
     "login": "Iniciar Sesión",
     "register": "Registrarse",
     "logout": "Cerrar Sesión",
+    "vehicles": "Vehículos",
+    "experiences": "Experiencias",
+    "venues": "Salones",
     "dropdown": {
       "houses": "Casas",
       "housesDesc": "Casas en venta en las mejores zonas",
@@ -161,7 +287,15 @@
       "villas": "Villas",
       "villasDesc": "Villas de lujo para vacaciones",
       "budget": "Económicas",
-      "budgetDesc": "Opciones accesibles para todos"
+      "budgetDesc": "Opciones accesibles para todos",
+      "vehicles": "Vehículos",
+      "vehiclesDesc": "Autos, SUVs, motos y más en renta o venta",
+      "services": "Servicios",
+      "servicesDesc": "Limpieza, chef, DJ, fotografía y más",
+      "experiences": "Experiencias",
+      "experiencesDesc": "Tours, talleres, aventuras y bienestar",
+      "venues": "Salones",
+      "venuesDesc": "Salones de eventos, coworking y estudios"
     }
   },
   "theme": {

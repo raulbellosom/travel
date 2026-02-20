@@ -8,12 +8,11 @@ import {
   Sparkles,
   Camera,
   ClipboardList,
-  CalendarCheck,
   Pencil,
   FileText,
 } from "lucide-react";
 import LazyImage from "../../../../../components/common/atoms/LazyImage";
-import { OPERATION_TYPES, PRICING_MODEL_OPTIONS } from "../wizardConfig";
+import { COMMERCIAL_MODE_OPTIONS, PRICING_MODEL_OPTIONS } from "../wizardConfig";
 import {
   getCategoryTranslationKey,
   normalizeCategory,
@@ -113,7 +112,11 @@ const StepSummary = ({ formHook, onEditStep }) => {
     amenityNameField,
   } = formHook;
 
-  const operationLabel = resolveLabel(OPERATION_TYPES, form.operationType, t);
+  const commercialModeLabel = resolveLabel(
+    COMMERCIAL_MODE_OPTIONS,
+    form.commercialMode,
+    t,
+  );
   const resourceType = normalizeResourceType(form.resourceType);
   const categoryValue = sanitizeCategory(
     resourceType,
@@ -127,7 +130,7 @@ const StepSummary = ({ formHook, onEditStep }) => {
   });
   const pricingModelLabel = resolveLabel(
     PRICING_MODEL_OPTIONS,
-    form.pricingModel || form.pricePerUnit,
+    form.pricingModel,
     t,
   );
 
@@ -136,9 +139,9 @@ const StepSummary = ({ formHook, onEditStep }) => {
       getResourceFormProfile({
         resourceType: form.resourceType,
         category: form.category || form.propertyType,
-        commercialMode: form.commercialMode || form.operationType,
+        commercialMode: form.commercialMode,
       }),
-    [form.category, form.commercialMode, form.operationType, form.propertyType, form.resourceType],
+    [form.category, form.commercialMode, form.propertyType, form.resourceType],
   );
 
   const attributes = useMemo(
@@ -187,8 +190,8 @@ const StepSummary = ({ formHook, onEditStep }) => {
         onEdit={() => goTo("typeAndInfo")}
       >
         <SummaryRow
-          label={t("propertyForm.fields.operationType", "Operacion")}
-          value={operationLabel}
+          label={t("propertyForm.fields.commercialMode", "Modo comercial")}
+          value={commercialModeLabel}
         />
         <SummaryRow
           label={t("propertyForm.fields.resourceType", {
@@ -261,33 +264,18 @@ const StepSummary = ({ formHook, onEditStep }) => {
         </SummarySection>
       ) : null}
 
-      {profile.rentalTerms.length > 0 ? (
+      {profile.commercialConditions.length > 0 ? (
         <SummarySection
           icon={ClipboardList}
-          title={t("propertyForm.wizard.steps.rentalTerms", "Terminos de renta")}
-          onEdit={() => goTo("rentalTerms")}
+          title={t(
+            "propertyForm.wizard.steps.commercialConditions",
+            "Condiciones comerciales",
+          )}
+          onEdit={() => goTo("commercialConditions")}
         >
           <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
             <DynamicRows
-              fields={profile.rentalTerms}
-              form={form}
-              attributes={attributes}
-              profile={profile}
-              t={t}
-            />
-          </div>
-        </SummarySection>
-      ) : null}
-
-      {profile.vacationRules.length > 0 ? (
-        <SummarySection
-          icon={CalendarCheck}
-          title={t("propertyForm.wizard.steps.vacationRules", "Reglas de reserva")}
-          onEdit={() => goTo("vacationRules")}
-        >
-          <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-            <DynamicRows
-              fields={profile.vacationRules}
+              fields={profile.commercialConditions}
               form={form}
               attributes={attributes}
               profile={profile}
@@ -307,7 +295,7 @@ const StepSummary = ({ formHook, onEditStep }) => {
           value={formattedPrice}
         />
         <SummaryRow
-          label={t("propertyForm.fields.pricePer", "Por")}
+          label={t("propertyForm.fields.pricingModel", "Modelo de precio")}
           value={pricingModelLabel}
         />
         <SummaryRow

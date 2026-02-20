@@ -68,6 +68,31 @@ const createValidationError = (message, field, details = {}) => {
   return error;
 };
 
+const extractErrorMessage = (error) =>
+  String(error?.response?.message || error?.message || "").trim();
+
+const normalizeAppwriteLocationRangeError = (error) => {
+  const message = extractErrorMessage(error);
+  if (!message) return error;
+
+  if (
+    /attribute\s+"longitude".*range between -90 and 90/i.test(message) ||
+    /attribute\s+"longitude".*min.*-90.*max.*90/i.test(message)
+  ) {
+    return createValidationError(
+      "La base de datos tiene el campo longitude mal configurado. Debe permitir valores entre -180 y 180.",
+      "longitude",
+      {
+        expectedMin: -180,
+        expectedMax: 180,
+        currentError: message,
+      },
+    );
+  }
+
+  return error;
+};
+
 const normalizeCategoryToken = (value) =>
   String(value || "")
     .trim()
@@ -224,8 +249,27 @@ const normalizeResourceInput = (
   assign("streetAddress", String(source.streetAddress || "").trim());
   assign("neighborhood", String(source.neighborhood || "").trim());
   assign("postalCode", String(source.postalCode || "").trim());
-  assign("latitude", toNumber(source.latitude, null));
-  assign("longitude", toNumber(source.longitude, null));
+  const latitude = toNumber(source.latitude, null);
+  const longitude = toNumber(source.longitude, null);
+
+  if (latitude !== null && (latitude < -90 || latitude > 90)) {
+    throw createValidationError(
+      "La latitud debe estar entre -90 y 90.",
+      "latitude",
+      { min: -90, max: 90, value: latitude },
+    );
+  }
+
+  if (longitude !== null && (longitude < -180 || longitude > 180)) {
+    throw createValidationError(
+      "La longitud debe estar entre -180 y 180.",
+      "longitude",
+      { min: -180, max: 180, value: longitude },
+    );
+  }
+
+  assign("latitude", latitude);
+  assign("longitude", longitude);
 
   const furnished = String(source.furnished || "").trim();
   if (furnished) assign("furnished", furnished);
@@ -267,7 +311,7 @@ const normalizeResourceInput = (
       : [];
   }
 
-  if (!forUpdate || hasOwn(source, "assignedStaffIds")) {
+  if (hasOwn(source, "assignedStaffIds")) {
     data.assignedStaffIds = Array.isArray(source.assignedStaffIds)
       ? source.assignedStaffIds
           .map((id) => String(id || "").trim())
@@ -328,6 +372,42 @@ const listImagesWithFallbackField = async ({
     ],
   });
 
+const extractUnknownAttributeName = (error) => {
+  const message = extractErrorMessage(error);
+  const match = message.match(/Unknown attribute:\s*"([^"]+)"/i);
+  return match?.[1] ? String(match[1]).trim() : "";
+};
+
+const createImageDocWithPayloadRetry = async ({
+  databaseId,
+  collectionId,
+  payload,
+}) => {
+  try {
+    return await databases.createDocument({
+      databaseId,
+      collectionId,
+      documentId: ID.unique(),
+      data: payload,
+    });
+  } catch (error) {
+    const unknownAttribute = extractUnknownAttributeName(error);
+    if (!unknownAttribute || !hasOwn(payload, unknownAttribute)) {
+      throw error;
+    }
+
+    const retryPayload = { ...payload };
+    delete retryPayload[unknownAttribute];
+
+    return databases.createDocument({
+      databaseId,
+      collectionId,
+      documentId: ID.unique(),
+      data: retryPayload,
+    });
+  }
+};
+
 const createImageDocWithFallbackField = async ({
   databaseId,
   collectionId,
@@ -341,19 +421,17 @@ const createImageDocWithFallbackField = async ({
   };
 
   try {
-    return await databases.createDocument({
+    return await createImageDocWithPayloadRetry({
       databaseId,
       collectionId,
-      documentId: ID.unique(),
-      data: firstPayload,
+      payload: firstPayload,
     });
-  } catch (firstError) {
+  } catch {
     const fallbackField = preferredIdField === "resourceId" ? "propertyId" : "resourceId";
-    return databases.createDocument({
+    return createImageDocWithPayloadRetry({
       databaseId,
       collectionId,
-      documentId: ID.unique(),
-      data: {
+      payload: {
         ...data,
         [fallbackField]: resourceId,
       },
@@ -602,12 +680,17 @@ export const propertiesService = {
       reservationCount: 0,
     };
 
-    const created = await databases.createDocument({
-      databaseId: env.appwrite.databaseId,
-      collectionId: resourcesCollectionId,
-      documentId: ID.unique(),
-      data,
-    });
+    let created;
+    try {
+      created = await databases.createDocument({
+        databaseId: env.appwrite.databaseId,
+        collectionId: resourcesCollectionId,
+        documentId: ID.unique(),
+        data,
+      });
+    } catch (error) {
+      throw normalizeAppwriteLocationRangeError(error);
+    }
 
     return normalizeResourceDocument(created);
   },
@@ -640,12 +723,17 @@ export const propertiesService = {
       existing,
     });
 
-    const updated = await databases.updateDocument({
-      databaseId: env.appwrite.databaseId,
-      collectionId: resourcesCollectionId,
-      documentId: resourceId,
-      data: normalized,
-    });
+    let updated;
+    try {
+      updated = await databases.updateDocument({
+        databaseId: env.appwrite.databaseId,
+        collectionId: resourcesCollectionId,
+        documentId: resourceId,
+        data: normalized,
+      });
+    } catch (error) {
+      throw normalizeAppwriteLocationRangeError(error);
+    }
 
     return normalizeResourceDocument(updated);
   },

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -18,8 +18,7 @@ import Modal, { ModalFooter } from "../../../../components/common/organisms/Moda
 import StepTypeAndInfo from "./steps/StepTypeAndInfo";
 import StepLocation from "./steps/StepLocation";
 import StepFeatures from "./steps/StepFeatures";
-import StepRentalTerms from "./steps/StepRentalTerms";
-import StepVacationRules from "./steps/StepVacationRules";
+import StepCommercialConditions from "./steps/StepCommercialConditions";
 import StepPricing from "./steps/StepPricing";
 import StepAmenities from "./steps/StepAmenities";
 import StepImages from "./steps/StepImages";
@@ -77,20 +76,29 @@ const PropertyWizard = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
+  const flowContextKey = useMemo(
+    () =>
+      [
+        form.resourceType,
+        form.category || form.propertyType,
+        form.commercialMode,
+      ].join("|"),
+    [form.category, form.commercialMode, form.propertyType, form.resourceType],
+  );
+  const previousFlowContextKeyRef = useRef(flowContextKey);
 
   const activeSteps = useMemo(
     () =>
-      getActiveSteps(form.operationType, {
+      getActiveSteps(form.commercialMode, {
         isEnabled: modulesApi.isEnabled,
       }, {
         resourceType: form.resourceType,
         category: form.category || form.propertyType,
-        commercialMode: form.commercialMode || form.operationType,
+        commercialMode: form.commercialMode,
       }),
     [
       form.category,
       form.commercialMode,
-      form.operationType,
       form.propertyType,
       form.resourceType,
       modulesApi.isEnabled,
@@ -101,6 +109,20 @@ const PropertyWizard = ({
   const isFirstStep = currentStepIndex === 0;
   const isSummary = currentStep.id === "summary";
   const totalSteps = activeSteps.length;
+
+  useEffect(() => {
+    if (previousFlowContextKeyRef.current === flowContextKey) return;
+    previousFlowContextKeyRef.current = flowContextKey;
+    setCompletedSteps(new Set());
+    setDirection(-1);
+    setCurrentStepIndex(0);
+  }, [flowContextKey]);
+
+  useEffect(() => {
+    setCurrentStepIndex((prev) =>
+      Math.min(prev, Math.max(0, activeSteps.length - 1)),
+    );
+  }, [activeSteps.length]);
 
   /* ── Navigation handlers ───────────────────────────── */
 
@@ -226,15 +248,13 @@ const PropertyWizard = ({
   const renderStepContent = () => {
     switch (currentStep.id) {
       case "typeAndInfo":
-        return <StepTypeAndInfo formHook={formHook} modulesApi={modulesApi} />;
+        return <StepTypeAndInfo formHook={formHook} />;
       case "location":
         return <StepLocation formHook={formHook} />;
       case "features":
         return <StepFeatures formHook={formHook} />;
-      case "rentalTerms":
-        return <StepRentalTerms formHook={formHook} />;
-      case "vacationRules":
-        return <StepVacationRules formHook={formHook} />;
+      case "commercialConditions":
+        return <StepCommercialConditions formHook={formHook} />;
       case "pricing":
         return <StepPricing formHook={formHook} />;
       case "amenities":

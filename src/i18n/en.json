@@ -26,15 +26,45 @@
       "hasAccount": "I have an account"
     },
     "features": {
-      "sectionTitle": "What is Inmobo?",
-      "sectionSubtitle": "The platform that transforms your real estate business",
-      "description": "Inmobo is a complete real estate CRM that centralizes all your business operations: from property publishing to closing sales, including lead management, reservations, and collections."
+      "sectionTitle": "Why choose Inmobo?",
+      "sectionSubtitle": "We connect you with the best properties",
+      "description": "Inmobo is a complete real estate CRM that centralizes all your business operations: from property publishing to closing sales, including lead management, reservations, and collections.",
+      "trust": {
+        "title": "Trust and transparency",
+        "description": "Every listing is reviewed to ensure accuracy and quality."
+      },
+      "fast": {
+        "title": "Fast and simple",
+        "description": "Find your ideal property in minutes with smart search."
+      },
+      "experience": {
+        "title": "Unique experiences",
+        "description": "From beachfront villas to urban apartments, for every lifestyle."
+      },
+      "quality": {
+        "title": "Premium quality",
+        "description": "Only curated properties that meet our standards."
+      },
+      "investment": {
+        "title": "Investment opportunities",
+        "description": "Properties with high appreciation potential and solid returns."
+      },
+      "support": {
+        "title": "Personalized support",
+        "description": "Expert guidance throughout the entire process."
+      }
     },
     "stats": {
       "cloud": "Cloud platform",
       "leads": "Lead capture",
       "gateways": "Payment gateways",
-      "unlimited": "Unlimited properties"
+      "unlimited": "Unlimited properties",
+      "sectionTitle": "Numbers that speak for us",
+      "sectionSubtitle": "Join thousands of satisfied clients",
+      "properties": "Properties",
+      "clients": "Happy customers",
+      "cities": "Cities",
+      "satisfaction": "Satisfaction"
     },
     "grid": {
       "sectionTitle": "Features",
@@ -84,28 +114,44 @@
     },
     "howItWorks": {
       "sectionTitle": "How it works",
-      "sectionSubtitle": "Start in",
+      "sectionSubtitle": "Find your perfect property in simple steps",
       "subtitleHighlight": "3 simple steps",
       "step1": {
-        "title": "Register your account",
-        "desc": "Create your free account in minutes. Configure your profile and start adding properties."
+        "title": "Search and explore",
+        "desc": "Browse our catalog and use filters to find properties that match your criteria.",
+        "description": "Browse our catalog and use filters to find properties that match your criteria."
       },
       "step2": {
-        "title": "Add your properties",
-        "desc": "Upload photos, describe amenities and customize each listing to attract the best clients."
+        "title": "Contact and visit",
+        "desc": "Connect directly with agents and schedule visits at your convenience.",
+        "description": "Connect directly with agents and schedule visits at your convenience."
       },
       "step3": {
-        "title": "Manage and grow",
-        "desc": "Receive leads, reservations and payments automatically. Analyze your performance and scale your business."
-      }
+        "title": "Close the deal",
+        "desc": "Receive leads, reservations and payments automatically. Analyze your performance and scale your business.",
+        "description": "We support you through the entire closing process with secure documentation."
+      },
+      "step4": {
+        "title": "Enjoy your new home",
+        "description": "Move into your ideal property and enjoy the lifestyle you deserve."
+      },
+      "bottomText": "Simple process, extraordinary results."
     },
     "socialProof": {
       "title": "Designed to scale",
       "subtitle": "Tools designed for the modern real estate professional",
-      "stat1": { "label": "Guaranteed uptime" },
-      "stat2": { "label": "Properties managed" },
-      "stat3": { "label": "Load time" },
-      "stat4": { "label": "More productivity" }
+      "stat1": {
+        "label": "Guaranteed uptime"
+      },
+      "stat2": {
+        "label": "Properties managed"
+      },
+      "stat3": {
+        "label": "Load time"
+      },
+      "stat4": {
+        "label": "More productivity"
+      }
     },
     "finalCta": {
       "badge": "Start for free, no credit card required",
@@ -178,60 +224,6 @@
       "email": "hello@inmobo.com",
       "availability": "Mon - Fri: 9 AM - 6 PM"
     },
-    "features": {
-      "sectionTitle": "Why choose Inmobo?",
-      "sectionSubtitle": "We connect you with the best properties",
-      "description": "Inmobo is a complete real estate CRM that centralizes all your business operations: from property publishing to closing sales, including lead management, reservations, and collections.",
-      "trust": {
-        "title": "Trust and transparency",
-        "description": "Every listing is reviewed to ensure accuracy and quality."
-      },
-      "fast": {
-        "title": "Fast and simple",
-        "description": "Find your ideal property in minutes with smart search."
-      },
-      "experience": {
-        "title": "Unique experiences",
-        "description": "From beachfront villas to urban apartments, for every lifestyle."
-      },
-      "quality": {
-        "title": "Premium quality",
-        "description": "Only curated properties that meet our standards."
-      },
-      "investment": {
-        "title": "Investment opportunities",
-        "description": "Properties with high appreciation potential and solid returns."
-      },
-      "support": {
-        "title": "Personalized support",
-        "description": "Expert guidance throughout the entire process."
-      }
-    },
-    "howItWorks": {
-      "sectionTitle": "How it works",
-      "sectionSubtitle": "Find your perfect property in simple steps",
-      "subtitleHighlight": "3 simple steps",
-      "step1": {
-        "title": "Search and explore",
-        "desc": "Browse our catalog and use filters to find properties that match your criteria.",
-        "description": "Browse our catalog and use filters to find properties that match your criteria."
-      },
-      "step2": {
-        "title": "Contact and visit",
-        "desc": "Connect directly with agents and schedule visits at your convenience.",
-        "description": "Connect directly with agents and schedule visits at your convenience."
-      },
-      "step3": {
-        "title": "Close the deal",
-        "desc": "Receive leads, reservations and payments automatically. Analyze your performance and scale your business.",
-        "description": "We support you through the entire closing process with secure documentation."
-      },
-      "step4": {
-        "title": "Enjoy your new home",
-        "description": "Move into your ideal property and enjoy the lifestyle you deserve."
-      },
-      "bottomText": "Simple process, extraordinary results."
-    },
     "propertyShowcase": {
       "sectionTitle": "Featured Properties",
       "sectionSubtitle": "Discover the best options hand-picked for you.",
@@ -239,26 +231,6 @@
       "loading": "Loading properties...",
       "noProperties": "No properties available at this time.",
       "errorLoading": "Could not load properties."
-    },
-    "stats": {
-      "cloud": "Cloud platform",
-      "leads": "Lead capture",
-      "gateways": "Payment gateways",
-      "unlimited": "Unlimited properties",
-      "sectionTitle": "Numbers that speak for us",
-      "sectionSubtitle": "Join thousands of satisfied clients",
-      "properties": "Properties",
-      "clients": "Happy customers",
-      "cities": "Cities",
-      "satisfaction": "Satisfaction"
-    },
-    "socialProof": {
-      "title": "Designed to scale",
-      "subtitle": "Tools designed for the modern real estate professional",
-      "stat1": { "label": "Guaranteed uptime" },
-      "stat2": { "label": "Properties managed" },
-      "stat3": { "label": "Load time" },
-      "stat4": { "label": "More productivity" }
     },
     "quickCategories": {
       "beachfront": "Beachfront",
@@ -1303,15 +1275,11 @@
       "draftNoticeBody": "Review the information before saving. You can publish your property later from the edit panel.",
       "steps": {
         "typeAndInfo": "Type & Info",
-        "typeAndInfoDesc": "Set the operation type, property type and basic details.",
+        "typeAndInfoDesc": "Set resource type, commercial mode, and core listing details.",
         "location": "Location",
         "locationDesc": "Select the property location and address.",
         "features": "Features",
         "featuresDesc": "Detail the physical characteristics of the property.",
-        "rentalTerms": "Rental Terms",
-        "rentalTermsDesc": "Configure specific rental terms.",
-        "vacationRules": "Booking Rules",
-        "vacationRulesDesc": "Define operational rules for date-based and hourly bookings.",
         "pricing": "Pricing",
         "pricingDesc": "Set the price and economic conditions.",
         "amenities": "Amenities",
@@ -1319,21 +1287,25 @@
         "images": "Images & Media",
         "imagesDesc": "Add photos, video and virtual tour.",
         "summary": "Summary",
-        "summaryDesc": "Review all information before saving."
+        "summaryDesc": "Review all information before saving.",
+        "commercialConditions": "Commercial Conditions",
+        "commercialConditionsDesc": "Define offer conditions based on the selected commercial mode."
       },
       "stepOf": "Step {{current}} of {{total}}",
-      "rentalTermsHint": "Set the terms that apply to long-term rental listings.",
-      "vacationRulesHint": "Configure availability, capacity, and booking-window rules.",
       "noSpecificFeatures": "This resource type does not require additional features in this step.",
-      "noSpecificRentalTerms": "This resource type does not require additional long-term rental terms.",
-      "noSpecificBookingRules": "This resource type does not require extra booking rules.",
       "noDataCaptured": "No data has been captured in this section yet.",
       "placeholders": {
         "title": "Example: Oceanfront villa with pool in Puerto Vallarta",
         "description": "Describe location, standout features, ideal guest profile, and nearby services.",
         "streetAddress": "Street and number",
         "neighborhood": "Neighborhood or area"
-      }
+      },
+      "commercialConditionsHint": {
+        "longTerm": "Set contract conditions for medium and long-term rentals.",
+        "shortTerm": "Configure stay and operating rules for date-based bookings.",
+        "hourly": "Configure booking windows and limits for hourly/event offers."
+      },
+      "noSpecificCommercialConditions": "This resource type does not require additional commercial conditions."
     },
     "tabs": {
       "helper": "You can switch between sections and save when finished.",
@@ -1415,7 +1387,8 @@
       "venueCapacityStanding": "Standing capacity",
       "venueHasStage": "Includes stage",
       "venueOpeningTime": "Opening time",
-      "venueClosingTime": "Closing time"
+      "venueClosingTime": "Closing time",
+      "minimumContractDuration": "Minimum contract duration"
     },
     "helper": {
       "description": "At least 20 characters. Explain value, location, and key highlights."
@@ -1507,7 +1480,9 @@
       "fieldTimeInvalid": "{{field}} must follow HH:mm format.",
       "maxMustBeGreaterThanMin": "Maximum value must be greater than or equal to minimum value.",
       "errorSummary": "{{count}} fields need attention.",
-      "ready": "Form is ready to save."
+      "ready": "Form is ready to save.",
+      "categoryRequired": "Select a category.",
+      "commercialModeRequired": "Select a commercial mode."
     },
     "locationCombobox": {
       "countryPlaceholder": "Type to search country...",
@@ -1626,6 +1601,12 @@
         "intermediate": "Intermediate",
         "challenging": "Challenging",
         "expert": "Expert"
+      },
+      "commercialMode": {
+        "sale": "Sale",
+        "rentLongTerm": "Long-term rent",
+        "rentShortTerm": "Short-term rent",
+        "rentHourly": "Hourly rent"
       }
     },
     "units": {
@@ -1636,7 +1617,8 @@
       "minutes": "min",
       "hours": "hrs",
       "people": "people",
-      "years": "years"
+      "years": "years",
+      "months": "months"
     },
     "amenitiesLoading": "Loading amenities...",
     "amenitiesPlaceholder": "Search amenity...",
@@ -1835,7 +1817,15 @@
     "close": "Close modal"
   },
   "dateRangePicker": {
-    "dayHeaders": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+    "dayHeaders": [
+      "Su",
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa"
+    ],
     "placeholders": {
       "single": "Select date",
       "range": "Select dates"

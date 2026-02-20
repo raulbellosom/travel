@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { RefreshCw, Loader2, Check, AlertCircle } from "lucide-react";
 import { Select, TextInputWithCharCounter } from "../../../../../components/common";
-import { OPERATION_TYPES } from "../wizardConfig";
-import { useMemo } from "react";
+import { COMMERCIAL_MODE_OPTIONS } from "../wizardConfig";
+import { useEffect, useMemo } from "react";
 import {
   getAllowedCategories,
   getAllowedCommercialModes,
@@ -12,7 +12,7 @@ import {
 /**
  * Step 1: Property type, operation type, title, slug, description.
  */
-const StepTypeAndInfo = ({ formHook, modulesApi = {} }) => {
+const StepTypeAndInfo = ({ formHook }) => {
   const { t } = useTranslation();
   const {
     form,
@@ -26,11 +26,6 @@ const StepTypeAndInfo = ({ formHook, modulesApi = {} }) => {
     slugStatusView,
     slugStatus,
   } = formHook;
-
-  const isModuleEnabled =
-    typeof modulesApi.isEnabled === "function"
-      ? modulesApi.isEnabled
-      : () => true;
 
   const resourceTypeOptions = useMemo(
     () => [
@@ -86,25 +81,36 @@ const StepTypeAndInfo = ({ formHook, modulesApi = {} }) => {
     }));
   }, [form.resourceType, t]);
 
-  const operationTypeOptions = useMemo(
-    () => {
-      const allowedCommercialModes = new Set(
-        getAllowedCommercialModes(form.resourceType),
-      );
+  const commercialModeOptions = useMemo(() => {
+    const allowedCommercialModes = new Set(
+      getAllowedCommercialModes(form.resourceType),
+    );
 
-      return OPERATION_TYPES.filter((option) => {
-        const optionMode = String(option.commercialMode || option.value || "")
-          .trim()
-          .toLowerCase();
-        const moduleAllowed = !option.moduleKey || isModuleEnabled(option.moduleKey);
-        return moduleAllowed && allowedCommercialModes.has(optionMode);
-      }).map((option) => ({
-        value: option.commercialMode || option.value,
-        label: t(option.key),
-      }));
-    },
-    [form.resourceType, isModuleEnabled, t],
-  );
+    return COMMERCIAL_MODE_OPTIONS.filter((option) => {
+      const optionMode = String(option.value || "").trim().toLowerCase();
+      return allowedCommercialModes.has(optionMode);
+    }).map((option) => ({
+      value: option.value,
+      label: t(option.key),
+    }));
+  }, [form.resourceType, t]);
+
+  useEffect(() => {
+    if (commercialModeOptions.length === 0) return;
+    if (commercialModeOptions.some((option) => option.value === form.commercialMode)) {
+      return;
+    }
+    setField("commercialMode", commercialModeOptions[0].value);
+  }, [commercialModeOptions, form.commercialMode, setField]);
+
+  useEffect(() => {
+    if (categoryOptions.length === 0) return;
+    const currentCategory = form.category || form.propertyType;
+    if (categoryOptions.some((option) => option.value === currentCategory)) {
+      return;
+    }
+    setField("category", categoryOptions[0].value);
+  }, [categoryOptions, form.category, form.propertyType, setField]);
 
   const SlugIcon =
     slugStatus.state === "checking"
@@ -130,35 +136,37 @@ const StepTypeAndInfo = ({ formHook, modulesApi = {} }) => {
         />
       </label>
 
-      {/* Commercial mode cards */}
-      <div>
-        <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-          {t("propertyForm.fields.commercialMode", {
-            defaultValue: t("propertyForm.fields.operationType"),
-          })}{" "}
-          *
-        </span>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {operationTypeOptions.map((option) => {
-            const isSelected = form.commercialMode === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setField("commercialMode", option.value)}
-                className={`min-h-14 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition-all duration-200 ${
-                  isSelected
-                    ? "border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm shadow-cyan-500/10 dark:border-cyan-400 dark:bg-cyan-900/20 dark:text-cyan-300"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+      {/* Commercial mode cards (shown only when there is more than one valid option) */}
+      {commercialModeOptions.length > 1 ? (
+        <div>
+          <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+            {t("propertyForm.fields.commercialMode", {
+              defaultValue: "Commercial mode",
+            })}{" "}
+            *
+          </span>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {commercialModeOptions.map((option) => {
+              const isSelected = form.commercialMode === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setField("commercialMode", option.value)}
+                  className={`min-h-14 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+                    isSelected
+                      ? "border-cyan-500 bg-cyan-50 text-cyan-800 shadow-sm shadow-cyan-500/10 hover:border-cyan-600 hover:bg-cyan-100 hover:text-cyan-900 dark:border-cyan-400 dark:bg-cyan-900/20 dark:text-cyan-200 dark:hover:bg-cyan-900/40 dark:hover:text-cyan-100"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-700 dark:hover:text-white"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          {renderFieldError("commercialMode")}
         </div>
-        {renderFieldError("operationType")}
-      </div>
+      ) : null}
 
       {/* Category */}
       <label className="grid gap-1 text-sm">
@@ -173,10 +181,10 @@ const StepTypeAndInfo = ({ formHook, modulesApi = {} }) => {
           value={form.category || form.propertyType}
           options={categoryOptions}
           size="md"
-          className={errors.propertyType ? "border-red-400" : ""}
+          className={errors.category ? "border-red-400" : ""}
           onChange={(value) => setField("category", value)}
         />
-        {renderFieldError("propertyType")}
+        {renderFieldError("category")}
       </label>
 
       {/* Title */}

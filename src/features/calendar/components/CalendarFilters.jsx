@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Filter, X } from "lucide-react";
 import { useState } from "react";
+import { Select } from "../../../components/common";
 
 const RESERVATION_STATUSES = [
   "pending",
@@ -40,6 +41,30 @@ export default function CalendarFilters({
   const hasActiveFilters =
     filters.propertyId || filters.status || filters.paymentStatus;
 
+  const propertyOptions = [
+    { value: "", label: t("calendar.filters.allProperties") },
+    ...properties.map((property) => ({
+      value: property.$id,
+      label: property.title,
+    })),
+  ];
+
+  const reservationStatusOptions = [
+    { value: "", label: t("calendar.filters.allStatuses") },
+    ...RESERVATION_STATUSES.map((status) => ({
+      value: status,
+      label: t(`calendar.status.${status}`),
+    })),
+  ];
+
+  const paymentStatusOptions = [
+    { value: "", label: t("calendar.filters.allPaymentStatuses") },
+    ...PAYMENT_STATUSES.map((status) => ({
+      value: status,
+      label: t(`calendar.paymentStatus.${status}`),
+    })),
+  ];
+
   const FilterContent = () => (
     <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
       {/* Property filter */}
@@ -47,18 +72,12 @@ export default function CalendarFilters({
         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
           {t("calendar.filters.property")}
         </label>
-        <select
+        <Select
           value={filters.propertyId || ""}
-          onChange={(e) => update("propertyId", e.target.value)}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-11"
-        >
-          <option value="">{t("calendar.filters.allProperties")}</option>
-          {properties.map((p) => (
-            <option key={p.$id} value={p.$id}>
-              {p.title}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => update("propertyId", value)}
+          options={propertyOptions}
+          size="md"
+        />
       </div>
 
       {/* Status filter */}
@@ -66,18 +85,12 @@ export default function CalendarFilters({
         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
           {t("calendar.filters.status")}
         </label>
-        <select
+        <Select
           value={filters.status || ""}
-          onChange={(e) => update("status", e.target.value)}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-11"
-        >
-          <option value="">{t("calendar.filters.allStatuses")}</option>
-          {RESERVATION_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(`calendar.status.${s}`)}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => update("status", value)}
+          options={reservationStatusOptions}
+          size="md"
+        />
       </div>
 
       {/* Payment status filter */}
@@ -85,18 +98,12 @@ export default function CalendarFilters({
         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
           {t("calendar.filters.paymentStatus")}
         </label>
-        <select
+        <Select
           value={filters.paymentStatus || ""}
-          onChange={(e) => update("paymentStatus", e.target.value)}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-11"
-        >
-          <option value="">{t("calendar.filters.allPaymentStatuses")}</option>
-          {PAYMENT_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(`calendar.paymentStatus.${s}`)}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => update("paymentStatus", value)}
+          options={paymentStatusOptions}
+          size="md"
+        />
       </div>
 
       {/* Clear button */}

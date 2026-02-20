@@ -30,17 +30,27 @@
   },
   "categories": {
     "title": "Explore by Category",
-    "subtitle": "Find the type of property that fits your lifestyle.",
-    "view": "View properties"
+    "subtitle": "Find the resource that fits what you need.",
+    "view": "View"
   },
   "search": {
-    "heroTitle": "Find Your Perfect Property",
-    "heroSubtitle": "Explore our exclusive catalog of properties for sale, rent and vacation.",
-    "inputPlaceholder": "Search by city, neighborhood or property name...",
+    "heroTitle": "Find What You're Looking For",
+    "heroSubtitle": "Explore our catalog of properties, vehicles, services, experiences and venues.",
+    "inputPlaceholder": "Search by city, name or resource type...",
     "button": "Search",
     "filters": "Filters",
     "operationType": "Operation Type",
     "propertyType": "Property Type",
+    "resourceType": "Resource Type",
+    "allResourceTypes": "All",
+    "category": "Category",
+    "sortRecent": "Most recent",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "allCategories": "All categories",
+    "resultsLabel": "results",
+    "semiFurnished": "Semi-furnished",
+    "unfurnished": "Unfurnished",
     "priceRange": "Price Range",
     "minPricePlaceholder": "Min",
     "maxPricePlaceholder": "Max",
@@ -65,12 +75,12 @@
     "anyOption": "Any",
     "unknownLocation": "Unknown location",
     "seo": {
-      "title": "Search Properties | Inmobo",
-      "description": "Find properties for sale, rent or vacation in our catalog."
+      "title": "Search | Inmobo",
+      "description": "Find properties, vehicles, services, experiences and venues in our catalog."
     },
     "empty": {
-      "title": "No properties found",
-      "descDefault": "There are no properties available right now. Check back later.",
+      "title": "No results found",
+      "descDefault": "There are no listings available right now. Check back later.",
       "descFiltered": "Try adjusting your filters to see more results."
     }
   },
@@ -94,6 +104,44 @@
     },
     "actions": {
       "clearFilters": "Clear filters"
+    },
+    "houses": {
+      "title": "Houses for Sale",
+      "subtitle": "Discover spacious houses perfect for your family."
+    },
+    "apartments": {
+      "title": "Apartments",
+      "subtitle": "Modern and comfortable spaces in the best locations."
+    },
+    "vehicles": {
+      "title": "Vehicles",
+      "subtitle": "Cars, SUVs, motorcycles and more available for you."
+    },
+    "servicesSection": {
+      "badge": "SERVICES",
+      "title": "Professional Services",
+      "subtitle": "Cleaning, chef, DJ, photography, catering and more at your reach."
+    },
+    "experiencesSection": {
+      "badge": "EXPERIENCES",
+      "title": "Unique Experiences",
+      "subtitle": "Tours, workshops, adventures, wellness and gastronomy."
+    },
+    "venuesSection": {
+      "badge": "VENUES",
+      "title": "Venues & Spaces",
+      "subtitle": "Event halls, coworking, studios and meeting rooms."
+    },
+    "pool": {
+      "title": "Properties with Pool",
+      "subtitle": "Enjoy the luxury of your own pool."
+    },
+    "oceanView": {
+      "title": "Ocean View",
+      "subtitle": "Wake up with the best panoramic ocean views."
+    },
+    "amenities": {
+      "badge": "AMENITIES"
     }
   },
   "common": {
@@ -108,14 +156,68 @@
       "operation": {
         "sale": "Sale",
         "rent": "Rent",
-        "vacation_rental": "Vacation Rental"
+        "vacation_rental": "Short-Term Rental",
+        "rent_hourly": "Hourly Rental",
+        "rent_long_term": "Monthly Rental",
+        "rent_short_term": "Daily Rental"
       },
       "propertyType": {
         "house": "House",
         "apartment": "Apartment",
         "land": "Land",
         "commercial": "Commercial",
-        "industrial": "Industrial"
+        "industrial": "Industrial",
+        "office": "Office",
+        "warehouse": "Warehouse",
+        "property": "Property"
+      },
+      "resourceType": {
+        "property": "Property",
+        "service": "Service",
+        "vehicle": "Vehicle",
+        "experience": "Experience",
+        "venue": "Venue"
+      },
+      "category": {
+        "house": "House",
+        "apartment": "Apartment",
+        "land": "Land",
+        "commercial": "Commercial",
+        "office": "Office",
+        "warehouse": "Warehouse",
+        "cleaning": "Cleaning",
+        "dj": "DJ",
+        "chef": "Chef",
+        "photography": "Photography",
+        "catering": "Catering",
+        "maintenance": "Maintenance",
+        "car": "Car",
+        "suv": "SUV",
+        "pickup": "Pickup",
+        "van": "Van",
+        "motorcycle": "Motorcycle",
+        "boat": "Boat",
+        "tour": "Tour",
+        "class": "Class",
+        "workshop": "Workshop",
+        "adventure": "Adventure",
+        "wellness": "Wellness",
+        "gastronomy": "Gastronomy",
+        "event_hall": "Event Hall",
+        "commercial_local": "Commercial Space",
+        "studio": "Studio",
+        "coworking": "Coworking",
+        "meeting_room": "Meeting Room"
+      },
+      "pricingModel": {
+        "total": "Total price",
+        "per_month": "Per month",
+        "per_night": "Per night",
+        "per_day": "Per day",
+        "per_hour": "Per hour",
+        "per_person": "Per person",
+        "per_event": "Per event",
+        "per_m2": "Per m²"
       }
     }
   },
@@ -124,9 +226,30 @@
     "bathrooms": "ba",
     "from": "From"
   },
+  "resource": {
+    "type": "Type",
+    "passengers": "Passengers",
+    "mode": "Mode",
+    "duration": "Duration",
+    "location": "Location",
+    "maxGuests": "Max.",
+    "capacity": "Capacity"
+  },
   "pricing": {
     "perNight": "per night",
     "pricePerNight": "Price per night",
+    "perDay": "per day",
+    "pricePerDay": "Price per day",
+    "perHour": "per hour",
+    "pricePerHour": "Price per hour",
+    "perMonth": "per month",
+    "pricePerMonth": "Price per month",
+    "perPerson": "per person",
+    "pricePerPerson": "Price per person",
+    "perEvent": "per event",
+    "pricePerEvent": "Price per event",
+    "perM2": "per m²",
+    "pricePerM2": "Price per m²",
     "label": "Price",
     "contactForPrice": "Contact for price"
   },
@@ -145,6 +268,9 @@
     "login": "Log In",
     "register": "Register",
     "logout": "Log Out",
+    "vehicles": "Vehicles",
+    "experiences": "Experiences",
+    "venues": "Venues",
     "dropdown": {
       "houses": "Houses",
       "housesDesc": "Homes for sale in the best areas",
@@ -161,7 +287,15 @@
       "villas": "Villas",
       "villasDesc": "Luxury villas for vacations",
       "budget": "Budget",
-      "budgetDesc": "Affordable options for everyone"
+      "budgetDesc": "Affordable options for everyone",
+      "vehicles": "Vehicles",
+      "vehiclesDesc": "Cars, SUVs, motorcycles and more for rent or sale",
+      "services": "Services",
+      "servicesDesc": "Cleaning, chef, DJ, photography and more",
+      "experiences": "Experiences",
+      "experiencesDesc": "Tours, workshops, adventures and wellness",
+      "venues": "Venues",
+      "venuesDesc": "Event halls, coworking and studios"
     }
   },
   "theme": {

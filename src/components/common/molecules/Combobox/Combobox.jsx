@@ -218,6 +218,8 @@ const Combobox = ({
       }
 
       commitOrClearCurrentInput();
+      setIsOpen(false);
+      setActiveIndex(-1);
     }, 0);
   };
 
