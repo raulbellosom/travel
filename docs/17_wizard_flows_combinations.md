@@ -7,6 +7,27 @@ Combinaciones totales: 82
 
 ---
 
+## 0. Rutas reales del wizard (frontend)
+
+### Ruta principal de creacion
+
+- URL canonica: `/app/properties/new`
+- Alias legacy/redirect: `/app/crear-propiedad`, `/properties/new`, `/crear-propiedad`
+- Componente: `CreateProperty` -> `PropertyWizard`
+
+### Ruta de edicion (usa la misma logica dinamica por perfil de recurso)
+
+- URL canonica: `/app/properties/:id/edit`
+- Alias legacy/redirect: `/app/editar-propiedad/:id`, `/properties/:id/edit`, `/editar-propiedad/:id`
+- Componente: `EditProperty` (usa el mismo motor de perfil dinamico de campos)
+
+### Nota importante
+
+- No existe una URL distinta por `resourceType` (`property`, `vehicle`, `service`, `experience`, `venue`).
+- La variacion por tipo/categoria/modo ocurre dentro del wizard en runtime, no por ruta HTTP.
+
+---
+
 ## 1. Campos base (se preguntan en todos los flujos)
 
 ### typeAndInfo
@@ -217,3 +238,28 @@ Notas:
 - `pricingModel` es la unica fuente de verdad para periodicidad de cobro.
 - Para `vehicle`, el ano corresponde a `vehicleModelYear` (no `yearBuilt`).
 - Para `vehicle`, el paso `commercialConditions` no aplica en este flujo (renta individual sin min/max unidades de reserva).
+
+---
+
+## 5. Reglas dinamicas activas (motor del wizard)
+
+- Al cambiar `resourceType`, se sanitizan automaticamente:
+- `category` (solo categorias permitidas para ese tipo).
+- `commercialMode` (solo modos permitidos para ese tipo).
+- `pricingModel` (solo modelos permitidos para ese tipo + modo).
+- `bookingType` (fallback por modo: `manual_contact`, `date_range`, `time_slot`).
+- Si cambia el contexto `resourceType|category|commercialMode`, el wizard reinicia navegacion a paso 1 y recalcula pasos visibles.
+- El paso `features` solo aparece si el perfil actual tiene campos dinamicos de caracteristicas.
+- El paso `commercialConditions` solo aparece si el perfil actual tiene campos dinamicos de condiciones.
+- La validacion por paso solo evalua los campos activos de ese paso; al guardar se valida todo el perfil activo.
+- En `location`, `country/state/city` se validan por cascada y se normalizan contra catalogo cargado.
+- Las amenidades se ordenan por relevancia segun `resourceType` + `category` (no por modo comercial).
+
+---
+
+## 6. Posibles desajustes funcionales detectados
+
+- `property + land + rent_long_term` muestra `furnished` y `petsAllowed`; puede sentirse semantico-debil para terrenos.
+- `vehicle` permite `rent_long_term` con `pricingModel=per_day`; operativamente puede ser valido, pero UX puede confundir si esperan solo mensual.
+- `amenities` existe para todos los tipos de recurso; si no hay catalogo especializado por tipo, puede mostrar opciones poco pertinentes.
+- `location` siempre exige `country/state/city`; para ciertos `service` o `experience` digitales podria requerirse un modo "sin ubicacion fisica".
