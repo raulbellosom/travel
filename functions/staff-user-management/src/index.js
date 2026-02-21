@@ -17,6 +17,8 @@ import {
 } from "./_request.js";
 
 const ALLOWED_STAFF_ROLES = new Set([
+  "root",
+  "owner",
   "staff_manager",
   "staff_editor",
   "staff_support",
@@ -354,7 +356,7 @@ const listStaff = async ({ db, users, config }) => {
         role: doc.role,
         scopesJson: doc.scopesJson || "[]",
         enabled: doc.enabled !== false,
-        avatarFileId: normalizeFileId(authUser?.prefs?.avatarFileId),
+        avatarFileId: normalizeFileId(doc.avatarFileId || authUser?.prefs?.avatarFileId),
         avatarUpdatedAt: normalize(authUser?.prefs?.avatarUpdatedAt, 48),
         $createdAt: doc.$createdAt,
       };

@@ -40,7 +40,7 @@ Campos troncales:
 
 ### pricingModel
 
-- `total`
+- `fixed_total` (legacy alias: `total`)
 - `per_month`
 - `per_night`
 - `per_day`
@@ -70,9 +70,9 @@ Campos troncales:
 
 | resourceType | commercialMode permitido |
 | --- | --- |
-| `property` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `property` | `sale`,`rent_long_term`,`rent_short_term` |
 | `service` | `rent_short_term`,`rent_hourly` |
-| `vehicle` | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly` |
+| `vehicle` | `sale`,`rent_long_term`,`rent_short_term` |
 | `experience` | `rent_short_term`,`rent_hourly` |
 | `venue` | `rent_short_term`,`rent_hourly` |
 
@@ -80,25 +80,23 @@ Campos troncales:
 
 | resourceType | commercialMode | pricingModel permitido |
 | --- | --- | --- |
-| `property` | `sale` | `total`,`per_m2` |
-| `property` | `rent_long_term` | `per_month`,`per_day`,`total`,`per_m2` |
-| `property` | `rent_short_term` | `per_day`,`per_night`,`total` |
-| `property` | `rent_hourly` | `per_hour`,`per_event`,`total` |
-| `vehicle` | `sale` | `total` |
-| `vehicle` | `rent_long_term` | `per_month`,`per_day`,`total` |
-| `vehicle` | `rent_short_term` | `per_day`,`total` |
-| `vehicle` | `rent_hourly` | `per_hour`,`total` |
-| `service` | `rent_short_term` | `per_day`,`per_person`,`per_event`,`total` |
-| `service` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`total` |
-| `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`total` |
-| `experience` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`total` |
-| `venue` | `rent_short_term` | `per_day`,`per_event`,`total` |
-| `venue` | `rent_hourly` | `per_hour`,`per_event`,`total` |
+| `property` | `sale` | `fixed_total`,`per_m2` |
+| `property` | `rent_long_term` | `per_month`,`fixed_total`,`per_m2` |
+| `property` | `rent_short_term` | `per_night`,`per_day`,`fixed_total` (house/apartment) y `per_day`,`fixed_total` (land/commercial/office/warehouse) |
+| `vehicle` | `sale` | `fixed_total` |
+| `vehicle` | `rent_long_term` | `per_month`,`fixed_total` |
+| `vehicle` | `rent_short_term` | `per_day` |
+| `service` | `rent_short_term` | `per_day`,`per_person`,`per_event`,`fixed_total` |
+| `service` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`fixed_total` |
+| `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`fixed_total` |
+| `experience` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`fixed_total` |
+| `venue` | `rent_short_term` | `per_day`,`per_event`,`fixed_total` |
+| `venue` | `rent_hourly` | `per_hour`,`per_event`,`fixed_total` |
 
 Reglas de fallback:
 
 - Si llega `category` invalida, se usa la primera categoria valida del `resourceType` solo para normalizacion interna de UI.
-- Si llega `commercialMode` invalido, se usa el primer modo valido del `resourceType` solo para normalizacion interna de UI.
+- Si llega `commercialMode` invalido, se usa el primer modo valido del contexto (`resourceType + category`) solo para normalizacion interna de UI.
 - Persistencia debe rechazar combinaciones invalidas (`422 VALIDATION_ERROR`) cuando el payload explicita una combinacion no permitida.
 
 ### Perfil dinamico de campos (wizard/editor)
@@ -179,7 +177,7 @@ Se consume en:
 - CTA: solicitar informacion
 - pagos online: no
 - condiciones comerciales: `furnished`, `petsAllowed`, `minimumContractDuration`
-- periodicidad de cobro unificada por `pricingModel` (`per_month`,`per_day`,`total`,`per_m2` segun tipo)
+- periodicidad de cobro unificada por `pricingModel` (`per_month`,`fixed_total`,`per_m2` segun tipo)
 
 ### rent_short_term
 
@@ -216,5 +214,5 @@ Durante migracion:
 
 ---
 
-Ultima actualizacion: 2026-02-20
-Version: 1.3.0
+Ultima actualizacion: 2026-02-21
+Version: 1.4.0

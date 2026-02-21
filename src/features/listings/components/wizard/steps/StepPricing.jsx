@@ -99,6 +99,12 @@ const StepPricing = ({ formHook }) => {
             );
           })}
         </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {t(
+            "propertyForm.helper.pricingModel",
+            "Selecciona como se cobra el precio segun el tipo de recurso y modo comercial.",
+          )}
+        </p>
         {renderFieldError("pricingModel")}
       </label>
 

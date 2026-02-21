@@ -3,6 +3,8 @@ import { ensureAppwriteConfigured } from "../api/appwriteClient";
 import { executeJsonFunction } from "../utils/functions";
 
 export const STAFF_ROLES = [
+  "root",
+  "owner",
   "staff_manager",
   "staff_editor",
   "staff_support",

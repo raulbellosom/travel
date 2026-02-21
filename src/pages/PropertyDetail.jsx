@@ -557,7 +557,7 @@ const PropertyDetail = () => {
               to={`/buscar?resourceType=${resourceBehavior.resourceType}&page=1`}
               className="transition hover:text-cyan-600 dark:hover:text-cyan-400"
             >
-              {t(`client:common.enums.resourceType.${resourceBehavior.resourceType}`, {
+              {t("client:propertyDetail.breadcrumb.resources", {
                 defaultValue: t("client:propertyDetail.breadcrumb.properties"),
               })}
             </Link>

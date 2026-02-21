@@ -37,6 +37,7 @@ import env from "../../../env";
 import PropertyImagePlaceholder from "../atoms/PropertyImagePlaceholder";
 import LazyImage from "../atoms/LazyImage";
 import { getResourceBehavior } from "../../../utils/resourceModel";
+import { getPublicPropertyRoute } from "../../../utils/internalRoutes";
 
 const normalizeEnumValue = (value) =>
   String(value || "")
@@ -56,6 +57,10 @@ const PropertyCard = ({ property, className }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const resource = useMemo(() => getResourceBehavior(property), [property]);
+  const publicDetailPath = getPublicPropertyRoute(
+    property.slug || property.$id,
+    i18n.resolvedLanguage || i18n.language,
+  );
 
   // Build image URLs from galleryImageIds
   const images = useMemo(() => {
@@ -176,7 +181,7 @@ const PropertyCard = ({ property, className }) => {
     : "";
 
   // Price label based on pricing model
-  const pricingModel = resource?.pricingModel || "total";
+  const pricingModel = resource?.pricingModel || "fixed_total";
   const priceLabelMap = {
     per_night: "client:pricing.pricePerNight",
     per_day: "client:pricing.pricePerDay",
@@ -218,7 +223,7 @@ const PropertyCard = ({ property, className }) => {
       {/* Image Carousel */}
       <div className="relative aspect-4/3 overflow-hidden bg-slate-200 dark:bg-slate-800">
         <Link
-          to={`/propiedades/${property.slug || property.$id}`}
+          to={publicDetailPath}
           className="block h-full w-full"
         >
           {hasImages ? (
@@ -329,7 +334,7 @@ const PropertyCard = ({ property, className }) => {
           </div>
 
           <Link
-            to={`/propiedades/${property.slug || property.$id}`}
+            to={publicDetailPath}
             className="group-hover:underline"
           >
             <h3
@@ -560,7 +565,7 @@ const PropertyCard = ({ property, className }) => {
           </div>
 
           <Link
-            to={`/propiedades/${property.slug || property.$id}`}
+            to={publicDetailPath}
             className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-lg active:scale-95 dark:bg-white dark:text-slate-900 dark:hover:bg-cyan-400 opacity-100 transform translate-y-0 md:opacity-0 md:translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 duration-300"
           >
             {t("client:actions.viewDetails", "Ver Detalles")}

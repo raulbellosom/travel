@@ -114,13 +114,19 @@ const normalizeCategoryValue = (
   fallback = WIZARD_DEFAULTS.category,
 ) => sanitizeCategory(resourceType, value || fallback);
 
-const pickAllowedPricingModel = (inputValue, commercialMode, resourceType) => {
+const pickAllowedPricingModel = (
+  inputValue,
+  commercialMode,
+  resourceType,
+  category = "",
+) => {
   const normalizedMode = normalizeCommercialMode(commercialMode);
-  const allowed = getAllowedPricingModels(resourceType, normalizedMode);
+  const allowed = getAllowedPricingModels(resourceType, normalizedMode, category);
   const candidate = normalizePricingModel(
     inputValue,
     normalizedMode,
     resourceType,
+    category,
   );
   return allowed.includes(candidate) ? candidate : allowed[0];
 };
@@ -129,19 +135,28 @@ const buildCommercialState = (
   draft = {},
   nextCommercialInput = "sale",
   resourceTypeInput = WIZARD_DEFAULTS.resourceType,
+  categoryInput = WIZARD_DEFAULTS.category,
 ) => {
   const normalizedResourceType = normalizeResourceType(resourceTypeInput);
+  const normalizedCategory = normalizeCategoryValue(
+    normalizedResourceType,
+    categoryInput,
+    WIZARD_DEFAULTS.category,
+  );
   const commercialMode = sanitizeCommercialMode(
     normalizedResourceType,
     nextCommercialInput,
+    normalizedCategory,
   );
   const pricingModel = pickAllowedPricingModel(
-    draft.pricingModel || draft.pricePerUnit || "total",
+    draft.pricingModel || draft.pricePerUnit || "fixed_total",
     commercialMode,
     normalizedResourceType,
+    normalizedCategory,
   );
   const bookingType = normalizeBookingType(draft.bookingType, commercialMode);
   return {
+    category: normalizedCategory,
     commercialMode,
     pricingModel,
     bookingType,
@@ -168,6 +183,7 @@ export const buildFormState = (initialValues = {}) => {
     merged,
     merged.commercialMode || WIZARD_DEFAULTS.commercialMode,
     resourceType,
+    category,
   );
   const initialAttributes = parseResourceAttributes(merged.attributes || "{}");
   if (
@@ -366,22 +382,36 @@ export const useWizardForm = ({
     (field, value) => {
       setForm((prev) => {
         if (field === "commercialMode") {
+          const resolvedCategory = normalizeCategoryValue(
+            prev.resourceType,
+            prev.category || prev.propertyType || WIZARD_DEFAULTS.category,
+            WIZARD_DEFAULTS.category,
+          );
           return {
             ...prev,
-            ...buildCommercialState(prev, value, prev.resourceType),
+            ...buildCommercialState(prev, value, prev.resourceType, resolvedCategory),
           };
         }
 
         if (field === "propertyType" || field === "category") {
-          const category = normalizeCategoryValue(
+          const nextCategory = normalizeCategoryValue(
             prev.resourceType,
             value,
             prev.category || prev.propertyType || WIZARD_DEFAULTS.category,
           );
+          const commercialState = buildCommercialState(
+            prev,
+            prev.commercialMode || WIZARD_DEFAULTS.commercialMode,
+            prev.resourceType,
+            nextCategory,
+          );
           return {
             ...prev,
-            category,
-            propertyType: category,
+            category: nextCategory,
+            propertyType: nextCategory,
+            commercialMode: commercialState.commercialMode,
+            pricingModel: commercialState.pricingModel,
+            bookingType: commercialState.bookingType,
           };
         }
 
@@ -390,6 +420,7 @@ export const useWizardForm = ({
             value,
             prev.commercialMode || "sale",
             prev.resourceType,
+            prev.category || prev.propertyType,
           );
           return {
             ...prev,
@@ -418,13 +449,16 @@ export const useWizardForm = ({
             prev,
             prev.commercialMode || WIZARD_DEFAULTS.commercialMode,
             nextResourceType,
+            category,
           );
           return {
             ...prev,
             resourceType: nextResourceType,
             category,
             propertyType: category,
-            ...commercialState,
+            commercialMode: commercialState.commercialMode,
+            pricingModel: commercialState.pricingModel,
+            bookingType: commercialState.bookingType,
           };
         }
 
@@ -443,6 +477,8 @@ export const useWizardForm = ({
       }
       if (field === "propertyType" || field === "category") {
         clearError("category");
+        clearError("commercialMode");
+        clearError("pricingModel");
       }
       if (field === "pricingModel") {
         clearError("pricingModel");
@@ -1092,9 +1128,37 @@ export const useWizardForm = ({
           "propertyForm.validation.commercialModeRequired",
         );
       else if (shouldValidate("commercialMode")) {
-        if (!isAllowedCommercialMode(resourceType, commercialModeValue)) {
+        if (
+          !isAllowedCommercialMode(
+            resourceType,
+            categoryValue,
+            commercialModeValue,
+          )
+        ) {
           nextErrors.commercialMode = t(
             "propertyForm.validation.commercialModeInvalidForResourceType",
+          );
+        }
+      }
+      if (shouldValidate("pricingModel")) {
+        const allowedPricingModels = getAllowedPricingModels(
+          resourceType,
+          commercialModeValue,
+          categoryValue,
+        );
+        const normalizedPricingModel = normalizePricingModel(
+          form.pricingModel,
+          commercialModeValue,
+          resourceType,
+          categoryValue,
+        );
+        if (!allowedPricingModels.includes(normalizedPricingModel)) {
+          nextErrors.pricingModel = t(
+            "propertyForm.validation.pricingModelInvalidForContext",
+            {
+              defaultValue:
+                "El modelo de precio no es valido para el tipo, categoria y modo comercial seleccionados.",
+            },
           );
         }
       }
@@ -1248,11 +1312,13 @@ export const useWizardForm = ({
     const commercialMode = sanitizeCommercialMode(
       resourceType,
       form.commercialMode || "sale",
+      category,
     );
     const pricingModel = pickAllowedPricingModel(
-      form.pricingModel || "total",
+      form.pricingModel || "fixed_total",
       commercialMode,
       resourceType,
+      category,
     );
     const bookingType = normalizeBookingType(form.bookingType, commercialMode);
     const profile = getResourceFormProfile({

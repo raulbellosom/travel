@@ -568,75 +568,132 @@ const FEATURES_BY_RESOURCE_TYPE = Object.freeze({
   ]),
 });
 
-const COMMERCIAL_CONDITION_FIELDS_BY_TYPE_AND_MODE = Object.freeze({
+const COMMERCIAL_CONDITION_FIELDS_BY_TYPE_CATEGORY_AND_MODE = Object.freeze({
   property: Object.freeze({
-    rent_long_term: Object.freeze([
-      "furnished",
-      "petsAllowed",
-      "minimumContractDuration",
-    ]),
-    rent_short_term: Object.freeze([
-      "maxGuests",
-      "minStayNights",
-      "maxStayNights",
-      "checkInTime",
-      "checkOutTime",
-    ]),
-    rent_hourly: Object.freeze([
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
+    house: Object.freeze({
+      sale: Object.freeze(["furnished"]),
+      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_short_term: Object.freeze([
+        "maxGuests",
+        "minStayNights",
+        "maxStayNights",
+        "checkInTime",
+        "checkOutTime",
+      ]),
+    }),
+    apartment: Object.freeze({
+      sale: Object.freeze(["furnished"]),
+      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_short_term: Object.freeze([
+        "maxGuests",
+        "minStayNights",
+        "maxStayNights",
+        "checkInTime",
+        "checkOutTime",
+      ]),
+    }),
+    commercial: Object.freeze({
+      sale: Object.freeze(["furnished"]),
+      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_short_term: Object.freeze([]),
+    }),
+    office: Object.freeze({
+      sale: Object.freeze(["furnished"]),
+      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_short_term: Object.freeze([]),
+    }),
+    warehouse: Object.freeze({
+      sale: Object.freeze(["furnished"]),
+      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_short_term: Object.freeze([]),
+    }),
+    land: Object.freeze({
+      sale: Object.freeze([]),
+      rent_long_term: Object.freeze(["minimumContractDuration"]),
+      rent_short_term: Object.freeze([]),
+    }),
   }),
   vehicle: Object.freeze({
-    rent_long_term: Object.freeze([]),
-    rent_short_term: Object.freeze([]),
-    rent_hourly: Object.freeze([]),
+    car: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
+    suv: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
+    pickup: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
+    van: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
+    motorcycle: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
+    boat: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
   }),
   service: Object.freeze({
-    rent_short_term: Object.freeze([
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
-    rent_hourly: Object.freeze([
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
+    cleaning: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    dj: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    chef: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    photography: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    catering: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    maintenance: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
   }),
   experience: Object.freeze({
-    rent_short_term: Object.freeze([
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
-    rent_hourly: Object.freeze([
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
+    tour: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    class: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    workshop: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    adventure: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    wellness: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    gastronomy: Object.freeze({
+      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
   }),
   venue: Object.freeze({
-    rent_short_term: Object.freeze([
-      "maxGuests",
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
-    rent_hourly: Object.freeze([
-      "maxGuests",
-      "bookingMinUnits",
-      "bookingMaxUnits",
-      "availabilityStartTime",
-      "availabilityEndTime",
-    ]),
+    event_hall: Object.freeze({
+      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    commercial_local: Object.freeze({
+      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    studio: Object.freeze({
+      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    coworking: Object.freeze({
+      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
+    meeting_room: Object.freeze({
+      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+    }),
   }),
 });
 
@@ -651,10 +708,15 @@ const resolveFeatureFieldKeys = (resourceType, category) => {
   return FEATURES_BY_RESOURCE_TYPE[resourceType] || [];
 };
 
-const resolveCommercialConditionFieldKeys = (resourceType, commercialMode) => {
-  const fieldsByMode =
-    COMMERCIAL_CONDITION_FIELDS_BY_TYPE_AND_MODE[resourceType] || {};
-  return fieldsByMode[commercialMode] || [];
+const resolveCommercialConditionFieldKeys = (
+  resourceType,
+  category,
+  commercialMode,
+) => {
+  const byCategory =
+    COMMERCIAL_CONDITION_FIELDS_BY_TYPE_CATEGORY_AND_MODE[resourceType] || {};
+  const byMode = byCategory[category] || byCategory[Object.keys(byCategory)[0]] || {};
+  return byMode[commercialMode] || [];
 };
 
 const mapFieldKeys = (keys) =>
@@ -703,13 +765,18 @@ export const getResourceFormProfile = ({
   const normalizedCommercial = sanitizeCommercialMode(
     normalizedType,
     normalizeCommercialMode(commercialMode || "sale"),
+    normalizedCategory,
   );
 
   const featureKeys = toUniqueKeys(
     resolveFeatureFieldKeys(normalizedType, normalizedCategory),
   );
   const commercialConditionKeys = toUniqueKeys(
-    resolveCommercialConditionFieldKeys(normalizedType, normalizedCommercial),
+    resolveCommercialConditionFieldKeys(
+      normalizedType,
+      normalizedCategory,
+      normalizedCommercial,
+    ),
   );
 
   const features = mapFieldKeys(featureKeys);

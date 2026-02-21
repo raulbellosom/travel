@@ -830,55 +830,139 @@
       "empty": "No hay leads aun."
     }
   },
-  "myPropertiesPage": {
-    "title": "Mis propiedades",
+  "myResourcesPage": {
+    "title": "Mis recursos",
     "subtitle": "Gestiona tus publicaciones y su estado.",
-    "loading": "Cargando...",
-    "empty": "Aun no has creado propiedades.",
+    "loading": "Cargando recursos...",
+    "empty": "Aún no has creado recursos.",
     "emptyFiltered": "No hay resultados para \"{{query}}\".",
-    "confirmDeactivate": "Seguro que deseas desactivar esta propiedad?",
+    "confirmDeactivate": "¿Seguro que deseas desactivar este recurso?",
     "filters": {
       "search": "Buscar",
-      "searchPlaceholder": "Titulo, slug, ciudad o estado",
-      "showAllProperties": "Ver todas las propiedades"
+      "searchPlaceholder": "Título, slug, ciudad, estado o categoría",
+      "showAll": "Ver todos los recursos",
+      "resourceType": "Tipo de recurso",
+      "allTypes": "Todos los tipos",
+      "responsible": "Responsable",
+      "allResponsibles": "Todos",
+      "noResponsibleResults": "Sin resultados",
+      "featured": "Destacados",
+      "featuredAll": "Todos",
+      "featuredOnly": "Solo destacados",
+      "featuredNone": "Sin destacados"
     },
     "table": {
       "image": "Imagen",
-      "title": "Titulo",
-      "location": "Ubicacion",
-      "type": "Tipo",
-      "operation": "Operacion",
-      "rooms": "Recamaras/Banos",
+      "title": "Título",
+      "location": "Ubicación",
+      "resourceType": "Tipo",
+      "category": "Categoría",
+      "commercialMode": "Operación",
+      "details": "Detalles",
+      "responsible": "Responsable",
       "status": "Estado",
-      "metrics": "Metricas",
+      "featured": "Destacado",
+      "metrics": "Métricas",
       "views": "Vistas",
       "leads": "Leads",
       "reservations": "Reservas",
       "price": "Precio",
-      "createdAt": "Creada",
-      "updatedAt": "Actualizada",
+      "pricingLabel": "{{price}} {{model}}",
+      "createdAt": "Creado",
+      "updatedAt": "Actualizado",
       "actions": "Acciones"
     },
+    "details": {
+      "bedrooms": "Recámaras",
+      "bathrooms": "Baños",
+      "totalArea": "Área total",
+      "builtArea": "Área construida",
+      "parkingSpaces": "Estacionamientos",
+      "maxGuests": "Huéspedes máx.",
+      "seats": "Asientos",
+      "doors": "Puertas",
+      "transmission": "Transmisión",
+      "duration": "Duración",
+      "capacitySeated": "Cap. sentados",
+      "capacityStanding": "Cap. de pie",
+      "participants": "Participantes",
+      "slotDuration": "Duración turno",
+      "minStay": "Estancia mín.",
+      "maxStay": "Estancia máx."
+    },
     "actions": {
-      "create": "Crear propiedad",
+      "create": "Crear recurso",
       "view": "Ver detalle",
       "edit": "Editar",
       "toDraft": "Pasar a borrador",
       "publish": "Publicar",
       "delete": "Eliminar",
-      "openMenu": "Abrir menu de acciones",
-      "menuLabel": "Acciones de la propiedad"
+      "openMenu": "Abrir menú de acciones",
+      "menuLabel": "Acciones del recurso"
     },
     "deleteModal": {
-      "title": "Eliminar propiedad",
-      "description": "Estas seguro de eliminar \"{{title}}\"? Esta accion la desactiva para que no sea visible.",
+      "title": "Eliminar recurso",
+      "description": "¿Estás seguro de eliminar \"{{title}}\"? Esta acción lo desactiva para que no sea visible.",
       "confirm": "Eliminar",
-      "warning": "Esta acción desactivará la propiedad para que no sea visible públicamente."
+      "warning": "Esta acción desactivará el recurso para que no sea visible públicamente."
     },
     "errors": {
-      "load": "No se pudieron cargar tus propiedades.",
+      "load": "No se pudieron cargar tus recursos.",
       "toggleStatus": "No se pudo cambiar el estado.",
-      "delete": "No se pudo eliminar la propiedad."
+      "updateResponsible": "No se pudo actualizar el responsable.",
+      "updateFeatured": "No se pudo actualizar el destacado.",
+      "delete": "No se pudo eliminar el recurso."
+    }
+  },
+  "myPropertiesPage": {
+    "title": "Mis recursos",
+    "subtitle": "Gestiona tus publicaciones y su estado.",
+    "loading": "Cargando recursos...",
+    "empty": "Aún no has creado recursos.",
+    "emptyFiltered": "No hay resultados para \"{{query}}\".",
+    "confirmDeactivate": "¿Seguro que deseas desactivar este recurso?",
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Título, slug, ciudad, estado o categoría",
+      "showAllProperties": "Ver todos los recursos"
+    },
+    "table": {
+      "image": "Imagen",
+      "title": "Título",
+      "location": "Ubicación",
+      "type": "Tipo",
+      "operation": "Operación",
+      "rooms": "Recámaras/Baños",
+      "status": "Estado",
+      "metrics": "Métricas",
+      "views": "Vistas",
+      "leads": "Leads",
+      "reservations": "Reservas",
+      "price": "Precio",
+      "createdAt": "Creado",
+      "updatedAt": "Actualizado",
+      "actions": "Acciones"
+    },
+    "actions": {
+      "create": "Crear recurso",
+      "view": "Ver detalle",
+      "edit": "Editar",
+      "toDraft": "Pasar a borrador",
+      "publish": "Publicar",
+      "delete": "Eliminar",
+      "openMenu": "Abrir menú de acciones",
+      "menuLabel": "Acciones del recurso"
+    },
+    "deleteModal": {
+      "title": "Eliminar recurso",
+      "description": "¿Estás seguro de eliminar \"{{title}}\"? Esta acción lo desactiva para que no sea visible.",
+      "confirm": "Eliminar",
+      "warning": "Esta acción desactivará el recurso para que no sea visible públicamente."
+    },
+    "errors": {
+      "load": "No se pudieron cargar tus recursos.",
+      "toggleStatus": "No se pudo cambiar el estado.",
+      "delete": "No se pudo eliminar el recurso."
     }
   },
   "leadsPage": {
@@ -1057,6 +1141,7 @@
   },
   "appPropertyDetailPage": {
     "loading": "Cargando detalle...",
+    "featured": "Destacado",
     "noImage": "Sin imagen",
     "galleryTitle": "Galeria de imagenes",
     "descriptionTitle": "Descripcion",
@@ -1391,7 +1476,9 @@
       "minimumContractDuration": "Duracion minima de contrato"
     },
     "helper": {
-      "description": "Minimo 20 caracteres. Explica valor diferencial, ubicacion y beneficios."
+      "description": "Minimo 20 caracteres. Explica valor diferencial, ubicacion y beneficios.",
+      "pricingModel": "Selecciona como se cobra el precio segun el tipo de recurso y modo comercial.",
+      "categoryCommercialDifference": "Usa Comercial para inmuebles en renta/venta tradicional. Para espacios por hora usa tipo de recurso Salon y categoria Local comercial."
     },
     "actions": {
       "saving": "Guardando...",
@@ -1482,7 +1569,8 @@
       "errorSummary": "{{count}} campos requieren atencion.",
       "ready": "Formulario listo para guardar.",
       "categoryRequired": "Selecciona una categoria.",
-      "commercialModeRequired": "Selecciona un modo comercial."
+      "commercialModeRequired": "Selecciona un modo comercial.",
+      "pricingModelInvalidForContext": "El modelo de precio no es valido para el tipo, categoria y modo comercial seleccionados."
     },
     "locationCombobox": {
       "countryPlaceholder": "Escribe para buscar pais...",
@@ -1552,7 +1640,8 @@
         "meetingRoom": "Sala de juntas"
       },
       "pricingModel": {
-        "total": "Total",
+        "total": "Precio fijo",
+        "fixedTotal": "Precio fijo",
         "perMonth": "Por mes",
         "perNight": "Por noche",
         "perDay": "Por dia",
@@ -1817,15 +1906,7 @@
     "close": "Cerrar modal"
   },
   "dateRangePicker": {
-    "dayHeaders": [
-      "Do",
-      "Lu",
-      "Ma",
-      "Mi",
-      "Ju",
-      "Vi",
-      "Sa"
-    ],
+    "dayHeaders": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
     "placeholders": {
       "single": "Selecciona fecha",
       "range": "Selecciona fechas"

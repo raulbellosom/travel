@@ -4,8 +4,8 @@ const withInternalBase = (segment) => `${INTERNAL_BASE_PATH}/${segment}`;
 
 export const INTERNAL_ROUTES = Object.freeze({
   dashboard: withInternalBase("dashboard"),
-  myProperties: withInternalBase("my-properties"),
-  createProperty: withInternalBase("properties/new"),
+  myProperties: withInternalBase("my-resources"),
+  createProperty: withInternalBase("resources/new"),
   leads: withInternalBase("leads"),
   reservations: withInternalBase("reservations"),
   calendar: withInternalBase("calendar"),
@@ -23,10 +23,10 @@ export const INTERNAL_ROUTES = Object.freeze({
 });
 
 export const getInternalEditPropertyRoute = (id) =>
-  withInternalBase(`properties/${id}/edit`);
+  withInternalBase(`resources/${id}/edit`);
 
 export const getInternalPropertyDetailRoute = (id) =>
-  withInternalBase(`properties/${id}`);
+  withInternalBase(`resources/${id}`);
 
 export const getLegacyInternalEditPropertyRoute = (id) =>
   withInternalBase(`editar-propiedad/${id}`);
@@ -36,7 +36,13 @@ export const getLegacyInternalPropertyDetailRoute = (id) =>
 
 /* ── Public routes ─────────────────────────────────── */
 
-export const getPublicPropertyRoute = (slug) => `/propiedades/${slug}`;
+export const getPublicPropertyRoute = (slug, language = "es") => {
+  const normalizedLanguage = String(language || "es").toLowerCase();
+  const basePath = normalizedLanguage.startsWith("en")
+    ? "/properties"
+    : "/propiedades";
+  return `${basePath}/${slug}`;
+};
 
 /* ── Conversations routes (role-based) ───────────────── */
 

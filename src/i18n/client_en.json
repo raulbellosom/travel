@@ -211,6 +211,7 @@
       },
       "pricingModel": {
         "total": "Total price",
+        "fixed_total": "Fixed price",
         "per_month": "Per month",
         "per_night": "Per night",
         "per_day": "Per day",
@@ -218,6 +219,18 @@
         "per_person": "Per person",
         "per_event": "Per event",
         "per_m2": "Per m²"
+      },
+      "commercialMode": {
+        "sale": "Sale",
+        "rent_long_term": "Long-term rent",
+        "rent_short_term": "Short-term rent",
+        "rent_hourly": "Hourly rent"
+      },
+      "bookingType": {
+        "manual_contact": "Manual contact",
+        "date_range": "Date range",
+        "time_slot": "Time slot",
+        "fixed_event": "Fixed event"
       }
     }
   },
@@ -280,6 +293,8 @@
       "landDesc": "Land ready to build",
       "commercial": "Commercial",
       "commercialDesc": "Commercial premises and offices",
+      "officesDesc": "Offices in strategic locations",
+      "warehousesDesc": "Warehouses and industrial spaces",
       "hotels": "Hotels",
       "hotelsDesc": "Accommodation in local hotels",
       "condos": "Condos",
@@ -288,6 +303,29 @@
       "villasDesc": "Luxury villas for vacations",
       "budget": "Budget",
       "budgetDesc": "Affordable options for everyone",
+      "vehicleCarDesc": "Compact cars and sedans",
+      "vehicleSuvDesc": "Family SUVs",
+      "vehiclePickupDesc": "Pickups for work and adventure",
+      "vehicleVanDesc": "Passenger vans",
+      "vehicleMotorcycleDesc": "Motorcycles and scooters",
+      "vehicleBoatDesc": "Boats and yachts",
+      "serviceCleaningDesc": "Professional cleaning services",
+      "serviceDjDesc": "DJs for parties and events",
+      "serviceChefDesc": "Private chefs",
+      "servicePhotographyDesc": "Professional photographers",
+      "serviceCateringDesc": "Food and banquet service",
+      "serviceMaintenanceDesc": "General maintenance and repairs",
+      "experienceTourDesc": "Guided local tours",
+      "experienceClassDesc": "Classes and courses",
+      "experienceWorkshopDesc": "Creative workshops",
+      "experienceAdventureDesc": "Outdoor adventures",
+      "experienceWellnessDesc": "Spa, yoga and wellness",
+      "experienceGastronomyDesc": "Tastings and food tours",
+      "venueEventHallDesc": "Spaces for social events",
+      "venueCommercialLocalDesc": "Flexible spaces for business",
+      "venueStudioDesc": "Production and recording studios",
+      "venueCoworkingDesc": "Shared workspaces",
+      "venueMeetingRoomDesc": "Equipped rooms for meetings",
       "vehicles": "Vehicles",
       "vehiclesDesc": "Cars, SUVs, motorcycles and more for rent or sale",
       "services": "Services",
@@ -370,7 +408,8 @@
     },
     "breadcrumb": {
       "home": "Home",
-      "properties": "Properties"
+      "properties": "Properties",
+      "resources": "Resources"
     },
     "price": {
       "perMonth": "/month",
@@ -654,28 +693,28 @@
     "rejected": "Rejected"
   },
   "myProperties": {
-    "title": "My Properties",
-    "subtitle": "Manage your property inventory.",
-    "loading": "Loading properties...",
-    "empty": "You have no registered properties.",
+    "title": "My Resources",
+    "subtitle": "Manage your resource inventory.",
+    "loading": "Loading resources...",
+    "empty": "You have no registered resources.",
     "emptyFiltered": "No results for \"{{query}}\".",
     "errors": {
-      "load": "Error loading properties.",
+      "load": "Error loading resources.",
       "toggleStatus": "Error changing status.",
-      "delete": "Error deleting property."
+      "delete": "Error deleting resource."
     },
     "actions": {
-      "create": "Post Property",
+      "create": "Post Resource",
       "openMenu": "Open actions menu",
-      "menuLabel": "Property actions",
+      "menuLabel": "Resource actions",
       "view": "View details",
       "edit": "Edit",
       "toDraft": "Move to Drafts",
-      "publish": "Publish Property"
+      "publish": "Publish Resource"
     },
     "filters": {
       "search": "Search",
-      "searchPlaceholder": "Title, slug, city or state"
+      "searchPlaceholder": "Title, slug, city, state or category"
     },
     "table": {
       "image": "Image",
@@ -683,7 +722,7 @@
       "location": "Location",
       "type": "Type",
       "operation": "Operation",
-      "rooms": "Beds/Baths",
+      "rooms": "Details",
       "status": "Status",
       "metrics": "Metrics",
       "price": "Price",

@@ -830,17 +830,101 @@
       "empty": "There are no leads yet."
     }
   },
-  "myPropertiesPage": {
-    "title": "My properties",
+  "myResourcesPage": {
+    "title": "My resources",
     "subtitle": "Manage your listings and their status.",
-    "loading": "Loading...",
-    "empty": "You have not created properties yet.",
+    "loading": "Loading resources...",
+    "empty": "You have not created any resources yet.",
     "emptyFiltered": "No results for \"{{query}}\".",
-    "confirmDeactivate": "Are you sure you want to deactivate this property?",
+    "confirmDeactivate": "Are you sure you want to deactivate this resource?",
     "filters": {
       "search": "Search",
-      "searchPlaceholder": "Title, slug, city, or state",
-      "showAllProperties": "Show all properties"
+      "searchPlaceholder": "Title, slug, city, state, or category",
+      "showAll": "Show all resources",
+      "resourceType": "Resource type",
+      "allTypes": "All types",
+      "responsible": "Responsible",
+      "allResponsibles": "All",
+      "noResponsibleResults": "No results",
+      "featured": "Featured",
+      "featuredAll": "All",
+      "featuredOnly": "Featured only",
+      "featuredNone": "Not featured"
+    },
+    "table": {
+      "image": "Image",
+      "title": "Title",
+      "location": "Location",
+      "resourceType": "Type",
+      "category": "Category",
+      "commercialMode": "Operation",
+      "details": "Details",
+      "responsible": "Responsible",
+      "status": "Status",
+      "featured": "Featured",
+      "metrics": "Metrics",
+      "views": "Views",
+      "leads": "Leads",
+      "reservations": "Reservations",
+      "price": "Price",
+      "pricingLabel": "{{price}} {{model}}",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "actions": "Actions"
+    },
+    "details": {
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "totalArea": "Total area",
+      "builtArea": "Built area",
+      "parkingSpaces": "Parking",
+      "maxGuests": "Max guests",
+      "seats": "Seats",
+      "doors": "Doors",
+      "transmission": "Transmission",
+      "duration": "Duration",
+      "capacitySeated": "Seated cap.",
+      "capacityStanding": "Standing cap.",
+      "participants": "Participants",
+      "slotDuration": "Slot duration",
+      "minStay": "Min. stay",
+      "maxStay": "Max. stay"
+    },
+    "actions": {
+      "create": "Create resource",
+      "view": "View details",
+      "edit": "Edit",
+      "toDraft": "Move to draft",
+      "publish": "Publish",
+      "delete": "Delete",
+      "openMenu": "Open actions menu",
+      "menuLabel": "Resource actions"
+    },
+    "deleteModal": {
+      "title": "Delete resource",
+      "description": "Are you sure you want to delete \"{{title}}\"? This will deactivate it so it is no longer visible.",
+      "confirm": "Delete",
+      "warning": "This action will deactivate the resource so it is no longer publicly visible."
+    },
+    "errors": {
+      "load": "Could not load your resources.",
+      "toggleStatus": "Could not change status.",
+      "updateResponsible": "Could not update the assignee.",
+      "updateFeatured": "Could not update featured status.",
+      "delete": "Could not delete the resource."
+    }
+  },
+  "myPropertiesPage": {
+    "title": "My resources",
+    "subtitle": "Manage your listings and their status.",
+    "loading": "Loading resources...",
+    "empty": "You have not created any resources yet.",
+    "emptyFiltered": "No results for \"{{query}}\".",
+    "confirmDeactivate": "Are you sure you want to deactivate this resource?",
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "Title, slug, city, state, or category",
+      "showAllProperties": "Show all resources"
     },
     "table": {
       "image": "Image",
@@ -848,7 +932,7 @@
       "location": "Location",
       "type": "Type",
       "operation": "Operation",
-      "rooms": "Beds/Baths",
+      "rooms": "Details",
       "status": "Status",
       "metrics": "Metrics",
       "views": "Views",
@@ -860,25 +944,25 @@
       "actions": "Actions"
     },
     "actions": {
-      "create": "Create property",
+      "create": "Create resource",
       "view": "View details",
       "edit": "Edit",
       "toDraft": "Move to draft",
       "publish": "Publish",
       "delete": "Delete",
       "openMenu": "Open actions menu",
-      "menuLabel": "Property actions"
+      "menuLabel": "Resource actions"
     },
     "deleteModal": {
-      "title": "Delete property",
+      "title": "Delete resource",
       "description": "Are you sure you want to delete \"{{title}}\"? This will deactivate it so it is no longer visible.",
       "confirm": "Delete",
-      "warning": "This action will deactivate the property so it is no longer publicly visible."
+      "warning": "This action will deactivate the resource so it is no longer publicly visible."
     },
     "errors": {
-      "load": "Could not load your properties.",
+      "load": "Could not load your resources.",
       "toggleStatus": "Could not change status.",
-      "delete": "Could not delete property."
+      "delete": "Could not delete the resource."
     }
   },
   "leadsPage": {
@@ -1057,6 +1141,7 @@
   },
   "appPropertyDetailPage": {
     "loading": "Loading details...",
+    "featured": "Featured",
     "noImage": "No image",
     "galleryTitle": "Image gallery",
     "descriptionTitle": "Description",
@@ -1391,7 +1476,9 @@
       "minimumContractDuration": "Minimum contract duration"
     },
     "helper": {
-      "description": "At least 20 characters. Explain value, location, and key highlights."
+      "description": "At least 20 characters. Explain value, location, and key highlights.",
+      "pricingModel": "Choose how pricing is charged for the selected resource type and commercial mode.",
+      "categoryCommercialDifference": "Use Commercial for classic real-estate sale/rent listings. For bookable spaces by hour, use resource type Venue and category Commercial unit."
     },
     "actions": {
       "saving": "Saving...",
@@ -1482,7 +1569,8 @@
       "errorSummary": "{{count}} fields need attention.",
       "ready": "Form is ready to save.",
       "categoryRequired": "Select a category.",
-      "commercialModeRequired": "Select a commercial mode."
+      "commercialModeRequired": "Select a commercial mode.",
+      "pricingModelInvalidForContext": "The pricing model is not valid for the selected resource type, category, and commercial mode."
     },
     "locationCombobox": {
       "countryPlaceholder": "Type to search country...",
@@ -1552,7 +1640,8 @@
         "meetingRoom": "Meeting room"
       },
       "pricingModel": {
-        "total": "Total",
+        "total": "Fixed price",
+        "fixedTotal": "Fixed price",
         "perMonth": "Per month",
         "perNight": "Per night",
         "perDay": "Per day",
@@ -1817,15 +1906,7 @@
     "close": "Close modal"
   },
   "dateRangePicker": {
-    "dayHeaders": [
-      "Su",
-      "Mo",
-      "Tu",
-      "We",
-      "Th",
-      "Fr",
-      "Sa"
-    ],
+    "dayHeaders": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
     "placeholders": {
       "single": "Select date",
       "range": "Select dates"

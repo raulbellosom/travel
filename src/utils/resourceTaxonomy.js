@@ -1,4 +1,4 @@
-import { normalizeCommercialMode, normalizeResourceType } from "./resourceModel";
+import { normalizeCommercialMode, normalizeResourceType } from "./resourceModel.js";
 
 export const CATEGORY_BY_RESOURCE_TYPE = Object.freeze({
   property: Object.freeze([
@@ -43,21 +43,53 @@ export const CATEGORY_BY_RESOURCE_TYPE = Object.freeze({
 });
 
 export const COMMERCIAL_MODE_BY_RESOURCE_TYPE = Object.freeze({
-  property: Object.freeze([
-    "sale",
-    "rent_long_term",
-    "rent_short_term",
-    "rent_hourly",
-  ]),
+  property: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
   service: Object.freeze(["rent_short_term", "rent_hourly"]),
-  vehicle: Object.freeze([
-    "sale",
-    "rent_long_term",
-    "rent_short_term",
-    "rent_hourly",
-  ]),
+  vehicle: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
   experience: Object.freeze(["rent_short_term", "rent_hourly"]),
   venue: Object.freeze(["rent_short_term", "rent_hourly"]),
+});
+
+const COMMERCIAL_MODE_BY_RESOURCE_AND_CATEGORY = Object.freeze({
+  property: Object.freeze({
+    house: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    apartment: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    land: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    commercial: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    office: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    warehouse: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+  }),
+  service: Object.freeze({
+    cleaning: Object.freeze(["rent_short_term", "rent_hourly"]),
+    dj: Object.freeze(["rent_short_term", "rent_hourly"]),
+    chef: Object.freeze(["rent_short_term", "rent_hourly"]),
+    photography: Object.freeze(["rent_short_term", "rent_hourly"]),
+    catering: Object.freeze(["rent_short_term", "rent_hourly"]),
+    maintenance: Object.freeze(["rent_short_term", "rent_hourly"]),
+  }),
+  vehicle: Object.freeze({
+    car: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    suv: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    pickup: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    van: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    motorcycle: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+    boat: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
+  }),
+  experience: Object.freeze({
+    tour: Object.freeze(["rent_short_term", "rent_hourly"]),
+    class: Object.freeze(["rent_short_term", "rent_hourly"]),
+    workshop: Object.freeze(["rent_short_term", "rent_hourly"]),
+    adventure: Object.freeze(["rent_short_term", "rent_hourly"]),
+    wellness: Object.freeze(["rent_short_term", "rent_hourly"]),
+    gastronomy: Object.freeze(["rent_short_term", "rent_hourly"]),
+  }),
+  venue: Object.freeze({
+    event_hall: Object.freeze(["rent_short_term", "rent_hourly"]),
+    commercial_local: Object.freeze(["rent_short_term", "rent_hourly"]),
+    studio: Object.freeze(["rent_short_term", "rent_hourly"]),
+    coworking: Object.freeze(["rent_short_term", "rent_hourly"]),
+    meeting_room: Object.freeze(["rent_short_term", "rent_hourly"]),
+  }),
 });
 
 export const CATEGORY_I18N_KEY_BY_SLUG = Object.freeze({
@@ -108,8 +140,14 @@ export const getAllowedCategories = (resourceType) => {
   return [...(CATEGORY_BY_RESOURCE_TYPE[normalizedType] || CATEGORY_BY_RESOURCE_TYPE.property)];
 };
 
-export const getAllowedCommercialModes = (resourceType) => {
+export const getAllowedCommercialModes = (resourceType, category = "") => {
   const normalizedType = normalizeResourceType(resourceType);
+  const normalizedCategory = normalizeCategory(category);
+  const byCategory =
+    COMMERCIAL_MODE_BY_RESOURCE_AND_CATEGORY[normalizedType]?.[normalizedCategory];
+  if (Array.isArray(byCategory) && byCategory.length > 0) {
+    return [...byCategory];
+  }
   return [
     ...(COMMERCIAL_MODE_BY_RESOURCE_TYPE[normalizedType] ||
       COMMERCIAL_MODE_BY_RESOURCE_TYPE.property),
@@ -119,10 +157,20 @@ export const getAllowedCommercialModes = (resourceType) => {
 export const isAllowedCategory = (resourceType, category) =>
   getAllowedCategories(resourceType).includes(normalizeCategory(category));
 
-export const isAllowedCommercialMode = (resourceType, commercialMode) =>
-  getAllowedCommercialModes(resourceType).includes(
+export const isAllowedCommercialMode = (
+  resourceType,
+  categoryOrCommercialMode,
+  commercialModeInput,
+) => {
+  const hasCategory = commercialModeInput !== undefined;
+  const category = hasCategory ? categoryOrCommercialMode : "";
+  const commercialMode = hasCategory
+    ? commercialModeInput
+    : categoryOrCommercialMode;
+  return getAllowedCommercialModes(resourceType, category).includes(
     normalizeCommercialMode(commercialMode),
   );
+};
 
 export const sanitizeCategory = (resourceType, category) => {
   const normalizedCategory = normalizeCategory(category);
@@ -131,16 +179,21 @@ export const sanitizeCategory = (resourceType, category) => {
     : getDefaultCategory(resourceType);
 };
 
-export const sanitizeCommercialMode = (resourceType, commercialMode) => {
+export const sanitizeCommercialMode = (
+  resourceType,
+  commercialMode,
+  category = "",
+) => {
   const normalizedMode = normalizeCommercialMode(commercialMode);
-  return isAllowedCommercialMode(resourceType, normalizedMode)
+  return isAllowedCommercialMode(resourceType, category, normalizedMode)
     ? normalizedMode
-    : getDefaultCommercialMode(resourceType);
+    : getAllowedCommercialModes(resourceType, category)[0] ||
+        getDefaultCommercialMode(resourceType);
 };
 
 export const isValidResourceCombo = (resourceType, category, commercialMode) =>
   isAllowedCategory(resourceType, category) &&
-  isAllowedCommercialMode(resourceType, commercialMode);
+  isAllowedCommercialMode(resourceType, category, commercialMode);
 
 export const getCategoryTranslationKey = (categorySlug) =>
   CATEGORY_I18N_KEY_BY_SLUG[normalizeCategory(categorySlug)] || "";

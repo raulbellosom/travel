@@ -170,9 +170,6 @@ const PublicNavbar = () => {
     "bg-white/50 border-white/60 text-slate-700 hover:bg-white/70 backdrop-blur-sm dark:bg-slate-800/60 dark:border-slate-600/50 dark:text-slate-200 dark:hover:bg-slate-700/70";
   const circleTransparent =
     "bg-white/15 border-white/30 text-white hover:bg-white/25 backdrop-blur-sm";
-  const circleMobile =
-    "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700";
-
   return (
     <>
       <header
@@ -253,7 +250,7 @@ const PublicNavbar = () => {
                           to={link.path}
                           className="flex items-center justify-between text-sm font-medium text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
                         >
-                          {t("common.viewAll", "Ver todos")}
+                          {t("client:common.viewAll", "View all")}
                           <ChevronRight size={14} />
                         </Link>
                       </div>
@@ -277,8 +274,8 @@ const PublicNavbar = () => {
                   circleBase,
                   solidNav ? circleScrolled : circleTransparent,
                 )}
-                aria-label={t("dashboardNavbar.toggleLanguage")}
-                title={t("dashboardNavbar.toggleLanguage")}
+                aria-label={t("client:dashboardNavbar.toggleLanguage")}
+                title={t("client:dashboardNavbar.toggleLanguage")}
               >
                 <span className="text-[11px] font-semibold uppercase tracking-wide">
                   {String(nextLanguage || "en").toUpperCase()}
@@ -370,13 +367,13 @@ const PublicNavbar = () => {
                     )}
                   >
                     <LogIn size={18} />
-                    <span>{t("nav.login", "Iniciar Sesion")}</span>
+                    <span>{t("client:nav.login", "Log in")}</span>
                   </Link>
                   <Link
                     to="/register"
                     className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-cyan-500/30 active:scale-95"
                   >
-                    {t("nav.register", "Registrarse")}
+                    {t("client:nav.register", "Register")}
                   </Link>
                 </>
               )}
@@ -402,7 +399,7 @@ const PublicNavbar = () => {
                       circleBase,
                       solidNav ? circleScrolled : circleTransparent,
                     )}
-                    aria-label={t("dashboardNavbar.toggleLanguage")}
+                    aria-label={t("client:dashboardNavbar.toggleLanguage")}
                   >
                     <span className="text-[10px] font-semibold uppercase tracking-wide">
                       {String(nextLanguage || "en").toUpperCase()}
@@ -415,7 +412,7 @@ const PublicNavbar = () => {
                       circleBase,
                       solidNav ? circleScrolled : circleTransparent,
                     )}
-                    aria-label={t("dashboardNavbar.toggleThemeTo", {
+                    aria-label={t("client:dashboardNavbar.toggleThemeTo", {
                       theme: t(`theme.${nextThemeMobile}`),
                     })}
                   >
@@ -431,7 +428,7 @@ const PublicNavbar = () => {
                         circleBase,
                         solidNav ? circleScrolled : circleTransparent,
                       )}
-                      aria-label={t("nav.login", "Iniciar Sesión")}
+                      aria-label={t("client:nav.login", "Log in")}
                     >
                       <LogIn size={18} />
                     </Link>

@@ -1,11 +1,6 @@
-﻿import React, { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+﻿import { useTranslation } from "react-i18next";
 
 import env from "../env";
-import { propertiesService } from "../services/propertiesService";
-import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
 
 // Components
@@ -47,8 +42,8 @@ const Home = () => {
           "client:home.houses.subtitle",
           "Descubre casas espaciosas perfectas para tu familia.",
         )}
-        filters={{ resourceType: "property", category: "house", operationType: "sale" }}
-        viewAllLink="/buscar?resourceType=property&category=house&operationType=sale"
+        filters={{ resourceType: "property", category: "house", commercialMode: "sale" }}
+        viewAllLink="/buscar?resourceType=property&category=house&commercialMode=sale"
         limit={3}
         bgClass="bg-slate-50 dark:bg-slate-900/50"
       />
@@ -155,3 +150,6 @@ const Home = () => {
 };
 
 export default Home;
+
+
+

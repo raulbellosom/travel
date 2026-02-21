@@ -141,6 +141,7 @@ const AppRoutes = () => {
                     element={<PropertyDetail />}
                   />
                   <Route path="properties/:slug" element={<PropertyDetail />} />
+                  <Route path="resources/:slug" element={<PropertyDetail />} />
                   <Route path="reservar/:slug" element={<ReserveProperty />} />
                   <Route path="reserve/:slug" element={<ReserveProperty />} />
                   <Route path="voucher/:code" element={<VoucherLookup />} />
@@ -264,7 +265,7 @@ const AppRoutes = () => {
                   />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route
-                    path="my-properties"
+                    path="my-resources"
                     element={
                       <ScopeRoute scope="properties.read">
                         <MyProperties />
@@ -272,7 +273,7 @@ const AppRoutes = () => {
                     }
                   />
                   <Route
-                    path="properties/new"
+                    path="resources/new"
                     element={
                       <ScopeRoute scope="properties.write">
                         <CreateProperty />
@@ -280,7 +281,7 @@ const AppRoutes = () => {
                     }
                   />
                   <Route
-                    path="properties/:id/edit"
+                    path="resources/:id/edit"
                     element={
                       <ScopeRoute scope="properties.write">
                         <EditProperty />
@@ -288,7 +289,7 @@ const AppRoutes = () => {
                     }
                   />
                   <Route
-                    path="properties/:id"
+                    path="resources/:id"
                     element={
                       <ScopeRoute scope="properties.read">
                         <AppPropertyDetail />
@@ -401,10 +402,38 @@ const AppRoutes = () => {
                   />
                   <Route path="profile" element={<AppProfile />} />
                   <Route
+                    path="my-properties"
+                    element={
+                      <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                    }
+                  />
+                  <Route
                     path="mis-propiedades"
                     element={
                       <Navigate to={INTERNAL_ROUTES.myProperties} replace />
                     }
+                  />
+                  <Route
+                    path="mis-recursos"
+                    element={
+                      <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                    }
+                  />
+                  <Route
+                    path="properties/new"
+                    element={
+                      <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                    }
+                  />
+                  <Route
+                    path="crear-recurso"
+                    element={
+                      <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                    }
+                  />
+                  <Route
+                    path="properties/:id"
+                    element={<LegacyPropertyDetailRedirect />}
                   />
                   <Route
                     path="propiedades/:id"
@@ -417,7 +446,15 @@ const AppRoutes = () => {
                     }
                   />
                   <Route
+                    path="properties/:id/edit"
+                    element={<LegacyEditPropertyRedirect />}
+                  />
+                  <Route
                     path="editar-propiedad/:id"
+                    element={<LegacyEditPropertyRedirect />}
+                  />
+                  <Route
+                    path="editar-recurso/:id"
                     element={<LegacyEditPropertyRedirect />}
                   />
                   <Route
@@ -465,11 +502,33 @@ const AppRoutes = () => {
                   }
                 />
                 <Route
+                  path="/mis-recursos"
+                  element={
+                    <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                  }
+                />
+                <Route
+                  path="/my-resources"
+                  element={
+                    <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                  }
+                />
+                <Route
                   path="/properties/:id"
                   element={<LegacyPropertyDetailRedirect />}
                 />
                 <Route
+                  path="/resources/:id"
+                  element={<LegacyPropertyDetailRedirect />}
+                />
+                <Route
                   path="/crear-propiedad"
+                  element={
+                    <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                  }
+                />
+                <Route
+                  path="/crear-recurso"
                   element={
                     <Navigate to={INTERNAL_ROUTES.createProperty} replace />
                   }
@@ -481,11 +540,25 @@ const AppRoutes = () => {
                   }
                 />
                 <Route
+                  path="/resources/new"
+                  element={
+                    <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                  }
+                />
+                <Route
                   path="/editar-propiedad/:id"
                   element={<LegacyEditPropertyRedirect />}
                 />
                 <Route
+                  path="/editar-recurso/:id"
+                  element={<LegacyEditPropertyRedirect />}
+                />
+                <Route
                   path="/properties/:id/edit"
+                  element={<LegacyEditPropertyRedirect />}
+                />
+                <Route
+                  path="/resources/:id/edit"
                   element={<LegacyEditPropertyRedirect />}
                 />
                 <Route

@@ -211,6 +211,7 @@
       },
       "pricingModel": {
         "total": "Precio total",
+        "fixed_total": "Precio fijo",
         "per_month": "Por mes",
         "per_night": "Por noche",
         "per_day": "Por día",
@@ -218,6 +219,18 @@
         "per_person": "Por persona",
         "per_event": "Por evento",
         "per_m2": "Por m²"
+      },
+      "commercialMode": {
+        "sale": "Venta",
+        "rent_long_term": "Renta mensual",
+        "rent_short_term": "Renta corta",
+        "rent_hourly": "Renta por hora"
+      },
+      "bookingType": {
+        "manual_contact": "Contacto manual",
+        "date_range": "Rango de fechas",
+        "time_slot": "Turno horario",
+        "fixed_event": "Evento fijo"
       }
     }
   },
@@ -288,6 +301,31 @@
       "villasDesc": "Villas de lujo para vacaciones",
       "budget": "Económicas",
       "budgetDesc": "Opciones accesibles para todos",
+      "officesDesc": "Oficinas en zonas estrategicas",
+      "warehousesDesc": "Bodegas y espacios industriales",
+      "vehicleCarDesc": "Autos compactos y sedanes",
+      "vehicleSuvDesc": "SUVs familiares",
+      "vehiclePickupDesc": "Pickups para trabajo y aventura",
+      "vehicleVanDesc": "Vans para pasajeros",
+      "vehicleMotorcycleDesc": "Motocicletas y scooters",
+      "vehicleBoatDesc": "Lanchas y yates",
+      "serviceCleaningDesc": "Servicios de limpieza profesional",
+      "serviceDjDesc": "DJs para fiestas y eventos",
+      "serviceChefDesc": "Chefs privados",
+      "servicePhotographyDesc": "Fotografos profesionales",
+      "serviceCateringDesc": "Servicio de alimentos y banquetes",
+      "serviceMaintenanceDesc": "Mantenimiento y reparaciones generales",
+      "experienceTourDesc": "Tours guiados por la zona",
+      "experienceClassDesc": "Clases y cursos",
+      "experienceWorkshopDesc": "Talleres creativos",
+      "experienceAdventureDesc": "Aventuras al aire libre",
+      "experienceWellnessDesc": "Spa, yoga y bienestar",
+      "experienceGastronomyDesc": "Degustaciones y recorridos gastronomicos",
+      "venueEventHallDesc": "Espacios para eventos sociales",
+      "venueCommercialLocalDesc": "Espacios flexibles para negocio",
+      "venueStudioDesc": "Estudios de produccion y grabacion",
+      "venueCoworkingDesc": "Espacios de trabajo compartido",
+      "venueMeetingRoomDesc": "Salas equipadas para reuniones",
       "vehicles": "Vehículos",
       "vehiclesDesc": "Autos, SUVs, motos y más en renta o venta",
       "services": "Servicios",
@@ -370,7 +408,8 @@
     },
     "breadcrumb": {
       "home": "Inicio",
-      "properties": "Propiedades"
+      "properties": "Propiedades",
+      "resources": "Recursos"
     },
     "price": {
       "perMonth": "/mes",
@@ -654,28 +693,28 @@
     "rejected": "Rechazada"
   },
   "myProperties": {
-    "title": "Mis Propiedades",
-    "subtitle": "Gestiona tu inventario de propiedades.",
-    "loading": "Cargando propiedades...",
-    "empty": "No tienes propiedades registradas.",
+    "title": "Mis Recursos",
+    "subtitle": "Gestiona tu inventario de recursos.",
+    "loading": "Cargando recursos...",
+    "empty": "No tienes recursos registrados.",
     "emptyFiltered": "No hay resultados para \"{{query}}\".",
     "errors": {
-      "load": "Error al cargar propiedades.",
+      "load": "Error al cargar recursos.",
       "toggleStatus": "Error al cambiar el estado.",
-      "delete": "Error al eliminar la propiedad."
+      "delete": "Error al eliminar el recurso."
     },
     "actions": {
-      "create": "Publicar Propiedad",
+      "create": "Publicar Recurso",
       "openMenu": "Abrir menú de acciones",
-      "menuLabel": "Acciones de la propiedad",
+      "menuLabel": "Acciones del recurso",
       "view": "Ver detalle",
       "edit": "Editar",
       "toDraft": "Mover a Borradores",
-      "publish": "Publicar Propiedad"
+      "publish": "Publicar Recurso"
     },
     "filters": {
       "search": "Buscar",
-      "searchPlaceholder": "Título, slug, ciudad o estado"
+      "searchPlaceholder": "Título, slug, ciudad, estado o categoría"
     },
     "table": {
       "image": "Imagen",
@@ -683,11 +722,11 @@
       "location": "Ubicación",
       "type": "Tipo",
       "operation": "Operación",
-      "rooms": "Recámaras/Baños",
+      "rooms": "Detalles",
       "status": "Estado",
       "metrics": "Métricas",
       "price": "Precio",
-      "updatedAt": "Actualizada",
+      "updatedAt": "Actualizado",
       "actions": "Acciones",
       "views": "Vistas",
       "leads": "Leads",
@@ -698,7 +737,7 @@
     "draft": "Borrador",
     "published": "Publicada",
     "inactive": "Inactiva",
-    "archived": "Archived"
+    "archived": "Archivada"
   },
   "terms": {
     "title": "Términos y Condiciones",

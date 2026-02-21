@@ -10,6 +10,7 @@ import { propertiesService } from "../../../../services/propertiesService";
 import { storage } from "../../../../api/appwriteClient";
 import env from "../../../../env";
 import { getErrorMessage } from "../../../../utils/errors";
+import { getPublicPropertyRoute } from "../../../../utils/internalRoutes";
 
 /**
  * PropertyShowcaseSection - Featured properties grid display
@@ -131,7 +132,10 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   <Link
-                    to={`/propiedades/${property.slug}`}
+                    to={getPublicPropertyRoute(
+                      property.slug,
+                      i18n.resolvedLanguage || i18n.language,
+                    )}
                     className="block h-full"
                   >
                     <ListingCard

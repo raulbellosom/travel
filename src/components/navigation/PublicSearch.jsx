@@ -7,6 +7,7 @@ import { AnimatePresence, motion as Motion } from "framer-motion";
 import { storage } from "../../api/appwriteClient";
 import env from "../../env";
 import { cn } from "../../utils/cn";
+import { getPublicPropertyRoute } from "../../utils/internalRoutes";
 import LazyImage from "../common/atoms/LazyImage";
 import {
   PUBLIC_SEARCH_MIN_QUERY_LENGTH,
@@ -165,7 +166,7 @@ const PublicSearch = ({
       decoratedLiveResults.forEach((property) => {
         items.push({
           type: "property",
-          action: () => goTo(`/propiedades/${property.slug}`),
+          action: () => goTo(getPublicPropertyRoute(property.slug, language)),
         });
       });
     }
@@ -260,7 +261,9 @@ const PublicSearch = ({
                       key={property.$id}
                       type="button"
                       data-nav-item
-                      onClick={() => goTo(`/propiedades/${property.slug}`)}
+                      onClick={() =>
+                        goTo(getPublicPropertyRoute(property.slug, language))
+                      }
                       onMouseEnter={() => setActiveIndex(currentIndex)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",

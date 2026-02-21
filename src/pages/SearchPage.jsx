@@ -51,6 +51,7 @@ import { DEFAULT_AMENITIES_CATALOG } from "../data/amenitiesCatalog";
 import {
   CATEGORY_BY_RESOURCE_TYPE,
   COMMERCIAL_MODE_BY_RESOURCE_TYPE,
+  getAllowedCommercialModes,
 } from "../utils/resourceTaxonomy";
 
 /* ─────────────────────────── constants ─────────────────────────── */
@@ -67,11 +68,15 @@ const RESOURCE_TYPE_OPTIONS = [
 const OPERATION_OPTIONS = [
   { value: "", labelKey: "search.allOperations", fallback: "All" },
   { value: "sale", labelKey: "common.enums.operation.sale", fallback: "Sale" },
-  { value: "rent", labelKey: "common.enums.operation.rent", fallback: "Rent" },
   {
-    value: "vacation_rental",
-    labelKey: "common.enums.operation.vacation_rental",
-    fallback: "Vacation",
+    value: "rent_long_term",
+    labelKey: "common.enums.operation.rent_long_term",
+    fallback: "Long-term rent",
+  },
+  {
+    value: "rent_short_term",
+    labelKey: "common.enums.operation.rent_short_term",
+    fallback: "Short-term rent",
   },
   {
     value: "rent_hourly",
@@ -136,45 +141,25 @@ const buildCategoryOptions = (resourceType, t) => {
   return options;
 };
 
-const PROPERTY_TYPE_OPTIONS = [
-  { value: "", labelKey: "search.allTypes", fallback: "All", icon: Home },
-  {
-    value: "house",
-    labelKey: "common.enums.propertyType.house",
-    fallback: "House",
-    icon: Home,
-  },
-  {
-    value: "apartment",
-    labelKey: "common.enums.propertyType.apartment",
-    fallback: "Apartment",
-    icon: Building2,
-  },
-  {
-    value: "land",
-    labelKey: "common.enums.propertyType.land",
-    fallback: "Land",
-    icon: Square,
-  },
-  {
-    value: "commercial",
-    labelKey: "common.enums.propertyType.commercial",
-    fallback: "Commercial",
-    icon: Store,
-  },
-  {
-    value: "office",
-    labelKey: "common.enums.propertyType.office",
-    fallback: "Office",
-    icon: Building2,
-  },
-  {
-    value: "warehouse",
-    labelKey: "common.enums.propertyType.warehouse",
-    fallback: "Warehouse",
-    icon: Warehouse,
-  },
-];
+const buildCommercialModeOptions = (resourceType, category, t) => {
+  const modes = resourceType
+    ? getAllowedCommercialModes(resourceType, category)
+    : Array.from(
+        new Set(
+          Object.values(COMMERCIAL_MODE_BY_RESOURCE_TYPE).flat(),
+        ),
+      );
+  return [
+    {
+      value: "",
+      label: t("client:search.allOperations", "Todas"),
+    },
+    ...modes.map((mode) => ({
+      value: mode,
+      label: t(`client:common.enums.operation.${mode}`, mode),
+    })),
+  ];
+};
 
 const BEDROOM_OPTIONS = [
   { value: "", labelKey: "search.anyOption", label: "Cualquiera" },
@@ -304,8 +289,12 @@ const SearchPage = () => {
       city: searchParams.get("city") || "",
       state: searchParams.get("state") || "",
       resourceType: searchParams.get("resourceType") || "",
-      operationType: searchParams.get("operationType") || "",
-      propertyType: searchParams.get("propertyType") || "",
+      commercialMode:
+        searchParams.get("commercialMode") ||
+        searchParams.get("operationType") ||
+        "",
+      category:
+        searchParams.get("category") || searchParams.get("propertyType") || "",
       minPrice: searchParams.get("minPrice") || "",
       maxPrice: searchParams.get("maxPrice") || "",
       bedrooms: searchParams.get("bedrooms") || "",
@@ -327,8 +316,8 @@ const SearchPage = () => {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.resourceType) count++;
-    if (filters.operationType) count++;
-    if (filters.propertyType) count++;
+    if (filters.commercialMode) count++;
+    if (filters.category) count++;
     if (filters.city) count++;
     if (filters.state) count++;
     if (filters.minPrice) count++;
@@ -434,28 +423,22 @@ const SearchPage = () => {
           : filters.resourceType,
       });
     }
-    if (filters.operationType) {
+    if (filters.commercialMode) {
       const op = OPERATION_OPTIONS.find(
-        (o) => o.value === filters.operationType,
+        (o) => o.value === filters.commercialMode,
       );
       chips.push({
-        key: "operationType",
+        key: "commercialMode",
         label: op
           ? t(`client:${op.labelKey}`, op.fallback)
-          : filters.operationType,
+          : filters.commercialMode,
       });
     }
-    if (filters.propertyType) {
-      const pt = PROPERTY_TYPE_OPTIONS.find(
-        (o) => o.value === filters.propertyType,
-      );
+    if (filters.category)
       chips.push({
-        key: "propertyType",
-        label: pt
-          ? t(`client:${pt.labelKey}`, pt.fallback)
-          : filters.propertyType,
+        key: "category",
+        label: t(`client:common.enums.category.${filters.category}`, filters.category),
       });
-    }
     if (filters.city) chips.push({ key: "city", label: filters.city });
     if (filters.state) chips.push({ key: "state", label: filters.state });
     if (filters.minPrice)
@@ -508,14 +491,10 @@ const SearchPage = () => {
     ...o,
     label: t(`client:${o.labelKey}`, o.fallback),
   }));
-  const tOperations = OPERATION_OPTIONS.map((o) => ({
-    ...o,
-    label: t(`client:${o.labelKey}`, o.fallback),
-  }));
-  const tPropertyTypes = PROPERTY_TYPE_OPTIONS.map((o) => ({
-    ...o,
-    label: t(`client:${o.labelKey}`, o.fallback),
-  }));
+  const tOperations = useMemo(
+    () => buildCommercialModeOptions(filters.resourceType, filters.category, t),
+    [filters.category, filters.resourceType, t],
+  );
   const tCategories = useMemo(
     () => buildCategoryOptions(filters.resourceType, t),
     [filters.resourceType, t],
@@ -543,7 +522,13 @@ const SearchPage = () => {
         options={tResourceTypes}
         onChange={(v) => {
           // When resource type changes, clear category filter
-          updateFilters({ resourceType: v, propertyType: "" });
+          updateFilters({
+            resourceType: v,
+            category: "",
+            propertyType: "",
+            commercialMode: "",
+            operationType: "",
+          });
         }}
         icon={LayoutGrid}
       />
@@ -551,17 +536,36 @@ const SearchPage = () => {
       {/* Tipo de operación */}
       <FilterSelect
         label={t("client:search.operationType")}
-        value={filters.operationType}
+        value={filters.commercialMode}
         options={tOperations}
-        onChange={(v) => updateFilter("operationType", v)}
+        onChange={(v) => {
+          updateFilters({ commercialMode: v, operationType: "" });
+        }}
       />
 
       {/* Categoría (dynamic based on resource type) */}
       <FilterSelect
         label={t("client:search.category")}
-        value={filters.propertyType}
+        value={filters.category}
         options={tCategories}
-        onChange={(v) => updateFilter("propertyType", v)}
+        onChange={(v) => {
+          const allowedModes = buildCommercialModeOptions(
+            filters.resourceType,
+            v,
+            t,
+          )
+            .map((option) => option.value)
+            .filter(Boolean);
+          const nextCommercialMode = allowedModes.includes(filters.commercialMode)
+            ? filters.commercialMode
+            : "";
+          updateFilters({
+            category: v,
+            propertyType: "",
+            commercialMode: nextCommercialMode,
+            operationType: "",
+          });
+        }}
         icon={Home}
       />
 
@@ -852,7 +856,15 @@ const SearchPage = () => {
                 <button
                   key={rt.value}
                   type="button"
-                  onClick={() => updateFilters({ resourceType: rt.value, propertyType: "" })}
+                  onClick={() =>
+                    updateFilters({
+                      resourceType: rt.value,
+                      category: "",
+                      propertyType: "",
+                      commercialMode: "",
+                      operationType: "",
+                    })
+                  }
                   className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition sm:text-sm ${
                     isActive
                       ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/30"
@@ -901,7 +913,13 @@ const SearchPage = () => {
                       key={rt.value}
                       type="button"
                       onClick={() =>
-                        updateFilters({ resourceType: isActive ? "" : rt.value, propertyType: "" })
+                        updateFilters({
+                          resourceType: isActive ? "" : rt.value,
+                          category: "",
+                          propertyType: "",
+                          commercialMode: "",
+                          operationType: "",
+                        })
                       }
                       className={`flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold transition ${
                         isActive

@@ -132,6 +132,10 @@ const normalizeResourceInput = (
 
   const rawCategory = normalizeCategoryToken(categoryInput);
   const rawCommercialMode = normalizeCommercialMode(commercialInput || "sale");
+  const normalizedCategory = sanitizeCategory(
+    normalizedResourceType,
+    rawCategory || baseCategoryRaw,
+  );
 
   if (hasCategoryField && rawCategory && !isAllowedCategory(normalizedResourceType, rawCategory)) {
     throw createValidationError(
@@ -144,7 +148,14 @@ const normalizeResourceInput = (
     );
   }
 
-  if (hasCommercialField && !isAllowedCommercialMode(normalizedResourceType, rawCommercialMode)) {
+  if (
+    hasCommercialField &&
+    !isAllowedCommercialMode(
+      normalizedResourceType,
+      normalizedCategory,
+      rawCommercialMode,
+    )
+  ) {
     throw createValidationError(
       "El modo comercial seleccionado no es valido para este tipo de recurso.",
       "commercialMode",
@@ -169,7 +180,13 @@ const normalizeResourceInput = (
   }
 
   if (forUpdate && hasResourceTypeField && !hasCommercialField) {
-    if (!isAllowedCommercialMode(normalizedResourceType, rawCommercialMode)) {
+    if (
+      !isAllowedCommercialMode(
+        normalizedResourceType,
+        normalizedCategory,
+        rawCommercialMode,
+      )
+    ) {
       throw createValidationError(
         "Debes actualizar el modo comercial para que sea compatible con el nuevo tipo de recurso.",
         "commercialMode",
@@ -180,19 +197,36 @@ const normalizeResourceInput = (
       );
     }
   }
+  if (forUpdate && hasCategoryField && !hasCommercialField) {
+    if (
+      !isAllowedCommercialMode(
+        normalizedResourceType,
+        normalizedCategory,
+        rawCommercialMode,
+      )
+    ) {
+      throw createValidationError(
+        "Debes actualizar el modo comercial para que sea compatible con la categoria seleccionada.",
+        "commercialMode",
+        {
+          resourceType: normalizedResourceType,
+          category: normalizedCategory,
+          commercialMode: rawCommercialMode,
+        },
+      );
+    }
+  }
 
-  const normalizedCategory = sanitizeCategory(
-    normalizedResourceType,
-    rawCategory || baseCategoryRaw,
-  );
   const normalizedCommercialMode = sanitizeCommercialMode(
     normalizedResourceType,
     rawCommercialMode,
+    normalizedCategory,
   );
   const normalizedPricingModel = normalizePricingModel(
-    source.pricingModel || source.pricePerUnit || "total",
+    source.pricingModel || source.pricePerUnit || "fixed_total",
     normalizedCommercialMode,
     normalizedResourceType,
+    normalizedCategory,
   );
   const normalizedBookingType = normalizeBookingType(
     source.bookingType,
@@ -483,6 +517,13 @@ export const propertiesService = {
 
     if (filters.search) {
       queries.push(Query.search("title", filters.search));
+    }
+
+    const resourceTypeFilter = String(filters.resourceType || "")
+      .trim()
+      .toLowerCase();
+    if (resourceTypeFilter && useCanonicalResources) {
+      queries.push(Query.equal("resourceType", normalizeResourceType(resourceTypeFilter)));
     }
 
     if (filters.city) queries.push(Query.equal("city", filters.city));

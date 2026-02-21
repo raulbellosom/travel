@@ -11,19 +11,19 @@ const PUBLIC_SEARCH_AMENITY_LIMIT = 4;
 const BASE_SUGGESTIONS = [
   {
     icon: Palmtree,
-    to: "/buscar?operationType=vacation_rental",
+    to: "/buscar?resourceType=property&commercialMode=rent_short_term",
     i18nKey: "publicSearch.suggestions.vacationRentals",
     defaultLabel: "Rentas Vacacionales",
   },
   {
     icon: Home,
-    to: "/buscar?propertyType=house&operationType=sale",
+    to: "/buscar?resourceType=property&category=house&commercialMode=sale",
     i18nKey: "publicSearch.suggestions.houses",
     defaultLabel: "Casas en venta",
   },
   {
     icon: Building2,
-    to: "/buscar?propertyType=apartment",
+    to: "/buscar?resourceType=property&category=apartment",
     i18nKey: "publicSearch.suggestions.apartments",
     defaultLabel: "Departamentos",
   },

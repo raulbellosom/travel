@@ -1,232 +1,430 @@
-import React, { useState, useEffect } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
   MapPin,
-  Home,
-  ArrowRight,
+  Pause,
+  Play,
+  Search,
+  Star,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { storage } from "../../../../api/appwriteClient";
+import env from "../../../../env";
 import { propertiesService } from "../../../../services/propertiesService";
-import Button from "../../atoms/Button";
-import AdvancedSearch from "../../molecules/AdvancedSearch/AdvancedSearch";
+import { getAllowedCategories } from "../../../../utils/resourceTaxonomy";
+import { getPublicPropertyRoute } from "../../../../utils/internalRoutes";
 import fallbackImage from "../../../../assets/img/examples/house/fachada.webp";
 
-const HomeHeroCarousel = () => {
-  const { t } = useTranslation();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
+const ROTATE_MS = 6500;
+const FEATURED_LIMIT = 10;
+const RESOURCE_TYPES = ["property", "vehicle", "service", "experience", "venue"];
 
-  // Fetch featured properties for the carousel
+const getResourceImage = (resource) => {
+  if (resource?.mainImageUrl) return resource.mainImageUrl;
+  if (Array.isArray(resource?.images) && resource.images[0]) return resource.images[0];
+
+  const firstGalleryImageId = Array.isArray(resource?.galleryImageIds)
+    ? resource.galleryImageIds.find(Boolean)
+    : "";
+
+  const bucketId =
+    env.appwrite?.buckets?.resourceImages || env.appwrite?.buckets?.propertyImages;
+
+  if (firstGalleryImageId && bucketId) {
+    return storage.getFileView({
+      bucketId,
+      fileId: firstGalleryImageId,
+    });
+  }
+
+  return fallbackImage;
+};
+
+const HomeHeroCarousel = () => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [featuredResources, setFeaturedResources] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [slideProgress, setSlideProgress] = useState(0);
+  const [query, setQuery] = useState("");
+  const [resourceType, setResourceType] = useState("property");
+  const [category, setCategory] = useState("");
+  const progressRef = useRef(0);
+  const lastTimestampRef = useRef(null);
+  const animationFrameRef = useRef(null);
+
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
         const data = await propertiesService.listPublic({
-          limit: 5,
-          filters: { featured: true },
+          limit: FEATURED_LIMIT,
+          filters: { featured: true, sort: "recent" },
         });
-        setProperties(data.documents);
-      } catch (error) {
-        console.error("Error fetching hero properties:", error);
+        setFeaturedResources(data.documents || []);
+      } catch {
+        setFeaturedResources([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchFeatured();
   }, []);
 
-  // Auto-advance carousel
   useEffect(() => {
-    if (properties.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % properties.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [properties.length]);
+    progressRef.current = slideProgress;
+  }, [slideProgress]);
+
+  const categories = useMemo(
+    () => getAllowedCategories(resourceType),
+    [resourceType],
+  );
+
+  const hasFeaturedResources = featuredResources.length > 0;
+  const hasMultipleFeatured = featuredResources.length > 1;
+
+  const slides = hasFeaturedResources
+    ? featuredResources
+    : [
+        {
+          $id: "featured-placeholder",
+          mainImageUrl: fallbackImage,
+          title: t("client:hero.fallback.title", "Encuentra tu próximo recurso ideal"),
+          city: "",
+          state: "",
+          resourceType: "property",
+          category: "house",
+          featured: false,
+        },
+      ];
+
+  const safeCurrent = ((currentSlide % slides.length) + slides.length) % slides.length;
+  const activeResource = slides[safeCurrent] || slides[0];
+
+  useEffect(() => {
+    if (!hasMultipleFeatured || isPaused) {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+      lastTimestampRef.current = null;
+
+      if (!hasMultipleFeatured) {
+        progressRef.current = 0;
+        setSlideProgress(0);
+      }
+      return undefined;
+    }
+
+    const tick = (timestamp) => {
+      if (lastTimestampRef.current == null) {
+        lastTimestampRef.current = timestamp;
+      }
+
+      const elapsed = timestamp - lastTimestampRef.current;
+      lastTimestampRef.current = timestamp;
+
+      let nextProgress = progressRef.current + elapsed / ROTATE_MS;
+      if (nextProgress >= 1) {
+        const steps = Math.floor(nextProgress);
+        nextProgress -= steps;
+        setCurrentSlide((prev) => (prev + steps) % slides.length);
+      }
+
+      progressRef.current = nextProgress;
+      setSlideProgress(nextProgress);
+      animationFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+      lastTimestampRef.current = null;
+    };
+  }, [hasMultipleFeatured, isPaused, slides.length]);
+
+  const submitSearch = (event) => {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    if (resourceType) params.set("resourceType", resourceType);
+    if (category) params.set("category", category);
+    params.set("page", "1");
+    navigate(`/buscar?${params.toString()}`);
+  };
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % properties.length);
+    progressRef.current = 0;
+    setSlideProgress(0);
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide(
-      (prev) => (prev - 1 + properties.length) % properties.length,
-    );
+    progressRef.current = 0;
+    setSlideProgress(0);
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   if (loading) {
     return (
-      <div className="relative h-[600px] w-full animate-pulse bg-slate-200 dark:bg-slate-800" />
+      <div className="relative min-h-[100dvh] w-full animate-pulse bg-slate-200 dark:bg-slate-800" />
     );
   }
 
-  // Fallback if no properties
-  const slides =
-    properties.length > 0
-      ? properties
-      : [
-          {
-            $id: "fallback-1",
-            mainImageUrl: fallbackImage,
-            title: t("client:hero.fallback.title", "Encuentra tu hogar ideal"),
-            location: "Puerto Vallarta, Jal.",
-            price: 0,
-          },
-        ];
-
-  const activeProperty = slides[currentSlide];
-
   return (
-    <section className="relative h-dvh min-h-[600px] w-full overflow-hidden bg-slate-900">
-      {/* Search Overlay - Positioned appropriately */}
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-        <div className="container mx-auto px-4">
-          {/* Title / Hero Text */}
-          <div className="mb-8 text-center pointer-events-auto">
-            <motion.h1
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="text-4xl md:text-6xl font-black text-white drop-shadow-lg mb-4"
-            >
-              {t("client:hero.mainTitle", "Tu próximo hogar comienza aquí")}
-            </motion.h1>
-            <motion.p
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="text-lg md:text-xl text-white/90 drop-shadow-md max-w-2xl mx-auto"
-            >
-              {t(
-                "client:hero.subTitle",
-                "Explora las mejores propiedades en venta y renta en las zonas más exclusivas.",
-              )}
-            </motion.p>
-          </div>
-
-          {/* Advanced Search Component */}
+    <section className="relative min-h-[100dvh] w-full overflow-hidden bg-slate-950">
+      <div className="absolute inset-0">
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="pointer-events-auto w-full max-w-4xl mx-auto"
+            key={activeResource?.$id || safeCurrent}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0"
           >
-            <AdvancedSearch />
+            <motion.img
+              src={getResourceImage(activeResource)}
+              alt={activeResource?.title || "Featured"}
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.target.onerror = null;
+                event.target.src = fallbackImage;
+              }}
+              initial={{ scale: 1.02 }}
+              animate={{ scale: hasFeaturedResources ? 1.1 : 1.03 }}
+              transition={{ duration: 10, ease: "linear" }}
+            />
           </motion.div>
-        </div>
+        </AnimatePresence>
+
+        {hasFeaturedResources ? (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/68 via-slate-950/50 to-slate-950/85" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.25),transparent_45%),radial-gradient(circle_at_78%_30%,rgba(14,165,233,0.20),transparent_42%),radial-gradient(circle_at_50%_100%,rgba(2,132,199,0.24),transparent_40%)]" />
+            <motion.div
+              className="absolute -left-20 top-24 h-60 w-60 rounded-full bg-cyan-400/16 blur-3xl"
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              className="absolute -right-16 bottom-24 h-56 w-56 rounded-full bg-sky-500/15 blur-3xl"
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/70 to-slate-950/92" />
+        )}
       </div>
 
-      {/* Background Slides */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentSlide}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.7 }}
-          className="absolute inset-0 z-0 h-full w-full"
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center px-4 pb-8 pt-24 sm:px-6 sm:pb-10 sm:pt-28">
+        <div className="max-w-3xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/45 bg-cyan-400/16 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-100">
+            <Star size={12} />
+            {t("client:featured.badge", "Exclusivo")}
+          </span>
+          <h1 className="mt-4 text-balance text-4xl font-black leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+            {t("client:hero.mainTitle", "Tu próximo recurso comienza aquí")}
+          </h1>
+          <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
+            {t(
+              "client:hero.subTitle",
+              "Descubre propiedades, vehículos, servicios, experiencias y venues filtrados correctamente por categoría.",
+            )}
+          </p>
+        </div>
+
+        <form
+          onSubmit={submitSearch}
+          className="mt-7 w-full rounded-3xl border border-white/20 bg-white/12 p-3 backdrop-blur-xl sm:p-4"
         >
-          <div className="absolute inset-0 bg-linear-to-t from-slate-900 via-slate-900/40 to-slate-900/30 z-10" />
-          <img
-            src={
-              activeProperty &&
-              activeProperty.images &&
-              activeProperty.images.length > 0
-                ? activeProperty.images[0]
-                : activeProperty?.mainImageUrl || fallbackImage
-            }
-            alt={activeProperty?.title || "Property"}
-            className="h-full w-full object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = fallbackImage;
-            }}
-          />
-        </motion.div>
-      </AnimatePresence>
+          <div className="grid gap-2 sm:gap-3 md:grid-cols-[1fr_190px_220px_140px]">
+            <label className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/70"
+                size={16}
+              />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t("client:search.inputPlaceholder", "Buscar por título, ciudad o palabra clave")}
+                className="h-11 w-full rounded-2xl border border-white/30 bg-white/15 pl-9 pr-3 text-sm text-white placeholder:text-white/70 outline-none transition focus:border-cyan-300 focus:bg-white/20"
+              />
+            </label>
 
-      {/* Slide Info (Bottom Left) */}
-      {properties.length > 0 && (
-        <div className="absolute bottom-8 left-8 z-20 hidden md:block max-w-md">
-          <motion.div
-            key={`info-${currentSlide}`}
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl text-white"
-          >
-            <h3 className="text-xl font-bold truncate mb-1">
-              {activeProperty.title}
-            </h3>
-            <div className="flex items-center gap-2 text-sm text-white/80 mb-3">
-              <MapPin size={14} />
-              <span className="truncate">
-                {activeProperty.location ||
-                  activeProperty.address ||
-                  t("client:search.unknownLocation", "Unknown location")}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-black">
-                {new Intl.NumberFormat("es-MX", {
-                  style: "currency",
-                  currency: activeProperty.currency || "USD",
-                  maximumFractionDigits: 0,
-                }).format(activeProperty.price)}
-              </span>
-              <Link
-                to={`/propiedades/${activeProperty.slug || activeProperty.$id}`}
-              >
-                <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                  rightIcon={ArrowRight}
-                >
-                  {t("client:common.viewDetails", "Ver Detalles")}
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            <select
+              value={resourceType}
+              onChange={(event) => {
+                const next = event.target.value;
+                setResourceType(next);
+                setCategory("");
+              }}
+              className="h-11 rounded-2xl border border-white/30 bg-white/15 px-3 text-sm font-semibold text-white outline-none"
+            >
+              {RESOURCE_TYPES.map((type) => (
+                <option key={type} value={type} className="text-slate-900">
+                  {t(`client:common.enums.resourceType.${type}`, type)}
+                </option>
+              ))}
+            </select>
 
-      {/* Navigation Controls */}
-      {properties.length > 1 && (
-        <div className="absolute bottom-8 right-8 z-20 flex gap-2">
-          <button
-            onClick={prevSlide}
-            className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all active:scale-95"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all active:scale-95"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      )}
+            <select
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              className="h-11 rounded-2xl border border-white/30 bg-white/15 px-3 text-sm font-semibold text-white outline-none"
+            >
+              <option value="" className="text-slate-900">
+                {t("client:search.allCategories", "Todas las categorías")}
+              </option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat} className="text-slate-900">
+                  {t(`client:common.enums.category.${cat}`, cat)}
+                </option>
+              ))}
+            </select>
 
-      {/* Progress Indicators */}
-      {properties.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-          {properties.map((_, idx) => (
             <button
-              key={idx}
-              onClick={() => setCurrentSlide(idx)}
-              className={`h-1.5 rounded-full transition-all ${
-                idx === currentSlide
-                  ? "w-8 bg-white"
-                  : "w-2 bg-white/40 hover:bg-white/60"
-              }`}
-            />
-          ))}
+              type="submit"
+              className="h-11 rounded-2xl bg-cyan-500 px-4 text-sm font-bold text-white transition hover:bg-cyan-400"
+            >
+              {t("client:search.button", "Buscar")}
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-4 space-y-3">
+          <AnimatePresence mode="wait">
+            <motion.article
+              key={activeResource?.$id || safeCurrent}
+              initial={{ opacity: 0, y: 10, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="relative overflow-hidden rounded-2xl border border-white/20 bg-slate-950/40 p-4 backdrop-blur-md sm:p-5"
+            >
+              {hasMultipleFeatured ? (
+                <div
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-sky-400/12 to-transparent"
+                  style={{
+                    transform: `scaleX(${slideProgress})`,
+                    transformOrigin: "left center",
+                    opacity: 0.15 + slideProgress * 0.25,
+                  }}
+                />
+              ) : (
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyan-400/12 via-sky-400/8 to-transparent" />
+              )}
+
+              <div className="absolute inset-x-0 bottom-0 h-0.5 bg-white/10" />
+              {hasMultipleFeatured && (
+                <div
+                  className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-300"
+                  style={{
+                    transform: `scaleX(${slideProgress})`,
+                    transformOrigin: "left center",
+                  }}
+                />
+              )}
+
+              <div className="relative z-10 mb-2 flex flex-wrap items-center gap-2">
+                <span className="inline-flex rounded-full border border-cyan-300/45 bg-cyan-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-100">
+                  {t(`client:common.enums.resourceType.${activeResource.resourceType || "property"}`, activeResource.resourceType || "Property")}
+                </span>
+                {activeResource.category && (
+                  <span className="inline-flex rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90">
+                    {t(`client:common.enums.category.${activeResource.category}`, activeResource.category)}
+                  </span>
+                )}
+              </div>
+
+              <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <img
+                    src={getResourceImage(activeResource)}
+                    alt={activeResource?.title || "Featured resource"}
+                    className="h-16 w-24 shrink-0 rounded-lg border border-white/20 object-cover sm:h-18 sm:w-28"
+                    onError={(event) => {
+                      event.target.onerror = null;
+                      event.target.src = fallbackImage;
+                    }}
+                  />
+                  <div className="min-w-0">
+                    <p className="line-clamp-2 text-lg font-extrabold text-white sm:text-xl">
+                      {activeResource?.title || ""}
+                    </p>
+                    {(activeResource?.city || activeResource?.state) && (
+                      <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-white/80">
+                        <MapPin size={14} className="text-cyan-300" />
+                        {[activeResource.city, activeResource.state].filter(Boolean).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {activeResource?.slug && (
+                  <Link
+                    to={getPublicPropertyRoute(
+                      activeResource.slug,
+                      i18n.resolvedLanguage || i18n.language,
+                    )}
+                    className="inline-flex w-fit items-center justify-center rounded-xl border border-white/35 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-white/20"
+                  >
+                    {t("client:actions.viewDetails", "Ver detalles")}
+                  </Link>
+                )}
+              </div>
+            </motion.article>
+          </AnimatePresence>
+
+          {hasMultipleFeatured && (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                {safeCurrent + 1} / {slides.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  className="rounded-full border border-white/35 bg-white/10 p-2 text-white transition hover:bg-white/20"
+                  aria-label={t("client:common.previous", "Anterior")}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPaused((prev) => !prev)}
+                  className="rounded-full border border-white/35 bg-white/10 p-2 text-white transition hover:bg-white/20"
+                  aria-label={
+                    isPaused
+                      ? t("client:common.resume", "Reanudar")
+                      : t("client:common.pause", "Pausar")
+                  }
+                >
+                  {isPaused ? <Play size={16} /> : <Pause size={16} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  className="rounded-full border border-white/35 bg-white/10 p-2 text-white transition hover:bg-white/20"
+                  aria-label={t("client:common.next", "Siguiente")}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </section>
   );
 };
 
 export default HomeHeroCarousel;
+

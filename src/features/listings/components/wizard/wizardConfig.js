@@ -20,7 +20,7 @@ export const WIZARD_DEFAULTS = {
   resourceType: "property",
   category: "house",
   commercialMode: "sale",
-  pricingModel: "total",
+  pricingModel: "fixed_total",
   bookingType: "manual_contact",
   attributes: "{}",
   propertyType: "house",
@@ -123,7 +123,7 @@ export const WIZARD_STEPS = [
     descriptionKey: "propertyForm.wizard.steps.commercialConditionsDesc",
     icon: ClipboardList,
     fields: [],
-    appliesTo: ["rent_long_term", "rent_short_term", "rent_hourly"],
+    appliesTo: ["sale", "rent_long_term", "rent_short_term", "rent_hourly"],
   },
   {
     id: "pricing",
@@ -167,8 +167,9 @@ export const SUMMARY_STEP = {
  */
 const resolveAllowedCommercialModes = (
   resourceType = WIZARD_DEFAULTS.resourceType,
+  category = WIZARD_DEFAULTS.category,
 ) => {
-  return getAllowedCommercialModes(resourceType);
+  return getAllowedCommercialModes(resourceType, category);
 };
 
 export const getActiveSteps = (
@@ -183,6 +184,7 @@ export const getActiveSteps = (
   });
   const allowedCommercialModes = resolveAllowedCommercialModes(
     baseProfile.resourceType,
+    baseProfile.category,
   );
   const effectiveCommercialMode = allowedCommercialModes.includes(
     baseProfile.commercialMode,
@@ -262,7 +264,7 @@ export const CURRENCY_OPTIONS = [
 
 /** Canonical pricing model options */
 export const PRICING_MODEL_OPTIONS = [
-  { value: "total", key: "propertyForm.options.pricingModel.total" },
+  { value: "fixed_total", key: "propertyForm.options.pricingModel.fixedTotal" },
   { value: "per_month", key: "propertyForm.options.pricingModel.perMonth" },
   { value: "per_night", key: "propertyForm.options.pricingModel.perNight" },
   { value: "per_day", key: "propertyForm.options.pricingModel.perDay" },

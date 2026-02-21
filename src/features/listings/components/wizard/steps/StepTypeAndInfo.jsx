@@ -83,7 +83,10 @@ const StepTypeAndInfo = ({ formHook }) => {
 
   const commercialModeOptions = useMemo(() => {
     const allowedCommercialModes = new Set(
-      getAllowedCommercialModes(form.resourceType),
+      getAllowedCommercialModes(
+        form.resourceType,
+        form.category || form.propertyType,
+      ),
     );
 
     return COMMERCIAL_MODE_OPTIONS.filter((option) => {
@@ -96,14 +99,6 @@ const StepTypeAndInfo = ({ formHook }) => {
   }, [form.resourceType, t]);
 
   useEffect(() => {
-    if (commercialModeOptions.length === 0) return;
-    if (commercialModeOptions.some((option) => option.value === form.commercialMode)) {
-      return;
-    }
-    setField("commercialMode", commercialModeOptions[0].value);
-  }, [commercialModeOptions, form.commercialMode, setField]);
-
-  useEffect(() => {
     if (categoryOptions.length === 0) return;
     const currentCategory = form.category || form.propertyType;
     if (categoryOptions.some((option) => option.value === currentCategory)) {
@@ -111,6 +106,14 @@ const StepTypeAndInfo = ({ formHook }) => {
     }
     setField("category", categoryOptions[0].value);
   }, [categoryOptions, form.category, form.propertyType, setField]);
+
+  useEffect(() => {
+    if (commercialModeOptions.length === 0) return;
+    if (commercialModeOptions.some((option) => option.value === form.commercialMode)) {
+      return;
+    }
+    setField("commercialMode", commercialModeOptions[0].value);
+  }, [commercialModeOptions, form.commercialMode, setField]);
 
   const SlugIcon =
     slugStatus.state === "checking"
@@ -134,6 +137,33 @@ const StepTypeAndInfo = ({ formHook }) => {
           size="md"
           onChange={(value) => setField("resourceType", value)}
         />
+      </label>
+
+      {/* Category */}
+      <label className="grid gap-1 text-sm">
+        <span className="font-medium text-slate-700 dark:text-slate-200">
+          {t("propertyForm.fields.category", {
+            defaultValue: t("propertyForm.fields.propertyType"),
+          })}{" "}
+          *
+        </span>
+        <Select
+          required
+          value={form.category || form.propertyType}
+          options={categoryOptions}
+          size="md"
+          className={errors.category ? "border-red-400" : ""}
+          onChange={(value) => setField("category", value)}
+        />
+        {renderFieldError("category")}
+        {form.resourceType === "property" && (form.category || form.propertyType) === "commercial" ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t(
+              "propertyForm.helper.categoryCommercialDifference",
+              "Usa Comercial para inmuebles en renta/venta tradicional. Para espacios por hora usa tipo de recurso Salon y categoria Local comercial.",
+            )}
+          </p>
+        ) : null}
       </label>
 
       {/* Commercial mode cards (shown only when there is more than one valid option) */}
@@ -167,25 +197,6 @@ const StepTypeAndInfo = ({ formHook }) => {
           {renderFieldError("commercialMode")}
         </div>
       ) : null}
-
-      {/* Category */}
-      <label className="grid gap-1 text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">
-          {t("propertyForm.fields.category", {
-            defaultValue: t("propertyForm.fields.propertyType"),
-          })}{" "}
-          *
-        </span>
-        <Select
-          required
-          value={form.category || form.propertyType}
-          options={categoryOptions}
-          size="md"
-          className={errors.category ? "border-red-400" : ""}
-          onChange={(value) => setField("category", value)}
-        />
-        {renderFieldError("category")}
-      </label>
 
       {/* Title */}
       <label className="grid gap-1 text-sm">

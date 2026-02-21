@@ -31,6 +31,7 @@ import {
   Package,
   Pencil,
   Sparkles,
+  Star,
   Tag,
   Trash2,
   TrendingUp,
@@ -336,6 +337,12 @@ const AppPropertyDetail = () => {
                 defaultValue: property.status,
               })}
             </span>
+            {property.featured && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                <Star size={12} className="fill-current" />
+                {t("appPropertyDetailPage.featured", "Destacado")}
+              </span>
+            )}
           </div>
           <div className="mt-1 flex items-center gap-2">
             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -343,7 +350,10 @@ const AppPropertyDetail = () => {
             </p>
             {property.status === "published" && (
               <a
-                href={getPublicPropertyRoute(property.slug)}
+                href={getPublicPropertyRoute(
+                  property.slug,
+                  i18n.resolvedLanguage || i18n.language,
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-cyan-600 transition hover:bg-cyan-50 dark:text-cyan-400 dark:hover:bg-cyan-900/20"

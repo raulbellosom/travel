@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "../../../../utils/cn";
+
+// Keep a module-level cache so repeated mounts of the same URL don't fade in again.
+const loadedSrcCache = new Set();
 
 /**
  * LazyImage - Image component with lazy loading and smooth fade-in effect
@@ -16,13 +19,27 @@ const LazyImage = ({
   alt = "",
   className = "",
   eager = false,
+  fadeIn = true,
   onLoad,
   onError,
   ...props
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const normalizedSrc = String(src || "").trim();
+  const [isLoading, setIsLoading] = useState(() => {
+    if (!normalizedSrc) return false;
+    return !loadedSrcCache.has(normalizedSrc);
+  });
+
+  useEffect(() => {
+    if (!normalizedSrc) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(!loadedSrcCache.has(normalizedSrc));
+  }, [normalizedSrc]);
 
   const handleLoad = (e) => {
+    if (normalizedSrc) loadedSrcCache.add(normalizedSrc);
     setIsLoading(false);
     onLoad?.(e);
   };
@@ -40,8 +57,8 @@ const LazyImage = ({
       onLoad={handleLoad}
       onError={handleError}
       className={cn(
-        "transition-opacity duration-300",
-        isLoading ? "opacity-0" : "opacity-100",
+        fadeIn ? "transition-opacity duration-300" : "",
+        fadeIn && isLoading ? "opacity-0" : "opacity-100",
         className,
       )}
       {...props}

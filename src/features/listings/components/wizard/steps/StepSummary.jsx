@@ -130,7 +130,7 @@ const StepSummary = ({ formHook, onEditStep }) => {
   });
   const pricingModelLabel = resolveLabel(
     PRICING_MODEL_OPTIONS,
-    form.pricingModel,
+    form.pricingModel === "total" ? "fixed_total" : form.pricingModel,
     t,
   );
 
