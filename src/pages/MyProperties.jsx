@@ -265,8 +265,27 @@ const MyProperties = () => {
   }, [loadData]);
 
   // ─── Staff loading ──────────────────────────────────────────
+  // Always seed at least the current user so responsible cells can display
+  // their own name/avatar regardless of role. Full staff list only loads for
+  // users with canViewAll (owner+).
   useEffect(() => {
-    if (!canViewAll) return;
+    if (!user?.$id) return;
+
+    const currentUserEntry = {
+      $id: user.$id,
+      email: user.email || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      role: user.role || "",
+      avatarFileId: user.avatarFileId || "",
+    };
+
+    if (!canViewAll) {
+      // Non-admin: just show the current user (enough to resolve their own resources)
+      setStaffUsers([currentUserEntry]);
+      return;
+    }
+
     let cancelled = false;
     setLoadingStaff(true);
     staffService
@@ -274,39 +293,15 @@ const MyProperties = () => {
       .then((docs) => {
         if (cancelled) return;
         let staffList = docs || [];
-        // Ensure current user is included if they have permission but aren't in the list
-        if (user?.$id && !staffList.some((s) => s.$id === user.$id)) {
-          staffList = [
-            {
-              $id: user.$id,
-              email: user.email || "",
-              firstName: user.firstName || "",
-              lastName: user.lastName || "",
-              role: user.role || "",
-              avatarFileId: user.avatarFileId || "",
-            },
-            ...staffList,
-          ];
+        // Ensure current user is always present in the list
+        if (!staffList.some((s) => s.$id === user.$id)) {
+          staffList = [currentUserEntry, ...staffList];
         }
         setStaffUsers(staffList);
       })
       .catch(() => {
         if (cancelled) return;
-        // Fallback: at least include current user
-        if (user?.$id) {
-          setStaffUsers([
-            {
-              $id: user.$id,
-              email: user.email || "",
-              firstName: user.firstName || "",
-              lastName: user.lastName || "",
-              role: user.role || "",
-              avatarFileId: user.avatarFileId || "",
-            },
-          ]);
-        } else {
-          setStaffUsers([]);
-        }
+        setStaffUsers([currentUserEntry]);
       })
       .finally(() => {
         if (!cancelled) setLoadingStaff(false);
