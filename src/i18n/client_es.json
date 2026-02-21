@@ -1,9 +1,11 @@
 {
   "hero": {
-    "title": "Descubre tu próximo hogar",
-    "subtitle": "Explora las mejores propiedades en venta y renta en las zonas más exclusivas.",
-    "mainTitle": "Tu próximo hogar comienza aquí",
-    "subTitle": "Explora las mejores propiedades en venta y renta en las zonas más exclusivas.",
+    "title": "Descubre tu próximo recurso",
+    "subtitle": "Descubre propiedades, vehículos, servicios, experiencias y más en las mejores zonas.",
+    "mainTitle": "Tu próximo recurso comienza aquí",
+    "titlePrefix": "Tu próximo",
+    "titleSuffix": "comienza aquí",
+    "subTitle": "Descubre propiedades, vehículos, servicios, experiencias y más en las mejores zonas.",
     "stats": {
       "properties": "Propiedades",
       "satisfaction": "Clientes Satisfechos",
@@ -20,6 +22,9 @@
       "searchButton": "Buscar Propiedades",
       "allOperations": "Todas las operaciones",
       "allTypes": "Todos los tipos"
+    },
+    "fallback": {
+      "title": "Encuentra tu proximo recurso ideal"
     }
   },
   "featured": {
@@ -33,6 +38,29 @@
     "subtitle": "Encuentra el recurso que se adapta a lo que necesitas.",
     "view": "Ver"
   },
+  "articles": {
+    "badge": "Blog Inmobo",
+    "title": "Noticias y Consejos Inmobiliarios",
+    "viewAll": "Ver todos los articulos",
+    "readMore": "Leer articulo",
+    "categories": {
+      "buying": "Comprar",
+      "investment": "Inversion",
+      "selling": "Vender"
+    },
+    "1": {
+      "title": "Guia para comprar tu primera casa",
+      "excerpt": "Descubre los pasos esenciales y consejos financieros para hacer tu sueno realidad sin estres."
+    },
+    "2": {
+      "title": "Invertir en bienes raices en 2024",
+      "excerpt": "Analisis de mercado y las mejores zonas para obtener plusvalia en el proximo ano."
+    },
+    "3": {
+      "title": "Tips para vender tu propiedad mas rapido",
+      "excerpt": "Pequenas mejoras y estrategias de staging que aumentan el valor y atractivo de tu hogar."
+    }
+  },
   "search": {
     "heroTitle": "Encuentra Lo Que Buscas",
     "heroSubtitle": "Explora nuestro catálogo de propiedades, vehículos, servicios, experiencias y salones.",
@@ -40,6 +68,7 @@
     "resultsLabel": "resultados",
     "resourceType": "Tipo de Recurso",
     "allResourceTypes": "Todos",
+    "allOperations": "Todas",
     "category": "Categoría",
     "sortRecent": "Más recientes",
     "sortPriceAsc": "Precio: menor a mayor",
@@ -149,6 +178,10 @@
     "errorLoading": "No pudimos cargar las propiedades",
     "viewAll": "Ver todos",
     "loading": "Cargando...",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pause": "Pausar",
+    "resume": "Reanudar",
     "units": {
       "squareMeters": "m²"
     },
@@ -169,7 +202,9 @@
         "industrial": "Industrial",
         "office": "Oficina",
         "warehouse": "Bodega",
-        "property": "Propiedad"
+        "property": "Propiedad",
+        "van": "Van",
+        "event_hall": "Salon de eventos"
       },
       "resourceType": {
         "property": "Propiedad",
@@ -270,7 +305,8 @@
     "viewDetails": "Ver detalles"
   },
   "badges": {
-    "premium": "Premium"
+    "premium": "Premium",
+    "featured": "Destacado"
   },
   "nav": {
     "home": "Inicio",
@@ -284,6 +320,7 @@
     "vehicles": "Vehículos",
     "experiences": "Experiencias",
     "venues": "Salones",
+    "more": "Mas",
     "dropdown": {
       "houses": "Casas",
       "housesDesc": "Casas en venta en las mejores zonas",
@@ -402,6 +439,8 @@
     "viewAllPhotos": "Ver todas las fotos",
     "reserveHint": "Reserva en línea con confirmación y voucher digital.",
     "reserveCta": "Reservar ahora",
+    "moduleDisabled": "Este tipo de publicacion no esta habilitado.",
+    "paymentsDisabled": "Pagos en linea no disponibles para esta instancia.",
     "errors": {
       "notFound": "No encontramos la propiedad que buscas.",
       "load": "Error al cargar la propiedad."
@@ -496,6 +535,10 @@
       "vacationRental": {
         "hint": "¿Listo para reservar tu estancia vacacional?",
         "button": "Reservar ahora"
+      },
+      "hourly": {
+        "hint": "Confirma disponibilidad por bloques de tiempo.",
+        "button": "Reservar horario"
       }
     },
     "contact": {

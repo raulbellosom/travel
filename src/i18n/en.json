@@ -264,6 +264,7 @@
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
+    "menu": "Menu",
     "myProperties": "My properties",
     "leads": "Leads",
     "goToLanding": "Go to landing page",

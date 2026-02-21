@@ -387,7 +387,7 @@ const PublicSearch = ({
               <label className="relative block flex-1">
                 <Search
                   size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-cyan-600"
+                  className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-cyan-600"
                 />
                 <input
                   ref={mobileInputRef}
@@ -456,7 +456,7 @@ const PublicSearch = ({
             <Search
               size={15}
               className={cn(
-                "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2",
+                "pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2",
                 variant === "transparent"
                   ? "text-white/70"
                   : "text-cyan-600/80 dark:text-cyan-400",

@@ -1,9 +1,11 @@
 {
   "hero": {
-    "title": "Discover your next home",
-    "subtitle": "Explore the best properties for sale and rent in the most exclusive areas.",
-    "mainTitle": "Your next home starts here",
-    "subTitle": "Explore the best properties for sale and rent in the most exclusive areas.",
+    "title": "Discover your next resource",
+    "subtitle": "Discover properties, vehicles, services, experiences and more in the best locations.",
+    "mainTitle": "Your next resource starts here",
+    "titlePrefix": "Your next",
+    "titleSuffix": "starts here",
+    "subTitle": "Discover properties, vehicles, services, experiences and more in the best locations.",
     "stats": {
       "properties": "Properties",
       "satisfaction": "Satisfied Clients",
@@ -20,6 +22,9 @@
       "searchButton": "Search Properties",
       "allOperations": "All operations",
       "allTypes": "All types"
+    },
+    "fallback": {
+      "title": "Find your next ideal resource"
     }
   },
   "featured": {
@@ -33,6 +38,29 @@
     "subtitle": "Find the resource that fits what you need.",
     "view": "View"
   },
+  "articles": {
+    "badge": "Inmobo Blog",
+    "title": "Real Estate News and Tips",
+    "viewAll": "View all articles",
+    "readMore": "Read article",
+    "categories": {
+      "buying": "Buying",
+      "investment": "Investment",
+      "selling": "Selling"
+    },
+    "1": {
+      "title": "Guide to buying your first home",
+      "excerpt": "Discover essential steps and financial tips to make your dream come true without stress."
+    },
+    "2": {
+      "title": "Investing in real estate in 2024",
+      "excerpt": "Market analysis and the best areas to gain value in the coming year."
+    },
+    "3": {
+      "title": "Tips to sell your property faster",
+      "excerpt": "Small improvements and staging strategies that increase your home's value and appeal."
+    }
+  },
   "search": {
     "heroTitle": "Find What You're Looking For",
     "heroSubtitle": "Explore our catalog of properties, vehicles, services, experiences and venues.",
@@ -43,6 +71,7 @@
     "propertyType": "Property Type",
     "resourceType": "Resource Type",
     "allResourceTypes": "All",
+    "allOperations": "All",
     "category": "Category",
     "sortRecent": "Most recent",
     "sortPriceAsc": "Price: low to high",
@@ -149,6 +178,10 @@
     "errorLoading": "We could not load the properties",
     "viewAll": "View all",
     "loading": "Loading...",
+    "previous": "Previous",
+    "next": "Next",
+    "pause": "Pause",
+    "resume": "Resume",
     "units": {
       "squareMeters": "m²"
     },
@@ -169,7 +202,9 @@
         "industrial": "Industrial",
         "office": "Office",
         "warehouse": "Warehouse",
-        "property": "Property"
+        "property": "Property",
+        "van": "Van",
+        "event_hall": "Event Hall"
       },
       "resourceType": {
         "property": "Property",
@@ -270,7 +305,8 @@
     "viewDetails": "View details"
   },
   "badges": {
-    "premium": "Premium"
+    "premium": "Premium",
+    "featured": "Featured"
   },
   "nav": {
     "home": "Home",
@@ -284,6 +320,7 @@
     "vehicles": "Vehicles",
     "experiences": "Experiences",
     "venues": "Venues",
+    "more": "More",
     "dropdown": {
       "houses": "Houses",
       "housesDesc": "Homes for sale in the best areas",
@@ -402,6 +439,8 @@
     "viewAllPhotos": "View all photos",
     "reserveHint": "Book online with confirmation and digital voucher.",
     "reserveCta": "Book now",
+    "moduleDisabled": "This publication type is not enabled.",
+    "paymentsDisabled": "Online payments are not available for this instance.",
     "errors": {
       "notFound": "We could not find the property you are looking for.",
       "load": "Error loading property."
@@ -496,6 +535,10 @@
       "vacationRental": {
         "hint": "Ready to book your vacation stay?",
         "button": "Book now"
+      },
+      "hourly": {
+        "hint": "Confirm availability by time blocks.",
+        "button": "Book time slot"
       }
     },
     "contact": {

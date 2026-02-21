@@ -23,6 +23,8 @@ const resources = {
   },
 };
 
+const i18nDebug = import.meta.env.VITE_I18N_DEBUG === "true";
+
 i18n
   // Detecta el idioma del usuario
   .use(LanguageDetector)
@@ -59,7 +61,8 @@ i18n
     },
 
     // Configuración para desarrollo
-    debug: import.meta.env.DEV,
+    debug: i18nDebug,
+    showSupportNotice: false,
 
     // Configuración para mejor SEO
     cleanCode: true,

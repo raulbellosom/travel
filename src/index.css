@@ -483,6 +483,30 @@ input[type="reset"]:disabled {
   }
 }
 
+/* Skeleton shimmer for images while loading (light mode) */
+.img-loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(226 232 240) 0%,
+    rgb(241 245 249) 40%,
+    rgb(226 232 240) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Dark-mode skeleton shimmer — scoped to .dark on <html> */
+.dark .img-loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(30 41 59) 0%,
+    rgb(51 65 85) 40%,
+    rgb(30 41 59) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .error-orb,
   .error-card-enter,
@@ -492,7 +516,8 @@ input[type="reset"]:disabled {
   .animate-shake-soft,
   .animate-glitch-soft,
   .marketing-orb,
-  .marketing-orb-reverse {
+  .marketing-orb-reverse,
+  .img-loading-skeleton {
     animation: none !important;
   }
 }

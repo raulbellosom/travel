@@ -20,18 +20,86 @@ import fallbackImage from "../../../../assets/img/examples/house/fachada.webp";
 
 const ROTATE_MS = 6500;
 const FEATURED_LIMIT = 10;
-const RESOURCE_TYPES = ["property", "vehicle", "service", "experience", "venue"];
+const RESOURCE_TYPES = [
+  "property",
+  "vehicle",
+  "service",
+  "experience",
+  "venue",
+];
+
+// Words cycled by the typewriter, keyed by language prefix
+const TYPEWRITER_WORDS = {
+  es: ["hogar", "viaje", "servicio", "experiencia", "evento"],
+  en: ["home", "trip", "service", "experience", "event"],
+};
+
+/** Typewriter that types & deletes words from a rotating list */
+const TypewriterWord = ({ words }) => {
+  const [displayText, setDisplayText] = useState("");
+  const [wordIndex, setWordIndex] = useState(0);
+  const [phase, setPhase] = useState("typing"); // typing | hold | deleting
+
+  useEffect(() => {
+    const current = words[wordIndex % words.length];
+
+    if (phase === "typing") {
+      if (displayText.length < current.length) {
+        const id = setTimeout(
+          () => setDisplayText(current.slice(0, displayText.length + 1)),
+          85,
+        );
+        return () => clearTimeout(id);
+      }
+      const id = setTimeout(() => setPhase("hold"), 1800);
+      return () => clearTimeout(id);
+    }
+
+    if (phase === "hold") {
+      const id = setTimeout(() => setPhase("deleting"), 300);
+      return () => clearTimeout(id);
+    }
+
+    if (phase === "deleting") {
+      if (displayText.length > 0) {
+        const id = setTimeout(
+          () => setDisplayText(displayText.slice(0, -1)),
+          50,
+        );
+        return () => clearTimeout(id);
+      }
+      setWordIndex((p) => (p + 1) % words.length);
+      setPhase("typing");
+    }
+  }, [displayText, phase, wordIndex, words]);
+
+  return (
+    <span className="relative whitespace-nowrap">
+      <span className="bg-linear-to-r from-cyan-400 via-sky-300 to-cyan-400 bg-clip-text text-transparent">
+        {displayText}
+      </span>
+      {/* blinking cursor */}
+      <span
+        className="ml-0.5 inline-block h-[0.82em] w-0.75 translate-y-[0.05em] rounded-sm bg-cyan-400"
+        style={{ animation: "blink 0.7s step-end infinite" }}
+      />
+      <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
+    </span>
+  );
+};
 
 const getResourceImage = (resource) => {
   if (resource?.mainImageUrl) return resource.mainImageUrl;
-  if (Array.isArray(resource?.images) && resource.images[0]) return resource.images[0];
+  if (Array.isArray(resource?.images) && resource.images[0])
+    return resource.images[0];
 
   const firstGalleryImageId = Array.isArray(resource?.galleryImageIds)
     ? resource.galleryImageIds.find(Boolean)
     : "";
 
   const bucketId =
-    env.appwrite?.buckets?.resourceImages || env.appwrite?.buckets?.propertyImages;
+    env.appwrite?.buckets?.resourceImages ||
+    env.appwrite?.buckets?.propertyImages;
 
   if (firstGalleryImageId && bucketId) {
     return storage.getFileView({
@@ -55,6 +123,9 @@ const HomeHeroCarousel = () => {
   const [query, setQuery] = useState("");
   const [resourceType, setResourceType] = useState("property");
   const [category, setCategory] = useState("");
+  // Tracks whether the current slide's background image has finished loading
+  // so we can transition from blurred → sharp (blur-up effect).
+  const [bgImgLoaded, setBgImgLoaded] = useState(false);
   const progressRef = useRef(0);
   const lastTimestampRef = useRef(null);
   const animationFrameRef = useRef(null);
@@ -95,7 +166,10 @@ const HomeHeroCarousel = () => {
         {
           $id: "featured-placeholder",
           mainImageUrl: fallbackImage,
-          title: t("client:hero.fallback.title", "Encuentra tu próximo recurso ideal"),
+          title: t(
+            "client:hero.fallback.title",
+            "Encuentra tu próximo recurso ideal",
+          ),
           city: "",
           state: "",
           resourceType: "property",
@@ -104,12 +178,19 @@ const HomeHeroCarousel = () => {
         },
       ];
 
-  const safeCurrent = ((currentSlide % slides.length) + slides.length) % slides.length;
+  const safeCurrent =
+    ((currentSlide % slides.length) + slides.length) % slides.length;
   const activeResource = slides[safeCurrent] || slides[0];
+
+  // Reset blur state whenever the active slide changes.
+  useEffect(() => {
+    setBgImgLoaded(false);
+  }, [activeResource?.$id]);
 
   useEffect(() => {
     if (!hasMultipleFeatured || isPaused) {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
       lastTimestampRef.current = null;
 
@@ -143,7 +224,8 @@ const HomeHeroCarousel = () => {
     animationFrameRef.current = requestAnimationFrame(tick);
 
     return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
       lastTimestampRef.current = null;
     };
@@ -196,10 +278,20 @@ const HomeHeroCarousel = () => {
               onError={(event) => {
                 event.target.onerror = null;
                 event.target.src = fallbackImage;
+                setBgImgLoaded(true);
               }}
-              initial={{ scale: 1.02 }}
-              animate={{ scale: hasFeaturedResources ? 1.1 : 1.03 }}
-              transition={{ duration: 10, ease: "linear" }}
+              onLoad={() => setBgImgLoaded(true)}
+              initial={{ scale: 1.02, filter: "blur(20px) saturate(1.1)" }}
+              animate={{
+                scale: hasFeaturedResources ? 1.1 : 1.03,
+                filter: bgImgLoaded
+                  ? "blur(0px) saturate(1)"
+                  : "blur(20px) saturate(1.1)",
+              }}
+              transition={{
+                scale: { duration: 10, ease: "linear" },
+                filter: { duration: 0.9, ease: "easeOut" },
+              }}
             />
           </motion.div>
         </AnimatePresence>
@@ -230,13 +322,21 @@ const HomeHeroCarousel = () => {
             <Star size={12} />
             {t("client:featured.badge", "Exclusivo")}
           </span>
-          <h1 className="mt-4 text-balance text-4xl font-black leading-[1.05] text-white sm:text-5xl lg:text-6xl">
-            {t("client:hero.mainTitle", "Tu próximo recurso comienza aquí")}
+          <h1 className="mt-4 text-4xl font-black leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+            {t("client:hero.titlePrefix", "Tu próximo")}{" "}
+            <TypewriterWord
+              words={
+                TYPEWRITER_WORDS[i18n.language?.split("-")[0]] ??
+                TYPEWRITER_WORDS.es
+              }
+            />
+            <br className="hidden sm:block" />
+            {t("client:hero.titleSuffix", "comienza aquí")}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
             {t(
               "client:hero.subTitle",
-              "Descubre propiedades, vehículos, servicios, experiencias y venues filtrados correctamente por categoría.",
+              "Descubre propiedades, vehículos, servicios, experiencias y más en las mejores zonas.",
             )}
           </p>
         </div>
@@ -254,7 +354,10 @@ const HomeHeroCarousel = () => {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder={t("client:search.inputPlaceholder", "Buscar por título, ciudad o palabra clave")}
+                placeholder={t(
+                  "client:search.inputPlaceholder",
+                  "Buscar por título, ciudad o palabra clave",
+                )}
                 className="h-11 w-full rounded-2xl border border-white/30 bg-white/15 pl-9 pr-3 text-sm text-white placeholder:text-white/70 outline-none transition focus:border-cyan-300 focus:bg-white/20"
               />
             </label>
@@ -335,11 +438,17 @@ const HomeHeroCarousel = () => {
 
               <div className="relative z-10 mb-2 flex flex-wrap items-center gap-2">
                 <span className="inline-flex rounded-full border border-cyan-300/45 bg-cyan-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-100">
-                  {t(`client:common.enums.resourceType.${activeResource.resourceType || "property"}`, activeResource.resourceType || "Property")}
+                  {t(
+                    `client:common.enums.resourceType.${activeResource.resourceType || "property"}`,
+                    activeResource.resourceType || "Property",
+                  )}
                 </span>
                 {activeResource.category && (
                   <span className="inline-flex rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90">
-                    {t(`client:common.enums.category.${activeResource.category}`, activeResource.category)}
+                    {t(
+                      `client:common.enums.category.${activeResource.category}`,
+                      activeResource.category,
+                    )}
                   </span>
                 )}
               </div>
@@ -362,7 +471,9 @@ const HomeHeroCarousel = () => {
                     {(activeResource?.city || activeResource?.state) && (
                       <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-white/80">
                         <MapPin size={14} className="text-cyan-300" />
-                        {[activeResource.city, activeResource.state].filter(Boolean).join(", ")}
+                        {[activeResource.city, activeResource.state]
+                          .filter(Boolean)
+                          .join(", ")}
                       </p>
                     )}
                   </div>
@@ -427,4 +538,3 @@ const HomeHeroCarousel = () => {
 };
 
 export default HomeHeroCarousel;
-

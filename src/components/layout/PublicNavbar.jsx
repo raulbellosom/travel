@@ -14,6 +14,7 @@ import {
   LogIn,
   Monitor,
   Moon,
+  MoreHorizontal,
   Sun,
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
@@ -41,6 +42,13 @@ const PublicNavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  // Overflow nav: null = not yet measured (all items visible for first paint)
+  const [visibleCount, setVisibleCount] = useState(null);
+  const navLinksContainerRef = useRef(null);
+  const itemRefs = useRef([]);
+  const cachedItemWidths = useRef(null); // filled on first measurement
+  const moreBtnRef = useRef(null);
+  const moreDropdownRef = useRef(null);
 
   const hasHeroBehind =
     location.pathname === "/" || location.pathname.startsWith("/buscar");
@@ -123,6 +131,82 @@ const PublicNavbar = () => {
 
   const navLinks = useMemo(() => buildPublicNavLinks(t), [t]);
 
+  // When language changes → navLinks change → reset measurement so items re-measure
+  useEffect(() => {
+    cachedItemWidths.current = null;
+    setVisibleCount(null);
+  }, [navLinks]);
+
+  // ── Overflow nav measurement ─────────────────────────────────────────────
+  // Strategy:
+  //   • When visibleCount=null all items are display:block → we read & cache widths.
+  //   • When visibleCount is set, hidden items (display:none) have 0 offsetWidth,
+  //     so we use cached values; only container width is re-read from the DOM.
+  const recalcNavOverflow = useCallback(() => {
+    const container = navLinksContainerRef.current;
+    if (!container) return;
+
+    const items = itemRefs.current.filter(Boolean);
+    if (!items.length) return;
+
+    // Build/refresh cache — only update entries that are currently visible
+    if (!cachedItemWidths.current) {
+      cachedItemWidths.current = new Array(items.length).fill(0);
+    }
+    items.forEach((el, i) => {
+      if (el && el.offsetWidth > 0) {
+        cachedItemWidths.current[i] = el.offsetWidth;
+      }
+    });
+
+    // Need all items measured before first commit
+    if (cachedItemWidths.current.some((w) => !w)) return;
+
+    const available = container.clientWidth;
+    if (!available) return;
+
+    // Width of the "Más" chip (measured from the always-present phantom)
+    const moreBtnW = (moreBtnRef.current?.offsetWidth ?? 88) + 4;
+    const GAP = 4; // gap between items (space-x-1)
+
+    let accumulated = 0;
+    let count = items.length;
+
+    for (let i = 0; i < items.length; i++) {
+      const w = cachedItemWidths.current[i] + GAP;
+      const hasNext = i < items.length - 1;
+
+      if (hasNext) {
+        // If adding this item would leave no room for "Más" + the rest, cut here
+        if (accumulated + w + moreBtnW > available) {
+          count = i;
+          break;
+        }
+      } else {
+        // Last item → no "Más" needed
+        if (accumulated + w > available) {
+          count = i;
+          break;
+        }
+      }
+      accumulated += w;
+    }
+
+    setVisibleCount(count);
+  }, []);
+
+  useEffect(() => {
+    // Run after first paint so all item refs are populated
+    const raf = requestAnimationFrame(recalcNavOverflow);
+    const observer = new ResizeObserver(recalcNavOverflow);
+    if (navLinksContainerRef.current)
+      observer.observe(navLinksContainerRef.current);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
+  }, [recalcNavOverflow]);
+
   useEffect(() => {
     const handleScroll = () => {
       const nextIsScrolled = window.scrollY > 20;
@@ -181,92 +265,204 @@ const PublicNavbar = () => {
         )}
       >
         <div className="container mx-auto px-4 md:px-6">
-          <nav className="flex items-center justify-between gap-3">
+          {/*
+            Desktop layout uses CSS Grid with 4 columns:
+              [logo auto] [nav-links 1fr] [search 240px] [controls auto]
+            The 1fr column bounds the nav-links section for measurement.
+            Grid template is set via inline style to avoid Tailwind parsing issues
+            with complex values. On mobile the nav is flex justify-between.
+          */}
+          <nav
+            className="flex items-center justify-between gap-3 lg:grid lg:items-center lg:gap-3"
+            style={{
+              gridTemplateColumns: "auto 1fr 240px auto",
+            }}
+          >
+            {/* ── Logo ── */}
             <Link
               to="/"
-              className="relative z-50 flex flex-shrink-0 items-center gap-3"
+              className="relative z-50 flex shrink-0 items-center gap-2"
             >
-              <BrandLogo className="h-10 w-auto" />
-              <div>
-                <p
-                  className={cn(
-                    "text-base font-bold transition-colors sm:text-lg",
-                    solidNav ? "text-slate-900 dark:text-white" : "text-white",
-                  )}
-                >
-                  {env.app.name}
-                </p>
-              </div>
+              <BrandLogo className="h-9 w-auto" />
+              <p
+                className={cn(
+                  "hidden text-base font-bold transition-colors sm:block sm:text-lg",
+                  solidNav ? "text-slate-900 dark:text-white" : "text-white",
+                )}
+              >
+                {env.app.name}
+              </p>
             </Link>
 
-            <div className="hidden items-center space-x-1 lg:flex">
-              {navLinks.map((link) => (
-                <div key={link.name} className="group relative px-3 py-2">
-                  <Link
-                    to={link.path}
+            {/* ── Desktop nav links (1fr column) ── */}
+            <div
+              ref={navLinksContainerRef}
+              className="hidden min-w-0 items-center gap-1 lg:flex"
+            >
+              {navLinks.map((link, idx) => {
+                // While measuring (visibleCount=null) all items are visible.
+                // After measurement, items ≥ visibleCount get display:none.
+                const isHidden = visibleCount !== null && idx >= visibleCount;
+                return (
+                  <div
+                    key={link.name}
+                    ref={(el) => {
+                      itemRefs.current[idx] = el;
+                    }}
                     className={cn(
-                      "flex items-center gap-1 text-sm font-semibold transition-colors",
-                      solidNav
-                        ? "text-slate-700 hover:text-cyan-600 dark:text-slate-200 dark:hover:text-cyan-400"
-                        : "text-white/90 hover:text-white",
+                      "group relative shrink-0",
+                      isHidden && "hidden",
                     )}
                   >
-                    {link.name}
-                    <ChevronDown
-                      size={14}
-                      className="opacity-70 transition-transform duration-200 group-hover:rotate-180"
-                    />
-                  </Link>
+                    <Link
+                      to={link.path}
+                      className={cn(
+                        "flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                        solidNav
+                          ? "text-slate-700 hover:bg-slate-100/80 hover:text-cyan-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-cyan-400"
+                          : "text-white/90 hover:bg-white/10 hover:text-white",
+                      )}
+                    >
+                      {link.name}
+                      <ChevronDown
+                        size={13}
+                        className="opacity-60 transition-transform duration-200 group-hover:rotate-180"
+                      />
+                    </Link>
 
-                  <div className="invisible absolute top-full left-1/2 -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-                    <div className="w-[26rem] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-slate-700">
-                      <div className="grid grid-cols-2 gap-1 p-3">
-                        {link.items.map((item) => {
-                          const Icon = item.icon;
-                          return (
-                            <Link
-                              key={item.to}
-                              to={item.to}
-                              className="group/item flex items-start gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-cyan-50 dark:hover:bg-slate-700"
-                            >
-                              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 transition-colors group-hover/item:bg-cyan-200 dark:bg-cyan-900/40 dark:text-cyan-400 dark:group-hover/item:bg-cyan-800/40">
-                                <Icon size={18} />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                                  {item.label}
-                                </p>
-                                <p className="text-xs leading-snug text-slate-500 dark:text-slate-400">
-                                  {item.desc}
-                                </p>
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-
-                      <div className="border-t border-slate-100 px-4 py-2.5 dark:border-slate-700">
-                        <Link
-                          to={link.path}
-                          className="flex items-center justify-between text-sm font-medium text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
-                        >
-                          {t("client:common.viewAll", "View all")}
-                          <ChevronRight size={14} />
-                        </Link>
+                    {/* Per-item dropdown */}
+                    <div className="invisible absolute top-full left-1/2 z-50 -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                      <div className="w-[26rem] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-slate-700">
+                        <div className="grid grid-cols-2 gap-1 p-3">
+                          {link.items.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <Link
+                                key={item.to}
+                                to={item.to}
+                                className="group/item flex items-start gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-cyan-50 dark:hover:bg-slate-700"
+                              >
+                                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 transition-colors group-hover/item:bg-cyan-200 dark:bg-cyan-900/40 dark:text-cyan-400 dark:group-hover/item:bg-cyan-800/40">
+                                  <Icon size={18} />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                                    {item.label}
+                                  </p>
+                                  <p className="text-xs leading-snug text-slate-500 dark:text-slate-400">
+                                    {item.desc}
+                                  </p>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                        <div className="border-t border-slate-100 px-4 py-2.5 dark:border-slate-700">
+                          <Link
+                            to={link.path}
+                            className="flex items-center justify-between text-sm font-medium text-cyan-600 transition-colors hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                          >
+                            {t("client:common.viewAll", "View all")}
+                            <ChevronRight size={14} />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
+                );
+              })}
+
+              {/* ── "Más" — hover trigger, same pattern as other nav items ── */}
+              {visibleCount !== null && visibleCount < navLinks.length && (
+                <div ref={moreDropdownRef} className="group relative shrink-0">
+                  {/* Trigger — matches exactly the other nav link style */}
+                  <div
+                    className={cn(
+                      "flex cursor-default items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                      solidNav
+                        ? "text-slate-700 hover:bg-slate-100/80 hover:text-cyan-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-cyan-400"
+                        : "text-white/90 hover:bg-white/10 hover:text-white",
+                    )}
+                  >
+                    <MoreHorizontal size={15} />
+                    <span>{t("client:nav.more", "Más")}</span>
+                    <ChevronDown
+                      size={13}
+                      className="opacity-60 transition-transform duration-200 group-hover:rotate-180"
+                    />
+                  </div>
+
+                  {/* Dropdown — same invisible→visible transition as other items */}
+                  <div className="invisible absolute left-0 top-full z-[110] translate-y-2 pt-3 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                    <div
+                      className="overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 [&::-webkit-scrollbar]:hidden dark:bg-slate-800 dark:ring-slate-700"
+                      style={{
+                        minWidth: "42rem",
+                        maxWidth: "68rem",
+                        maxHeight: "80vh",
+                        scrollbarWidth: "none",
+                        msOverflowStyle: "none",
+                      }}
+                    >
+                      {/* Overflow sections grouped by category */}
+                      {navLinks.slice(visibleCount).map((link, si) => (
+                        <div
+                          key={link.name}
+                          className={cn(
+                            "p-3",
+                            si > 0 &&
+                              "border-t border-slate-100 dark:border-slate-700",
+                          )}
+                        >
+                          <Link
+                            to={link.path}
+                            className="mb-2 flex items-center justify-between rounded-lg px-2 py-1 text-[11px] font-bold uppercase tracking-widest text-slate-400 transition-colors hover:text-cyan-600 dark:text-slate-500 dark:hover:text-cyan-400"
+                          >
+                            <span>{link.name}</span>
+                            <ChevronRight size={11} />
+                          </Link>
+                          <div className="grid grid-cols-3 gap-1">
+                            {link.items.map((item) => {
+                              const Icon = item.icon;
+                              return (
+                                <Link
+                                  key={item.to}
+                                  to={item.to}
+                                  className="group/item flex items-start gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-cyan-50 dark:hover:bg-slate-700"
+                                >
+                                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 transition-colors group-hover/item:bg-cyan-200 dark:bg-cyan-900/40 dark:text-cyan-400">
+                                    <Icon size={14} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-semibold leading-tight text-slate-800 dark:text-white">
+                                      {item.label}
+                                    </p>
+                                    <p className="mt-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                                      {item.desc}
+                                    </p>
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
 
-            <div className="hidden flex-1 items-center justify-center px-6 lg:flex">
+            {/* ── Search (240px column) ── */}
+            <div className="hidden lg:flex">
               <PublicSearch
                 variant={solidNav ? "default" : "transparent"}
                 showMobileTrigger={false}
+                desktopContainerClassName="w-full max-w-full"
               />
             </div>
 
+            {/* ── Right controls ── */}
             <div className="hidden items-center gap-2 lg:flex">
               <button
                 onClick={onToggleLanguage}
@@ -309,7 +505,6 @@ const PublicNavbar = () => {
                       {themes.map((themeOption) => {
                         const Icon = themeOption.icon;
                         const isSelected = theme === themeOption.value;
-
                         return (
                           <button
                             key={themeOption.value}
@@ -366,12 +561,12 @@ const PublicNavbar = () => {
                         : "bg-white text-slate-900 shadow-md hover:bg-slate-100",
                     )}
                   >
-                    <LogIn size={18} />
+                    <LogIn size={16} />
                     <span>{t("client:nav.login", "Log in")}</span>
                   </Link>
                   <Link
                     to="/register"
-                    className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-cyan-500/30 active:scale-95"
+                    className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-cyan-500/30 active:scale-95"
                   >
                     {t("client:nav.register", "Register")}
                   </Link>
@@ -441,16 +636,10 @@ const PublicNavbar = () => {
                         ? "text-slate-800 dark:text-white"
                         : "text-white",
                     )}
-                    onClick={() =>
-                      setIsMobileMenuOpen((previous) => !previous)
-                    }
+                    onClick={() => setIsMobileMenuOpen((previous) => !previous)}
                     aria-label={t("nav.menu", "Menu")}
                   >
-                    {isMobileMenuOpen ? (
-                      <X size={22} />
-                    ) : (
-                      <Menu size={22} />
-                    )}
+                    {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
                   </button>
                 </>
               )}
