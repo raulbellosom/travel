@@ -2,9 +2,9 @@
   "hero": {
     "title": "Descubre tu próximo recurso",
     "subtitle": "Descubre propiedades, vehículos, servicios, experiencias y más en las mejores zonas.",
-    "mainTitle": "Tu próximo recurso comienza aquí",
-    "titlePrefix": "Tu próximo",
-    "titleSuffix": "comienza aquí",
+    "mainTitle": "Aquí comienza tu próximo recurso",
+    "titlePrefix": "Aquí comienza",
+    "titleSuffix": "tu próximo",
     "subTitle": "Descubre propiedades, vehículos, servicios, experiencias y más en las mejores zonas.",
     "stats": {
       "properties": "Propiedades",

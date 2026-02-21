@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -34,56 +34,84 @@ const TYPEWRITER_WORDS = {
   en: ["home", "trip", "service", "experience", "event"],
 };
 
-/** Typewriter that types & deletes words from a rotating list */
+/* ── Typewriter styles (injected once) ── */
+const TYPEWRITER_CSS = `
+@keyframes tw-blink{0%,100%{opacity:1}50%{opacity:0}}
+`;
+let twStyleInjected = false;
+
+/**
+ * TypewriterWord – GPU-friendly, ref-driven (no state per char).
+ * Writes directly to a <span> ref so React doesn't re-render on each letter.
+ */
 const TypewriterWord = ({ words }) => {
-  const [displayText, setDisplayText] = useState("");
-  const [wordIndex, setWordIndex] = useState(0);
-  const [phase, setPhase] = useState("typing"); // typing | hold | deleting
+  const textRef = useRef(null);
 
   useEffect(() => {
-    const current = words[wordIndex % words.length];
+    if (!twStyleInjected) {
+      const s = document.createElement("style");
+      s.textContent = TYPEWRITER_CSS;
+      document.head.appendChild(s);
+      twStyleInjected = true;
+    }
+  }, []);
 
-    if (phase === "typing") {
-      if (displayText.length < current.length) {
-        const id = setTimeout(
-          () => setDisplayText(current.slice(0, displayText.length + 1)),
-          85,
-        );
-        return () => clearTimeout(id);
+  useEffect(() => {
+    let timerId = null;
+    let wi = 0;
+    let ci = 0;
+    let phase = "typing"; // typing | hold | deleting
+    let cancelled = false;
+
+    const el = textRef.current;
+    if (!el) return;
+
+    const step = () => {
+      if (cancelled) return;
+      const word = words[wi % words.length];
+
+      if (phase === "typing") {
+        ci += 1;
+        el.textContent = word.slice(0, ci);
+        if (ci >= word.length) {
+          phase = "hold";
+          timerId = setTimeout(step, 2000);
+        } else {
+          timerId = setTimeout(step, 80);
+        }
+      } else if (phase === "hold") {
+        phase = "deleting";
+        timerId = setTimeout(step, 200);
+      } else {
+        ci -= 1;
+        el.textContent = word.slice(0, ci);
+        if (ci <= 0) {
+          wi = (wi + 1) % words.length;
+          phase = "typing";
+          timerId = setTimeout(step, 350);
+        } else {
+          timerId = setTimeout(step, 45);
+        }
       }
-      const id = setTimeout(() => setPhase("hold"), 1800);
-      return () => clearTimeout(id);
-    }
+    };
 
-    if (phase === "hold") {
-      const id = setTimeout(() => setPhase("deleting"), 300);
-      return () => clearTimeout(id);
-    }
-
-    if (phase === "deleting") {
-      if (displayText.length > 0) {
-        const id = setTimeout(
-          () => setDisplayText(displayText.slice(0, -1)),
-          50,
-        );
-        return () => clearTimeout(id);
-      }
-      setWordIndex((p) => (p + 1) % words.length);
-      setPhase("typing");
-    }
-  }, [displayText, phase, wordIndex, words]);
+    step();
+    return () => {
+      cancelled = true;
+      clearTimeout(timerId);
+    };
+  }, [words]);
 
   return (
     <span className="relative whitespace-nowrap">
-      <span className="bg-linear-to-r from-cyan-400 via-sky-300 to-cyan-400 bg-clip-text text-transparent">
-        {displayText}
-      </span>
-      {/* blinking cursor */}
+      <span
+        ref={textRef}
+        className="bg-linear-to-r from-cyan-400 via-sky-300 to-cyan-400 bg-clip-text text-transparent"
+      />
       <span
         className="ml-0.5 inline-block h-[0.82em] w-0.75 translate-y-[0.05em] rounded-sm bg-cyan-400"
-        style={{ animation: "blink 0.7s step-end infinite" }}
+        style={{ animation: "tw-blink 0.75s step-end infinite" }}
       />
-      <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
     </span>
   );
 };
@@ -119,7 +147,6 @@ const HomeHeroCarousel = () => {
   const [featuredResources, setFeaturedResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-  const [slideProgress, setSlideProgress] = useState(0);
   const [query, setQuery] = useState("");
   const [resourceType, setResourceType] = useState("property");
   const [category, setCategory] = useState("");
@@ -148,9 +175,9 @@ const HomeHeroCarousel = () => {
     fetchFeatured();
   }, []);
 
-  useEffect(() => {
-    progressRef.current = slideProgress;
-  }, [slideProgress]);
+  // ─── Progress bar driven by ref + CSS transition (no react re-render per frame) ───
+  const progressBarRef = useRef(null);
+  const progressFillRef = useRef(null);
 
   const categories = useMemo(
     () => getAllowedCategories(resourceType),
@@ -187,49 +214,57 @@ const HomeHeroCarousel = () => {
     setBgImgLoaded(false);
   }, [activeResource?.$id]);
 
+  /* ── Carousel timer: CSS transition drives bars, no per-frame React renders ── */
+  const animateBars = useCallback((action) => {
+    const els = [progressBarRef.current, progressFillRef.current].filter(
+      Boolean,
+    );
+    if (action === "freeze") {
+      els.forEach((el) => {
+        const cur = getComputedStyle(el).transform;
+        el.style.transition = "none";
+        el.style.transform = cur;
+      });
+    } else if (action === "reset") {
+      els.forEach((el) => {
+        el.style.transition = "none";
+        el.style.transform = "scaleX(0)";
+      });
+    } else {
+      // "start"
+      els.forEach((el) => {
+        el.style.transition = "none";
+        el.style.transform = "scaleX(0)";
+        void el.offsetWidth;
+        el.style.transition = `transform ${ROTATE_MS}ms linear`;
+        el.style.transform = "scaleX(1)";
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (!hasMultipleFeatured || isPaused) {
+      animateBars("freeze");
       if (animationFrameRef.current)
         cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
       lastTimestampRef.current = null;
-
       if (!hasMultipleFeatured) {
         progressRef.current = 0;
-        setSlideProgress(0);
+        animateBars("reset");
       }
       return undefined;
     }
 
-    const tick = (timestamp) => {
-      if (lastTimestampRef.current == null) {
-        lastTimestampRef.current = timestamp;
-      }
+    animateBars("start");
 
-      const elapsed = timestamp - lastTimestampRef.current;
-      lastTimestampRef.current = timestamp;
+    const id = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      animateBars("start");
+    }, ROTATE_MS);
 
-      let nextProgress = progressRef.current + elapsed / ROTATE_MS;
-      if (nextProgress >= 1) {
-        const steps = Math.floor(nextProgress);
-        nextProgress -= steps;
-        setCurrentSlide((prev) => (prev + steps) % slides.length);
-      }
-
-      progressRef.current = nextProgress;
-      setSlideProgress(nextProgress);
-      animationFrameRef.current = requestAnimationFrame(tick);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (animationFrameRef.current)
-        cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-      lastTimestampRef.current = null;
-    };
-  }, [hasMultipleFeatured, isPaused, slides.length]);
+    return () => clearInterval(id);
+  }, [hasMultipleFeatured, isPaused, slides.length, animateBars]);
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -241,26 +276,32 @@ const HomeHeroCarousel = () => {
     navigate(`/buscar?${params.toString()}`);
   };
 
-  const nextSlide = () => {
-    progressRef.current = 0;
-    setSlideProgress(0);
+  const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
+    animateBars("start");
+  }, [slides.length, animateBars]);
 
-  const prevSlide = () => {
-    progressRef.current = 0;
-    setSlideProgress(0);
+  const prevSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
+    animateBars("start");
+  }, [slides.length, animateBars]);
 
   if (loading) {
     return (
-      <div className="relative min-h-[100dvh] w-full animate-pulse bg-slate-200 dark:bg-slate-800" />
+      <div className="relative min-h-dvh w-full animate-pulse bg-slate-200 dark:bg-slate-800" />
     );
   }
 
   return (
-    <section className="relative min-h-[100dvh] w-full overflow-hidden bg-slate-950">
+    <section className="relative min-h-dvh w-full overflow-hidden bg-slate-950">
+      {/* Floating orb CSS animation (GPU-composited, zero JS) */}
+      <style>{`
+        @keyframes hero-float-up{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-10px,0)}}
+        @keyframes hero-float-down{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,10px,0)}}
+        .hero-orb-a{animation:hero-float-up 6s ease-in-out infinite;will-change:transform}
+        .hero-orb-b{animation:hero-float-down 7s ease-in-out infinite;will-change:transform}
+      `}</style>
+
       <div className="absolute inset-0">
         <AnimatePresence mode="wait">
           <motion.div
@@ -268,70 +309,52 @@ const HomeHeroCarousel = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6 }}
             className="absolute inset-0"
           >
-            <motion.img
+            <img
               src={getResourceImage(activeResource)}
               alt={activeResource?.title || "Featured"}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover will-change-[filter] transition-[filter] duration-700 ease-out"
+              style={{ filter: bgImgLoaded ? "blur(0px)" : "blur(16px)" }}
               onError={(event) => {
                 event.target.onerror = null;
                 event.target.src = fallbackImage;
                 setBgImgLoaded(true);
               }}
               onLoad={() => setBgImgLoaded(true)}
-              initial={{ scale: 1.02, filter: "blur(20px) saturate(1.1)" }}
-              animate={{
-                scale: hasFeaturedResources ? 1.1 : 1.03,
-                filter: bgImgLoaded
-                  ? "blur(0px) saturate(1)"
-                  : "blur(20px) saturate(1.1)",
-              }}
-              transition={{
-                scale: { duration: 10, ease: "linear" },
-                filter: { duration: 0.9, ease: "easeOut" },
-              }}
             />
           </motion.div>
         </AnimatePresence>
 
         {hasFeaturedResources ? (
           <>
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/68 via-slate-950/50 to-slate-950/85" />
+            <div className="absolute inset-0 bg-linear-to-b from-slate-950/68 via-slate-950/50 to-slate-950/85" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,211,238,0.25),transparent_45%),radial-gradient(circle_at_78%_30%,rgba(14,165,233,0.20),transparent_42%),radial-gradient(circle_at_50%_100%,rgba(2,132,199,0.24),transparent_40%)]" />
-            <motion.div
-              className="absolute -left-20 top-24 h-60 w-60 rounded-full bg-cyan-400/16 blur-3xl"
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-              className="absolute -right-16 bottom-24 h-56 w-56 rounded-full bg-sky-500/15 blur-3xl"
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-            />
+            <div className="hero-orb-a absolute -left-20 top-24 h-60 w-60 rounded-full bg-cyan-400/16 blur-3xl" />
+            <div className="hero-orb-b absolute -right-16 bottom-24 h-56 w-56 rounded-full bg-sky-500/15 blur-3xl" />
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/70 to-slate-950/92" />
+          <div className="absolute inset-0 bg-linear-to-b from-slate-950/85 via-slate-950/70 to-slate-950/92" />
         )}
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center px-4 pb-8 pt-24 sm:px-6 sm:pb-10 sm:pt-28">
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-7xl flex-col justify-center px-4 pb-8 pt-24 sm:px-6 sm:pb-10 sm:pt-28">
         <div className="max-w-3xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/45 bg-cyan-400/16 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-100">
             <Star size={12} />
             {t("client:featured.badge", "Exclusivo")}
           </span>
           <h1 className="mt-4 text-4xl font-black leading-[1.05] text-white sm:text-5xl lg:text-6xl">
-            {t("client:hero.titlePrefix", "Tu próximo")}{" "}
+            {t("client:hero.titlePrefix", "Aquí comienza")}{" "}
+            <br className="hidden sm:block" />
+            {t("client:hero.titleSuffix", "tu próximo")}{" "}
             <TypewriterWord
               words={
                 TYPEWRITER_WORDS[i18n.language?.split("-")[0]] ??
                 TYPEWRITER_WORDS.es
               }
             />
-            <br className="hidden sm:block" />
-            {t("client:hero.titleSuffix", "comienza aquí")}
           </h1>
           <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
             {t(
@@ -414,24 +437,25 @@ const HomeHeroCarousel = () => {
             >
               {hasMultipleFeatured ? (
                 <div
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-sky-400/12 to-transparent"
+                  className="pointer-events-none absolute inset-0 bg-linear-to-r from-cyan-400/20 via-sky-400/12 to-transparent will-change-transform"
+                  ref={progressFillRef}
                   style={{
-                    transform: `scaleX(${slideProgress})`,
                     transformOrigin: "left center",
-                    opacity: 0.15 + slideProgress * 0.25,
+                    transform: "scaleX(0)",
                   }}
                 />
               ) : (
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyan-400/12 via-sky-400/8 to-transparent" />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-cyan-400/12 via-sky-400/8 to-transparent" />
               )}
 
               <div className="absolute inset-x-0 bottom-0 h-0.5 bg-white/10" />
               {hasMultipleFeatured && (
                 <div
-                  className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-300"
+                  className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-300 will-change-transform"
+                  ref={progressBarRef}
                   style={{
-                    transform: `scaleX(${slideProgress})`,
                     transformOrigin: "left center",
+                    transform: "scaleX(0)",
                   }}
                 />
               )}
