@@ -267,7 +267,7 @@ const AppRoutes = () => {
                   <Route
                     path="my-resources"
                     element={
-                      <ScopeRoute scope="properties.read">
+                      <ScopeRoute scope="resources.read">
                         <MyProperties />
                       </ScopeRoute>
                     }
@@ -275,7 +275,7 @@ const AppRoutes = () => {
                   <Route
                     path="resources/new"
                     element={
-                      <ScopeRoute scope="properties.write">
+                      <ScopeRoute scope="resources.write">
                         <CreateProperty />
                       </ScopeRoute>
                     }
@@ -283,7 +283,7 @@ const AppRoutes = () => {
                   <Route
                     path="resources/:id/edit"
                     element={
-                      <ScopeRoute scope="properties.write">
+                      <ScopeRoute scope="resources.write">
                         <EditProperty />
                       </ScopeRoute>
                     }
@@ -291,7 +291,7 @@ const AppRoutes = () => {
                   <Route
                     path="resources/:id"
                     element={
-                      <ScopeRoute scope="properties.read">
+                      <ScopeRoute scope="resources.read">
                         <AppPropertyDetail />
                       </ScopeRoute>
                     }
@@ -307,9 +307,9 @@ const AppRoutes = () => {
                   <Route
                     path="conversations"
                     element={
-                      <ProtectedRoute>
+                      <ScopeRoute scope="messaging.read">
                         <Conversations />
-                      </ProtectedRoute>
+                      </ScopeRoute>
                     }
                   />
                   <Route

@@ -13,7 +13,7 @@ import { hasScope } from "../utils/roles";
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const canReadProperties = hasScope(user, "properties.read");
+  const canReadProperties = hasScope(user, "resources.read");
   const canReadLeads = hasScope(user, "leads.read");
   const [properties, setProperties] = useState([]);
   const [leads, setLeads] = useState([]);

@@ -18,6 +18,7 @@ const COL_MESSAGES = () => env.appwrite.collections.messages;
 const COL_USERS = () => env.appwrite.collections.users;
 const normalizeId = (value) => String(value || "").trim();
 const INTERNAL_CHAT_ROLES = [
+  "root",
   "owner",
   "staff_manager",
   "staff_editor",
@@ -189,7 +190,6 @@ export const chatService = {
 
   /**
    * List internal users available for admin-to-admin direct chat.
-   * Root users are always excluded.
    */
   async listInternalChatUsers({ excludeUserId } = {}) {
     ensureAppwriteConfigured();
@@ -220,7 +220,6 @@ export const chatService = {
     const excludedId = normalizeId(excludeUserId);
     return (response.documents || []).filter((doc) => {
       const role = String(doc?.role || "").trim().toLowerCase();
-      if (role === "root") return false;
       if (!INTERNAL_CHAT_ROLES.includes(role)) return false;
       if (doc?.enabled === false) return false;
       if (doc?.isHidden === true) return false;

@@ -26,6 +26,7 @@ const Combobox = ({
   inputClassName = "",
   maxResults = 12,
   keepOpenAfterSelect = false, // New prop for multi-select behavior
+  renderOption = null, // Optional: (option, { isHighlighted, isSelected }) => ReactNode
 }) => {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
@@ -361,7 +362,9 @@ const Combobox = ({
                           commitValue(option);
                         }}
                       >
-                        {option.label}
+                        {renderOption
+                          ? renderOption(option, { isHighlighted, isSelected })
+                          : option.label}
                       </li>
                     );
                   })}

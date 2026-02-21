@@ -78,7 +78,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
       href: INTERNAL_ROUTES.dashboard,
       icon: Home,
     },
-    ...(hasScope(user, "properties.read")
+    ...(hasScope(user, "resources.read")
       ? [
           {
             name: t("sidebar.listings"),
@@ -90,11 +90,15 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
     ...(hasScope(user, "leads.read")
       ? [{ name: t("sidebar.leads"), href: INTERNAL_ROUTES.leads, icon: Inbox }]
       : []),
-    {
-      name: t("sidebar.conversations"),
-      href: INTERNAL_ROUTES.conversations,
-      icon: MessageCircle,
-    },
+    ...(hasScope(user, "messaging.read")
+      ? [
+          {
+            name: t("sidebar.conversations"),
+            href: INTERNAL_ROUTES.conversations,
+            icon: MessageCircle,
+          },
+        ]
+      : []),
     ...(hasScope(user, "reservations.read")
       ? [
           {

@@ -31,6 +31,7 @@ import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
 import { authService } from "../services/authService";
 import { profileService } from "../services/profileService";
 import { staffService, STAFF_ROLES } from "../services/staffService";
+import { useToast } from "../hooks/useToast";
 import { getErrorMessage } from "../utils/errors";
 import {
   getPasswordChecks,
@@ -107,9 +108,16 @@ const getFullName = (item, fallback = "") => {
 };
 
 const isBlobUrl = (value) => String(value || "").startsWith("blob:");
+const isTeamListableUser = (item) => {
+  const role = String(item?.role || "")
+    .trim()
+    .toLowerCase();
+  return STAFF_ROLES.includes(role) && item?.isHidden !== true;
+};
 
 const Team = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -212,7 +220,7 @@ const Team = () => {
     setError("");
     try {
       const documents = await staffService.listStaff();
-      setStaff(documents);
+      setStaff((documents || []).filter(isTeamListableUser));
     } catch (err) {
       setError(getErrorMessage(err, t("teamPage.errors.load")));
     } finally {
@@ -231,6 +239,25 @@ const Team = () => {
       }
     };
   }, [form.avatarPreviewUrl]);
+
+  useEffect(() => {
+    if (!error) return;
+    showToast({
+      type: "error",
+      title: t("teamPage.title"),
+      message: error,
+      durationMs: 7000,
+    });
+  }, [error, showToast, t]);
+
+  useEffect(() => {
+    if (!success) return;
+    showToast({
+      type: "success",
+      title: t("teamPage.title"),
+      message: success,
+    });
+  }, [showToast, success, t]);
 
   const summaryStats = useMemo(() => {
     const active = staff.filter((item) => item.enabled !== false).length;
@@ -818,15 +845,35 @@ const Team = () => {
       <StatsCardsRow items={summaryCards} />
 
       {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-          {error}
-        </p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+          <div className="flex items-start justify-between gap-3">
+            <p className="break-words">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="rounded-md p-1 opacity-80 transition hover:bg-red-100 hover:opacity-100 dark:hover:bg-red-900/40"
+              aria-label={t("common.close", "Cerrar")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       ) : null}
 
       {success ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
-          {success}
-        </p>
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <div className="flex items-start justify-between gap-3">
+            <p className="break-words">{success}</p>
+            <button
+              type="button"
+              onClick={() => setSuccess("")}
+              className="rounded-md p-1 opacity-80 transition hover:bg-emerald-100 hover:opacity-100 dark:hover:bg-emerald-900/40"
+              aria-label={t("common.close", "Cerrar")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       ) : null}
 
       <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white to-cyan-50/40 p-4 dark:border-slate-700 dark:from-slate-900 dark:to-slate-900/70 sm:p-5">
@@ -874,10 +921,6 @@ const Team = () => {
           </div>
         </div>
 
-        <p className="relative mt-3 inline-flex flex-wrap items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs leading-relaxed text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-cyan-200">
-          <Shield size={14} />
-          {t("teamPage.permissionsStorageHint")}
-        </p>
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/70">

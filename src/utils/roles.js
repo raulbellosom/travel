@@ -48,6 +48,13 @@ const ROLE_DEFAULT_SCOPES = {
   client: [],
 };
 
+const SCOPE_ALIASES = {
+  "resources.read": ["properties.read"],
+  "resources.write": ["properties.write"],
+  "properties.read": ["resources.read"],
+  "properties.write": ["resources.write"],
+};
+
 export const isInternalRole = (role) => INTERNAL_ROLES.has(String(role || ""));
 
 export const canPublishProperty = (role) =>
@@ -96,5 +103,8 @@ export const hasScope = (user, requiredScope) => {
   if (!requiredScope) return true;
   const scope = String(requiredScope || "").trim();
   const scopes = getEffectiveScopes(user);
-  return scopes.includes("*") || scopes.includes(scope);
+  const scopeSet = new Set(scopes);
+  if (scopeSet.has("*") || scopeSet.has(scope)) return true;
+  const aliases = SCOPE_ALIASES[scope] || [];
+  return aliases.some((alias) => scopeSet.has(alias));
 };

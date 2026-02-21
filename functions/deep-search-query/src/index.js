@@ -155,7 +155,12 @@ const hasScope = (scopes, required) => {
   const needed = String(required || "").trim();
   if (!needed) return true;
   const scopeSet = new Set(scopes || []);
-  return scopeSet.has("*") || scopeSet.has(needed);
+  if (scopeSet.has("*") || scopeSet.has(needed)) return true;
+  if (needed === "resources.read") return scopeSet.has("properties.read");
+  if (needed === "properties.read") return scopeSet.has("resources.read");
+  if (needed === "resources.write") return scopeSet.has("properties.write");
+  if (needed === "properties.write") return scopeSet.has("resources.write");
+  return false;
 };
 
 const isInternalRole = (role) => {
@@ -312,7 +317,7 @@ export default async ({ req, res }) => {
     const baseQuery = [Query.equal("enabled", true), Query.orderDesc("$createdAt"), Query.limit(SCAN_LIMIT)];
 
     const tasks = [
-      hasScope(scopes, "properties.read") && canFetchModule(plan, "properties")
+      hasScope(scopes, "resources.read") && canFetchModule(plan, "properties")
         ? listDocumentsSafe({
             db,
             config,

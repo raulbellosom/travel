@@ -9,8 +9,9 @@ import { Select, TablePagination } from "../components/common";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
-import { Sparkles, Plus } from "lucide-react";
+import { Sparkles, Plus, X } from "lucide-react";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
+import { useToast } from "../hooks/useToast";
 
 const emptyForm = {
   slug: "",
@@ -26,6 +27,7 @@ const SEED_PREVIEW_TABS = {
 
 const RootAmenitiesPanel = () => {
   const { t, i18n } = useTranslation();
+  const { showToast } = useToast();
   const [amenities, setAmenities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,6 +67,16 @@ const RootAmenitiesPanel = () => {
   useEffect(() => {
     loadAmenities();
   }, [loadAmenities]);
+
+  useEffect(() => {
+    if (!error) return;
+    showToast({
+      type: "error",
+      title: t("rootAmenitiesPage.title"),
+      message: error,
+      durationMs: 7000,
+    });
+  }, [error, showToast, t]);
 
   const filteredAmenities = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
@@ -131,6 +143,13 @@ const RootAmenitiesPanel = () => {
       setForm(emptyForm);
       setCreateModalOpen(false);
       await loadAmenities();
+      showToast({
+        type: "success",
+        title: t("rootAmenitiesPage.title"),
+        message: t("rootAmenitiesPage.messages.created", {
+          defaultValue: "Amenidad creada correctamente.",
+        }),
+      });
     } catch (err) {
       setError(getErrorMessage(err, t("rootAmenitiesPage.errors.create")));
     } finally {
@@ -144,6 +163,18 @@ const RootAmenitiesPanel = () => {
     try {
       await amenitiesService.toggleEnabled(item.$id, !item.enabled);
       await loadAmenities();
+      showToast({
+        type: "success",
+        title: t("rootAmenitiesPage.title"),
+        message:
+          item.enabled
+            ? t("rootAmenitiesPage.messages.disabled", {
+                defaultValue: "Amenidad desactivada correctamente.",
+              })
+            : t("rootAmenitiesPage.messages.enabled", {
+                defaultValue: "Amenidad activada correctamente.",
+              }),
+      });
     } catch (err) {
       setError(getErrorMessage(err, t("rootAmenitiesPage.errors.toggle")));
     } finally {
@@ -195,6 +226,13 @@ const RootAmenitiesPanel = () => {
       setEditId("");
       setEditForm(emptyForm);
       await loadAmenities();
+      showToast({
+        type: "success",
+        title: t("rootAmenitiesPage.title"),
+        message: t("rootAmenitiesPage.messages.updated", {
+          defaultValue: "Amenidad actualizada correctamente.",
+        }),
+      });
     } catch (err) {
       setError(getErrorMessage(err, t("rootAmenitiesPage.errors.update")));
     } finally {
@@ -219,6 +257,17 @@ const RootAmenitiesPanel = () => {
       setSeedPlan(null);
       setSeedPreviewOpen(false);
       await loadAmenities();
+      showToast({
+        type: "success",
+        title: t("rootAmenitiesPage.title"),
+        message: t("rootAmenitiesPage.seedResult", {
+          created: summary.created,
+          updated: summary.updated,
+          unchanged: summary.unchanged ?? summary.skipped ?? 0,
+          errors: summary.errors.length,
+        }),
+        durationMs: 6500,
+      });
     } catch (err) {
       setError(getErrorMessage(err, t("rootAmenitiesPage.errors.seed")));
     } finally {
@@ -307,19 +356,41 @@ const RootAmenitiesPanel = () => {
 
         {seedSummary ? (
           <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50 p-3 text-sm text-cyan-800 dark:border-cyan-900/50 dark:bg-cyan-950/40 dark:text-cyan-200">
-            {t("rootAmenitiesPage.seedResult", {
-              created: seedSummary.created,
-              updated: seedSummary.updated,
-              unchanged: seedSummary.unchanged ?? seedSummary.skipped ?? 0,
-              errors: seedSummary.errors.length,
-            })}
+            <div className="flex items-start justify-between gap-3">
+              <p className="break-words">
+                {t("rootAmenitiesPage.seedResult", {
+                  created: seedSummary.created,
+                  updated: seedSummary.updated,
+                  unchanged: seedSummary.unchanged ?? seedSummary.skipped ?? 0,
+                  errors: seedSummary.errors.length,
+                })}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSeedSummary(null)}
+                className="rounded-md p-1 opacity-80 transition hover:bg-cyan-100 hover:opacity-100 dark:hover:bg-cyan-900/40"
+                aria-label={t("common.close", { defaultValue: "Cerrar" })}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         ) : null}
       </article>
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-          {error}
+          <div className="flex items-start justify-between gap-3">
+            <p className="break-words">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="rounded-md p-1 opacity-80 transition hover:bg-red-100 hover:opacity-100 dark:hover:bg-red-900/40"
+              aria-label={t("common.close", { defaultValue: "Cerrar" })}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       ) : null}
 

@@ -24,7 +24,7 @@ const DashboardBottomTabs = () => {
       icon: Home,
       label: t("sidebar.overview"),
     },
-    ...(hasScope(user, "properties.read")
+    ...(hasScope(user, "resources.read")
       ? [
           {
             key: "properties",
@@ -44,12 +44,16 @@ const DashboardBottomTabs = () => {
           },
         ]
       : []),
-    {
-      key: "conversations",
-      to: INTERNAL_ROUTES.conversations,
-      icon: MessageCircle,
-      label: t("sidebar.conversations"),
-    },
+    ...(hasScope(user, "messaging.read")
+      ? [
+          {
+            key: "conversations",
+            to: INTERNAL_ROUTES.conversations,
+            icon: MessageCircle,
+            label: t("sidebar.conversations"),
+          },
+        ]
+      : []),
     ...(hasScope(user, "reservations.read")
       ? [
           {

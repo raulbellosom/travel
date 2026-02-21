@@ -17,8 +17,6 @@ import {
 } from "./_request.js";
 
 const ALLOWED_STAFF_ROLES = new Set([
-  "root",
-  "owner",
   "staff_manager",
   "staff_editor",
   "staff_support",

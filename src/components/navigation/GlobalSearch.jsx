@@ -49,8 +49,8 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const [loading, setLoading] = useState(false);
   const [dataset, setDataset] = useState(EMPTY_DATASET);
 
-  const canReadProperties = hasScope(user, "properties.read");
-  const canWriteProperties = hasScope(user, "properties.write");
+  const canReadProperties = hasScope(user, "resources.read");
+  const canWriteProperties = hasScope(user, "resources.write");
   const canReadLeads = hasScope(user, "leads.read");
   const canReadReservations = hasScope(user, "reservations.read");
   const canReadPayments = hasScope(user, "payments.read");
