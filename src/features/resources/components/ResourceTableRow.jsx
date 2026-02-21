@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { EllipsisVertical, Image as ImageIcon, Loader2, Star } from "lucide-react";
+import {
+  EllipsisVertical,
+  Image as ImageIcon,
+  Loader2,
+  Star,
+} from "lucide-react";
 import LazyImage from "../../../components/common/atoms/LazyImage";
 import { Select } from "../../../components/common";
 import ResourceTypeBadge from "./ResourceTypeBadge";
@@ -31,6 +36,7 @@ import {
  * @param {Array} statusOptions - Status select options
  * @param {Array} staffUsers - Staff user list for responsible assignment
  * @param {boolean} loadingStaff - Whether staff data is loading
+ * @param {boolean} canEditResponsible - Whether the current user can reassign the responsible agent
  * @param {Function} onStatusChange - Status change handler
  * @param {Function} onResponsibleChange - Responsible change handler (resourceId, newOwnerUserId)
  * @param {Function} onFeaturedChange - Featured toggle handler (resourceId, featured)
@@ -48,6 +54,7 @@ const ResourceTableRow = ({
   statusOptions,
   staffUsers = [],
   loadingStaff = false,
+  canEditResponsible = false,
   onStatusChange,
   onResponsibleChange,
   onFeaturedChange,
@@ -150,6 +157,7 @@ const ResourceTableRow = ({
           ownerUserId={item.ownerUserId}
           staffUsers={staffUsers}
           loading={loadingStaff}
+          readOnly={!canEditResponsible}
           disabled={isBusy}
           onChange={(newOwner) => onResponsibleChange?.(item.$id, newOwner)}
           onAvatarClick={(url) => onImageClick?.({ avatarUrl: url }, 0)}
@@ -187,10 +195,7 @@ const ResourceTableRow = ({
           } ${isBusy ? "cursor-not-allowed opacity-50" : ""}`}
           aria-label={t("myResourcesPage.table.featured")}
         >
-          <Star
-            size={20}
-            className={item.featured ? "fill-current" : ""}
-          />
+          <Star size={20} className={item.featured ? "fill-current" : ""} />
         </button>
       </td>
 

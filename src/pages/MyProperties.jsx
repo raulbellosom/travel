@@ -83,7 +83,13 @@ const useResourceSearch = (
     }
 
     return filtered;
-  }, [items, normalizedSearch, resourceTypeFilter, responsibleFilter, featuredFilter]);
+  }, [
+    items,
+    normalizedSearch,
+    resourceTypeFilter,
+    responsibleFilter,
+    featuredFilter,
+  ]);
 };
 
 // ─── Hook: usePagination ────────────────────────────────────────
@@ -760,6 +766,7 @@ const MyProperties = () => {
                     onStatusChange={handleStatusChange}
                     staffUsers={staffUsers}
                     loadingStaff={loadingStaff}
+                    canEditResponsible={canViewAll}
                     onResponsibleChange={handleResponsibleChange}
                     onFeaturedChange={handleFeaturedChange}
                     onImageClick={openImageViewer}

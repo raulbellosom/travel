@@ -51,6 +51,7 @@ const ResourceResponsibleCell = ({
   ownerUserId,
   staffUsers = [],
   loading = false,
+  readOnly = false,
   disabled = false,
   onChange,
   onAvatarClick,
@@ -183,6 +184,46 @@ const ResourceResponsibleCell = ({
         <div className="flex flex-col gap-1">
           <div className="h-3 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
           <div className="h-2.5 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+        </div>
+      </div>
+    );
+  }
+
+  // Read-only: plain display without combobox chrome
+  if (readOnly) {
+    return (
+      <div className="flex items-center gap-2">
+        <span
+          className="shrink-0"
+          onClick={() => avatarUrl && onAvatarClick?.(avatarUrl)}
+          role={avatarUrl && onAvatarClick ? "button" : undefined}
+          tabIndex={avatarUrl && onAvatarClick ? 0 : undefined}
+          onKeyDown={(e) => {
+            if (
+              (e.key === "Enter" || e.key === " ") &&
+              avatarUrl &&
+              onAvatarClick
+            ) {
+              onAvatarClick(avatarUrl);
+            }
+          }}
+        >
+          <Avatar
+            src={avatarUrl || undefined}
+            name={fullName}
+            size="sm"
+            variant="circular"
+          />
+        </span>
+        <div className="min-w-0 overflow-hidden">
+          <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+            {fullName}
+          </p>
+          {currentUser?.email ? (
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+              {currentUser.email}
+            </p>
+          ) : null}
         </div>
       </div>
     );
