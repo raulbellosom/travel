@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useChat } from "../../contexts/ChatContext";
 import { profileService } from "../../services/profileService";
+import { getConversationsRoute } from "../../utils/internalRoutes";
 import {
   getConversationCounterparty,
   getConversationUnreadCount,
@@ -164,7 +165,7 @@ const ConversationList = () => {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to="/mis-conversaciones"
+            to={getConversationsRoute(user)}
             onClick={closeChat}
             className="rounded p-1 text-cyan-600 transition hover:bg-cyan-50 hover:text-cyan-700 dark:text-cyan-400 dark:hover:bg-cyan-950/30 dark:hover:text-cyan-300"
             title={t("chat.conversations.viewAll")}

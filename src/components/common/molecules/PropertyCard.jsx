@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   MapPin,
@@ -39,6 +39,8 @@ import LazyImage from "../atoms/LazyImage";
 import { getResourceBehavior } from "../../../utils/resourceModel";
 import { getPublicPropertyRoute } from "../../../utils/internalRoutes";
 import { formatMoneyParts } from "../../../utils/money";
+import { useAuth } from "../../../hooks/useAuth";
+import { favoritesService } from "../../../services/favoritesService";
 
 const normalizeEnumValue = (value) =>
   String(value || "")
@@ -52,12 +54,49 @@ const humanizeEnumValue = (value) =>
     .replace(/\b\w/g, (c) => c.toUpperCase())
     .trim();
 
-const PropertyCard = ({ property, className }) => {
+const PropertyCard = ({
+  property,
+  className,
+  isFavorite,
+  onFavoriteToggle,
+}) => {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
+  const [favorited, setFavorited] = useState(() => isFavorite ?? false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   const _MOTION = motion;
   const resource = useMemo(() => getResourceBehavior(property), [property]);
+
+  const handleFavoriteClick = useCallback(
+    async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!user?.$id || favoriteLoading) return;
+      const prevFavorited = favorited;
+      setFavorited((v) => !v);
+      setFavoriteLoading(true);
+      try {
+        const result = await favoritesService.toggleFavorite({
+          userId: user.$id,
+          resourceId: property.$id,
+          resourceSlug: property.slug || "",
+          resourceTitle: property.title || property.name || "",
+          resourceOwnerUserId: property.userId || property.ownerUserId || "",
+        });
+        setFavorited(result.isFavorite);
+        if (!result.isFavorite && typeof onFavoriteToggle === "function") {
+          onFavoriteToggle(property.$id);
+        }
+      } catch {
+        setFavorited(prevFavorited);
+      } finally {
+        setFavoriteLoading(false);
+      }
+    },
+    [user, favoriteLoading, favorited, property, onFavoriteToggle],
+  );
   const publicDetailPath = getPublicPropertyRoute(
     property.slug || property.$id,
     i18n.resolvedLanguage || i18n.language,
@@ -111,7 +150,11 @@ const PropertyCard = ({ property, className }) => {
   };
 
   const priceParts = useMemo(() => {
-    if (property.price === 0 || property.price === null || property.price === undefined) {
+    if (
+      property.price === 0 ||
+      property.price === null ||
+      property.price === undefined
+    ) {
       return null;
     }
     return formatMoneyParts(property.price, {
@@ -156,29 +199,37 @@ const PropertyCard = ({ property, className }) => {
   };
 
   const resourceType = resource?.resourceType || "property";
-  const propertyTypeRaw = resource?.category || property?.propertyType || property?.type;
+  const propertyTypeRaw =
+    resource?.category || property?.propertyType || property?.type;
   // Use commercialMode from resource behavior for more accurate operation label
-  const commercialModeRaw = resource?.commercialMode || resource?.operationType || property?.operationType || property?.operation;
+  const commercialModeRaw =
+    resource?.commercialMode ||
+    resource?.operationType ||
+    property?.operationType ||
+    property?.operation;
 
   // Format the category label using the category enum
   const formattedCategory = propertyTypeRaw
-    ? t(
-        `client:common.enums.category.${normalizeEnumValue(propertyTypeRaw)}`,
+    ? t(`client:common.enums.category.${normalizeEnumValue(propertyTypeRaw)}`, {
+        defaultValue: t(
+          `client:common.enums.propertyType.${normalizeEnumValue(propertyTypeRaw)}`,
+          { defaultValue: humanizeEnumValue(propertyTypeRaw) },
+        ),
+      })
+    : t(
+        `client:common.enums.resourceType.${normalizeEnumValue(resourceType)}`,
         {
-          defaultValue: t(
-            `client:common.enums.propertyType.${normalizeEnumValue(propertyTypeRaw)}`,
-            { defaultValue: humanizeEnumValue(propertyTypeRaw) },
-          ),
+          defaultValue: humanizeEnumValue(resourceType),
         },
-      )
-    : t(`client:common.enums.resourceType.${normalizeEnumValue(resourceType)}`, {
-        defaultValue: humanizeEnumValue(resourceType),
-      });
+      );
 
   const formattedOperationType = commercialModeRaw
-    ? t(`client:common.enums.operation.${normalizeEnumValue(commercialModeRaw)}`, {
-        defaultValue: humanizeEnumValue(commercialModeRaw),
-      })
+    ? t(
+        `client:common.enums.operation.${normalizeEnumValue(commercialModeRaw)}`,
+        {
+          defaultValue: humanizeEnumValue(commercialModeRaw),
+        },
+      )
     : "";
 
   // Price label based on pricing model
@@ -221,10 +272,7 @@ const PropertyCard = ({ property, className }) => {
     >
       {/* Image Carousel */}
       <div className="relative aspect-4/3 overflow-hidden bg-slate-200 dark:bg-slate-800">
-        <Link
-          to={publicDetailPath}
-          className="block h-full w-full"
-        >
+        <Link to={publicDetailPath} className="block h-full w-full">
           {hasImages ? (
             <>
               {/* Sliding container */}
@@ -274,9 +322,24 @@ const PropertyCard = ({ property, className }) => {
           )}
         </div>
 
-        {/* Favorite Button (Visual only for now) */}
-        <button className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white transition-colors hover:bg-white hover:text-rose-500 backdrop-blur-md">
-          <Heart size={18} />
+        {/* Favorite Button */}
+        <button
+          onClick={handleFavoriteClick}
+          disabled={favoriteLoading}
+          aria-label={
+            favorited
+              ? t("client:favorites.remove", "Quitar de favoritos")
+              : t("client:favorites.add", "Añadir a favoritos")
+          }
+          className={cn(
+            "absolute right-4 top-4 rounded-full p-2 backdrop-blur-md transition-all",
+            favorited
+              ? "bg-rose-500 text-white hover:bg-rose-600"
+              : "bg-white/20 text-white hover:bg-white hover:text-rose-500",
+            favoriteLoading && "opacity-60 cursor-wait",
+          )}
+        >
+          <Heart size={18} fill={favorited ? "currentColor" : "none"} />
         </button>
 
         {/* Navigation Arrows */}
@@ -332,10 +395,7 @@ const PropertyCard = ({ property, className }) => {
             {/* Rating or other metadata could go here */}
           </div>
 
-          <Link
-            to={publicDetailPath}
-            className="group-hover:underline"
-          >
+          <Link to={publicDetailPath} className="group-hover:underline">
             <h3
               className="line-clamp-1 text-lg font-bold text-slate-900 dark:text-white"
               title={property.title}
@@ -455,7 +515,9 @@ const PropertyCard = ({ property, className }) => {
                     </span>
                   </div>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                    {property.slotDurationMinutes ? `${property.slotDurationMinutes} min` : "—"}
+                    {property.slotDurationMinutes
+                      ? `${property.slotDurationMinutes} min`
+                      : "—"}
                   </span>
                 </div>
 
@@ -507,7 +569,9 @@ const PropertyCard = ({ property, className }) => {
                     </span>
                   </div>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                    {property.slotDurationMinutes ? `${property.slotDurationMinutes} min` : "—"}
+                    {property.slotDurationMinutes
+                      ? `${property.slotDurationMinutes} min`
+                      : "—"}
                   </span>
                 </div>
               </>

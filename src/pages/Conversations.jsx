@@ -148,7 +148,7 @@ const Conversations = () => {
   useEffect(() => {
     const focusId = searchParams.get("focus");
     if (focusId && !activeConversationId) {
-      openConversation(focusId);
+      openConversation(focusId, { openChatBubble: false });
     }
   }, [searchParams, activeConversationId, openConversation]);
 
@@ -676,7 +676,9 @@ const Conversations = () => {
               return (
                 <button
                   key={conv.$id}
-                  onClick={() => openConversation(conv.$id)}
+                  onClick={() =>
+                    openConversation(conv.$id, { openChatBubble: false })
+                  }
                   className={cn(
                     "flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition",
                     "hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50",

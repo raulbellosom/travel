@@ -21,7 +21,8 @@ const ChatBubble = () => {
   // Don't show floating chat on dedicated conversation pages
   const isOnConversationsPage =
     location.pathname === "/mis-conversaciones" ||
-    location.pathname === "/app/conversations";
+    location.pathname === "/my-conversations" ||
+    location.pathname.startsWith("/app/conversations");
 
   // Close chat bubble if user navigates to conversations page
   // (don't call closeChat() as it clears activeConversationId)

@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { MessageCircle, Search, ArrowLeft, Send, Smile } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../hooks/useAuth";
 import { useChat } from "../contexts/ChatContext";
 import { profileService } from "../services/profileService";
+import { INTERNAL_ROUTES } from "../utils/internalRoutes";
+import { isInternalRole } from "../utils/roles";
 import {
   getConversationCounterparty,
   getConversationUnreadCount,
@@ -51,6 +53,7 @@ const MyConversations = () => {
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const scrolledConversationRef = useRef(null);
+  const prevMessagesCountRef = useRef(0);
 
   // Generate initials (2 letters from name)
   const getInitials = useCallback((name) => {
@@ -88,25 +91,36 @@ const MyConversations = () => {
   useEffect(() => {
     const focusId = searchParams.get("focus");
     if (focusId && !activeConversationId) {
-      openConversation(focusId);
+      openConversation(focusId, { openChatBubble: false });
     }
   }, [searchParams, activeConversationId, openConversation]);
 
-  // Auto-scroll to bottom when conversation first loads
+  // Close conversation with Escape key
   useEffect(() => {
+    if (!activeConversationId) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        goBackToList();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeConversationId, goBackToList]);
+
+  // Auto-scroll to bottom when conversation first loads
+  // Using useLayoutEffect to run synchronously after DOM mutations
+  useLayoutEffect(() => {
     // Reset when no conversation
     if (!activeConversationId) {
       setIsScrollReady(false);
       scrolledConversationRef.current = null;
+      prevMessagesCountRef.current = 0;
       return;
     }
 
-    // Already scrolled for this conversation
-    if (scrolledConversationRef.current === activeConversationId) {
-      return;
-    }
-
-    // Wait for messages to load
+    // Still loading - wait
     if (loadingMessages) {
       setIsScrollReady(false);
       return;
@@ -116,28 +130,58 @@ const MyConversations = () => {
     if (messages.length === 0) {
       setIsScrollReady(true);
       scrolledConversationRef.current = activeConversationId;
+      prevMessagesCountRef.current = 0;
       return;
     }
 
-    // Wait for DOM to render, then scroll to bottom
+    // Already scrolled for this conversation with same message count
+    if (
+      scrolledConversationRef.current === activeConversationId &&
+      prevMessagesCountRef.current === messages.length
+    ) {
+      return;
+    }
+
+    // New conversation or messages just loaded - need to scroll
+    let cancelled = false;
+    let timeoutId;
     let frameId;
-    const doScroll = () => {
-      frameId = requestAnimationFrame(() => {
-        const container = messagesContainerRef.current;
-        const endElement = messagesEndRef.current;
+    let retryCount = 0;
+    const maxRetries = 30; // ~500ms max wait at 60fps
+
+    const performScroll = () => {
+      if (cancelled) return;
+
+      const container = messagesContainerRef.current;
+      const endElement = messagesEndRef.current;
+
+      const contentReady =
+        endElement ||
+        (container && container.scrollHeight > 0) ||
+        retryCount >= maxRetries;
+
+      if (contentReady && container) {
         if (endElement) {
           endElement.scrollIntoView({ behavior: "instant", block: "end" });
-        } else if (container) {
+        } else {
           container.scrollTop = container.scrollHeight;
         }
+
         setIsScrollReady(true);
         scrolledConversationRef.current = activeConversationId;
-      });
+        prevMessagesCountRef.current = messages.length;
+      } else {
+        retryCount++;
+        frameId = requestAnimationFrame(performScroll);
+      }
     };
 
-    const timeoutId = setTimeout(doScroll, 100);
+    timeoutId = setTimeout(() => {
+      frameId = requestAnimationFrame(performScroll);
+    }, 0);
 
     return () => {
+      cancelled = true;
       clearTimeout(timeoutId);
       if (frameId) cancelAnimationFrame(frameId);
     };
@@ -400,6 +444,10 @@ const MyConversations = () => {
     return null;
   }, [messages, user?.$id]);
 
+  if (isInternalRole(user?.role)) {
+    return <Navigate to={INTERNAL_ROUTES.conversations} replace />;
+  }
+
   /* ── Render ──────────────────────────────────────────── */
 
   // Show loading while restoring conversation from localStorage
@@ -488,7 +536,9 @@ const MyConversations = () => {
               return (
                 <button
                   key={conv.$id}
-                  onClick={() => openConversation(conv.$id)}
+                  onClick={() =>
+                    openConversation(conv.$id, { openChatBubble: false })
+                  }
                   className={cn(
                     "flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition",
                     "hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50",

@@ -221,9 +221,12 @@ export const ChatProvider = ({ children }) => {
   /* ── Open a conversation ─────────────────────────────── */
 
   const openConversation = useCallback(
-    async (conversationId) => {
+    async (conversationId, options = {}) => {
+      const { openChatBubble = true } = options;
       setActiveConversationId(conversationId);
-      setIsChatOpen(true);
+      if (openChatBubble) {
+        setIsChatOpen(true);
+      }
       // Messages will be loaded automatically by the useEffect above
 
       // Mark as read
@@ -322,7 +325,7 @@ export const ChatProvider = ({ children }) => {
         });
       });
 
-      await openConversation(conversation.$id);
+      await openConversation(conversation.$id, { openChatBubble: false });
       return conversation;
     },
     [isInternal, user, openConversation],

@@ -48,9 +48,7 @@ const MyFavorites = () => {
       const byId = new Map(resolvedDocs.map((doc) => [doc.$id, doc]));
 
       setResources(
-        favoriteResourceIds
-          .map((id) => byId.get(id))
-          .filter(Boolean),
+        favoriteResourceIds.map((id) => byId.get(id)).filter(Boolean),
       );
     } catch (err) {
       setError(
@@ -71,14 +69,17 @@ const MyFavorites = () => {
     loadFavorites();
   }, [loadFavorites]);
 
-  const isEmpty = useMemo(() => !loading && !error && resources.length === 0, [
-    error,
-    loading,
-    resources.length,
-  ]);
+  const isEmpty = useMemo(
+    () => !loading && !error && resources.length === 0,
+    [error, loading, resources.length],
+  );
+
+  const handleFavoriteRemoved = useCallback((resourceId) => {
+    setResources((prev) => prev.filter((r) => r.$id !== resourceId));
+  }, []);
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <section className="mx-auto w-full max-w-7xl px-4 pt-24 pb-6 sm:px-6 sm:pt-28 lg:px-8">
       <header className="mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
           <Heart className="h-6 w-6 text-rose-500" />
@@ -116,8 +117,13 @@ const MyFavorites = () => {
 
       {!loading && resources.length > 0 && (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {resources.map((resource) => (
-            <PropertyCard key={resource.$id} property={resource} />
+          {resources.map((res) => (
+            <PropertyCard
+              key={res.$id}
+              property={res}
+              isFavorite={true}
+              onFavoriteToggle={handleFavoriteRemoved}
+            />
           ))}
         </div>
       )}
