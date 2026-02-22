@@ -2373,7 +2373,7 @@
   },
   "mapPicker": {
     "title": "Ubicar en el mapa",
-    "description": "Haz clic en el mapa para seleccionar la ubicación del inmueble. La dirección se completará automáticamente.",
+    "description": "Haz clic en el mapa para seleccionar la ubicación del recurso. La dirección se completará automáticamente.",
     "locateOnMap": "Ubicar en el mapa",
     "locateHint": "Selecciona la ubicación en el mapa para completar los campos automáticamente.",
     "confirm": "Confirmar ubicación",

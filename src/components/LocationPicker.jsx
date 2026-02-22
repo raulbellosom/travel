@@ -1,6 +1,6 @@
 /**
  * LocationPicker — Self-contained geolocation component combining autocomplete search,
- * interactive Leaflet map with Mapbox tiles, draggable marker, and reverse geocoding.
+ * interactive Google map with draggable marker and reverse geocoding.
  *
  * Designed as a reusable, standalone component for property forms or any context
  * requiring location selection with geocoded address data.
@@ -19,7 +19,10 @@ import { useTranslation } from "react-i18next";
 import { MapPin, Search, X, LocateFixed } from "lucide-react";
 import MapPicker from "../common/molecules/MapPicker";
 import useGeocoding from "../../hooks/useGeocoding";
-import { reverseGeocode } from "../../services/mapbox.service";
+import {
+  emptyNormalizedLocation,
+  reverseGeocode,
+} from "../../services/googleMaps.service";
 import { DEFAULT_CENTER, DEFAULT_ZOOM } from "../../config/map.config";
 
 const LocationPicker = ({
@@ -102,17 +105,7 @@ const LocationPicker = ({
             onChange?.(location);
           }
         } catch {
-          const fallback = {
-            lat,
-            lng,
-            formattedAddress: "",
-            city: "",
-            state: "",
-            postalCode: "",
-            country: "",
-            neighborhood: "",
-            streetAddress: "",
-          };
+          const fallback = emptyNormalizedLocation(lat, lng);
           setSelected(fallback);
           onChange?.(fallback);
         }

@@ -216,14 +216,30 @@ const PropertyDetail = () => {
     if (!property) return "";
     const pm = resourceBehavior.pricingModel;
     const labelMap = {
-      total: t("client:common.enums.pricingModel.total", { defaultValue: "Precio total" }),
-      per_month: t("client:common.enums.pricingModel.per_month", { defaultValue: "Precio mensual" }),
-      per_night: t("client:common.enums.pricingModel.per_night", { defaultValue: "Precio por noche" }),
-      per_day: t("client:common.enums.pricingModel.per_day", { defaultValue: "Precio por día" }),
-      per_hour: t("client:common.enums.pricingModel.per_hour", { defaultValue: "Precio por hora" }),
-      per_person: t("client:common.enums.pricingModel.per_person", { defaultValue: "Precio por persona" }),
-      per_event: t("client:common.enums.pricingModel.per_event", { defaultValue: "Precio por evento" }),
-      per_m2: t("client:common.enums.pricingModel.per_m2", { defaultValue: "Precio por m²" }),
+      total: t("client:common.enums.pricingModel.total", {
+        defaultValue: "Precio total",
+      }),
+      per_month: t("client:common.enums.pricingModel.per_month", {
+        defaultValue: "Precio mensual",
+      }),
+      per_night: t("client:common.enums.pricingModel.per_night", {
+        defaultValue: "Precio por noche",
+      }),
+      per_day: t("client:common.enums.pricingModel.per_day", {
+        defaultValue: "Precio por día",
+      }),
+      per_hour: t("client:common.enums.pricingModel.per_hour", {
+        defaultValue: "Precio por hora",
+      }),
+      per_person: t("client:common.enums.pricingModel.per_person", {
+        defaultValue: "Precio por persona",
+      }),
+      per_event: t("client:common.enums.pricingModel.per_event", {
+        defaultValue: "Precio por evento",
+      }),
+      per_m2: t("client:common.enums.pricingModel.per_m2", {
+        defaultValue: "Precio por m²",
+      }),
     };
     return labelMap[pm] || labelMap.total;
   }, [property, resourceBehavior.pricingModel, t]);
@@ -297,9 +313,7 @@ const PropertyDetail = () => {
 
   const authRedirectQuery = useMemo(
     () =>
-      authReturnPath
-        ? `?redirect=${encodeURIComponent(authReturnPath)}`
-        : "",
+      authReturnPath ? `?redirect=${encodeURIComponent(authReturnPath)}` : "",
     [authReturnPath],
   );
 
@@ -359,8 +373,7 @@ const PropertyDetail = () => {
   const handleShare = useCallback(async () => {
     if (!property) return;
 
-    const shareUrl =
-      typeof window !== "undefined" ? window.location.href : "";
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
@@ -947,10 +960,7 @@ const PropertyDetail = () => {
                     .join(", ")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Tag
-                    size={16}
-                    className="text-cyan-600 dark:text-cyan-400"
-                  />
+                  <Tag size={16} className="text-cyan-600 dark:text-cyan-400" />
                   {t(
                     `client:common.enums.category.${resourceBehavior.category}`,
                     { defaultValue: resourceBehavior.category },
@@ -1039,10 +1049,7 @@ const PropertyDetail = () => {
                       })
                 }
               >
-                <Heart
-                  size={14}
-                  className={isFavorite ? "fill-current" : ""}
-                />
+                <Heart size={14} className={isFavorite ? "fill-current" : ""} />
               </button>
             </div>
 
@@ -1134,12 +1141,17 @@ const PropertyDetail = () => {
                   <StatCard
                     icon={Car}
                     label={t("client:resource.type", { defaultValue: "Tipo" })}
-                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                    value={t(
+                      `client:common.enums.category.${resourceBehavior.category}`,
+                      { defaultValue: resourceBehavior.category },
+                    )}
                   />
                   {property.maxGuests > 0 && (
                     <StatCard
                       icon={Users}
-                      label={t("client:resource.passengers", { defaultValue: "Pasajeros" })}
+                      label={t("client:resource.passengers", {
+                        defaultValue: "Pasajeros",
+                      })}
                       value={property.maxGuests}
                     />
                   )}
@@ -1152,8 +1164,13 @@ const PropertyDetail = () => {
                   )}
                   <StatCard
                     icon={LayoutGrid}
-                    label={t("client:resource.mode", { defaultValue: "Modalidad" })}
-                    value={t(`client:common.enums.operation.${resourceBehavior.commercialMode}`, { defaultValue: resourceBehavior.commercialMode })}
+                    label={t("client:resource.mode", {
+                      defaultValue: "Modalidad",
+                    })}
+                    value={t(
+                      `client:common.enums.operation.${resourceBehavior.commercialMode}`,
+                      { defaultValue: resourceBehavior.commercialMode },
+                    )}
                   />
                 </>
               )}
@@ -1164,16 +1181,27 @@ const PropertyDetail = () => {
                   <StatCard
                     icon={Wrench}
                     label={t("client:resource.type", { defaultValue: "Tipo" })}
-                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                    value={t(
+                      `client:common.enums.category.${resourceBehavior.category}`,
+                      { defaultValue: resourceBehavior.category },
+                    )}
                   />
                   <StatCard
                     icon={Clock}
-                    label={t("client:resource.duration", { defaultValue: "Duración" })}
-                    value={property.minStayNights ? `${property.minStayNights}h` : "—"}
+                    label={t("client:resource.duration", {
+                      defaultValue: "Duración",
+                    })}
+                    value={
+                      property.minStayNights
+                        ? `${property.minStayNights}h`
+                        : "—"
+                    }
                   />
                   <StatCard
                     icon={MapPin}
-                    label={t("client:resource.location", { defaultValue: "Ubicación" })}
+                    label={t("client:resource.location", {
+                      defaultValue: "Ubicación",
+                    })}
                     value={property.city || property.state || "—"}
                   />
                 </>
@@ -1185,23 +1213,36 @@ const PropertyDetail = () => {
                   <StatCard
                     icon={Compass}
                     label={t("client:resource.type", { defaultValue: "Tipo" })}
-                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                    value={t(
+                      `client:common.enums.category.${resourceBehavior.category}`,
+                      { defaultValue: resourceBehavior.category },
+                    )}
                   />
                   {property.maxGuests > 0 && (
                     <StatCard
                       icon={Users}
-                      label={t("client:resource.maxGuests", { defaultValue: "Máx. personas" })}
+                      label={t("client:resource.maxGuests", {
+                        defaultValue: "Máx. personas",
+                      })}
                       value={property.maxGuests}
                     />
                   )}
                   <StatCard
                     icon={Clock}
-                    label={t("client:resource.duration", { defaultValue: "Duración" })}
-                    value={property.minStayNights ? `${property.minStayNights}h` : "—"}
+                    label={t("client:resource.duration", {
+                      defaultValue: "Duración",
+                    })}
+                    value={
+                      property.minStayNights
+                        ? `${property.minStayNights}h`
+                        : "—"
+                    }
                   />
                   <StatCard
                     icon={MapPin}
-                    label={t("client:resource.location", { defaultValue: "Ubicación" })}
+                    label={t("client:resource.location", {
+                      defaultValue: "Ubicación",
+                    })}
                     value={property.city || property.state || "—"}
                   />
                 </>
@@ -1213,12 +1254,17 @@ const PropertyDetail = () => {
                   <StatCard
                     icon={CalendarHeart}
                     label={t("client:resource.type", { defaultValue: "Tipo" })}
-                    value={t(`client:common.enums.category.${resourceBehavior.category}`, { defaultValue: resourceBehavior.category })}
+                    value={t(
+                      `client:common.enums.category.${resourceBehavior.category}`,
+                      { defaultValue: resourceBehavior.category },
+                    )}
                   />
                   {property.maxGuests > 0 && (
                     <StatCard
                       icon={Users}
-                      label={t("client:resource.capacity", { defaultValue: "Capacidad" })}
+                      label={t("client:resource.capacity", {
+                        defaultValue: "Capacidad",
+                      })}
                       value={property.maxGuests}
                     />
                   )}
@@ -1231,7 +1277,9 @@ const PropertyDetail = () => {
                   )}
                   <StatCard
                     icon={MapPin}
-                    label={t("client:resource.location", { defaultValue: "Ubicación" })}
+                    label={t("client:resource.location", {
+                      defaultValue: "Ubicación",
+                    })}
                     value={property.city || property.state || "—"}
                   />
                 </>
@@ -1249,138 +1297,141 @@ const PropertyDetail = () => {
             </section>
 
             {/* ── Type-specific details ─────────────────── */}
-            {resourceBehavior.resourceType === "property" && (isRent(opType) || isVacation(opType)) && (
-              <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
-                <SectionHeading className="mt-0!">
-                  {isRent(opType)
-                    ? t("client:propertyDetail.sections.rentalTerms")
-                    : t("client:propertyDetail.sections.vacationRules")}
-                </SectionHeading>
+            {resourceBehavior.resourceType === "property" &&
+              (isRent(opType) || isVacation(opType)) && (
+                <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
+                  <SectionHeading className="mt-0!">
+                    {isRent(opType)
+                      ? t("client:propertyDetail.sections.rentalTerms")
+                      : t("client:propertyDetail.sections.vacationRules")}
+                  </SectionHeading>
 
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {/* Rental-specific */}
-                  {isRent(opType) && (
-                    <>
-                      {property.rentPeriod && (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {/* Rental-specific */}
+                    {isRent(opType) && (
+                      <>
+                        {property.rentPeriod && (
+                          <DetailRow
+                            icon={Calendar}
+                            label={t("client:propertyDetail.rental.period")}
+                            value={t(
+                              `client:propertyDetail.rental.${property.rentPeriod}`,
+                            )}
+                          />
+                        )}
+                        {property.furnished && (
+                          <DetailRow
+                            icon={Sofa}
+                            label={t("client:propertyDetail.stats.furnished")}
+                            value={t(
+                              `client:propertyDetail.furnishedStatus.${property.furnished}`,
+                            )}
+                          />
+                        )}
                         <DetailRow
-                          icon={Calendar}
-                          label={t("client:propertyDetail.rental.period")}
-                          value={t(
-                            `client:propertyDetail.rental.${property.rentPeriod}`,
-                          )}
+                          icon={PawPrint}
+                          label={t("client:propertyDetail.stats.petsAllowed")}
+                          value={
+                            property.petsAllowed
+                              ? t("client:propertyDetail.petsStatus.allowed")
+                              : t("client:propertyDetail.petsStatus.notAllowed")
+                          }
                         />
-                      )}
-                      {property.furnished && (
-                        <DetailRow
-                          icon={Sofa}
-                          label={t("client:propertyDetail.stats.furnished")}
-                          value={t(
-                            `client:propertyDetail.furnishedStatus.${property.furnished}`,
-                          )}
-                        />
-                      )}
-                      <DetailRow
-                        icon={PawPrint}
-                        label={t("client:propertyDetail.stats.petsAllowed")}
-                        value={
-                          property.petsAllowed
-                            ? t("client:propertyDetail.petsStatus.allowed")
-                            : t("client:propertyDetail.petsStatus.notAllowed")
-                        }
-                      />
-                    </>
-                  )}
+                      </>
+                    )}
 
-                  {/* Vacation-specific */}
-                  {isVacation(opType) && (
-                    <>
-                      {property.maxGuests > 0 && (
+                    {/* Vacation-specific */}
+                    {isVacation(opType) && (
+                      <>
+                        {property.maxGuests > 0 && (
+                          <DetailRow
+                            icon={Users}
+                            label={t(
+                              "client:propertyDetail.vacation.maxGuestsLabel",
+                            )}
+                            value={`${property.maxGuests} ${t("client:propertyDetail.vacation.guests")}`}
+                          />
+                        )}
+                        {property.checkInTime && (
+                          <DetailRow
+                            icon={Clock}
+                            label={t("client:propertyDetail.vacation.checkIn")}
+                            value={property.checkInTime}
+                          />
+                        )}
+                        {property.checkOutTime && (
+                          <DetailRow
+                            icon={Clock}
+                            label={t("client:propertyDetail.vacation.checkOut")}
+                            value={property.checkOutTime}
+                          />
+                        )}
+                        {property.minStayNights > 0 && (
+                          <DetailRow
+                            icon={Calendar}
+                            label={t("client:propertyDetail.vacation.minStay")}
+                            value={`${property.minStayNights} ${property.minStayNights === 1 ? t("client:propertyDetail.vacation.night") : t("client:propertyDetail.vacation.nights")}`}
+                          />
+                        )}
+                        {property.maxStayNights > 0 && (
+                          <DetailRow
+                            icon={Calendar}
+                            label={t("client:propertyDetail.vacation.maxStay")}
+                            value={`${property.maxStayNights} ${t("client:propertyDetail.vacation.nights")}`}
+                          />
+                        )}
+                        {property.furnished && (
+                          <DetailRow
+                            icon={Sofa}
+                            label={t("client:propertyDetail.stats.furnished")}
+                            value={t(
+                              `client:propertyDetail.furnishedStatus.${property.furnished}`,
+                            )}
+                          />
+                        )}
                         <DetailRow
-                          icon={Users}
-                          label={t(
-                            "client:propertyDetail.vacation.maxGuestsLabel",
-                          )}
-                          value={`${property.maxGuests} ${t("client:propertyDetail.vacation.guests")}`}
+                          icon={PawPrint}
+                          label={t("client:propertyDetail.stats.petsAllowed")}
+                          value={
+                            property.petsAllowed
+                              ? t("client:propertyDetail.petsStatus.allowed")
+                              : t("client:propertyDetail.petsStatus.notAllowed")
+                          }
                         />
-                      )}
-                      {property.checkInTime && (
-                        <DetailRow
-                          icon={Clock}
-                          label={t("client:propertyDetail.vacation.checkIn")}
-                          value={property.checkInTime}
-                        />
-                      )}
-                      {property.checkOutTime && (
-                        <DetailRow
-                          icon={Clock}
-                          label={t("client:propertyDetail.vacation.checkOut")}
-                          value={property.checkOutTime}
-                        />
-                      )}
-                      {property.minStayNights > 0 && (
-                        <DetailRow
-                          icon={Calendar}
-                          label={t("client:propertyDetail.vacation.minStay")}
-                          value={`${property.minStayNights} ${property.minStayNights === 1 ? t("client:propertyDetail.vacation.night") : t("client:propertyDetail.vacation.nights")}`}
-                        />
-                      )}
-                      {property.maxStayNights > 0 && (
-                        <DetailRow
-                          icon={Calendar}
-                          label={t("client:propertyDetail.vacation.maxStay")}
-                          value={`${property.maxStayNights} ${t("client:propertyDetail.vacation.nights")}`}
-                        />
-                      )}
-                      {property.furnished && (
-                        <DetailRow
-                          icon={Sofa}
-                          label={t("client:propertyDetail.stats.furnished")}
-                          value={t(
-                            `client:propertyDetail.furnishedStatus.${property.furnished}`,
-                          )}
-                        />
-                      )}
-                      <DetailRow
-                        icon={PawPrint}
-                        label={t("client:propertyDetail.stats.petsAllowed")}
-                        value={
-                          property.petsAllowed
-                            ? t("client:propertyDetail.petsStatus.allowed")
-                            : t("client:propertyDetail.petsStatus.notAllowed")
-                        }
-                      />
-                    </>
-                  )}
-                </div>
-              </section>
-            )}
+                      </>
+                    )}
+                  </div>
+                </section>
+              )}
 
             {/* Sale-specific features */}
-            {resourceBehavior.resourceType === "property" && isSale(opType) && (property.furnished || property.yearBuilt) && (
-              <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
-                <SectionHeading className="mt-0!">
-                  {t("client:propertyDetail.sections.features")}
-                </SectionHeading>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {property.yearBuilt && (
-                    <DetailRow
-                      icon={CalendarDays}
-                      label={t("client:propertyDetail.stats.yearBuilt")}
-                      value={property.yearBuilt}
-                    />
-                  )}
-                  {property.furnished && (
-                    <DetailRow
-                      icon={Sofa}
-                      label={t("client:propertyDetail.stats.furnished")}
-                      value={t(
-                        `client:propertyDetail.furnishedStatus.${property.furnished}`,
-                      )}
-                    />
-                  )}
-                </div>
-              </section>
-            )}
+            {resourceBehavior.resourceType === "property" &&
+              isSale(opType) &&
+              (property.furnished || property.yearBuilt) && (
+                <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
+                  <SectionHeading className="mt-0!">
+                    {t("client:propertyDetail.sections.features")}
+                  </SectionHeading>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {property.yearBuilt && (
+                      <DetailRow
+                        icon={CalendarDays}
+                        label={t("client:propertyDetail.stats.yearBuilt")}
+                        value={property.yearBuilt}
+                      />
+                    )}
+                    {property.furnished && (
+                      <DetailRow
+                        icon={Sofa}
+                        label={t("client:propertyDetail.stats.furnished")}
+                        value={t(
+                          `client:propertyDetail.furnishedStatus.${property.furnished}`,
+                        )}
+                      />
+                    )}
+                  </div>
+                </section>
+              )}
 
             {/* ── Amenities ─────────────────────────────── */}
             {amenities.length > 0 && (
@@ -1390,32 +1441,34 @@ const PropertyDetail = () => {
                 </SectionHeading>
                 <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 dark:border-slate-700 dark:bg-slate-900/60">
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {amenities.map((amenity) => {
-                    const AmenityIconComp = getAmenityIcon(amenity);
-                    return (
-                      <div
-                        key={amenity.$id}
-                        className="flex items-center gap-2.5 px-2 py-1.5 text-sm"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700"
+                    {amenities.map((amenity) => {
+                      const AmenityIconComp = getAmenityIcon(amenity);
+                      return (
+                        <div
+                          key={amenity.$id}
+                          className="flex items-center gap-2.5 px-2 py-1.5 text-sm"
                         >
-                          <AmenityIconComp
-                            size={16}
-                            className="text-cyan-500 dark:text-cyan-400"
-                          />
-                        </span>
-                        <span className="line-clamp-2 text-slate-700 dark:text-slate-200">
-                          {i18n.language === "es"
-                            ? amenity.name_es || amenity.name_en || amenity.slug
-                            : amenity.name_en ||
-                              amenity.name_es ||
-                              amenity.slug}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          <span
+                            aria-hidden="true"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700"
+                          >
+                            <AmenityIconComp
+                              size={16}
+                              className="text-cyan-500 dark:text-cyan-400"
+                            />
+                          </span>
+                          <span className="line-clamp-2 text-slate-700 dark:text-slate-200">
+                            {i18n.language === "es"
+                              ? amenity.name_es ||
+                                amenity.name_en ||
+                                amenity.slug
+                              : amenity.name_en ||
+                                amenity.name_es ||
+                                amenity.slug}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </section>
@@ -1443,18 +1496,55 @@ const PropertyDetail = () => {
                     />
                   </Suspense>
                 </div>
-                <p className="mt-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                  <MapPin size={14} className="text-cyan-600" />
-                  {[
-                    property.streetAddress,
-                    property.neighborhood,
-                    property.city,
-                    property.state,
-                    property.postalCode,
-                  ]
-                    .filter(Boolean)
-                    .join(", ")}
-                </p>
+                <a
+                  href={`geo:${property.latitude},${property.longitude}?q=${encodeURIComponent(
+                    [
+                      property.streetAddress,
+                      property.neighborhood,
+                      property.city,
+                      property.state,
+                      property.postalCode,
+                    ]
+                      .filter(Boolean)
+                      .join(", "),
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex items-center gap-2 text-sm text-slate-500 hover:text-cyan-600 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group"
+                  title={t(
+                    "client:propertyDetail.openInMaps",
+                    "Abrir en mapas",
+                  )}
+                >
+                  <MapPin size={14} className="text-cyan-600 shrink-0" />
+                  <span className="group-hover:underline">
+                    {[
+                      property.streetAddress,
+                      property.neighborhood,
+                      property.city,
+                      property.state,
+                      property.postalCode,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="shrink-0 opacity-50 group-hover:opacity-100"
+                  >
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
               </section>
             )}
 
@@ -1502,26 +1592,27 @@ const PropertyDetail = () => {
             </div>
 
             {/* ── Calendar placeholder ───────────────── */}
-            {resourceBehavior.requiresCalendar && resourceBehavior.canOperateMode && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
-                  <Calendar
-                    size={18}
-                    className="text-cyan-600 dark:text-cyan-400"
-                  />
-                  {t("client:propertyDetail.calendar.title")}
-                </h2>
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
-                  <Calendar
-                    size={32}
-                    className="mb-2 text-slate-300 dark:text-slate-600"
-                  />
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
-                    {t("client:propertyDetail.calendar.placeholder")}
-                  </p>
+            {resourceBehavior.requiresCalendar &&
+              resourceBehavior.canOperateMode && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                  <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+                    <Calendar
+                      size={18}
+                      className="text-cyan-600 dark:text-cyan-400"
+                    />
+                    {t("client:propertyDetail.calendar.title")}
+                  </h2>
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
+                    <Calendar
+                      size={32}
+                      className="mb-2 text-slate-300 dark:text-slate-600"
+                    />
+                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                      {t("client:propertyDetail.calendar.placeholder")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* ── Agent Card (with integrated chat) ────── */}
             <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -1677,7 +1768,9 @@ const PropertyDetail = () => {
                       state={{ from: location }}
                       className="mt-2 block text-center text-xs font-medium text-cyan-600 transition-colors hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
                     >
-                      {t("loginPage.actions.submit", { defaultValue: "Iniciar sesión" })}
+                      {t("loginPage.actions.submit", {
+                        defaultValue: "Iniciar sesión",
+                      })}
                     </Link>
                   </div>
                 ) : null}
@@ -1849,14 +1942,14 @@ function PriceCard({
       {/* CTA Button */}
       {!isCtaBlocked &&
         (isBookFlow ? (
-        <Link
-          to={`/reservar/${property.slug}`}
-          className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition ${s.btn}`}
-        >
-          {ctaLabel}
-          <ArrowRight size={16} />
-        </Link>
-      ) : (
+          <Link
+            to={`/reservar/${property.slug}`}
+            className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition ${s.btn}`}
+          >
+            {ctaLabel}
+            <ArrowRight size={16} />
+          </Link>
+        ) : (
           <button
             type="button"
             onClick={canChat ? onContactAgent : undefined}
@@ -1872,4 +1965,3 @@ function PriceCard({
 }
 
 export default PropertyDetail;
-

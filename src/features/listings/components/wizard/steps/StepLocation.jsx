@@ -29,6 +29,7 @@ const StepLocation = ({ formHook }) => {
     cityOptions,
     isLocationOptionsLoading,
     ensureLocationOptionsLoaded,
+    locationService,
     selectedCountryCode,
     selectedStateCode,
     handleCountryChange,
@@ -42,24 +43,44 @@ const StepLocation = ({ formHook }) => {
 
   /**
    * When the user confirms a point on the map, auto-fill all location fields.
-   * Receives a normalized location object from Mapbox geocoding service.
+   * Receives a normalized location object from Google geocoding service.
    */
   const handleMapConfirm = useCallback(
     (location) => {
       const loc = location || {};
 
-      // Atomic batch update: always overwrite ALL location fields
+      // Resolve the canonical ISO country code from whatever Google returns
+      // (e.g. "México", "Mexico", "MEXICO" → "MX") using the same service
+      // that powers the country/state/city comboboxes.
+      const resolvedCountry = locationService?.findCountry(loc.country);
+      const countryCode =
+        resolvedCountry?.value ||
+        (loc.country ? loc.country.toUpperCase() : "");
+
+      // Resolve canonical state name (Google may use different casing/accents)
+      const resolvedState = locationService?.findState(countryCode, loc.state);
+      const stateName = resolvedState?.value || loc.state || "";
+      const stateCode = resolvedState?.stateCode || "";
+
+      // Resolve canonical city name
+      const resolvedCity = locationService?.findCity(
+        countryCode,
+        stateCode,
+        loc.city,
+      );
+      const cityName = resolvedCity?.value || loc.city || "";
+
+      // Atomic batch update for non-cascade fields
       setForm((prev) => ({
         ...prev,
-        latitude: String(loc.lat),
-        longitude: String(loc.lng),
-        country: loc.country ? loc.country.toUpperCase() : prev.country,
+        latitude: String(loc.lat ?? prev.latitude),
+        longitude: String(loc.lng ?? prev.longitude),
         streetAddress: loc.streetAddress ?? "",
         neighborhood: loc.neighborhood ?? "",
         postalCode: loc.postalCode ?? "",
       }));
 
-      // Clear validation errors for every location field
+      // Clear all location validation errors
       [
         "country",
         "state",
@@ -71,28 +92,29 @@ const StepLocation = ({ formHook }) => {
         "longitude",
       ].forEach(clearError);
 
-      // Country cascade (changes country -> clears dependent state/city)
-      if (loc.country) {
-        handleCountryChange(loc.country);
+      // Cascade country → state → city with staggered delays so each
+      // dependent options list has time to populate before the next setValue
+      if (countryCode) {
+        handleCountryChange(countryCode);
       }
 
-      // State -- small delay so cascade from country is applied
-      if (loc.state) {
+      if (stateName) {
         setTimeout(() => {
-          handleStateChange(loc.state);
-
-          // City -- delay after state cascade
-          setTimeout(() => {
-            handleCityChange(loc.city || "");
-          }, 80);
+          handleStateChange(stateName);
+          if (cityName) {
+            setTimeout(() => {
+              handleCityChange(cityName);
+            }, 80);
+          }
         }, 80);
-      } else if (loc.city) {
+      } else if (cityName) {
         setTimeout(() => {
-          handleCityChange(loc.city);
+          handleCityChange(cityName);
         }, 80);
       }
     },
     [
+      locationService,
       setForm,
       clearError,
       handleCountryChange,

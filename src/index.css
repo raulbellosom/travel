@@ -507,43 +507,26 @@ input[type="reset"]:disabled {
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
-.resource-map-price-tooltip {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-.resource-map-price-tooltip::before {
+/* ── Google Maps InfoWindow reset ── */
+/* Hide native header row (blank space) */
+.gm-style-iw-ch {
   display: none !important;
 }
-
-.resource-map-price-tooltip .leaflet-tooltip-content {
-  margin: 0 !important;
-  border-radius: 999px;
-  background: rgb(15 23 42);
-  color: #fff;
-  padding: 3px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  box-shadow: 0 8px 18px rgb(15 23 42 / 0.28);
+/* Hide native close button (the floating X Google renders separately) */
+.gm-ui-hover-effect,
+.gm-style-iw-chr > button {
+  display: none !important;
 }
-
-.resource-map-price-tooltip--active .leaflet-tooltip-content {
-  background: rgb(34 211 238);
-  color: rgb(8 47 73);
+/* Remove container background/padding so our inner div has full control */
+.gm-style-iw-c {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-
-.dark .resource-map-price-tooltip .leaflet-tooltip-content {
-  background: rgb(226 232 240);
-  color: rgb(15 23 42);
-  box-shadow: 0 8px 18px rgb(15 23 42 / 0.45);
-}
-
-.dark .resource-map-price-tooltip--active .leaflet-tooltip-content {
-  background: rgb(34 211 238);
-  color: rgb(8 47 73);
+/* Remove scrollable wrapper default padding/overflow */
+.gm-style-iw-d {
+  overflow: hidden !important;
+  padding: 0 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

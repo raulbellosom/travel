@@ -135,7 +135,7 @@ const env = {
   },
   external: {
     googleMapsApiKey: get("GOOGLE_MAPS_API_KEY"),
-    mapboxToken: get("MAPBOX_ACCESS_TOKEN"),
+    googleMapsMapId: get("GOOGLE_MAPS_MAP_ID"),
     gaId: get("GA_MEASUREMENT_ID"),
   },
 };

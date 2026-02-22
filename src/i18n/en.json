@@ -2373,7 +2373,7 @@
   },
   "mapPicker": {
     "title": "Locate on map",
-    "description": "Click on the map to select the property location. The address will be filled automatically.",
+    "description": "Click on the map to select the resource location. The address will be filled automatically.",
     "locateOnMap": "Locate on map",
     "locateHint": "Select the location on the map to auto-fill the address fields.",
     "confirm": "Confirm location",

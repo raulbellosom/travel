@@ -1,10 +1,13 @@
 /**
- * useGeocoding — custom hook for Mapbox forward and reverse geocoding.
- * Handles loading state, error state, debounced search, and request cancellation
- * to avoid race conditions from outdated requests.
+ * useGeocoding - custom hook for Google Places/Geocoding.
+ * Handles loading state, error state, debounced search, and request cancellation.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { searchPlaces, reverseGeocode } from "../services/mapbox.service";
+import {
+  createPlacesSessionToken,
+  reverseGeocode,
+  searchPlaces,
+} from "../services/googleMaps.service";
 import debounce from "../utils/debounce";
 import { DEBOUNCE_MS, MIN_QUERY_LENGTH } from "../config/map.config";
 
@@ -12,7 +15,7 @@ import { DEBOUNCE_MS, MIN_QUERY_LENGTH } from "../config/map.config";
  * @param {Object} [options]
  * @param {number} [options.debounceMs] - Custom debounce delay
  * @param {number} [options.minLength] - Minimum query length to trigger search
- * @returns {{ results, search, reverse, loading, error, clearResults }}
+ * @returns {{ results, search, reverse, loading, error, clearResults, resetSession }}
  */
 const useGeocoding = (options = {}) => {
   const { debounceMs = DEBOUNCE_MS, minLength = MIN_QUERY_LENGTH } = options;
@@ -23,10 +26,19 @@ const useGeocoding = (options = {}) => {
 
   const abortRef = useRef(null);
   const debouncedRef = useRef(null);
+  const sessionTokenRef = useRef(null);
 
-  /**
-   * Cancel any in-flight request.
-   */
+  const resetSession = useCallback(() => {
+    sessionTokenRef.current = null;
+  }, []);
+
+  const ensureSessionToken = useCallback(async () => {
+    if (!sessionTokenRef.current) {
+      sessionTokenRef.current = await createPlacesSessionToken();
+    }
+    return sessionTokenRef.current;
+  }, []);
+
   const cancelPending = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -34,9 +46,6 @@ const useGeocoding = (options = {}) => {
     }
   }, []);
 
-  /**
-   * Execute a forward geocoding search immediately (no debounce).
-   */
   const executeSearch = useCallback(
     async (query, searchOptions = {}) => {
       if (!query || query.trim().length < minLength) {
@@ -54,9 +63,11 @@ const useGeocoding = (options = {}) => {
       setError(null);
 
       try {
+        const sessionToken = await ensureSessionToken();
         const data = await searchPlaces(query, {
           ...searchOptions,
           signal: controller.signal,
+          sessionToken,
         });
 
         if (!controller.signal.aborted) {
@@ -72,13 +83,9 @@ const useGeocoding = (options = {}) => {
         }
       }
     },
-    [minLength, cancelPending],
+    [minLength, cancelPending, ensureSessionToken],
   );
 
-  /**
-   * Debounced forward geocoding search.
-   * Cancels previous timer and in-flight requests automatically.
-   */
   useEffect(() => {
     debouncedRef.current = debounce(executeSearch, debounceMs);
     return () => {
@@ -92,18 +99,15 @@ const useGeocoding = (options = {}) => {
         setResults([]);
         setLoading(false);
         debouncedRef.current?.cancel();
+        resetSession();
         return;
       }
       setLoading(true);
       debouncedRef.current?.(query, searchOptions);
     },
-    [minLength],
+    [minLength, resetSession],
   );
 
-  /**
-   * Reverse geocoding — get address from coordinates.
-   * Not debounced, executes immediately.
-   */
   const reverse = useCallback(
     async (lat, lng) => {
       cancelPending();
@@ -136,23 +140,19 @@ const useGeocoding = (options = {}) => {
     [cancelPending],
   );
 
-  /**
-   * Clear the current results list.
-   */
   const clearResults = useCallback(() => {
     setResults([]);
     setError(null);
-  }, []);
+    resetSession();
+  }, [resetSession]);
 
-  /**
-   * Cleanup on unmount — cancel pending requests and debounce timers.
-   */
   useEffect(() => {
     return () => {
       cancelPending();
       debouncedRef.current?.cancel();
+      resetSession();
     };
-  }, [cancelPending]);
+  }, [cancelPending, resetSession]);
 
   return {
     results,
@@ -161,6 +161,7 @@ const useGeocoding = (options = {}) => {
     loading,
     error,
     clearResults,
+    resetSession,
   };
 };
 

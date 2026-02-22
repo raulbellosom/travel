@@ -32,12 +32,13 @@ let locationOptionsServicePromise = null;
 
 const loadLocationOptionsService = async () => {
   if (!locationOptionsServicePromise) {
-    locationOptionsServicePromise = import("../../services/locationOptionsService")
-      .then((module) => module.locationOptionsService)
-      .catch((error) => {
-        locationOptionsServicePromise = null;
-        throw error;
-      });
+    locationOptionsServicePromise =
+      import("../../services/locationOptionsService")
+        .then((module) => module.locationOptionsService)
+        .catch((error) => {
+          locationOptionsServicePromise = null;
+          throw error;
+        });
   }
 
   return locationOptionsServicePromise;
@@ -121,7 +122,11 @@ const pickAllowedPricingModel = (
   category = "",
 ) => {
   const normalizedMode = normalizeCommercialMode(commercialMode);
-  const allowed = getAllowedPricingModels(resourceType, normalizedMode, category);
+  const allowed = getAllowedPricingModels(
+    resourceType,
+    normalizedMode,
+    category,
+  );
   const candidate = normalizePricingModel(
     inputValue,
     normalizedMode,
@@ -389,7 +394,12 @@ export const useWizardForm = ({
           );
           return {
             ...prev,
-            ...buildCommercialState(prev, value, prev.resourceType, resolvedCategory),
+            ...buildCommercialState(
+              prev,
+              value,
+              prev.resourceType,
+              resolvedCategory,
+            ),
           };
         }
 
@@ -563,7 +573,9 @@ export const useWizardForm = ({
   );
   useEffect(() => {
     const activeRootFieldKeys = new Set(resourceFormProfile.rootFieldKeys);
-    const activeAttributeFieldKeys = new Set(resourceFormProfile.attributeFieldKeys);
+    const activeAttributeFieldKeys = new Set(
+      resourceFormProfile.attributeFieldKeys,
+    );
 
     setForm((prev) => {
       let changed = false;
@@ -574,7 +586,7 @@ export const useWizardForm = ({
         const defaultValue =
           field.inputType === "boolean"
             ? Boolean(field.defaultValue)
-            : field.defaultValue ?? "";
+            : (field.defaultValue ?? "");
         if (next[field.key] === defaultValue) return;
         next[field.key] = defaultValue;
         changed = true;
@@ -584,7 +596,8 @@ export const useWizardForm = ({
       let attributesChanged = false;
       RESOURCE_ATTRIBUTE_FIELD_KEYS.forEach((fieldKey) => {
         if (activeAttributeFieldKeys.has(fieldKey)) return;
-        if (!Object.prototype.hasOwnProperty.call(nextAttributes, fieldKey)) return;
+        if (!Object.prototype.hasOwnProperty.call(nextAttributes, fieldKey))
+          return;
         delete nextAttributes[fieldKey];
         attributesChanged = true;
       });
@@ -623,7 +636,6 @@ export const useWizardForm = ({
     resourceFormProfile.attributeFieldKeys,
     resourceFormProfile.rootFieldKeys,
   ]);
-
 
   /* â”€â”€ slug auto-generate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -762,7 +774,9 @@ export const useWizardForm = ({
       return;
     }
 
-    setCityOptions(locationService.getCities(selectedCountryCode, selectedStateCode));
+    setCityOptions(
+      locationService.getCities(selectedCountryCode, selectedStateCode),
+    );
   }, [locationService, selectedCountryCode, selectedStateCode]);
 
   const handleCountryChange = useCallback(
@@ -1107,10 +1121,7 @@ export const useWizardForm = ({
           nextErrors.description = t("propertyForm.validation.descriptionMin");
       }
       // category/propertyType
-      if (
-        shouldValidate("category") &&
-        !categoryValue
-      )
+      if (shouldValidate("category") && !categoryValue)
         nextErrors.category = t("propertyForm.validation.categoryRequired");
       else if (shouldValidate("category")) {
         if (!isAllowedCategory(resourceType, categoryValue)) {
@@ -1198,10 +1209,13 @@ export const useWizardForm = ({
 
         if (field.inputType === "number") {
           const isRequiredGuestsField =
-            field.key === "maxGuests" && commercialConditionKeys.has("maxGuests");
+            field.key === "maxGuests" &&
+            commercialConditionKeys.has("maxGuests");
 
           if (!hasUiValue && isRequiredGuestsField) {
-            nextErrors.maxGuests = t("propertyForm.validation.maxGuestsRequired");
+            nextErrors.maxGuests = t(
+              "propertyForm.validation.maxGuestsRequired",
+            );
             return;
           }
 
@@ -1221,7 +1235,10 @@ export const useWizardForm = ({
 
           const hasMin = Number.isFinite(field.min);
           const hasMax = Number.isFinite(field.max);
-          if ((hasMin && numericValue < field.min) || (hasMax && numericValue > field.max)) {
+          if (
+            (hasMin && numericValue < field.min) ||
+            (hasMax && numericValue > field.max)
+          ) {
             if (field.key === "bedrooms") {
               nextErrors.bedrooms = t("propertyForm.validation.bedroomsMin");
               return;
@@ -1231,7 +1248,9 @@ export const useWizardForm = ({
               return;
             }
             if (field.key === "maxGuests") {
-              nextErrors.maxGuests = t("propertyForm.validation.maxGuestsRange");
+              nextErrors.maxGuests = t(
+                "propertyForm.validation.maxGuestsRange",
+              );
               return;
             }
             nextErrors[field.key] = t("propertyForm.validation.fieldRange", {
@@ -1252,10 +1271,13 @@ export const useWizardForm = ({
           if (options.length === 0) return;
 
           if (!options.some((option) => option.value === normalizedValue)) {
-            nextErrors[field.key] = t("propertyForm.validation.fieldOptionInvalid", {
-              field: fieldLabel,
-              defaultValue: `${fieldLabel} no tiene una opcion valida.`,
-            });
+            nextErrors[field.key] = t(
+              "propertyForm.validation.fieldOptionInvalid",
+              {
+                field: fieldLabel,
+                defaultValue: `${fieldLabel} no tiene una opcion valida.`,
+              },
+            );
           }
           return;
         }
@@ -1264,21 +1286,31 @@ export const useWizardForm = ({
           const normalizedValue = String(uiValue || "").trim();
           if (!normalizedValue) return;
           if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(normalizedValue)) {
-            nextErrors[field.key] = t("propertyForm.validation.fieldTimeInvalid", {
-              field: fieldLabel,
-              defaultValue: `${fieldLabel} debe tener formato HH:mm.`,
-            });
+            nextErrors[field.key] = t(
+              "propertyForm.validation.fieldTimeInvalid",
+              {
+                field: fieldLabel,
+                defaultValue: `${fieldLabel} debe tener formato HH:mm.`,
+              },
+            );
           }
         }
       });
 
       if (
-        (shouldValidate("bookingMinUnits") || shouldValidate("bookingMaxUnits")) &&
+        (shouldValidate("bookingMinUnits") ||
+          shouldValidate("bookingMaxUnits")) &&
         commercialConditionKeys.has("bookingMinUnits") &&
         commercialConditionKeys.has("bookingMaxUnits")
       ) {
-        const minUnits = parseNumber(attributeValues.bookingMinUnits, Number.NaN);
-        const maxUnits = parseNumber(attributeValues.bookingMaxUnits, Number.NaN);
+        const minUnits = parseNumber(
+          attributeValues.bookingMinUnits,
+          Number.NaN,
+        );
+        const maxUnits = parseNumber(
+          attributeValues.bookingMaxUnits,
+          Number.NaN,
+        );
         if (
           Number.isFinite(minUnits) &&
           Number.isFinite(maxUnits) &&
@@ -1441,7 +1473,13 @@ export const useWizardForm = ({
       amenityIds: Array.from(new Set(form.amenityIds || [])),
       imageFiles: pendingImageItems.map((i) => i.file).filter(Boolean),
     };
-  }, [form, mergedInitialValues.status, mode, pendingImageItems, resolveLocationValues]);
+  }, [
+    form,
+    mergedInitialValues.status,
+    mode,
+    pendingImageItems,
+    resolveLocationValues,
+  ]);
 
   /* â”€â”€ Slug status view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -1513,6 +1551,7 @@ export const useWizardForm = ({
     cityOptions,
     isLocationOptionsLoading,
     ensureLocationOptionsLoaded,
+    locationService,
     selectedCountryCode,
     selectedStateCode,
     handleCountryChange,

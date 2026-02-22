@@ -1,6 +1,6 @@
 /**
  * MapPickerModal — Modal wrapper around MapPicker for selecting a property location.
- * Uses Mapbox Geocoding API for forward search and reverse geocoding.
+ * Uses Google Places + Geocoding for forward search and reverse geocoding.
  * Opens a large modal with interactive map. On confirm, returns normalized location data.
  *
  * Props:
@@ -17,7 +17,10 @@ import Modal, { ModalFooter } from "../../organisms/Modal";
 import { Button } from "../../atoms";
 import MapPicker from "../MapPicker";
 import useGeocoding from "../../../../hooks/useGeocoding";
-import { reverseGeocode } from "../../../../services/mapbox.service";
+import {
+  emptyNormalizedLocation,
+  reverseGeocode,
+} from "../../../../services/googleMaps.service";
 
 const MapPickerModal = ({
   isOpen,
@@ -43,6 +46,10 @@ const MapPickerModal = ({
 
   const handleSelect = useCallback((location) => {
     setSelected(location);
+    // Keep mapCenter in sync so MapPicker props don't reset the pin back to origin
+    if (location?.lat != null && location?.lng != null) {
+      setMapCenter({ lat: location.lat, lng: location.lng });
+    }
   }, []);
 
   const handleConfirm = () => {
@@ -95,17 +102,7 @@ const MapPickerModal = ({
             setSelected(location);
           }
         } catch {
-          setSelected({
-            lat,
-            lng,
-            formattedAddress: "",
-            city: "",
-            state: "",
-            postalCode: "",
-            country: "",
-            neighborhood: "",
-            streetAddress: "",
-          });
+          setSelected(emptyNormalizedLocation(lat, lng));
         }
         setGeolocating(false);
       },

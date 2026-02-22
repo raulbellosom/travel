@@ -54,6 +54,21 @@ La fuente de verdad vive en `docs/`:
 - `npm run preview`: preview de build.
 - `npm run lint`: validacion ESLint.
 
+## Google Maps
+
+Para usar mapas y geocodificacion, configura estas variables en `.env`:
+
+- `GOOGLE_MAPS_API_KEY`: API key de Google Maps Platform.
+- `GOOGLE_MAPS_MAP_ID` (opcional): Map ID para estilos cloud.
+
+APIs requeridas en Google Cloud:
+
+- Maps JavaScript API
+- Places API
+- Geocoding API
+
+Se recomienda restringir la key por dominio (HTTP referrers) y por APIs permitidas.
+
 ## Plan maestro
 
 Usar `docs/10_master_plan_checklist.md` como backlog oficial de ejecucion y

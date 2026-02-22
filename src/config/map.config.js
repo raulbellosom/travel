@@ -1,99 +1,79 @@
 /**
- * Map configuration — centralized constants for Mapbox geocoding and map rendering.
- * Mexico-focused defaults with bounding box, tile URLs, and default center.
+ * Map configuration for Google Maps based features.
  */
 import env from "../env";
 
-/**
- * Mapbox access token from environment configuration.
- * Never hardcode — always sourced from MAPBOX_ACCESS_TOKEN env var.
- */
-export const MAPBOX_TOKEN = env.external.mapboxToken;
-export const HAS_MAPBOX_TOKEN = Boolean(MAPBOX_TOKEN);
+export const GOOGLE_MAPS_API_KEY = env.external.googleMapsApiKey;
+export const GOOGLE_MAPS_MAP_ID = env.external.googleMapsMapId;
+export const HAS_GOOGLE_MAPS_API_KEY = Boolean(GOOGLE_MAPS_API_KEY);
 
 /**
- * Mexico bounding box [southwest, northeast] for biased geocoding results.
+ * Mexico bounding box [southwest, northeast] as [lng, lat].
  */
 export const MEXICO_BOUNDS = [
   [-118.45, 14.53],
   [-86.71, 32.72],
 ];
 
-/**
- * Default country filter for geocoding queries.
- */
 export const DEFAULT_COUNTRY = "mx";
 
-/**
- * Mapbox Geocoding API v5 base URL.
- */
-export const GEOCODING_BASE_URL =
-  "https://api.mapbox.com/geocoding/v5/mapbox.places";
-
-/**
- * Default map center — Puerto Vallarta, Jalisco, Mexico.
- */
 export const DEFAULT_CENTER = {
   lat: 20.6534,
   lng: -105.2253,
 };
 
-/**
- * Default zoom level for map views.
- */
 export const DEFAULT_ZOOM = 13;
 
-/**
- * Maximum number of autocomplete results returned.
- */
 export const MAX_RESULTS = 5;
 
-/**
- * Minimum characters required before triggering a geocoding search.
- */
 export const MIN_QUERY_LENGTH = 3;
 
-/**
- * Debounce delay in milliseconds for search input.
- */
 export const DEBOUNCE_MS = 400;
 
-/**
- * Tile layer configurations for light and dark mode.
- * Uses Mapbox static tiles with the access token.
- */
-export const TILE_LAYERS = {
-  light: {
-    url: `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
-    attribution:
-      '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+export const GOOGLE_DARK_MAP_STYLE = [
+  { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0b1220" }] },
+  {
+    featureType: "administrative",
+    elementType: "geometry",
+    stylers: [{ color: "#1e293b" }],
   },
-  dark: {
-    url: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
-    attribution:
-      '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  {
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#64748b" }],
   },
-  fallback: {
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#1f2937" }],
   },
-};
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#0f172a" }],
+  },
+  {
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#cbd5e1" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "geometry",
+    stylers: [{ color: "#1e293b" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#082f49" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#38bdf8" }],
+  },
+];
 
-/**
- * Leaflet tile layer options shared across all map instances.
- */
-export const TILE_OPTIONS = {
-  tileSize: 512,
-  zoomOffset: -1,
-  maxZoom: 18,
-};
-
-/**
- * Tile options for fallback OSM tiles.
- */
-export const FALLBACK_TILE_OPTIONS = {
-  tileSize: 256,
-  zoomOffset: 0,
-  maxZoom: 19,
-};
+export const GOOGLE_LIGHT_MAP_STYLE = null;

@@ -1,102 +1,34 @@
 /**
- * MapPicker — Interactive Leaflet map with Mapbox tiles for selecting a location.
- * Supports click-to-place marker, draggable marker, and Mapbox reverse geocoding.
- *
- * Props:
- *   latitude         - initial lat (number|string, default: Puerto Vallarta)
- *   longitude        - initial lng (number|string, default: Puerto Vallarta)
- *   onSelect         - callback(NormalizedLocation) when user picks or drags
- *   readOnly         - if true, disables click-to-move and drag
- *   height           - CSS height string (default "400px")
- *   zoom             - initial zoom level (default from config)
- *   restrictToBounds - if true, restricts panning to Mexico bounds
+ * MapPicker - interactive Google Map for selecting a location.
+ * Supports click-to-place marker, draggable marker, and reverse geocoding.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMapEvents,
-  useMap,
-} from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { reverseGeocode } from "../../../../services/mapbox.service";
-import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
-  FALLBACK_TILE_OPTIONS,
-  HAS_MAPBOX_TOKEN,
-  TILE_LAYERS,
-  TILE_OPTIONS,
+  GOOGLE_DARK_MAP_STYLE,
+  GOOGLE_LIGHT_MAP_STYLE,
+  GOOGLE_MAPS_MAP_ID,
   MEXICO_BOUNDS,
 } from "../../../../config/map.config";
+import {
+  emptyNormalizedLocation,
+  reverseGeocode,
+} from "../../../../services/googleMaps.service";
+import { loadGoogleMaps } from "../../../../services/googleMaps.loader";
 
-/* -- Fix Leaflet default marker icon in bundlers (Vite, Webpack) -- */
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-/**
- * Detect if dark mode is active by checking the document root element.
- */
 const isDarkMode = () =>
   typeof document !== "undefined" &&
   document.documentElement.classList.contains("dark");
 
-/**
- * Sub-component: handles map click events.
- */
-const ClickHandler = ({ onClick }) => {
-  useMapEvents({ click: (e) => onClick(e.latlng) });
-  return null;
-};
-
-/**
- * Sub-component: smoothly fly to new position when marker changes.
- */
-const FlyToMarker = ({ position }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (position) map.flyTo(position, map.getZoom(), { duration: 0.5 });
-  }, [position, map]);
-  return null;
-};
-
-/**
- * Sub-component: draggable marker that reports its new position.
- */
-const DraggableMarker = ({ position, onDragEnd }) => {
-  const markerRef = useRef(null);
-
-  const eventHandlers = useMemo(
-    () => ({
-      dragend() {
-        const marker = markerRef.current;
-        if (marker) {
-          const { lat, lng } = marker.getLatLng();
-          onDragEnd({ lat, lng });
-        }
-      },
-    }),
-    [onDragEnd],
-  );
-
-  return (
-    <Marker
-      position={position}
-      draggable
-      ref={markerRef}
-      eventHandlers={eventHandlers}
-    />
-  );
+const boundsToRestriction = () => {
+  const [sw, ne] = MEXICO_BOUNDS;
+  return {
+    north: ne[1],
+    south: sw[1],
+    east: ne[0],
+    west: sw[0],
+  };
 };
 
 const MapPicker = ({
@@ -114,48 +46,100 @@ const MapPicker = ({
   const [position, setPosition] = useState({ lat: initLat, lng: initLng });
   const [loading, setLoading] = useState(false);
   const [dark, setDark] = useState(isDarkMode);
-  const [useFallbackTiles, setUseFallbackTiles] = useState(!HAS_MAPBOX_TOKEN);
+
+  const mapNodeRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const listenersRef = useRef([]);
   const abortRef = useRef(null);
+
+  // Track the last lat/lng we received from props so we only reset
+  // position when the PARENT explicitly changes the coordinates —
+  // NOT when position changes internally from a user click.
+  const lastExternalLatRef = useRef(parseFloat(latitude));
+  const lastExternalLngRef = useRef(parseFloat(longitude));
 
   useEffect(() => {
     const newLat = parseFloat(latitude);
     const newLng = parseFloat(longitude);
     if (
-      !isNaN(newLat) &&
-      !isNaN(newLng) &&
-      (newLat !== position.lat || newLng !== position.lng)
+      !Number.isNaN(newLat) &&
+      !Number.isNaN(newLng) &&
+      (newLat !== lastExternalLatRef.current ||
+        newLng !== lastExternalLngRef.current)
     ) {
+      lastExternalLatRef.current = newLat;
+      lastExternalLngRef.current = newLng;
       setPosition({ lat: newLat, lng: newLng });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setDark(isDarkMode());
     });
+
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
+
     return () => observer.disconnect();
   }, []);
 
-  const center = useMemo(() => [position.lat, position.lng], [position]);
+  // Options used only when the map is first created (include center + zoom).
+  // Never passed to setOptions — that would reset the user's current zoom level.
+  const initMapOptions = useMemo(
+    () => ({
+      center: position,
+      zoom,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+      mapId: GOOGLE_MAPS_MAP_ID || undefined,
+      styles: GOOGLE_MAPS_MAP_ID
+        ? undefined
+        : dark
+          ? GOOGLE_DARK_MAP_STYLE
+          : GOOGLE_LIGHT_MAP_STYLE,
+      restriction: restrictToBounds
+        ? {
+            latLngBounds: boundsToRestriction(),
+            strictBounds: false,
+          }
+        : undefined,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dark, position, restrictToBounds, zoom],
+  );
 
-  const tileConfig = useFallbackTiles
-    ? TILE_LAYERS.fallback
-    : dark
-      ? TILE_LAYERS.dark
-      : TILE_LAYERS.light;
-  const tileOptions = useFallbackTiles ? FALLBACK_TILE_OPTIONS : TILE_OPTIONS;
+  // Options safe to pass to setOptions on subsequent renders.
+  // Intentionally excludes `center` and `zoom` so existing camera state is preserved.
+  const updateMapOptions = useMemo(
+    () => ({
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+      mapId: GOOGLE_MAPS_MAP_ID || undefined,
+      styles: GOOGLE_MAPS_MAP_ID
+        ? undefined
+        : dark
+          ? GOOGLE_DARK_MAP_STYLE
+          : GOOGLE_LIGHT_MAP_STYLE,
+      restriction: restrictToBounds
+        ? {
+            latLngBounds: boundsToRestriction(),
+            strictBounds: false,
+          }
+        : undefined,
+    }),
+    [dark, restrictToBounds],
+  );
 
-  const maxBounds = restrictToBounds
-    ? L.latLngBounds(
-        [MEXICO_BOUNDS[0][1], MEXICO_BOUNDS[0][0]],
-        [MEXICO_BOUNDS[1][1], MEXICO_BOUNDS[1][0]],
-      )
-    : undefined;
+  const clearListeners = () => {
+    listenersRef.current.forEach((listener) => listener.remove());
+    listenersRef.current = [];
+  };
 
   const handleReverseGeocode = useCallback(
     async (lat, lng) => {
@@ -181,17 +165,7 @@ const MapPicker = ({
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          onSelect?.({
-            lat,
-            lng,
-            formattedAddress: "",
-            city: "",
-            state: "",
-            postalCode: "",
-            country: "",
-            neighborhood: "",
-            streetAddress: "",
-          });
+          onSelect?.(emptyNormalizedLocation(lat, lng));
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -199,63 +173,101 @@ const MapPicker = ({
         }
       }
     },
-    [readOnly, onSelect],
-  );
-
-  const handleClick = useCallback(
-    (latlng) => {
-      handleReverseGeocode(latlng.lat, latlng.lng);
-    },
-    [handleReverseGeocode],
-  );
-
-  const handleDragEnd = useCallback(
-    ({ lat, lng }) => {
-      handleReverseGeocode(lat, lng);
-    },
-    [handleReverseGeocode],
+    [onSelect, readOnly],
   );
 
   useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      const google = await loadGoogleMaps();
+      if (!mounted || !mapNodeRef.current) return;
+
+      if (!mapRef.current) {
+        // First mount — use full options including center + zoom
+        mapRef.current = new google.maps.Map(
+          mapNodeRef.current,
+          initMapOptions,
+        );
+      } else {
+        // Subsequent renders — only update style/controls/restriction, NOT zoom or center
+        mapRef.current.setOptions(updateMapOptions);
+      }
+
+      if (!markerRef.current) {
+        markerRef.current = new google.maps.marker.AdvancedMarkerElement({
+          map: mapRef.current,
+          position,
+          gmpDraggable: !readOnly,
+        });
+      } else {
+        markerRef.current.map = mapRef.current;
+        markerRef.current.position = position;
+        markerRef.current.gmpDraggable = !readOnly;
+      }
+
+      clearListeners();
+
+      if (!readOnly) {
+        listenersRef.current.push(
+          mapRef.current.addListener("click", (event) => {
+            const lat = event.latLng?.lat?.();
+            const lng = event.latLng?.lng?.();
+            if (typeof lat === "number" && typeof lng === "number") {
+              handleReverseGeocode(lat, lng);
+            }
+          }),
+        );
+
+        listenersRef.current.push(
+          markerRef.current.addListener("dragend", () => {
+            const pos = markerRef.current?.position;
+            if (!pos) return;
+            const lat = typeof pos.lat === "function" ? pos.lat() : pos.lat;
+            const lng = typeof pos.lng === "function" ? pos.lng() : pos.lng;
+            if (typeof lat === "number" && typeof lng === "number") {
+              handleReverseGeocode(lat, lng);
+            }
+          }),
+        );
+      }
+    };
+
+    init().catch(() => {});
+
     return () => {
+      mounted = false;
+    };
+    // position intentionally excluded — marker/pan updates are handled by the effect below
+    // initMapOptions excluded — only needed on first mount (mapRef.current guard handles it)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleReverseGeocode, updateMapOptions, readOnly]);
+
+  useEffect(() => {
+    if (!mapRef.current || !markerRef.current) return;
+    markerRef.current.position = position;
+    // panTo keeps the current zoom — only pans the camera to the new pin
+    mapRef.current.panTo(position);
+  }, [position]);
+
+  useEffect(() => {
+    return () => {
+      clearListeners();
       if (abortRef.current) {
         abortRef.current.abort();
+      }
+      if (markerRef.current) {
+        markerRef.current.map = null;
       }
     };
   }, []);
 
   return (
     <div className="relative overflow-hidden rounded-xl" style={{ height }}>
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        scrollWheelZoom
-        maxBounds={maxBounds}
-        style={{ height: "100%", width: "100%", zIndex: 0 }}
-      >
-        <TileLayer
-          attribution={tileConfig.attribution}
-          url={tileConfig.url}
-          eventHandlers={{
-            tileerror: () => {
-              setUseFallbackTiles(true);
-            },
-          }}
-          tileSize={tileOptions.tileSize}
-          zoomOffset={tileOptions.zoomOffset}
-          maxZoom={tileOptions.maxZoom}
-        />
-        {readOnly ? (
-          <Marker position={center} />
-        ) : (
-          <DraggableMarker position={center} onDragEnd={handleDragEnd} />
-        )}
-        {!readOnly && <ClickHandler onClick={handleClick} />}
-        <FlyToMarker position={center} />
-      </MapContainer>
+      <div ref={mapNodeRef} className="h-full w-full" />
 
       {loading && (
-        <div className="absolute top-3 left-3 z-[1000] rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow backdrop-blur dark:bg-slate-800/90 dark:text-slate-200">
+        <div className="absolute left-3 top-3 z-10 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow backdrop-blur dark:bg-slate-800/90 dark:text-slate-200">
           Obteniendo direccion...
         </div>
       )}

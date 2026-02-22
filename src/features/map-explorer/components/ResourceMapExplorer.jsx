@@ -1,38 +1,23 @@
-﻿import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  Circle,
-  CircleMarker,
-  MapContainer,
-  Popup,
-  TileLayer,
-  Tooltip,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
 import { LocateFixed, Loader2, MapPin, Search } from "lucide-react";
-import "leaflet/dist/leaflet.css";
 
 import Select from "../../../components/common/atoms/Select/Select";
 import Combobox from "../../../components/common/molecules/Combobox/Combobox";
 import { storage } from "../../../api/appwriteClient";
+import { useAuth } from "../../../hooks/useAuth";
+import { favoritesService } from "../../../services/favoritesService";
 import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
-  FALLBACK_TILE_OPTIONS,
-  HAS_MAPBOX_TOKEN,
-  TILE_LAYERS,
-  TILE_OPTIONS,
+  GOOGLE_DARK_MAP_STYLE,
+  GOOGLE_LIGHT_MAP_STYLE,
+  GOOGLE_MAPS_MAP_ID,
 } from "../../../config/map.config";
 import env from "../../../env";
 import useGeocoding from "../../../hooks/useGeocoding";
+import { loadGoogleMaps } from "../../../services/googleMaps.loader";
 import { resourcesService } from "../../../services/resourcesService";
 import { cn } from "../../../utils/cn";
 import { getPublicPropertyRoute } from "../../../utils/internalRoutes";
@@ -53,7 +38,16 @@ const COMMERCIAL_MODE_OPTIONS = [
 ];
 
 const RADIUS_OPTIONS_KM = [5, 10, 20, 35, 50];
-const LANDING_DEFAULT_RADIUS_KM = 10;
+const LANDING_DEFAULT_RADIUS_KM = 5;
+
+// Per-type badge colors matching ResourceTypeBadge.jsx palette
+const TYPE_BADGE_COLORS = {
+  property: { bg: "#e0f2fe", text: "#0369a1" },
+  service: { bg: "#d1fae5", text: "#065f46" },
+  vehicle: { bg: "#fef3c7", text: "#92400e" },
+  experience: { bg: "#ede9fe", text: "#5b21b6" },
+  venue: { bg: "#ffe4e6", text: "#9f1239" },
+};
 
 const isDarkModeEnabled = () =>
   typeof document !== "undefined" &&
@@ -90,11 +84,14 @@ const distanceKmBetween = (latA, lngA, latB, lngB) => {
 
 const toBoundsBox = (bounds) => {
   if (!bounds) return null;
+  // google.maps.LatLngBounds exposes toJSON() → {north,south,east,west}
+  if (typeof bounds.toJSON === "function") return bounds.toJSON();
+  // fallback for Leaflet-style bounds
   return {
-    north: bounds.getNorth(),
-    south: bounds.getSouth(),
-    east: bounds.getEast(),
-    west: bounds.getWest(),
+    north: bounds.getNorthEast?.()?.lat() ?? bounds.getNorth?.(),
+    south: bounds.getSouthWest?.()?.lat() ?? bounds.getSouth?.(),
+    east: bounds.getNorthEast?.()?.lng() ?? bounds.getEast?.(),
+    west: bounds.getSouthWest?.()?.lng() ?? bounds.getWest?.(),
   };
 };
 
@@ -162,38 +159,325 @@ const formatDistance = (distanceKm, t) => {
   });
 };
 
-const MapViewportEvents = ({ onBoundsChange }) => {
-  const map = useMapEvents({
-    moveend: () => {
-      onBoundsChange(toBoundsBox(map.getBounds()));
-    },
-    zoomend: () => {
-      onBoundsChange(toBoundsBox(map.getBounds()));
-    },
-  });
+const escapeHtml = (value) =>
+  String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+
+const GoogleResourceMap = ({
+  center,
+  radiusKm,
+  resources,
+  activeResourceId,
+  favoriteIds,
+  language,
+  locale,
+  t,
+  darkMode,
+  onActiveResourceChange,
+  onBoundsChange,
+  onLoadError,
+  onCenterChange,
+}) => {
+  const mapNodeRef = useRef(null);
+  const mapRef = useRef(null);
+  const infoWindowRef = useRef(null);
+  const userMarkerRef = useRef(null);
+  const radiusCircleRef = useRef(null);
+  const idleListenerRef = useRef(null);
+  const mapClickListenerRef = useRef(null);
+  const onCenterChangeRef = useRef(onCenterChange);
+  const markersRef = useRef(new Map());
+
+  // Keep the callback ref fresh so the map click listener doesn't need to be re-added
+  useEffect(() => {
+    onCenterChangeRef.current = onCenterChange;
+  }, [onCenterChange]);
+
+  const mapOptions = useMemo(
+    () => ({
+      center,
+      zoom: DEFAULT_ZOOM,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+      gestureHandling: "greedy",
+      mapId: GOOGLE_MAPS_MAP_ID || undefined,
+      // styles cannot be set together with mapId — cloud console controls styling
+      styles: GOOGLE_MAPS_MAP_ID
+        ? undefined
+        : darkMode
+          ? GOOGLE_DARK_MAP_STYLE
+          : GOOGLE_LIGHT_MAP_STYLE,
+    }),
+    [center, darkMode],
+  );
 
   useEffect(() => {
-    onBoundsChange(toBoundsBox(map.getBounds()));
-  }, [map, onBoundsChange]);
+    let mounted = true;
 
-  return null;
-};
+    const init = async () => {
+      try {
+        const google = await loadGoogleMaps();
+        if (!mounted || !mapNodeRef.current) return;
 
-const MapCenterController = ({ center }) => {
-  const map = useMap();
-  const previous = useRef(null);
+        if (!mapRef.current) {
+          mapRef.current = new google.maps.Map(mapNodeRef.current, mapOptions);
+          infoWindowRef.current = new google.maps.InfoWindow({
+            headerDisabled: true,
+          });
+          // exposed so the inline HTML close button can call it
+          window.__iwClose = () => infoWindowRef.current?.close();
+
+          idleListenerRef.current = mapRef.current.addListener("idle", () => {
+            onBoundsChange(toBoundsBox(mapRef.current?.getBounds?.()));
+          });
+
+          // Single click on the map moves the search center pin
+          mapClickListenerRef.current = mapRef.current.addListener(
+            "click",
+            (event) => {
+              const lat = event.latLng.lat();
+              const lng = event.latLng.lng();
+              onCenterChangeRef.current?.({ lat, lng });
+            },
+          );
+        } else {
+          mapRef.current.setOptions(mapOptions);
+        }
+        onLoadError("");
+      } catch (error) {
+        onLoadError(error?.message || "Google Maps unavailable");
+      }
+    };
+
+    init();
+
+    return () => {
+      mounted = false;
+    };
+  }, [mapOptions, onBoundsChange, onLoadError]);
 
   useEffect(() => {
-    const currentKey = `${center.lat.toFixed(5)}:${center.lng.toFixed(5)}`;
-    if (previous.current === currentKey) return;
+    if (!mapRef.current) return;
+    mapRef.current.panTo(center);
+  }, [center]);
 
-    previous.current = currentKey;
-    map.flyTo([center.lat, center.lng], map.getZoom(), {
-      duration: 0.45,
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !window.google?.maps) return;
+
+    const google = window.google;
+    const markerPosition = new google.maps.LatLng(center.lat, center.lng);
+
+    if (!userMarkerRef.current) {
+      const dot = document.createElement("div");
+      dot.style.cssText = [
+        "width:14px",
+        "height:14px",
+        "background:#06b6d4",
+        "border:2px solid #0f172a",
+        "border-radius:50%",
+        "box-shadow:0 1px 4px rgba(0,0,0,0.5)",
+      ].join(";");
+      userMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
+        map,
+        position: { lat: center.lat, lng: center.lng },
+        title: t("client:home.mapExplorer.currentLocation", "Tu ubicacion"),
+        content: dot,
+      });
+    } else {
+      userMarkerRef.current.position = { lat: center.lat, lng: center.lng };
+    }
+
+    if (!radiusCircleRef.current) {
+      radiusCircleRef.current = new google.maps.Circle({
+        map,
+        center: markerPosition,
+        radius: radiusKm * 1000,
+        fillColor: "#06b6d4",
+        fillOpacity: 0.08,
+        strokeColor: "#06b6d4",
+        strokeWeight: 1,
+        clickable: false, // let clicks pass through to the map
+      });
+    } else {
+      radiusCircleRef.current.setCenter(markerPosition);
+      radiusCircleRef.current.setRadius(radiusKm * 1000);
+    }
+  }, [center, radiusKm, t]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !window.google?.maps) return;
+    const google = window.google;
+
+    const nextIds = new Set(resources.map((resource) => resource.$id));
+
+    markersRef.current.forEach((entry, resourceId) => {
+      if (!nextIds.has(resourceId)) {
+        entry.marker.map = null;
+        entry.listeners.forEach((listener) => listener.remove());
+        markersRef.current.delete(resourceId);
+      }
     });
-  }, [center, map]);
 
-  return null;
+    resources.forEach((resource) => {
+      const isActive = resource.$id === activeResourceId;
+      const link = getPublicPropertyRoute(
+        resource.slug || resource.$id,
+        language,
+      );
+
+      const rt = String(resource.resourceType || "").toLowerCase();
+      const typeBadgeColor = TYPE_BADGE_COLORS[rt] || {
+        bg: "#f1f5f9",
+        text: "#475569",
+      };
+      const typeLabelText = t(`client:common.enums.resourceType.${rt}`, rt);
+      const catLabelText = resource.category
+        ? t(
+            `client:common.enums.category.${resource.category}`,
+            resource.category,
+          )
+        : "";
+      const isFav = favoriteIds instanceof Set && favoriteIds.has(resource.$id);
+
+      const content = `
+        <div style="min-width:220px;max-width:260px;font-family:system-ui,sans-serif;background:#ffffff;border-radius:8px;padding:14px 14px 12px;position:relative;">
+          <button onclick="window.__iwClose()" style="position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;font-size:18px;line-height:1;color:#94a3b8;padding:0;" title="Cerrar">&times;</button>
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:7px;padding-right:24px;">
+            <span style="background:${typeBadgeColor.bg};color:${typeBadgeColor.text};border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.04em;">${escapeHtml(typeLabelText)}</span>
+            ${catLabelText ? `<span style="background:#f1f5f9;color:#475569;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:600;">${escapeHtml(catLabelText)}</span>` : ""}
+            ${resource.featured ? `<span style="background:#fef3c7;color:#92400e;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700;">&#9733; ${escapeHtml(t("client:badges.featured", "Destacado"))}</span>` : ""}
+            ${isFav ? `<span style="color:#e11d48;font-size:14px;line-height:1;" title="${escapeHtml(t("client:favorites.saved", "En tus favoritos"))}">&#9829;</span>` : ""}
+          </div>
+          <p style="margin:0 0 4px 0;font-size:13px;font-weight:700;color:#0f172a;line-height:1.3;">${escapeHtml(resource.title)}</p>
+          <p style="margin:0 0 2px 0;font-size:12px;color:#475569;">${escapeHtml(buildAddressLabel(resource) || t("client:search.unknownLocation"))}</p>
+          <p style="margin:0 0 10px 0;font-size:12px;color:#64748b;">${escapeHtml(formatDistance(resource.distanceKm, t))}</p>
+          <a href="${escapeHtml(link)}" style="display:inline-block;border-radius:8px;background:#0e7490;color:#ffffff;padding:5px 12px;font-size:12px;font-weight:600;text-decoration:none;letter-spacing:0.01em;">${escapeHtml(t("client:actions.viewDetails", "Ver detalles"))}</a>
+        </div>
+      `;
+
+      const priceText = formatCurrency(
+        resource.price,
+        resource.currency,
+        locale,
+      );
+
+      const existing = markersRef.current.get(resource.$id);
+      if (!existing) {
+        const el = document.createElement("div");
+        el.style.cssText = [
+          `background:${isActive ? "#22d3ee" : "#1e293b"}`,
+          `color:${darkMode ? "#e2e8f0" : isActive ? "#0f172a" : "#f8fafc"}`,
+          `border:2px solid ${isActive ? "#0891b2" : "#0f172a"}`,
+          "border-radius:12px",
+          "padding:3px 8px",
+          "font-size:11px",
+          "font-weight:700",
+          "white-space:nowrap",
+          "cursor:pointer",
+          "box-shadow:0 1px 4px rgba(0,0,0,0.3)",
+        ].join(";");
+        el.textContent = priceText;
+
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: { lat: resource.latitude, lng: resource.longitude },
+          title: resource.title,
+          content: el,
+        });
+
+        const handleClick = () => {
+          onActiveResourceChange(resource.$id);
+          infoWindowRef.current?.setContent(content);
+          infoWindowRef.current?.open({ map, anchor: marker });
+        };
+        const handleMouseover = () => {
+          onActiveResourceChange(resource.$id);
+        };
+
+        // AdvancedMarkerElement requires 'gmp-click'; mouseover is a DOM event on
+        // the content element.
+        const gmpClickListener = marker.addListener("gmp-click", handleClick);
+        el.addEventListener("mouseover", handleMouseover);
+
+        const listeners = [
+          gmpClickListener,
+          {
+            remove: () => el.removeEventListener("mouseover", handleMouseover),
+          },
+        ];
+
+        markersRef.current.set(resource.$id, {
+          marker,
+          el,
+          content,
+          listeners,
+        });
+      } else {
+        const el = existing.el;
+        el.style.background = isActive ? "#22d3ee" : "#1e293b";
+        el.style.color = darkMode
+          ? "#e2e8f0"
+          : isActive
+            ? "#0f172a"
+            : "#f8fafc";
+        el.style.borderColor = isActive ? "#0891b2" : "#0f172a";
+        el.textContent = priceText;
+        existing.content = content;
+      }
+    });
+  }, [
+    activeResourceId,
+    darkMode,
+    favoriteIds,
+    language,
+    locale,
+    onActiveResourceChange,
+    resources,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!activeResourceId) return;
+    const active = markersRef.current.get(activeResourceId);
+    if (!active || !mapRef.current || !infoWindowRef.current) return;
+
+    infoWindowRef.current.setContent(active.content);
+    infoWindowRef.current.open({
+      map: mapRef.current,
+      anchor: active.marker,
+    });
+  }, [activeResourceId]);
+
+  useEffect(() => {
+    const markersMap = markersRef.current;
+
+    return () => {
+      idleListenerRef.current?.remove();
+      mapClickListenerRef.current?.remove();
+      markersMap.forEach((entry) => {
+        entry.listeners.forEach((listener) => listener.remove());
+        entry.marker.map = null;
+      });
+      markersMap.clear();
+      if (userMarkerRef.current) userMarkerRef.current.map = null;
+      radiusCircleRef.current?.setMap(null);
+      infoWindowRef.current?.close();
+    };
+  }, []);
+
+  return (
+    <div
+      ref={mapNodeRef}
+      className="h-full w-full"
+      style={{ cursor: "crosshair" }}
+    />
+  );
 };
 const SidebarResourceCard = ({
   resource,
@@ -247,14 +531,14 @@ const SidebarResourceCard = ({
         <p className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-white">
           {resource.title}
         </p>
-        <p className="line-clamp-1 text-xs text-slate-500 dark:text-slate-400">
+        <p className="line-clamp-1 text-xs text-slate-500 dark:text-slate-300">
           {buildAddressLabel(resource) || t("client:search.unknownLocation")}
         </p>
         <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
             {categoryLabel}
           </span>
-          <span className="font-semibold text-slate-800 dark:text-slate-100">
+          <span className="font-bold text-slate-900 dark:text-white">
             {formatCurrency(resource.price, resource.currency, locale)}
           </span>
         </div>
@@ -269,22 +553,22 @@ const ResourceMapExplorer = ({
   initialFilters = {},
 }) => {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const isPageMode = mode === "page";
-  const locale =
-    String(i18n.resolvedLanguage || i18n.language || "es")
-      .toLowerCase()
-      .startsWith("en")
-      ? "en-US"
-      : "es-MX";
+  const locale = String(i18n.resolvedLanguage || i18n.language || "es")
+    .toLowerCase()
+    .startsWith("en")
+    ? "en-US"
+    : "es-MX";
   const language = i18n.resolvedLanguage || i18n.language || "es";
   const initialResourceType = String(initialFilters.resourceType || "").trim();
-  const initialCommercialMode = String(initialFilters.commercialMode || "").trim();
+  const initialCommercialMode = String(
+    initialFilters.commercialMode || "",
+  ).trim();
   const initialMaxPrice = String(initialFilters.maxPrice || "").trim();
 
   const [center, setCenter] = useState(DEFAULT_CENTER);
-  const [radiusKm, setRadiusKm] = useState(
-    isPageMode ? 20 : LANDING_DEFAULT_RADIUS_KM,
-  );
+  const [radiusKm, setRadiusKm] = useState(LANDING_DEFAULT_RADIUS_KM);
   const [resourceType, setResourceType] = useState(initialResourceType);
   const [commercialMode, setCommercialMode] = useState(initialCommercialMode);
   const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
@@ -303,9 +587,29 @@ const ResourceMapExplorer = ({
   const [activeResourceId, setActiveResourceId] = useState("");
 
   const [darkMode, setDarkMode] = useState(isDarkModeEnabled);
-  const [useFallbackTiles, setUseFallbackTiles] = useState(!HAS_MAPBOX_TOKEN);
+  const [mapLoadError, setMapLoadError] = useState("");
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+
+  useEffect(() => {
+    if (!user?.$id) {
+      setFavoriteIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    favoritesService
+      .listByUser(user.$id, { limit: 500 })
+      .then((docs) => {
+        if (!cancelled)
+          setFavoriteIds(new Set(docs.map((d) => String(d.resourceId || ""))));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.$id]);
 
   const requestedLocationRef = useRef(false);
+  const [repinning, setRepinning] = useState(false);
 
   const {
     results: placeResults,
@@ -336,6 +640,28 @@ const ResourceMapExplorer = ({
 
     return () => observer.disconnect();
   }, []);
+
+  const handleMapCenterChange = useCallback(
+    async ({ lat, lng }) => {
+      setCenter({ lat, lng });
+      setRepinning(true);
+      try {
+        const place = await reversePlace(lat, lng);
+        const label =
+          place?.formattedAddress || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        setQuery(label);
+        setSelectedLocationValue(label);
+        setLocationLabel(label);
+      } catch {
+        const label = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        setSelectedLocationValue(label);
+        setLocationLabel(label);
+      } finally {
+        setRepinning(false);
+      }
+    },
+    [reversePlace],
+  );
 
   const requestUserLocation = useCallback(
     (auto = false) => {
@@ -435,7 +761,9 @@ const ResourceMapExplorer = ({
 
       setCenter({ lat: place.lat, lng: place.lng });
       setQuery(formatted);
-      setSelectedLocationValue(`${place.lat}:${place.lng}:${place.formattedAddress}`);
+      setSelectedLocationValue(
+        `${place.lat}:${place.lng}:${place.formattedAddress}`,
+      );
       setLocationLabel(formatted);
       setLocationError("");
       clearResults();
@@ -599,14 +927,6 @@ const ResourceMapExplorer = ({
     [],
   );
 
-  const tileConfig = useFallbackTiles
-    ? TILE_LAYERS.fallback
-    : darkMode
-      ? TILE_LAYERS.dark
-      : TILE_LAYERS.light;
-
-  const tileOptions = useFallbackTiles ? FALLBACK_TILE_OPTIONS : TILE_OPTIONS;
-
   return (
     <section
       className={cn(
@@ -680,7 +1000,10 @@ const ResourceMapExplorer = ({
                 maxResults={8}
                 renderOption={(option) => (
                   <div className="flex items-start gap-2">
-                    <MapPin size={14} className="mt-0.5 shrink-0 text-cyan-600" />
+                    <MapPin
+                      size={14}
+                      className="mt-0.5 shrink-0 text-cyan-600"
+                    />
                     <span className="line-clamp-2">{option.label}</span>
                   </div>
                 )}
@@ -709,7 +1032,7 @@ const ResourceMapExplorer = ({
 
           {locationLabel && (
             <p className="text-xs text-slate-600 dark:text-slate-300">
-              {t("client:home.mapExplorer.activeLocation", "Ubicacion activa")}: {" "}
+              {t("client:home.mapExplorer.activeLocation", "Ubicacion activa")}:{" "}
               {locationLabel}
             </p>
           )}
@@ -761,7 +1084,10 @@ const ResourceMapExplorer = ({
 
                 <label className="flex flex-col gap-1">
                   <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    {t("client:home.mapExplorer.filters.commercialMode", "Modo")}
+                    {t(
+                      "client:home.mapExplorer.filters.commercialMode",
+                      "Modo",
+                    )}
                   </span>
                   <Select
                     value={commercialMode}
@@ -818,117 +1144,47 @@ const ResourceMapExplorer = ({
           )}
         >
           <div className="relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className={cn("h-[420px] sm:h-[500px]", isPageMode && "lg:h-[620px]")}>
-              <MapContainer
-                center={[center.lat, center.lng]}
-                zoom={DEFAULT_ZOOM}
-                scrollWheelZoom={true}
-                style={{ height: "100%", width: "100%", zIndex: 0 }}
-              >
-                <TileLayer
-                  attribution={tileConfig.attribution}
-                  url={tileConfig.url}
-                  tileSize={tileOptions.tileSize}
-                  zoomOffset={tileOptions.zoomOffset}
-                  maxZoom={tileOptions.maxZoom}
-                  eventHandlers={{
-                    tileerror: () => {
-                      setUseFallbackTiles(true);
-                    },
-                  }}
-                />
-
-                <MapCenterController center={center} />
-                <MapViewportEvents onBoundsChange={setBounds} />
-
-                <Circle
-                  center={[center.lat, center.lng]}
-                  radius={radiusKm * 1000}
-                  pathOptions={{
-                    color: "#06b6d4",
-                    fillColor: "#06b6d4",
-                    fillOpacity: 0.08,
-                    weight: 1,
-                  }}
-                />
-
-                <CircleMarker
-                  center={[center.lat, center.lng]}
-                  radius={7}
-                  pathOptions={{
-                    color: "#0f172a",
-                    fillColor: "#06b6d4",
-                    fillOpacity: 1,
-                    weight: 2,
-                  }}
-                >
-                  <Tooltip direction="bottom" offset={[0, 10]}>
-                    {t(
-                      "client:home.mapExplorer.currentLocation",
-                      "Tu ubicacion",
-                    )}
-                  </Tooltip>
-                </CircleMarker>
-                {resources.map((resource) => {
-                  const isActive = resource.$id === activeResourceId;
-                  const link = getPublicPropertyRoute(
-                    resource.slug || resource.$id,
-                    language,
-                  );
-
-                  return (
-                    <CircleMarker
-                      key={resource.$id}
-                      center={[resource.latitude, resource.longitude]}
-                      radius={isActive ? 8 : 7}
-                      pathOptions={{
-                        color: isActive ? "#0891b2" : "#0f172a",
-                        fillColor: isActive ? "#22d3ee" : "#1e293b",
-                        fillOpacity: 0.95,
-                        weight: isActive ? 2 : 1,
-                      }}
-                      eventHandlers={{
-                        click: () => setActiveResourceId(resource.$id),
-                        mouseover: () => setActiveResourceId(resource.$id),
-                      }}
-                    >
-                      <Tooltip
-                        permanent
-                        direction="top"
-                        offset={[0, -10]}
-                        className={cn(
-                          "resource-map-price-tooltip",
-                          isActive && "resource-map-price-tooltip--active",
-                        )}
-                      >
-                        {formatCurrency(resource.price, resource.currency, locale)}
-                      </Tooltip>
-
-                      <Popup>
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold">{resource.title}</p>
-                          <p className="text-xs text-slate-500">
-                            {buildAddressLabel(resource) ||
-                              t("client:search.unknownLocation")}
-                          </p>
-                          <p className="text-xs text-slate-600">
-                            {formatDistance(resource.distanceKm, t)}
-                          </p>
-                          <Link
-                            to={link}
-                            className="inline-flex rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white"
-                          >
-                            {t("client:actions.viewDetails", "Ver detalles")}
-                          </Link>
-                        </div>
-                      </Popup>
-                    </CircleMarker>
-                  );
-                })}
-              </MapContainer>
+            <div
+              className={cn(
+                "h-[420px] sm:h-[500px]",
+                isPageMode && "lg:h-[620px]",
+              )}
+            >
+              <GoogleResourceMap
+                center={center}
+                radiusKm={radiusKm}
+                resources={resources}
+                activeResourceId={activeResourceId}
+                favoriteIds={favoriteIds}
+                language={language}
+                locale={locale}
+                t={t}
+                darkMode={darkMode}
+                onActiveResourceChange={setActiveResourceId}
+                onBoundsChange={setBounds}
+                onLoadError={setMapLoadError}
+                onCenterChange={handleMapCenterChange}
+              />
             </div>
 
-            <div className="pointer-events-none absolute right-3 top-3 z-20 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow backdrop-blur dark:bg-slate-900/90 dark:text-slate-200">
+            {repinning && (
+              <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
+                <div className="flex items-center gap-2 rounded-xl bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 shadow backdrop-blur dark:bg-slate-900/90 dark:text-slate-200">
+                  <Loader2 size={13} className="animate-spin" />
+                  {t(
+                    "client:home.mapExplorer.locating",
+                    "Obteniendo ubicacion...",
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="pointer-events-none absolute bottom-10 left-1/2 z-20 -translate-x-1/2 rounded-xl bg-black/60 px-3 py-1.5 text-xs font-medium text-white shadow backdrop-blur">
+              {t(
+                "client:home.mapExplorer.clickToRepin",
+                "Clic en el mapa para mover el pin de busqueda",
+              )}
+            </div>
+            <div className="pointer-events-none absolute left-3 top-3 z-20 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow backdrop-blur dark:bg-slate-900/90 dark:text-slate-200">
               {loadingResources
                 ? t("client:home.mapExplorer.loading", "Buscando recursos...")
                 : t("client:home.mapExplorer.results", {
@@ -936,10 +1192,25 @@ const ResourceMapExplorer = ({
                     defaultValue: "{{count}} recursos en esta zona",
                   })}
             </div>
+            {mapLoadError ? (
+              <div className="border-t border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-900/10 dark:text-red-300">
+                {mapLoadError}
+              </div>
+            ) : null}
           </div>
 
-          <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+          <aside
+            className={cn(
+              "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900",
+              isPageMode && "flex flex-col",
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800",
+                isPageMode && "shrink-0",
+              )}
+            >
               <div>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {t(
@@ -959,7 +1230,7 @@ const ResourceMapExplorer = ({
             <div
               className={cn(
                 "space-y-2 overflow-y-auto p-3",
-                isPageMode ? "max-h-[560px]" : "max-h-[360px]",
+                isPageMode ? "flex-1" : "max-h-[360px]",
               )}
             >
               {loadingResources ? (
@@ -1000,4 +1271,3 @@ const ResourceMapExplorer = ({
 };
 
 export default ResourceMapExplorer;
-

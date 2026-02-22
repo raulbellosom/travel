@@ -151,7 +151,7 @@ FEATURE_VERBOSE_LOGS=false
 FEATURE_MARKETING_SITE=true
 
 GOOGLE_MAPS_API_KEY=
-MAPBOX_ACCESS_TOKEN=
+GOOGLE_MAPS_MAP_ID=
 GA_MEASUREMENT_ID=
 ```
 
@@ -214,6 +214,8 @@ Buenas practicas:
 - Scope minimo por function.
 - Rotacion de secrets cada 6 meses.
 - No exponer llaves de pago en frontend.
+- Restringir `GOOGLE_MAPS_API_KEY` por dominios permitidos (HTTP referrers).
+- Restringir `GOOGLE_MAPS_API_KEY` solo a Maps JavaScript API, Places API y Geocoding API.
 
 ---
 

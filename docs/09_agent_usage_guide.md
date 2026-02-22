@@ -320,7 +320,7 @@ Incluye toda la estructura según 06, sección 4.
 
 ```
 Necesito añadir Google Maps API para mostrar mapas en detalle de propiedad. Añade variables:
-- VITE_GOOGLE_MAPS_API_KEY (frontend)
+- GOOGLE_MAPS_API_KEY (frontend)
 Actualiza 08_env_reference.md, .env.example y src/env.js.
 ```
 

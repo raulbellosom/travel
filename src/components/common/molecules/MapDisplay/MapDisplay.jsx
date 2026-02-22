@@ -1,41 +1,14 @@
 /**
- * MapDisplay — Read-only Leaflet map with Mapbox tiles showing a property location.
- * Supports dark mode tiles. No user interaction enabled.
- *
- * Props:
- *   latitude   - (number|string) required
- *   longitude  - (number|string) required
- *   label      - optional popup text for the marker
- *   height     - CSS height string (default "280px")
- *   zoom       - initial zoom (default 15)
- *   className  - extra wrapper classes
+ * MapDisplay - read-only Google Map showing a resource location.
  */
-import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FALLBACK_TILE_OPTIONS,
-  HAS_MAPBOX_TOKEN,
-  TILE_LAYERS,
-  TILE_OPTIONS,
+  GOOGLE_DARK_MAP_STYLE,
+  GOOGLE_LIGHT_MAP_STYLE,
+  GOOGLE_MAPS_MAP_ID,
 } from "../../../../config/map.config";
+import { loadGoogleMaps } from "../../../../services/googleMaps.loader";
 
-/* Fix Leaflet default icons in bundlers */
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-/**
- * Detect if dark mode is active by checking the document root element.
- */
 const isDarkMode = () =>
   typeof document !== "undefined" &&
   document.documentElement.classList.contains("dark");
@@ -51,59 +24,123 @@ const MapDisplay = ({
   const lat = parseFloat(latitude);
   const lng = parseFloat(longitude);
   const [dark, setDark] = useState(isDarkMode);
-  const [useFallbackTiles, setUseFallbackTiles] = useState(!HAS_MAPBOX_TOKEN);
+
+  const mapNodeRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const infoWindowRef = useRef(null);
+  const markerClickListenerRef = useRef(null);
+
+  const center = useMemo(() => ({ lat, lng }), [lat, lng]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setDark(isDarkMode());
     });
+
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
+
     return () => observer.disconnect();
   }, []);
 
-  const center = useMemo(() => [lat, lng], [lat, lng]);
+  useEffect(() => {
+    let mounted = true;
 
-  if (isNaN(lat) || isNaN(lng)) return null;
+    const init = async () => {
+      if (Number.isNaN(lat) || Number.isNaN(lng) || !mapNodeRef.current) {
+        return;
+      }
 
-  const tileConfig = useFallbackTiles
-    ? TILE_LAYERS.fallback
-    : dark
-      ? TILE_LAYERS.dark
-      : TILE_LAYERS.light;
-  const tileOptions = useFallbackTiles ? FALLBACK_TILE_OPTIONS : TILE_OPTIONS;
+      const google = await loadGoogleMaps();
+      if (!mounted) return;
+
+      const mapOptions = {
+        center,
+        zoom,
+        disableDefaultUI: true,
+        zoomControl: true,
+        gestureHandling: "cooperative",
+        keyboardShortcuts: false,
+        clickableIcons: false,
+        mapId: GOOGLE_MAPS_MAP_ID || undefined,
+        // styles cannot be set together with mapId — cloud console controls styling
+        styles: GOOGLE_MAPS_MAP_ID
+          ? undefined
+          : dark
+            ? GOOGLE_DARK_MAP_STYLE
+            : GOOGLE_LIGHT_MAP_STYLE,
+      };
+
+      if (!mapRef.current) {
+        mapRef.current = new google.maps.Map(mapNodeRef.current, mapOptions);
+      } else {
+        mapRef.current.setOptions(mapOptions);
+      }
+
+      if (!markerRef.current) {
+        markerRef.current = new google.maps.marker.AdvancedMarkerElement({
+          map: mapRef.current,
+          position: center,
+        });
+      } else {
+        markerRef.current.map = mapRef.current;
+        markerRef.current.position = center;
+      }
+
+      if (label) {
+        if (!infoWindowRef.current) {
+          infoWindowRef.current = new google.maps.InfoWindow({
+            content: label,
+          });
+        } else {
+          infoWindowRef.current.setContent(label);
+        }
+
+        markerClickListenerRef.current?.remove();
+        markerClickListenerRef.current = markerRef.current.addListener(
+          "gmp-click",
+          () => {
+            infoWindowRef.current?.open({
+              map: mapRef.current,
+              anchor: markerRef.current,
+            });
+          },
+        );
+      }
+
+      mapRef.current.setCenter(center);
+    };
+
+    init().catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
+  }, [center, dark, label, lat, lng, zoom]);
+
+  useEffect(() => {
+    return () => {
+      if (markerRef.current) {
+        markerRef.current.map = null;
+      }
+      markerClickListenerRef.current?.remove();
+      if (infoWindowRef.current) {
+        infoWindowRef.current.close();
+      }
+    };
+  }, []);
+
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
 
   return (
     <div
       className={`overflow-hidden rounded-2xl ${className}`}
       style={{ height }}
     >
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        scrollWheelZoom={false}
-        dragging={false}
-        doubleClickZoom={false}
-        zoomControl={false}
-        attributionControl
-        style={{ height: "100%", width: "100%", zIndex: 0 }}
-      >
-        <TileLayer
-          attribution={tileConfig.attribution}
-          url={tileConfig.url}
-          eventHandlers={{
-            tileerror: () => {
-              setUseFallbackTiles(true);
-            },
-          }}
-          tileSize={tileOptions.tileSize}
-          zoomOffset={tileOptions.zoomOffset}
-          maxZoom={tileOptions.maxZoom}
-        />
-        <Marker position={center}>{label && <Popup>{label}</Popup>}</Marker>
-      </MapContainer>
+      <div ref={mapNodeRef} className="h-full w-full" />
     </div>
   );
 };
