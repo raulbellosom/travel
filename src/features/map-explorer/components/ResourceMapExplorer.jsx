@@ -817,7 +817,7 @@ const ResourceMapExplorer = ({
               : "lg:grid-cols-[minmax(0,1fr)_19rem]",
           )}
         >
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="relative isolate overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className={cn("h-[420px] sm:h-[500px]", isPageMode && "lg:h-[620px]")}>
               <MapContainer
                 center={[center.lat, center.lng]}
@@ -928,7 +928,7 @@ const ResourceMapExplorer = ({
               </MapContainer>
             </div>
 
-            <div className="pointer-events-none absolute right-3 top-3 z-[1000] rounded-xl bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow backdrop-blur dark:bg-slate-900/90 dark:text-slate-200">
+            <div className="pointer-events-none absolute right-3 top-3 z-20 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow backdrop-blur dark:bg-slate-900/90 dark:text-slate-200">
               {loadingResources
                 ? t("client:home.mapExplorer.loading", "Buscando recursos...")
                 : t("client:home.mapExplorer.results", {
