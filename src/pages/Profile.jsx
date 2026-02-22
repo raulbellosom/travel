@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -242,6 +243,7 @@ const Profile = ({ mode = "client" }) => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [avatarMenuPos, setAvatarMenuPos] = useState({ top: 0, left: 0 });
 
   const avatarMenuRef = useRef(null);
   const avatarDropdownRef = useRef(null);
@@ -531,7 +533,11 @@ const Profile = ({ mode = "client" }) => {
       <button
         ref={avatarMenuRef}
         type="button"
-        onClick={() => setShowAvatarMenu((v) => !v)}
+        onClick={() => {
+          const rect = avatarMenuRef.current?.getBoundingClientRect();
+          if (rect) setAvatarMenuPos({ top: rect.bottom + 8, left: rect.left });
+          setShowAvatarMenu((v) => !v);
+        }}
         disabled={avatarBusy}
         className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-cyan-500 text-white shadow-md transition hover:bg-cyan-400 disabled:opacity-60 dark:border-slate-800"
         aria-label="Opciones de avatar"
@@ -539,36 +545,39 @@ const Profile = ({ mode = "client" }) => {
         <Camera size={13} />
       </button>
 
-      {showAvatarMenu && (
-        <div
-          ref={avatarDropdownRef}
-          className="absolute left-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800"
-        >
-          <button
-            type="button"
-            onClick={() => {
-              fileInputRef.current?.click();
-              setShowAvatarMenu(false);
-            }}
-            disabled={avatarBusy}
-            className="flex w-full items-center gap-2.5 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
+      {showAvatarMenu &&
+        createPortal(
+          <div
+            ref={avatarDropdownRef}
+            style={{ top: avatarMenuPos.top, left: avatarMenuPos.left }}
+            className="fixed z-9999 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800"
           >
-            <Camera size={15} />
-            {t("profilePage.actions.uploadAvatar")}
-          </button>
-          {user?.avatarUrl && (
             <button
               type="button"
-              onClick={onRemoveAvatar}
+              onClick={() => {
+                fileInputRef.current?.click();
+                setShowAvatarMenu(false);
+              }}
               disabled={avatarBusy}
-              className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50 dark:border-slate-700/60 dark:text-rose-400 dark:hover:bg-rose-950/30"
+              className="flex w-full items-center gap-2.5 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
             >
-              <Trash2 size={15} />
-              {t("profilePage.actions.removeAvatar")}
+              <Camera size={15} />
+              {t("profilePage.actions.uploadAvatar")}
             </button>
-          )}
-        </div>
-      )}
+            {user?.avatarUrl && (
+              <button
+                type="button"
+                onClick={onRemoveAvatar}
+                disabled={avatarBusy}
+                className="flex w-full items-center gap-2.5 border-t border-slate-100 px-4 py-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50 dark:border-slate-700/60 dark:text-rose-400 dark:hover:bg-rose-950/30"
+              >
+                <Trash2 size={15} />
+                {t("profilePage.actions.removeAvatar")}
+              </button>
+            )}
+          </div>,
+          document.body,
+        )}
 
       <input
         ref={fileInputRef}
