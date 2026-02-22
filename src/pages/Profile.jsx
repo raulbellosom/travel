@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Camera,
@@ -160,7 +160,68 @@ const Profile = ({ mode = "client" }) => {
     updatePreferences,
     updateAvatar,
     removeAvatar,
+    requestPasswordRecovery,
   } = useAuth();
+
+  const navigate = useNavigate();
+
+  const [sendingReset, setSendingReset] = useState(false);
+
+  const handleRequestPasswordReset = async () => {
+    const email = user?.email || profile?.email;
+    if (!email) {
+      navigate("/recuperar-password");
+      return;
+    }
+    setSendingReset(true);
+    try {
+      await requestPasswordRecovery(email);
+      showToast({
+        type: "success",
+        title: t("profilePage.security.resetSentTitle", "Enlace enviado"),
+        message: t(
+          "profilePage.security.resetSentMessage",
+          "Revisa tu correo {{email}} para restablecer tu contraseña.",
+          { email },
+        ),
+      });
+    } catch (err) {
+      // cooldown (HTTP 429 from the function)
+      if (
+        err?.code === 429 ||
+        String(err?.message || "")
+          .toLowerCase()
+          .includes("espera")
+      ) {
+        showToast({
+          type: "warning",
+          title: t(
+            "profilePage.security.resetCooldownTitle",
+            "Espera un momento",
+          ),
+          message:
+            err.message ||
+            t(
+              "profilePage.security.resetCooldown",
+              "Ya se envió un enlace recientemente.",
+            ),
+        });
+      } else {
+        showToast({
+          type: "error",
+          title: t(
+            "profilePage.security.resetErrorTitle",
+            "Error al enviar enlace",
+          ),
+          message:
+            err.message ||
+            t("common.errors.unexpected", "Ocurrió un error inesperado."),
+        });
+      }
+    } finally {
+      setSendingReset(false);
+    }
+  };
 
   const [profileForm, setProfileForm] = useState(() =>
     buildProfileFormFromSources({ profile: null, user: null }),
@@ -877,13 +938,21 @@ const Profile = ({ mode = "client" }) => {
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
           {t("profilePage.security.subtitle")}
         </p>
-        <Link
-          to="/recuperar-password"
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-200 dark:hover:bg-slate-700"
+        <button
+          type="button"
+          disabled={sendingReset}
+          onClick={handleRequestPasswordReset}
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800/50 dark:text-slate-200 dark:hover:bg-slate-700"
         >
-          <KeyRound size={15} />
-          {t("profilePage.security.action")}
-        </Link>
+          {sendingReset ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <KeyRound size={15} />
+          )}
+          {sendingReset
+            ? t("profilePage.security.sending", "Enviando...")
+            : t("profilePage.security.action")}
+        </button>
       </div>
     </div>
   );

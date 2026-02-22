@@ -1,9 +1,14 @@
 ﻿import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
+import {
+  getPasswordChecks,
+  getPasswordStrengthScore,
+  isStrongPassword,
+} from "../utils/validation";
 
 const ResetPassword = () => {
   const { t } = useTranslation();
@@ -19,6 +24,14 @@ const ResetPassword = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
+  const passwordScore = useMemo(
+    () => getPasswordStrengthScore(password),
+    [password],
+  );
+  const passwordsMatch =
+    confirmPassword.length === 0 || password === confirmPassword;
+
   const canSubmit = useMemo(() => Boolean(token), [token]);
 
   const onSubmit = async (event) => {
@@ -26,8 +39,13 @@ const ResetPassword = () => {
     setError("");
     setSuccess("");
 
-    if (password.length < 8) {
-      setError(t("resetPasswordPage.errors.passwordLength"));
+    if (!isStrongPassword(password)) {
+      setError(
+        t(
+          "resetPasswordPage.errors.passwordWeak",
+          t("registerPage.errors.passwordWeak"),
+        ),
+      );
       return;
     }
 
@@ -81,7 +99,9 @@ const ResetPassword = () => {
 
       <form className="space-y-4" onSubmit={onSubmit}>
         <label className="grid gap-1 text-sm">
-          <span>{t("resetPasswordPage.fields.password")}</span>
+          <span className="inline-flex items-center gap-2">
+            <Lock size={14} /> {t("resetPasswordPage.fields.password")}
+          </span>
           <div className="relative">
             <input
               required
@@ -102,10 +122,55 @@ const ResetPassword = () => {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+
+          {/* Strength meter — only shown once user starts typing */}
+          {password.length > 0 && (
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-1">
+                {[1, 2, 3, 4].map((step) => (
+                  <span
+                    key={step}
+                    className={`h-1.5 rounded-full ${
+                      passwordScore >= step
+                        ? passwordScore <= 2
+                          ? "bg-amber-500"
+                          : "bg-emerald-500"
+                        : "bg-slate-200 dark:bg-slate-700"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {t(`passwordStrength.levels.${passwordScore}`)}
+              </p>
+              <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                <li>
+                  {passwordChecks.hasMinLength ? "✓" : "○"}{" "}
+                  {t("passwordStrength.rules.minLength")}
+                </li>
+                <li>
+                  {passwordChecks.hasLower && passwordChecks.hasUpper
+                    ? "✓"
+                    : "○"}{" "}
+                  {t("passwordStrength.rules.upperLower")}
+                </li>
+                <li>
+                  {passwordChecks.hasNumber ? "✓" : "○"}{" "}
+                  {t("passwordStrength.rules.number")}
+                </li>
+                <li>
+                  {passwordChecks.hasSymbol ? "✓" : "○"}{" "}
+                  {t("passwordStrength.rules.symbol")}
+                </li>
+              </ul>
+            </div>
+          )}
         </label>
 
         <label className="grid gap-1 text-sm">
-          <span>{t("resetPasswordPage.fields.confirmPassword")}</span>
+          <span className="inline-flex items-center gap-2">
+            <Lock size={14} /> {t("resetPasswordPage.fields.confirmPassword")}
+          </span>
           <div className="relative">
             <input
               required
@@ -128,6 +193,11 @@ const ResetPassword = () => {
               {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          {!passwordsMatch && (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {t("resetPasswordPage.errors.passwordMismatch")}
+            </p>
+          )}
         </label>
 
         {error ? (

@@ -758,6 +758,7 @@
     },
     "errors": {
       "passwordLength": "La contrasena debe tener al menos 8 caracteres.",
+      "passwordWeak": "La contrasena no es suficientemente segura.",
       "passwordMismatch": "Las contrasenas no coinciden.",
       "update": "No se pudo cambiar la contrasena."
     }

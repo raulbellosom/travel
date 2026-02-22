@@ -758,6 +758,7 @@
     },
     "errors": {
       "passwordLength": "Password must be at least 8 characters.",
+      "passwordWeak": "Password is not strong enough.",
       "passwordMismatch": "Passwords do not match.",
       "update": "Could not update password."
     }
