@@ -19,6 +19,7 @@ const Combobox = ({
   options = [],
   value = "",
   onChange,
+  onInputChange,
   placeholder = "",
   noResultsText = "",
   required = false,
@@ -203,6 +204,7 @@ const Combobox = ({
     const query = event.target.value;
     setIsUserTyping(true);
     setInputValue(query);
+    onInputChange?.(query);
 
     if (value) {
       onChange?.("");

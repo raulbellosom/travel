@@ -39,15 +39,6 @@
     "view": "View"
   },
   "articles": {
-    "badge": "Inmobo Blog",
-    "title": "Real Estate News and Tips",
-    "viewAll": "View all articles",
-    "readMore": "Read article",
-    "categories": {
-      "buying": "Buying",
-      "investment": "Investment",
-      "selling": "Selling"
-    },
     "1": {
       "title": "Guide to buying your first home",
       "excerpt": "Discover essential steps and financial tips to make your dream come true without stress."
@@ -59,6 +50,15 @@
     "3": {
       "title": "Tips to sell your property faster",
       "excerpt": "Small improvements and staging strategies that increase your home's value and appeal."
+    },
+    "badge": "Inmobo Blog",
+    "title": "Real Estate News and Tips",
+    "viewAll": "View all articles",
+    "readMore": "Read article",
+    "categories": {
+      "buying": "Buying",
+      "investment": "Investment",
+      "selling": "Selling"
     }
   },
   "search": {
@@ -171,6 +171,50 @@
     },
     "amenities": {
       "badge": "AMENITIES"
+    },
+    "mapExplorer": {
+      "badge": "MAP & LOCATION",
+      "title": "Find resources near you",
+      "subtitle": "See published resources with prices directly on the map and compare by area.",
+      "pageTitle": "Explore resources on interactive map",
+      "pageSubtitle": "Search by street, city or area and apply filters by type, mode and price.",
+      "locationPlaceholder": "Search street, neighborhood, city or country",
+      "searchingLocations": "Searching locations...",
+      "activeLocation": "Active location",
+      "currentLocation": "Your location",
+      "loading": "Searching resources...",
+      "results": "{{count}} resources in this area",
+      "sidebarTitle": "Resources on screen",
+      "sidebarCount": "{{count}} visible",
+      "empty": "No resources found for these filters in the current radius.",
+      "distanceMeters": "{{count}} m",
+      "distanceKm": "{{count}} km",
+      "actions": {
+        "openExplorer": "Open full explorer",
+        "useMyLocation": "Use my location"
+      },
+      "filters": {
+        "radius": "Radius",
+        "resourceType": "Resource type",
+        "commercialMode": "Commercial mode",
+        "maxPrice": "Max price",
+        "anyPrice": "No limit",
+        "onlyFeatured": "Featured only",
+        "allResourceTypes": "All",
+        "allModes": "All"
+      },
+      "geo": {
+        "notSupported": "Your browser does not support geolocation.",
+        "denied": "Enable location permissions to explore nearby resources.",
+        "error": "We could not get your current location."
+      },
+      "errors": {
+        "load": "We could not load resources for this area."
+      },
+      "seo": {
+        "title": "Explore resources on map | Inmobo",
+        "description": "Explore nearby resources by location, type and price on an interactive map."
+      }
     }
   },
   "common": {
@@ -370,8 +414,17 @@
       "experiences": "Experiences",
       "experiencesDesc": "Tours, workshops, adventures and wellness",
       "venues": "Venues",
-      "venuesDesc": "Event halls, coworking and studios"
-    }
+      "venuesDesc": "Event halls, coworking and studios",
+      "mapExploreNearby": "Near me",
+      "mapExploreNearbyDesc": "Explore nearby resources with live map prices",
+      "mapExploreByArea": "Search by area",
+      "mapExploreByAreaDesc": "Search streets, neighborhoods or cities from the map",
+      "mapExploreHomes": "Homes nearby",
+      "mapExploreHomesDesc": "Properties and stays around your selected location",
+      "mapExploreVehicles": "Vehicles nearby",
+      "mapExploreVehiclesDesc": "Cars and mobility options available around your area"
+    },
+    "mapExplore": "Explore map"
   },
   "theme": {
     "light": "Light",

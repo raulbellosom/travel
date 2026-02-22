@@ -338,7 +338,7 @@ const PublicNavbar = () => {
                             const Icon = item.icon;
                             return (
                               <Link
-                                key={item.to}
+                                key={`${item.to}-${item.label}`}
                                 to={item.to}
                                 className="group/item flex items-start gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-cyan-50 dark:hover:bg-slate-700"
                               >
@@ -426,7 +426,7 @@ const PublicNavbar = () => {
                               const Icon = item.icon;
                               return (
                                 <Link
-                                  key={item.to}
+                                  key={`${item.to}-${item.label}`}
                                   to={item.to}
                                   className="group/item flex items-start gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-cyan-50 dark:hover:bg-slate-700"
                                 >
@@ -700,7 +700,7 @@ const PublicNavbar = () => {
                         const Icon = item.icon;
                         return (
                           <Link
-                            key={item.to}
+                            key={`${item.to}-${item.label}`}
                             to={item.to}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-slate-600 transition-colors hover:bg-cyan-50 dark:text-slate-300 dark:hover:bg-slate-800"

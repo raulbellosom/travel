@@ -10,6 +10,7 @@ import CategoriesSection from "../components/common/organisms/CategoriesSection/
 import ArticlesSection from "../components/common/organisms/ArticlesSection/ArticlesSection";
 import PropertyGridSection from "../components/common/organisms/PropertyGridSection/PropertyGridSection";
 import LandingTemplate from "../components/common/templates/LandingTemplate/LandingTemplate";
+import ResourceMapExplorer from "../features/map-explorer/components/ResourceMapExplorer";
 
 const Home = () => {
   const { t } = useTranslation();
@@ -32,6 +33,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <HomeHeroCarousel />
+      <ResourceMapExplorer />
       <CategoriesSection />
       <FeaturedPropertiesSection />
 

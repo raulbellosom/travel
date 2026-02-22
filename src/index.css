@@ -507,6 +507,45 @@ input[type="reset"]:disabled {
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
+.resource-map-price-tooltip {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.resource-map-price-tooltip::before {
+  display: none !important;
+}
+
+.resource-map-price-tooltip .leaflet-tooltip-content {
+  margin: 0 !important;
+  border-radius: 999px;
+  background: rgb(15 23 42);
+  color: #fff;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 18px rgb(15 23 42 / 0.28);
+}
+
+.resource-map-price-tooltip--active .leaflet-tooltip-content {
+  background: rgb(34 211 238);
+  color: rgb(8 47 73);
+}
+
+.dark .resource-map-price-tooltip .leaflet-tooltip-content {
+  background: rgb(226 232 240);
+  color: rgb(15 23 42);
+  box-shadow: 0 8px 18px rgb(15 23 42 / 0.45);
+}
+
+.dark .resource-map-price-tooltip--active .leaflet-tooltip-content {
+  background: rgb(34 211 238);
+  color: rgb(8 47 73);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .error-orb,
   .error-card-enter,

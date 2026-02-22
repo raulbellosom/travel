@@ -39,15 +39,6 @@
     "view": "Ver"
   },
   "articles": {
-    "badge": "Blog Inmobo",
-    "title": "Noticias y Consejos Inmobiliarios",
-    "viewAll": "Ver todos los articulos",
-    "readMore": "Leer articulo",
-    "categories": {
-      "buying": "Comprar",
-      "investment": "Inversion",
-      "selling": "Vender"
-    },
     "1": {
       "title": "Guia para comprar tu primera casa",
       "excerpt": "Descubre los pasos esenciales y consejos financieros para hacer tu sueno realidad sin estres."
@@ -59,6 +50,15 @@
     "3": {
       "title": "Tips para vender tu propiedad mas rapido",
       "excerpt": "Pequenas mejoras y estrategias de staging que aumentan el valor y atractivo de tu hogar."
+    },
+    "badge": "Blog Inmobo",
+    "title": "Noticias y Consejos Inmobiliarios",
+    "viewAll": "Ver todos los articulos",
+    "readMore": "Leer articulo",
+    "categories": {
+      "buying": "Comprar",
+      "investment": "Inversion",
+      "selling": "Vender"
     }
   },
   "search": {
@@ -171,6 +171,50 @@
     },
     "amenities": {
       "badge": "AMENIDADES"
+    },
+    "mapExplorer": {
+      "badge": "MAPA Y UBICACION",
+      "title": "Encuentra recursos cerca de ti",
+      "subtitle": "Mostramos recursos con precio en el mapa para comparar por zona rapidamente.",
+      "pageTitle": "Explora recursos en mapa interactivo",
+      "pageSubtitle": "Busca por calle, ciudad o zona y aplica filtros por tipo, modo y precio.",
+      "locationPlaceholder": "Buscar calle, colonia, ciudad o pais",
+      "searchingLocations": "Buscando ubicaciones...",
+      "activeLocation": "Ubicacion activa",
+      "currentLocation": "Tu ubicacion",
+      "loading": "Buscando recursos...",
+      "results": "{{count}} recursos en esta zona",
+      "sidebarTitle": "Recursos en pantalla",
+      "sidebarCount": "{{count}} visibles",
+      "empty": "No encontramos recursos con estos filtros en el radio actual.",
+      "distanceMeters": "{{count}} m",
+      "distanceKm": "{{count}} km",
+      "actions": {
+        "openExplorer": "Abrir explorador completo",
+        "useMyLocation": "Usar mi ubicacion"
+      },
+      "filters": {
+        "radius": "Radio",
+        "resourceType": "Tipo de recurso",
+        "commercialMode": "Modo comercial",
+        "maxPrice": "Precio maximo",
+        "anyPrice": "Sin limite",
+        "onlyFeatured": "Solo destacados",
+        "allResourceTypes": "Todos",
+        "allModes": "Todos"
+      },
+      "geo": {
+        "notSupported": "Tu navegador no soporta geolocalizacion.",
+        "denied": "Activa permisos de ubicacion para explorar recursos cercanos.",
+        "error": "No pudimos obtener tu ubicacion actual."
+      },
+      "errors": {
+        "load": "No pudimos cargar recursos para esta zona."
+      },
+      "seo": {
+        "title": "Explorar recursos en mapa | Inmobo",
+        "description": "Explora recursos cercanos por ubicacion, tipo y precio en un mapa interactivo."
+      }
     }
   },
   "common": {
@@ -370,8 +414,17 @@
       "experiences": "Experiencias",
       "experiencesDesc": "Tours, talleres, aventuras y bienestar",
       "venues": "Salones",
-      "venuesDesc": "Salones de eventos, coworking y estudios"
-    }
+      "venuesDesc": "Salones de eventos, coworking y estudios",
+      "mapExploreNearby": "Cerca de mi",
+      "mapExploreNearbyDesc": "Explora recursos cercanos con precios en el mapa",
+      "mapExploreByArea": "Buscar por zona",
+      "mapExploreByAreaDesc": "Busca calles, colonias o ciudades desde el mapa",
+      "mapExploreHomes": "Casas cercanas",
+      "mapExploreHomesDesc": "Propiedades y estancias alrededor de tu ubicacion",
+      "mapExploreVehicles": "Vehiculos cercanos",
+      "mapExploreVehiclesDesc": "Autos y movilidad disponibles en tu zona"
+    },
+    "mapExplore": "Explorar mapa"
   },
   "theme": {
     "light": "Claro",

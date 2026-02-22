@@ -34,6 +34,7 @@ import { ChatProvider } from "../contexts/ChatContext";
 
 const Home = lazy(() => import("../pages/Home"));
 const SearchPage = lazy(() => import("../pages/SearchPage"));
+const MapExplorePage = lazy(() => import("../pages/MapExplorePage"));
 const PropertyDetail = lazy(() => import("../pages/PropertyDetail"));
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
@@ -137,6 +138,8 @@ const AppRoutes = () => {
                   )}
                   <Route path="buscar" element={<SearchPage />} />
                   <Route path="search" element={<SearchPage />} />
+                  <Route path="explorar-mapa" element={<MapExplorePage />} />
+                  <Route path="map-explore" element={<MapExplorePage />} />
                   <Route
                     path="propiedades/:slug"
                     element={<PropertyDetail />}

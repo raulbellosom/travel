@@ -40,6 +40,48 @@ const catLabel = (t, slug, fallback) =>
 
 export const buildPublicNavLinks = (t) => [
   {
+    name: t("client:nav.mapExplore", "Explore Map"),
+    path: "/explorar-mapa",
+    items: [
+      {
+        icon: Map,
+        label: t("client:nav.dropdown.mapExploreNearby", "Near me"),
+        desc: t(
+          "client:nav.dropdown.mapExploreNearbyDesc",
+          "Explore nearby resources with map and live prices",
+        ),
+        to: "/explorar-mapa",
+      },
+      {
+        icon: Compass,
+        label: t("client:nav.dropdown.mapExploreByArea", "By area"),
+        desc: t(
+          "client:nav.dropdown.mapExploreByAreaDesc",
+          "Search streets, neighborhoods or cities from the map",
+        ),
+        to: "/explorar-mapa",
+      },
+      {
+        icon: HomeIcon,
+        label: t("client:nav.dropdown.mapExploreHomes", "Homes nearby"),
+        desc: t(
+          "client:nav.dropdown.mapExploreHomesDesc",
+          "Properties and stays around your selected location",
+        ),
+        to: "/explorar-mapa?resourceType=property",
+      },
+      {
+        icon: Car,
+        label: t("client:nav.dropdown.mapExploreVehicles", "Vehicles nearby"),
+        desc: t(
+          "client:nav.dropdown.mapExploreVehiclesDesc",
+          "Cars, bikes and more available around your area",
+        ),
+        to: "/explorar-mapa?resourceType=vehicle",
+      },
+    ],
+  },
+  {
     name: t("client:nav.realEstate", "Real Estate"),
     path: "/buscar?resourceType=property&commercialMode=sale",
     items: [
