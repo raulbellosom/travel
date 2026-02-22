@@ -57,12 +57,42 @@ import {
 /* ─────────────────────────── constants ─────────────────────────── */
 
 const RESOURCE_TYPE_OPTIONS = [
-  { value: "", labelKey: "search.allResourceTypes", fallback: "All resources", icon: LayoutGrid },
-  { value: "property", labelKey: "common.enums.resourceType.property", fallback: "Property", icon: Home },
-  { value: "vehicle", labelKey: "common.enums.resourceType.vehicle", fallback: "Vehicle", icon: Car },
-  { value: "service", labelKey: "common.enums.resourceType.service", fallback: "Service", icon: Wrench },
-  { value: "experience", labelKey: "common.enums.resourceType.experience", fallback: "Experience", icon: Compass },
-  { value: "venue", labelKey: "common.enums.resourceType.venue", fallback: "Venue", icon: CalendarHeart },
+  {
+    value: "",
+    labelKey: "search.allResourceTypes",
+    fallback: "All resources",
+    icon: LayoutGrid,
+  },
+  {
+    value: "property",
+    labelKey: "common.enums.resourceType.property",
+    fallback: "Property",
+    icon: Home,
+  },
+  {
+    value: "vehicle",
+    labelKey: "common.enums.resourceType.vehicle",
+    fallback: "Vehicle",
+    icon: Car,
+  },
+  {
+    value: "service",
+    labelKey: "common.enums.resourceType.service",
+    fallback: "Service",
+    icon: Wrench,
+  },
+  {
+    value: "experience",
+    labelKey: "common.enums.resourceType.experience",
+    fallback: "Experience",
+    icon: Compass,
+  },
+  {
+    value: "venue",
+    labelKey: "common.enums.resourceType.venue",
+    fallback: "Venue",
+    icon: CalendarHeart,
+  },
 ];
 
 const OPERATION_OPTIONS = [
@@ -124,7 +154,12 @@ const buildCategoryOptions = (resourceType, t) => {
     : Object.values(CATEGORY_BY_RESOURCE_TYPE).flat();
 
   const options = [
-    { value: "", labelKey: "search.allCategories", fallback: t("client:search.allCategories", "All categories"), icon: LayoutGrid },
+    {
+      value: "",
+      labelKey: "search.allCategories",
+      fallback: t("client:search.allCategories", "All categories"),
+      icon: LayoutGrid,
+    },
   ];
 
   const seen = new Set();
@@ -145,9 +180,7 @@ const buildCommercialModeOptions = (resourceType, category, t) => {
   const modes = resourceType
     ? getAllowedCommercialModes(resourceType, category)
     : Array.from(
-        new Set(
-          Object.values(COMMERCIAL_MODE_BY_RESOURCE_TYPE).flat(),
-        ),
+        new Set(Object.values(COMMERCIAL_MODE_BY_RESOURCE_TYPE).flat()),
       );
   return [
     {
@@ -167,7 +200,6 @@ const BEDROOM_OPTIONS = [
   { value: "2", label: "2+" },
   { value: "3", label: "3+" },
   { value: "4", label: "4+" },
-  { value: "5", label: "5+" },
 ];
 
 const BATHROOM_OPTIONS = [
@@ -437,7 +469,10 @@ const SearchPage = () => {
     if (filters.category)
       chips.push({
         key: "category",
-        label: t(`client:common.enums.category.${filters.category}`, filters.category),
+        label: t(
+          `client:common.enums.category.${filters.category}`,
+          filters.category,
+        ),
       });
     if (filters.city) chips.push({ key: "city", label: filters.city });
     if (filters.state) chips.push({ key: "state", label: filters.state });
@@ -509,7 +544,8 @@ const SearchPage = () => {
   }));
 
   // Determine if property-specific filters should show
-  const showPropertyFilters = !filters.resourceType || filters.resourceType === "property";
+  const showPropertyFilters =
+    !filters.resourceType || filters.resourceType === "property";
 
   /* ──────────────────── FILTER SIDEBAR (shared) ──────────────────── */
 
@@ -556,7 +592,9 @@ const SearchPage = () => {
           )
             .map((option) => option.value)
             .filter(Boolean);
-          const nextCommercialMode = allowedModes.includes(filters.commercialMode)
+          const nextCommercialMode = allowedModes.includes(
+            filters.commercialMode,
+          )
             ? filters.commercialMode
             : "";
           updateFilters({
@@ -621,106 +659,106 @@ const SearchPage = () => {
 
       {/* Recámaras — only for properties */}
       {showPropertyFilters && (
-      <div className="space-y-2">
-        <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          <BedDouble size={13} className="mr-1 inline" />
-          {t("client:search.bedrooms")}
-        </label>
-        <div className="flex gap-1.5">
-          {BEDROOM_OPTIONS.map((o) => {
-            const isActive = filters.bedrooms === o.value;
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() =>
-                  updateFilter("bedrooms", isActive ? "" : o.value)
-                }
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                  isActive
-                    ? "bg-cyan-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
-                }`}
-              >
-                {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
-              </button>
-            );
-          })}
+        <div className="space-y-2">
+          <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <BedDouble size={13} className="mr-1 inline" />
+            {t("client:search.bedrooms")}
+          </label>
+          <div className="flex gap-1.5">
+            {BEDROOM_OPTIONS.map((o) => {
+              const isActive = filters.bedrooms === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() =>
+                    updateFilter("bedrooms", isActive ? "" : o.value)
+                  }
+                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+                    isActive
+                      ? "bg-cyan-600 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
+                  }`}
+                >
+                  {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Baños — only for properties */}
       {showPropertyFilters && (
-      <div className="space-y-2">
-        <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          <Bath size={13} className="mr-1 inline" />
-          {t("client:search.bathrooms")}
-        </label>
-        <div className="flex gap-1.5">
-          {BATHROOM_OPTIONS.map((o) => {
-            const isActive = filters.bathrooms === o.value;
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() =>
-                  updateFilter("bathrooms", isActive ? "" : o.value)
-                }
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                  isActive
-                    ? "bg-cyan-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
-                }`}
-              >
-                {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
-              </button>
-            );
-          })}
+        <div className="space-y-2">
+          <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <Bath size={13} className="mr-1 inline" />
+            {t("client:search.bathrooms")}
+          </label>
+          <div className="flex gap-1.5">
+            {BATHROOM_OPTIONS.map((o) => {
+              const isActive = filters.bathrooms === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() =>
+                    updateFilter("bathrooms", isActive ? "" : o.value)
+                  }
+                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+                    isActive
+                      ? "bg-cyan-600 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
+                  }`}
+                >
+                  {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Estacionamiento — only for properties/venues */}
       {(showPropertyFilters || filters.resourceType === "venue") && (
-      <div className="space-y-2">
-        <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          <Car size={13} className="mr-1 inline" />
-          {t("client:search.parking")}
-        </label>
-        <div className="flex gap-1.5">
-          {PARKING_OPTIONS.map((o) => {
-            const isActive = filters.parkingSpaces === o.value;
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() =>
-                  updateFilter("parkingSpaces", isActive ? "" : o.value)
-                }
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                  isActive
-                    ? "bg-cyan-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
-                }`}
-              >
-                {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
-              </button>
-            );
-          })}
+        <div className="space-y-2">
+          <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <Car size={13} className="mr-1 inline" />
+            {t("client:search.parking")}
+          </label>
+          <div className="flex gap-1.5">
+            {PARKING_OPTIONS.map((o) => {
+              const isActive = filters.parkingSpaces === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() =>
+                    updateFilter("parkingSpaces", isActive ? "" : o.value)
+                  }
+                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+                    isActive
+                      ? "bg-cyan-600 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
+                  }`}
+                >
+                  {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Amueblado — only for properties */}
       {showPropertyFilters && (
-      <FilterSelect
-        label={t("client:search.furnished")}
-        value={filters.furnished}
-        options={tFurnished}
-        onChange={(v) => updateFilter("furnished", v)}
-        icon={Armchair}
-      />
+        <FilterSelect
+          label={t("client:search.furnished")}
+          value={filters.furnished}
+          options={tFurnished}
+          onChange={(v) => updateFilter("furnished", v)}
+          icon={Armchair}
+        />
       )}
 
       {/* Toggles */}
@@ -881,10 +919,10 @@ const SearchPage = () => {
       </section>
 
       {/* ─── Main Content ─── */}
-      <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
-        <div className="flex gap-8">
+      <div className="w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+        <div className="flex gap-6 xl:gap-8">
           {/* ── Desktop Sidebar ── */}
-          <aside className="hidden w-72 shrink-0 lg:block">
+          <aside className="hidden w-64 shrink-0 lg:block">
             <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h3 className="mb-5 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
                 <SlidersHorizontal size={16} className="text-cyan-600" />
@@ -1062,7 +1100,7 @@ const SearchPage = () => {
                 />
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                 {properties.map((property, index) => (
                   <Motion.div
                     key={property.$id}

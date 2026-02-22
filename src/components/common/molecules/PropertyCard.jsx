@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   MapPin,
@@ -66,6 +66,27 @@ const PropertyCard = ({
   const [imageError, setImageError] = useState(false);
   const [favorited, setFavorited] = useState(() => isFavorite ?? false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+
+  // Sync isFavorite prop, or fetch from service when user is logged in
+  // and the prop wasn't explicitly provided (e.g. search/landing pages)
+  useEffect(() => {
+    if (isFavorite !== undefined) {
+      setFavorited(Boolean(isFavorite));
+      return;
+    }
+    if (!user?.$id || !property?.$id) return;
+    let cancelled = false;
+    favoritesService
+      .isFavorite(user.$id, property.$id)
+      .then((result) => {
+        if (!cancelled) setFavorited(Boolean(result));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFavorite, user?.$id, property?.$id]);
   const _MOTION = motion;
   const resource = useMemo(() => getResourceBehavior(property), [property]);
 
@@ -308,15 +329,15 @@ const PropertyCard = ({
         </Link>
 
         {/* Badges */}
-        <div className="absolute left-4 top-4 flex flex-col gap-2">
+        <div className="absolute left-3 top-3 flex flex-col gap-1.5">
           {formattedOperationType && (
-            <span className="inline-flex items-center rounded-lg bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-900 shadow-sm backdrop-blur-sm dark:bg-slate-950/90 dark:text-white">
+            <span className="inline-flex items-center rounded-full bg-slate-900/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow backdrop-blur-sm">
               {formattedOperationType}
             </span>
           )}
           {property.featured && (
-            <span className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-950 shadow-sm backdrop-blur-sm">
-              <Star size={10} fill="currentColor" />{" "}
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-950 shadow">
+              <Star size={9} fill="currentColor" />
               {t("client:badges.featured", "Destacado")}
             </span>
           )}
@@ -641,9 +662,9 @@ const PropertyCard = ({
 
           <Link
             to={publicDetailPath}
-            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-lg active:scale-95 dark:bg-white dark:text-slate-900 dark:hover:bg-cyan-400 opacity-100 transform translate-y-0 md:opacity-0 md:translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 duration-300"
+            className="whitespace-nowrap rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-lg active:scale-95 dark:bg-white dark:text-slate-900 dark:hover:bg-cyan-400 opacity-100 transform translate-y-0 md:opacity-0 md:translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 duration-300"
           >
-            {t("client:actions.viewDetails", "Ver Detalles")}
+            {t("client:actions.viewDetails", "Ver detalles")}
           </Link>
         </div>
       </div>
