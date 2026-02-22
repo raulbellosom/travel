@@ -59,7 +59,8 @@ const OPTIONAL_COMPAT_FIELDS = [
 ];
 
 const isValidEmail = (value) => EMAIL_REGEX.test(String(value || ""));
-const isValidPhoneLocal = (value) => PHONE_LOCAL_REGEX.test(String(value || ""));
+const isValidPhoneLocal = (value) =>
+  PHONE_LOCAL_REGEX.test(String(value || ""));
 const isValidDialCode = (value) => DIAL_CODE_REGEX.test(String(value || ""));
 
 const buildE164Phone = ({ dialCode, localNumber }) => {
@@ -91,14 +92,13 @@ const updateProfileCompat = async ({
   let nextPatch = { ...(patch || {}) };
   let lastError = null;
 
-  for (let attempt = 0; attempt <= OPTIONAL_COMPAT_FIELDS.length; attempt += 1) {
+  for (
+    let attempt = 0;
+    attempt <= OPTIONAL_COMPAT_FIELDS.length;
+    attempt += 1
+  ) {
     try {
-      await db.updateDocument(
-        databaseId,
-        usersCollectionId,
-        userId,
-        nextPatch,
-      );
+      await db.updateDocument(databaseId, usersCollectionId, userId, nextPatch);
       return Object.keys(nextPatch);
     } catch (dbErr) {
       lastError = dbErr;
@@ -201,7 +201,10 @@ export default async ({ req, res, log, error }) => {
 
     // Sync avatarFileId from Auth prefs to Database
     const nextAvatarFileId = normalize(
-      body.avatarFileId ?? authUser.prefs?.avatarFileId ?? currentProfile.avatarFileId ?? "",
+      body.avatarFileId ??
+        authUser.prefs?.avatarFileId ??
+        currentProfile.avatarFileId ??
+        "",
       64,
     );
 
@@ -241,7 +244,10 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (hasValue(nextPhoneCountryCode) && !isValidDialCode(nextPhoneCountryCode)) {
+    if (
+      hasValue(nextPhoneCountryCode) &&
+      !isValidDialCode(nextPhoneCountryCode)
+    ) {
       return json(res, 422, {
         ok: false,
         success: false,
@@ -264,7 +270,10 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (hasValue(nextWhatsappNumber) && !isValidPhoneLocal(nextWhatsappNumber)) {
+    if (
+      hasValue(nextWhatsappNumber) &&
+      !isValidPhoneLocal(nextWhatsappNumber)
+    ) {
       return json(res, 422, {
         ok: false,
         success: false,
@@ -278,7 +287,8 @@ export default async ({ req, res, log, error }) => {
         ok: false,
         success: false,
         code: "VALIDATION_ERROR",
-        message: "whatsappCountryCode is required when whatsappNumber is present",
+        message:
+          "whatsappCountryCode is required when whatsappNumber is present",
       });
     }
 
@@ -348,8 +358,21 @@ export default async ({ req, res, log, error }) => {
     }
 
     if (hasValue(nextPhoneE164) && nextPhoneE164 !== authUser.phone) {
-      await users.updatePhone(userId, nextPhoneE164);
-      authUpdates.push("phone");
+      try {
+        await users.updatePhone(userId, nextPhoneE164);
+        authUpdates.push("phone");
+      } catch (phoneErr) {
+        // Appwrite throws "A target with the same ID already exists" when the
+        // phone messaging target is already registered (e.g. number unchanged
+        // at the targets level). Treat it as a successful no-op so the profile
+        // update is not blocked.
+        const msg = String(phoneErr?.message || "").toLowerCase();
+        if (msg.includes("target") && msg.includes("same id")) {
+          authUpdates.push("phone");
+        } else {
+          throw phoneErr;
+        }
+      }
     }
 
     if (emailChanged && config.emailVerificationFunctionId) {

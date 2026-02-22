@@ -45,7 +45,7 @@ const FeaturedPropertiesSection = () => {
               )}
             </p>
           </div>
-          <Link to="/?sort=price-desc">
+          <Link to="/buscar?featured=true&sort=recent">
             <Button variant="outline" rightIcon={ArrowRight}>
               {t("client:featured.viewAll", "Ver todas")}
             </Button>

@@ -270,6 +270,22 @@ const PropertyCard = ({
 
   const ResourceIcon = getResourceIcon(resourceType, propertyTypeRaw);
 
+  // Color-coded operation badge — uses actual taxonomy values from resourceTaxonomy.js
+  const operationBadgeClass = useMemo(() => {
+    const mode = normalizeEnumValue(commercialModeRaw);
+    if (mode === "sale") return "bg-emerald-500 text-white";
+    if (mode === "rent_long_term") return "bg-blue-500 text-white";
+    if (mode === "rent_short_term") return "bg-orange-500 text-white";
+    if (mode === "rent_hourly") return "bg-violet-500 text-white";
+    if (mode === "rent_monthly") return "bg-sky-500 text-white";
+    if (mode === "rent_per_person" || mode === "per_person")
+      return "bg-pink-500 text-white";
+    // legacy / fallback aliases
+    if (mode === "rent" || mode === "renta") return "bg-blue-500 text-white";
+    if (mode === "venta") return "bg-emerald-500 text-white";
+    return "bg-slate-700/80 text-white";
+  }, [commercialModeRaw]);
+
   // Choose which area to display (built vs total)
   const displayArea = property.builtArea || property.totalArea || 0;
 
@@ -331,12 +347,14 @@ const PropertyCard = ({
         {/* Badges */}
         <div className="absolute left-3 top-3 flex flex-col gap-1.5">
           {formattedOperationType && (
-            <span className="inline-flex items-center rounded-full bg-slate-900/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow backdrop-blur-sm">
+            <span
+              className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest shadow-md backdrop-blur-sm ${operationBadgeClass}`}
+            >
               {formattedOperationType}
             </span>
           )}
           {property.featured && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-950 shadow">
+            <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-amber-400 to-yellow-300 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-amber-900 shadow-md">
               <Star size={9} fill="currentColor" />
               {t("client:badges.featured", "Destacado")}
             </span>
