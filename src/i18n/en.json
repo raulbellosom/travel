@@ -2414,7 +2414,7 @@
     },
     "propertyButton": {
       "startChat": "Start live chat",
-      "loginToChat": "Sign in to chat",
+      "loginToChat": "Sign up to start conversation",
       "loginRequired": "You must sign in to use the chat",
       "verifyRequired": "Verify your email to use the chat"
     },

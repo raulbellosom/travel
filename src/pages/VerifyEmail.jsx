@@ -1,12 +1,17 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
+import {
+  rememberAuthRedirect,
+  resolveAuthRedirectPath,
+} from "../utils/authRedirect";
 
 const VerifyEmail = () => {
   const { t } = useTranslation();
   const { verifyEmail, resendVerification } = useAuth();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   const token = searchParams.get("token") || "";
@@ -18,10 +23,27 @@ const VerifyEmail = () => {
   const [message, setMessage] = useState("");
   const [resending, setResending] = useState(false);
 
+  const authRedirectTarget = useMemo(
+    () => resolveAuthRedirectPath({ location, searchParams }),
+    [location, searchParams],
+  );
+
+  const authRedirectQuery = useMemo(
+    () =>
+      authRedirectTarget
+        ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
+        : "",
+    [authRedirectTarget],
+  );
+
   const hasVerificationPayload = useMemo(
     () => Boolean(token || (userId && secret)),
     [secret, token, userId]
   );
+
+  useEffect(() => {
+    rememberAuthRedirect({ location, searchParams });
+  }, [location, searchParams]);
 
   useEffect(() => {
     if (!hasVerificationPayload) return;
@@ -104,7 +126,11 @@ const VerifyEmail = () => {
       ) : null}
 
       <p className="text-sm text-slate-600 dark:text-slate-300">
-        <Link to="/login" className="font-medium text-sky-700 hover:underline dark:text-sky-400">
+        <Link
+          to={`/login${authRedirectQuery}`}
+          state={{ from: location.state?.from || location }}
+          className="font-medium text-sky-700 hover:underline dark:text-sky-400"
+        >
           {t("verifyEmailPage.links.toLogin")}
         </Link>
       </p>
@@ -113,4 +139,3 @@ const VerifyEmail = () => {
 };
 
 export default VerifyEmail;
-

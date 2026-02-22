@@ -1,5 +1,5 @@
-﻿import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   UserRound,
@@ -26,6 +26,10 @@ import {
   normalizePhoneDialCode,
   sanitizePhoneLocalNumber,
 } from "../utils/phone";
+import {
+  rememberAuthRedirect,
+  resolveAuthRedirectPath,
+} from "../utils/authRedirect";
 
 const inputClass =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800";
@@ -34,6 +38,8 @@ const Register = () => {
   const { t, i18n } = useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const [form, setForm] = useState({
     firstName: "",
@@ -49,6 +55,22 @@ const Register = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const authRedirectTarget = useMemo(
+    () => resolveAuthRedirectPath({ location, searchParams }),
+    [location, searchParams]
+  );
+  const authRedirectQuery = useMemo(
+    () =>
+      authRedirectTarget
+        ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
+        : "",
+    [authRedirectTarget]
+  );
+
+  useEffect(() => {
+    rememberAuthRedirect({ location, searchParams });
+  }, [location, searchParams]);
 
   const passwordChecks = useMemo(
     () => getPasswordChecks(form.password),
@@ -136,8 +158,15 @@ const Register = () => {
         phone: normalizedPhone,
         password: form.password,
       });
-      navigate(`/verify-email?email=${encodeURIComponent(form.email)}`, {
+      const verifyEmailParams = new URLSearchParams({
+        email: form.email,
+      });
+      if (authRedirectTarget) {
+        verifyEmailParams.set("redirect", authRedirectTarget);
+      }
+      navigate(`/verify-email?${verifyEmailParams.toString()}`, {
         replace: true,
+        state: { from: location.state?.from || location },
       });
     } catch (err) {
       setError(getErrorMessage(err, t("registerPage.errors.create")));
@@ -335,7 +364,11 @@ const Register = () => {
 
       <p className="text-sm text-slate-600 dark:text-slate-300">
         {t("registerPage.links.hasAccount")} {" "}
-        <Link to="/login" className="font-medium text-cyan-700 hover:underline dark:text-cyan-400">
+        <Link
+          to={`/login${authRedirectQuery}`}
+          state={{ from: location.state?.from || location }}
+          className="font-medium text-cyan-700 hover:underline dark:text-cyan-400"
+        >
           {t("registerPage.links.login")}
         </Link>
       </p>
@@ -344,3 +377,4 @@ const Register = () => {
 };
 
 export default Register;
+

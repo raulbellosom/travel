@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CreditCard, Filter, Search } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -7,6 +7,7 @@ import { Select, TablePagination } from "../components/common";
 import { paymentsService } from "../services/paymentsService";
 import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
+import { formatMoneyWithDenomination } from "../utils/money";
 
 const PROVIDERS = ["stripe", "mercadopago"];
 const STATUSES = ["pending", "approved", "rejected", "refunded"];
@@ -262,10 +263,12 @@ const AppPayments = () => {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {new Intl.NumberFormat(locale, {
-                          style: "currency",
+                        {formatMoneyWithDenomination(Number(payment.amount || 0), {
+                          locale,
                           currency: payment.currency || "MXN",
-                        }).format(Number(payment.amount || 0))}
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-300">
                         {payment.providerPaymentId || "-"}

@@ -13,16 +13,18 @@ import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { getResourceBehavior } from "../utils/resourceModel";
 import { useInstanceModules } from "../hooks/useInstanceModules";
+import { formatMoneyWithDenomination } from "../utils/money";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=80";
 
 const formatCurrency = (value, currency, locale) =>
-  new Intl.NumberFormat(locale, {
-    style: "currency",
+  formatMoneyWithDenomination(value, {
+    locale,
     currency: currency || "MXN",
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const ReserveProperty = () => {
   const { t, i18n } = useTranslation();

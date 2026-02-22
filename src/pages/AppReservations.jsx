@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CalendarDays, CreditCard, Filter, Search, User } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -7,6 +7,7 @@ import { Select } from "../components/common";
 import { reservationsService } from "../services/reservationsService";
 import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
+import { formatMoneyWithDenomination } from "../utils/money";
 
 const RESERVATION_STATUSES = [
   "pending",
@@ -311,10 +312,12 @@ const AppReservations = () => {
                   </p>
                   <p className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <CreditCard size={14} />
-                    {new Intl.NumberFormat(locale, {
-                      style: "currency",
+                    {formatMoneyWithDenomination(Number(reservation.totalAmount || 0), {
+                      locale,
                       currency: reservation.currency || "MXN",
-                    }).format(Number(reservation.totalAmount || 0))}
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
 

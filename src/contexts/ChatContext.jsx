@@ -262,8 +262,6 @@ export const ChatProvider = ({ children }) => {
     async ({
       resourceId,
       resourceTitle,
-      propertyId,
-      propertyTitle,
       ownerUserId,
       ownerName,
     }) => {
@@ -278,10 +276,8 @@ export const ChatProvider = ({ children }) => {
       }
 
       const conversation = await chatService.getOrCreateConversation({
-        resourceId: resourceId || propertyId,
-        resourceTitle: resourceTitle || propertyTitle,
-        propertyId,
-        propertyTitle,
+        resourceId,
+        resourceTitle,
         clientUserId: user.$id,
         clientName: user.name || user.email || "Cliente",
         ownerUserId,

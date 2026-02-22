@@ -4,9 +4,7 @@ import {
   databases,
   ensureAppwriteConfigured,
   ID,
-  Permission,
   Query,
-  Role,
 } from "../api/appwriteClient";
 import { executeJsonFunction } from "../utils/functions";
 
@@ -36,15 +34,6 @@ const isQueryCompatibilityError = (error) => {
   );
 };
 
-const buildConversationPermissions = (clientUserId, ownerUserId) => {
-  const userIds = Array.from(
-    new Set([normalizeId(clientUserId), normalizeId(ownerUserId)].filter(Boolean)),
-  );
-  const readPermissions = userIds.map((id) => Permission.read(Role.user(id)));
-  const updatePermissions = userIds.map((id) => Permission.update(Role.user(id)));
-  return [...readPermissions, ...updatePermissions];
-};
-
 const sortByLastMessageAtDesc = (docs) =>
   [...docs].sort((a, b) => {
     const aTime = new Date(a?.lastMessageAt || a?.$updatedAt || 0).getTime();
@@ -56,7 +45,7 @@ const sortByLastMessageAtDesc = (docs) =>
 
 export const chatService = {
   /**
-   * Find an existing conversation between a client and a property,
+   * Find an existing conversation between a client and a resource,
    * or return null if none exists.
    */
   async findConversation(resourceId, clientUserId) {
@@ -64,48 +53,33 @@ export const chatService = {
     const normalizedResourceId = normalizeId(resourceId);
     if (!normalizedResourceId) return null;
 
-    const queryByField = async (fieldName) =>
-      databases.listDocuments({
+    try {
+      const resourceResult = await databases.listDocuments({
         databaseId: DB(),
         collectionId: COL_CONVERSATIONS(),
         queries: [
-          Query.equal(fieldName, normalizedResourceId),
+          Query.equal("resourceId", normalizedResourceId),
           Query.equal("clientUserId", clientUserId),
           Query.equal("enabled", true),
           Query.limit(1),
         ],
       });
-
-    try {
-      const resourceResult = await queryByField("resourceId");
       if (resourceResult.documents?.[0]) return resourceResult.documents[0];
-    } catch {
-      // Fallback to legacy propertyId below
-    }
-
-    try {
-      const legacyResult = await queryByField("propertyId");
-      return legacyResult.documents?.[0] || null;
     } catch {
       return null;
     }
+
+    return null;
   },
 
   /**
    * Create a new conversation between client and property owner.
-   * Note: Only sets permissions for the creator (current user).
-   * The collection must have Role.users() or Role.users("verified") permissions
-   * configured server-side to allow:
-   *   - Create: users (verified)
-   *   - Read: users (verified)
-   *   - Update: users (verified)
-   * Security is enforced via query filters (clientUserId/ownerUserId).
+   * Relies on collection-level permissions configured in Appwrite.
+   * Security is enforced via participant fields and query filters.
    */
   async createConversation({
     resourceId,
     resourceTitle,
-    propertyId,
-    propertyTitle,
     clientUserId,
     clientName,
     ownerUserId,
@@ -118,10 +92,8 @@ export const chatService = {
       collectionId: COL_CONVERSATIONS(),
       documentId: docId,
       data: {
-        resourceId: normalizeId(resourceId || propertyId),
-        resourceTitle: String(resourceTitle || propertyTitle || "").trim(),
-        propertyId: normalizeId(propertyId || resourceId),
-        propertyTitle: String(propertyTitle || resourceTitle || "").trim(),
+        resourceId: normalizeId(resourceId),
+        resourceTitle: String(resourceTitle || "").trim(),
         clientUserId,
         clientName,
         ownerUserId,
@@ -133,7 +105,6 @@ export const chatService = {
         status: "active",
         enabled: true,
       },
-      permissions: buildConversationPermissions(clientUserId, ownerUserId),
     });
   },
 
@@ -179,8 +150,6 @@ export const chatService = {
     return this.getOrCreateConversation({
       resourceId,
       resourceTitle: "Chat interno",
-      propertyId: resourceId,
-      propertyTitle: "Chat interno",
       clientUserId,
       clientName,
       ownerUserId,

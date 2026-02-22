@@ -628,6 +628,33 @@ export const propertiesService = {
       : null;
   },
 
+  async listPublicByIds(resourceIds = []) {
+    ensureAppwriteConfigured();
+    const { resourcesCollectionId } = getCollectionConfig();
+    const normalizedIds = Array.from(
+      new Set(
+        (Array.isArray(resourceIds) ? resourceIds : [])
+          .map((id) => String(id || "").trim())
+          .filter(Boolean),
+      ),
+    ).slice(0, 100);
+
+    if (normalizedIds.length === 0) return [];
+
+    const response = await databases.listDocuments({
+      databaseId: env.appwrite.databaseId,
+      collectionId: resourcesCollectionId,
+      queries: [
+        Query.equal("$id", normalizedIds),
+        Query.equal("status", "published"),
+        Query.equal("enabled", true),
+        Query.limit(normalizedIds.length),
+      ],
+    });
+
+    return (response.documents || []).map((doc) => normalizeResourceDocument(doc));
+  },
+
   async getById(resourceId) {
     ensureAppwriteConfigured();
     const { resourcesCollectionId } = getCollectionConfig();

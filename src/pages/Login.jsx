@@ -1,11 +1,21 @@
-﻿import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
 import { isInternalRole } from "../utils/roles";
 import { INTERNAL_BASE_PATH } from "../utils/internalRoutes";
+import {
+  consumeRememberedAuthRedirectPath,
+  rememberAuthRedirect,
+  resolveAuthRedirectPath,
+} from "../utils/authRedirect";
 
 const inputClass =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800";
@@ -15,6 +25,7 @@ const Login = () => {
   const { login, resendVerification } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +35,23 @@ const Login = () => {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [emailNotVerified, setEmailNotVerified] = useState(false);
+
+  const authRedirectTarget = useMemo(
+    () => resolveAuthRedirectPath({ location, searchParams }),
+    [location, searchParams],
+  );
+
+  const authRedirectQuery = useMemo(
+    () =>
+      authRedirectTarget
+        ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
+        : "",
+    [authRedirectTarget],
+  );
+
+  useEffect(() => {
+    rememberAuthRedirect({ location, searchParams });
+  }, [location, searchParams]);
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -36,7 +64,7 @@ const Login = () => {
       const nextUser = await login(email, password);
       const target = isInternalRole(nextUser?.role)
         ? INTERNAL_BASE_PATH
-        : location.state?.from?.pathname || "/";
+        : consumeRememberedAuthRedirectPath("/");
       navigate(target, { replace: true });
     } catch (err) {
       const message = getErrorMessage(err, t("loginPage.errors.login"));
@@ -147,7 +175,11 @@ const Login = () => {
         </p>
         <p className="text-slate-600 dark:text-slate-300">
           {t("loginPage.links.noAccount")} {" "}
-          <Link to="/register" className="font-medium text-cyan-700 hover:underline dark:text-cyan-400">
+          <Link
+            to={`/register${authRedirectQuery}`}
+            state={{ from: location.state?.from || location }}
+            className="font-medium text-cyan-700 hover:underline dark:text-cyan-400"
+          >
             {t("loginPage.links.createAccount")}
           </Link>
         </p>

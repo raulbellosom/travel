@@ -5,6 +5,7 @@ import { databases, Query } from "../api/appwriteClient";
 import env from "../env";
 import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
+import { formatMoneyWithDenomination } from "../utils/money";
 
 const VoucherLookup = () => {
   const { t, i18n } = useTranslation();
@@ -127,10 +128,12 @@ const VoucherLookup = () => {
         </p>
         <p className="text-sm">
           <strong>{t("voucherPage.labels.total")}:</strong>{" "}
-          {new Intl.NumberFormat(locale, {
-            style: "currency",
+          {formatMoneyWithDenomination(Number(reservation.totalAmount || 0), {
+            locale,
             currency: reservation.currency || "MXN",
-          }).format(Number(reservation.totalAmount || 0))}
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </p>
         <p className="text-sm">
           <strong>{t("voucherPage.labels.status")}:</strong>{" "}

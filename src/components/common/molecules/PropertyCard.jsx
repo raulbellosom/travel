@@ -38,6 +38,7 @@ import PropertyImagePlaceholder from "../atoms/PropertyImagePlaceholder";
 import LazyImage from "../atoms/LazyImage";
 import { getResourceBehavior } from "../../../utils/resourceModel";
 import { getPublicPropertyRoute } from "../../../utils/internalRoutes";
+import { formatMoneyParts } from "../../../utils/money";
 
 const normalizeEnumValue = (value) =>
   String(value || "")
@@ -54,8 +55,8 @@ const humanizeEnumValue = (value) =>
 const PropertyCard = ({ property, className }) => {
   const { t, i18n } = useTranslation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const _MOTION = motion;
   const resource = useMemo(() => getResourceBehavior(property), [property]);
   const publicDetailPath = getPublicPropertyRoute(
     property.slug || property.$id,
@@ -109,17 +110,17 @@ const PropertyCard = ({ property, className }) => {
     }
   };
 
-  const formatPrice = (price, currency) => {
-    // If we have a valid number, format it. Otherwise show something like "Consultar" or 0
-    if (price === 0 || price === null || price === undefined)
-      return t("client:pricing.contactForPrice");
-
-    return new Intl.NumberFormat(i18n.language, {
-      style: "currency",
-      currency: currency || "MXN",
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+  const priceParts = useMemo(() => {
+    if (property.price === 0 || property.price === null || property.price === undefined) {
+      return null;
+    }
+    return formatMoneyParts(property.price, {
+      locale: i18n.language === "en" ? "en-US" : "es-MX",
+      currency: property.currency || "MXN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, [i18n.language, property.currency, property.price]);
 
   // Determine icon based on resource type and category
   const getResourceIcon = (resourceType, category) => {
@@ -217,8 +218,6 @@ const PropertyCard = ({ property, className }) => {
         "group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-200/50 transition-all hover:shadow-2xl hover:shadow-cyan-500/10 dark:bg-slate-900 dark:shadow-none dark:ring-1 dark:ring-white/10",
         className,
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Carousel */}
       <div className="relative aspect-4/3 overflow-hidden bg-slate-200 dark:bg-slate-800">
@@ -560,7 +559,19 @@ const PropertyCard = ({ property, className }) => {
               {priceDisplayLabel}
             </p>
             <p className="text-xl font-black text-slate-900 dark:text-white">
-              {formatPrice(property.price, property.currency)}
+              {priceParts ? (
+                <>
+                  <span>{priceParts.main}</span>
+                  <span className="ml-0.5 align-top text-xs font-semibold opacity-85">
+                    {priceParts.decimals}
+                  </span>
+                  <span className="ml-1 text-xs font-semibold opacity-85">
+                    {priceParts.denomination}
+                  </span>
+                </>
+              ) : (
+                t("client:pricing.contactForPrice")
+              )}
             </p>
           </div>
 

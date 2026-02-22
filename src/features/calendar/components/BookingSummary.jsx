@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Calendar, Moon, Users, DollarSign, ArrowRight } from "lucide-react";
-import { dateKey, daysBetween } from "../utils/calendarUtils";
+import { formatMoneyWithDenomination } from "../../../utils/money";
 
 /**
  * BookingSummary – shows selected dates, price breakdown, and reserve CTA.
@@ -32,11 +32,12 @@ export default function BookingSummary({
     });
 
   const fmtCurrency = (amount) =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
+    formatMoneyWithDenomination(amount, {
+      locale,
       currency: property.currency || "MXN",
-      minimumFractionDigits: 0,
-    }).format(amount);
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   const avgPerNight = summary.nights > 0 ? summary.total / summary.nights : 0;
 

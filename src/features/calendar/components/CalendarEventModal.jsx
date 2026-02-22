@@ -13,6 +13,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { STATUS_COLORS } from "../utils/calendarUtils";
+import { formatMoneyWithDenomination } from "../../../utils/money";
 
 /**
  * CalendarEventModal – detailed view of a reservation event.
@@ -41,23 +42,27 @@ export default function CalendarEventModal({ reservation, open, onClose }) {
     });
 
   const fmtCurrency = (amount, currency = "MXN") =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
+    formatMoneyWithDenomination(amount, {
+      locale,
       currency,
-      minimumFractionDigits: 0,
-    }).format(amount);
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
-  const InfoRow = ({ icon: Icon, label, value }) => (
-    <div className="flex items-start gap-3 py-2">
-      <Icon className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-      <div className="min-w-0">
-        <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 wrap-break-word">
-          {value}
-        </p>
+  const InfoRow = ({ icon: Icon, label, value }) => {
+    const IconComp = Icon;
+    return (
+      <div className="flex items-start gap-3 py-2">
+        <IconComp className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 wrap-break-word">
+            {value}
+          </p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <AnimatePresence>

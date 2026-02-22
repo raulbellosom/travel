@@ -8,6 +8,7 @@ import { storage } from "../../api/appwriteClient";
 import env from "../../env";
 import { cn } from "../../utils/cn";
 import { getPublicPropertyRoute } from "../../utils/internalRoutes";
+import { formatMoneyWithDenomination } from "../../utils/money";
 import LazyImage from "../common/atoms/LazyImage";
 import {
   PUBLIC_SEARCH_MIN_QUERY_LENGTH,
@@ -36,7 +37,6 @@ const PublicSearch = ({
   const desktopRef = useRef(null);
   const mobileInputRef = useRef(null);
   const dropdownRef = useRef(null);
-  const formattersRef = useRef(new Map());
 
   const language = i18n.resolvedLanguage || i18n.language || "es";
   const {
@@ -57,10 +57,6 @@ const PublicSearch = ({
   }, [isMobileOpen, onMobileOpenChange]);
 
   useEffect(() => {
-    formattersRef.current.clear();
-  }, [language]);
-
-  useEffect(() => {
     if (!isDesktopOpen) return;
     const handleOutsideClick = (event) => {
       if (!desktopRef.current?.contains(event.target)) {
@@ -73,30 +69,12 @@ const PublicSearch = ({
 
   const formatPrice = useCallback(
     (value, currency = "MXN") => {
-      const normalizedCurrency = String(currency || "MXN")
-        .trim()
-        .toUpperCase();
-      const cacheKey = `${language}:${normalizedCurrency}`;
-
-      let formatter = formattersRef.current.get(cacheKey);
-      if (!formatter) {
-        try {
-          formatter = new Intl.NumberFormat(language, {
-            style: "currency",
-            currency: normalizedCurrency,
-            maximumFractionDigits: 0,
-          });
-        } catch {
-          formatter = new Intl.NumberFormat(language, {
-            style: "currency",
-            currency: "MXN",
-            maximumFractionDigits: 0,
-          });
-        }
-        formattersRef.current.set(cacheKey, formatter);
-      }
-
-      return formatter.format(Number(value) || 0);
+      return formatMoneyWithDenomination(value, {
+        locale: language,
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
     },
     [language],
   );

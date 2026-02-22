@@ -22,6 +22,7 @@ import {
   ResourceListFilters,
 } from "../features/resources/components";
 import { propertiesService } from "../services/propertiesService";
+import { formatMoneyWithDenomination } from "../utils/money";
 
 // ─── Constants ──────────────────────────────────────────────────
 const RESOURCE_STATUS_OPTIONS = ["draft", "published", "inactive", "archived"];
@@ -521,13 +522,6 @@ const MyProperties = () => {
     }
   };
 
-  const handleStatusToggle = async (item) => {
-    await handleStatusChange(
-      item,
-      item.status === "published" ? "draft" : "published",
-    );
-  };
-
   // ─── Responsible change ─────────────────────────────────────
   const handleResponsibleChange = async (resourceId, newOwnerUserId) => {
     const item = items.find((i) => i.$id === resourceId);
@@ -638,12 +632,12 @@ const MyProperties = () => {
   // ─── Formatters ─────────────────────────────────────────────
   const formatPrice = useCallback(
     (item) =>
-      new Intl.NumberFormat(locale, {
-        style: "currency",
+      formatMoneyWithDenomination(item.price || 0, {
+        locale,
         currency: item.currency || "MXN",
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }).format(item.price || 0),
+      }),
     [locale],
   );
 

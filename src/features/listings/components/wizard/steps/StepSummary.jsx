@@ -26,6 +26,7 @@ import {
   parseResourceAttributes,
   toUiFieldValue,
 } from "../../../../../utils/resourceFormProfile";
+import { formatMoneyWithDenomination } from "../../../../../utils/money";
 
 const resolveLabel = (options, value, t) => {
   const found = options.find((option) => option.value === value);
@@ -156,7 +157,12 @@ const StepSummary = ({ formHook, onEditStep }) => {
     if (!form.price) return "-";
     const num = Number(form.price);
     if (!Number.isFinite(num)) return form.price;
-    return `$${num.toLocaleString("es-MX", { minimumFractionDigits: 0 })} ${form.currency}`;
+    return formatMoneyWithDenomination(num, {
+      locale: "es-MX",
+      currency: form.currency || "MXN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }, [form.price, form.currency]);
 
   const locationParts = [form.city, form.state, form.country]

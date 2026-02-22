@@ -53,6 +53,7 @@ APPWRITE_COLLECTION_ACTIVITY_LOGS_ID=activity_logs
 APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID=email_verifications
 APPWRITE_COLLECTION_CONVERSATIONS_ID=conversations
 APPWRITE_COLLECTION_MESSAGES_ID=messages
+APPWRITE_COLLECTION_FAVORITES_ID=favorites
 
 APPWRITE_BUCKET_RESOURCE_IMAGES_ID=resource-images
 APPWRITE_BUCKET_AVATARS_ID=avatars
@@ -227,8 +228,9 @@ Buenas practicas:
 - Eliminadas variables obsoletas de instance/owner (se gestionan vía BD).
 - Agregadas variables de chat (`conversations`, `messages`, `send-chat-notification`, `PLATFORM_OWNER_EMAIL`).
 - Agregada function `deep-search-query`.
+- Agregada variable de coleccion de favoritos: `APPWRITE_COLLECTION_FAVORITES_ID`.
 
 ---
 
-Ultima actualizacion: 2026-02-16
-Version: 2.3.0
+Ultima actualizacion: 2026-02-22
+Version: 2.4.0

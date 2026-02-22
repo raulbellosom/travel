@@ -19,6 +19,7 @@ import {
   calculateRangePrice,
 } from "../utils/calendarUtils";
 import BookingSummary from "./BookingSummary";
+import { formatMoneyWithDenomination } from "../../../utils/money";
 
 /**
  * PropertyAvailabilityCalendar – Client-facing calendar for property pages.
@@ -117,12 +118,12 @@ export default function PropertyAvailabilityCalendar({
   };
 
   const fmtPrice = (amount) =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
+    formatMoneyWithDenomination(amount, {
+      locale,
       currency: property.currency || "MXN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   const dayHeaders = useMemo(() => {
     const base = new Date(2024, 0, 7);

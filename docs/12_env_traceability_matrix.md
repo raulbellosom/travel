@@ -23,6 +23,7 @@ Trazabilidad de variables de entorno para arquitectura v3.
 | `APPWRITE_COLLECTION_REVIEWS_ID` | `src/env.js`, `src/services/reviewsService.js`, `functions/create-review-public/src/index.js` | reviews |
 | `APPWRITE_COLLECTION_CONVERSATIONS_ID` | `src/env.js`, `src/services/chatService.js`, `functions/send-chat-notification/src/index.js` | chat threads |
 | `APPWRITE_COLLECTION_MESSAGES_ID` | `src/env.js`, `src/services/chatService.js` | mensajes |
+| `APPWRITE_COLLECTION_FAVORITES_ID` | `src/env.js`, `src/services/favoritesService.js`, `src/pages/PropertyDetail.jsx`, `src/pages/MyFavorites.jsx` | favoritos de usuario |
 | `APPWRITE_COLLECTION_ACTIVITY_LOGS_ID` | `src/env.js`, `src/services/activityLogsService.js`, `functions/*/src/index.js` | auditoria |
 | `APPWRITE_COLLECTION_ANALYTICS_DAILY_ID` | `src/env.js`, `functions/dashboard-metrics-aggregator/src/index.js` | KPIs |
 | `APPWRITE_COLLECTION_USERS_ID` | `src/env.js`, `functions/staff-user-management/src/index.js` | usuarios y roles |
@@ -45,9 +46,10 @@ Trazabilidad de variables de entorno para arquitectura v3.
 
 - `APPWRITE_COLLECTION_RESOURCES_ID` es obligatorio en todos los despliegues activos.
 - `APPWRITE_COLLECTION_RESOURCE_IMAGES_ID`, `APPWRITE_COLLECTION_RATE_PLANS_ID` y `APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID` deben estar definidos para arquitectura completa.
+- `APPWRITE_COLLECTION_FAVORITES_ID` debe definirse si se habilita lista de favoritos en cliente.
 - `.env.example` y `functions/*/.env.example` deben mantenerse sincronizados con esta matriz.
 
 ---
 
-Ultima actualizacion: 2026-02-18
-Version: 2.0.0
+Ultima actualizacion: 2026-02-22
+Version: 2.1.0

@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { STATUS_COLORS } from "../utils/calendarUtils";
 import { MapPin, User, Moon } from "lucide-react";
+import { formatMoneyWithDenomination } from "../../../utils/money";
 
 /**
  * CalendarEventCard – renders a single reservation event in the calendar.
@@ -27,11 +28,12 @@ export default function CalendarEventCard({
     });
 
   const fmtCurrency = (amount, currency = "MXN") =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
+    formatMoneyWithDenomination(amount, {
+      locale,
       currency,
-      minimumFractionDigits: 0,
-    }).format(amount);
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   if (variant === "compact") {
     return (

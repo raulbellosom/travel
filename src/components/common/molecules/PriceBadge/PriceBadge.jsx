@@ -1,5 +1,9 @@
-﻿import React from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
+import {
+  formatMoneyParts,
+  formatMoneyWithDenomination,
+} from "../../../../utils/money";
 
 const PriceBadge = ({
   amount,
@@ -15,25 +19,13 @@ const PriceBadge = ({
 }) => {
   const { t } = useTranslation();
 
-  const formatCurrency = (amount, currency, locale) => {
-    try {
-      return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
-    } catch {
-      const symbols = {
-        USD: "$",
-        EUR: "€",
-        MXN: "$",
-        CAD: "C$",
-        GBP: "£",
-      };
-      return `${symbols[currency] || currency} ${amount.toLocaleString()}`;
-    }
-  };
+  const formatCurrency = (amount, currentCurrency, currentLocale) =>
+    formatMoneyWithDenomination(amount, {
+      currency: currentCurrency,
+      locale: currentLocale,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   const getPeriodText = (period) => {
     const periods = {
@@ -71,7 +63,12 @@ const PriceBadge = ({
     className,
   ].join(" ");
 
-  const formattedPrice = formatCurrency(amount, currency, locale);
+  const formattedPriceParts = formatMoneyParts(amount, {
+    currency,
+    locale,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   const totalWithBreakdown = breakdown
     ? amount + (breakdown.fees || 0) + (breakdown.taxes || 0)
@@ -80,7 +77,15 @@ const PriceBadge = ({
   return (
     <div className="relative inline-block">
       <span className={priceStyles} {...props}>
-        <span className="font-semibold">{formattedPrice}</span>
+        <span className="font-semibold">
+          <span>{formattedPriceParts.main}</span>
+          <span className="ml-0.5 align-top text-xs font-semibold opacity-85">
+            {formattedPriceParts.decimals}
+          </span>
+          <span className="ml-1 text-xs font-semibold opacity-85">
+            {formattedPriceParts.denomination}
+          </span>
+        </span>
         <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
           {getPeriodText(period)}
         </span>

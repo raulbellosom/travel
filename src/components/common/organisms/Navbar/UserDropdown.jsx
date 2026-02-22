@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageCircle,
+  Heart,
   ShieldCheck,
   Star,
   UserCircle2,
@@ -89,6 +90,13 @@ const UserDropdown = ({ user, onLogout }) => {
       to: "/my-reviews",
       icon: Star,
       label: t("navbar.userMenu.reviews"),
+    },
+    {
+      to: "/my-favorites",
+      icon: Heart,
+      label: t("navbar.userMenu.favorites", {
+        defaultValue: "Mis Favoritos",
+      }),
     },
     {
       to: getConversationsRoute(user),

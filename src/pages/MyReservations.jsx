@@ -6,6 +6,7 @@ import { reservationsService } from "../services/reservationsService";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
+import { formatMoneyWithDenomination } from "../utils/money";
 
 const formatDate = (value, locale) => {
   if (!value) return "-";
@@ -214,10 +215,12 @@ const MyReservations = () => {
                 <div className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                   <CreditCard size={14} />
                   <span>
-                    {new Intl.NumberFormat(locale, {
-                      style: "currency",
+                    {formatMoneyWithDenomination(Number(reservation.totalAmount || 0), {
+                      locale,
                       currency: reservation.currency || "MXN",
-                    }).format(Number(reservation.totalAmount || 0))}
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
                 <div className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">

@@ -58,6 +58,7 @@ const AppProfile = lazy(() => import("../pages/AppProfile"));
 const MyReservations = lazy(() => import("../pages/MyReservations"));
 const MyReviews = lazy(() => import("../pages/MyReviews"));
 const MyConversations = lazy(() => import("../pages/MyConversations"));
+const MyFavorites = lazy(() => import("../pages/MyFavorites"));
 const ReserveProperty = lazy(() => import("../pages/ReserveProperty"));
 const VoucherLookup = lazy(() => import("../pages/VoucherLookup"));
 const PrivacyNotice = lazy(() => import("../pages/PrivacyNotice"));
@@ -206,6 +207,22 @@ const AppRoutes = () => {
                     element={
                       <ProtectedRoute>
                         <MyConversations />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="mis-favoritos"
+                    element={
+                      <ProtectedRoute>
+                        <MyFavorites />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="my-favorites"
+                    element={
+                      <ProtectedRoute>
+                        <MyFavorites />
                       </ProtectedRoute>
                     }
                   />

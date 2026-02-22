@@ -1,4 +1,4 @@
-﻿import {
+import {
   useEffect,
   useMemo,
   useState,
@@ -6,7 +6,7 @@
   lazy,
   Suspense,
 } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,6 +27,7 @@ import {
   PawPrint,
   Sofa,
   Camera,
+  ArrowLeft,
   ArrowRight,
   MessageCircle,
   ChevronRight,
@@ -46,6 +47,8 @@ import {
   TreePine,
   UtensilsCrossed,
   Tag,
+  Heart,
+  Share2,
 } from "lucide-react";
 import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
@@ -55,6 +58,7 @@ import { profileService } from "../services/profileService";
 import { executeJsonFunction } from "../utils/functions";
 import { getErrorMessage } from "../utils/errors";
 import { useAuth } from "../hooks/useAuth";
+import { useToast } from "../hooks/useToast";
 import { useChat } from "../contexts/ChatContext";
 import { Spinner } from "../components/common";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
@@ -63,6 +67,9 @@ import LazyImage from "../components/common/atoms/LazyImage";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { getResourceBehavior } from "../utils/resourceModel";
 import { useInstanceModules } from "../hooks/useInstanceModules";
+import { buildPathFromLocation } from "../utils/authRedirect";
+import { formatMoneyParts } from "../utils/money";
+import { favoritesService } from "../services/favoritesService";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -80,22 +87,17 @@ const isSale = (op) => op === "sale";
 const isRent = (op) => op === "rent";
 const isVacation = (op) => op === "vacation_rental";
 const isHourly = (op) => op === "rent_hourly";
-
-const getRentPeriodSuffix = (period, t) => {
-  const map = {
-    monthly: t("client:propertyDetail.price.perMonth"),
-    yearly: t("client:propertyDetail.price.perYear"),
-    weekly: t("client:propertyDetail.price.perWeek"),
-  };
-  return map[period] || "";
-};
+const _MOTION = motion;
 
 /* ================================================================ */
 
 const PropertyDetail = () => {
   const { t, i18n } = useTranslation();
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { startConversation, isAuthenticated: isChatAuth } = useChat();
   const modulesApi = useInstanceModules();
   const [heroSlide, setHeroSlide] = useState(0);
@@ -108,6 +110,8 @@ const PropertyDetail = () => {
   const [error, setError] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [chatOpened, setChatOpened] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [imageViewer, setImageViewer] = useState({
     isOpen: false,
     initialIndex: 0,
@@ -182,14 +186,16 @@ const PropertyDetail = () => {
 
   const opType = resourceBehavior.operationType;
 
-  const amount = useMemo(() => {
-    if (!property) return "";
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: property.currency || "MXN",
-      maximumFractionDigits: 0,
-    }).format(property.price || 0);
-  }, [locale, property]);
+  const amountParts = useMemo(
+    () =>
+      formatMoneyParts(property?.price || 0, {
+        locale,
+        currency: property?.currency || "MXN",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [locale, property?.currency, property?.price],
+  );
 
   const priceSuffix = useMemo(() => {
     if (!property) return "";
@@ -273,24 +279,74 @@ const PropertyDetail = () => {
     };
   }, [opType, property, t]);
 
-  const ctaBlockedMessage = useMemo(() => {
-    if (!resourceBehavior.canOperateMode) {
-      return t("client:propertyDetail.moduleDisabled", {
-        defaultValue: "Este tipo de publicacion no esta habilitado.",
-      });
-    }
-    if (resourceBehavior.requiresPayments && !resourceBehavior.canUsePayments) {
-      return t("client:propertyDetail.paymentsDisabled", {
-        defaultValue: "Pagos en linea no disponibles para esta instancia.",
-      });
-    }
-    return "";
+  const isCtaBlocked = useMemo(() => {
+    return (
+      !resourceBehavior.canOperateMode ||
+      (resourceBehavior.requiresPayments && !resourceBehavior.canUsePayments)
+    );
   }, [
     resourceBehavior.canOperateMode,
     resourceBehavior.canUsePayments,
     resourceBehavior.requiresPayments,
-    t,
   ]);
+
+  const authReturnPath = useMemo(
+    () => buildPathFromLocation(location),
+    [location],
+  );
+
+  const authRedirectQuery = useMemo(
+    () =>
+      authReturnPath
+        ? `?redirect=${encodeURIComponent(authReturnPath)}`
+        : "",
+    [authReturnPath],
+  );
+
+  const registerToChatPath = useMemo(
+    () => `/register${authRedirectQuery}`,
+    [authRedirectQuery],
+  );
+
+  const loginToChatPath = useMemo(
+    () => `/login${authRedirectQuery}`,
+    [authRedirectQuery],
+  );
+
+  const handleGoBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(
+      `/buscar?resourceType=${encodeURIComponent(resourceBehavior.resourceType)}&page=1`,
+      { replace: true },
+    );
+  }, [navigate, resourceBehavior.resourceType]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.$id || !property?.$id) {
+      setIsFavorite(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    favoritesService
+      .isFavorite(user.$id, property.$id)
+      .then((value) => {
+        if (!cancelled) setIsFavorite(Boolean(value));
+      })
+      .catch(() => {
+        if (!cancelled) setIsFavorite(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [property?.$id, user?.$id]);
 
   /* ─── Handlers ───────────────────────────────────────── */
 
@@ -299,6 +355,98 @@ const PropertyDetail = () => {
 
   const closeImageViewer = () =>
     setImageViewer({ isOpen: false, initialIndex: 0 });
+
+  const handleShare = useCallback(async () => {
+    if (!property) return;
+
+    const shareUrl =
+      typeof window !== "undefined" ? window.location.href : "";
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: property.title,
+          text: property.description || property.title,
+          url: shareUrl,
+        });
+        return;
+      }
+    } catch {
+      // Use clipboard fallback.
+    }
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast({
+          type: "success",
+          message: t("client:propertyDetail.share.copied", {
+            defaultValue: "Enlace copiado al portapapeles.",
+          }),
+        });
+      }
+    } catch (error) {
+      showToast({
+        type: "error",
+        message: getErrorMessage(
+          error,
+          t("client:propertyDetail.share.error", {
+            defaultValue: "No se pudo compartir este recurso.",
+          }),
+        ),
+      });
+    }
+  }, [property, showToast, t]);
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!property) return;
+
+    if (!user?.$id) {
+      navigate(`/register${authRedirectQuery}`);
+      return;
+    }
+    if (favoriteLoading) return;
+
+    setFavoriteLoading(true);
+    try {
+      const result = await favoritesService.toggleFavorite({
+        userId: user.$id,
+        resourceId: property.$id,
+        resourceSlug: property.slug,
+        resourceTitle: property.title,
+        resourceOwnerUserId: property.ownerUserId,
+      });
+      setIsFavorite(result.isFavorite);
+      showToast({
+        type: "success",
+        message: result.isFavorite
+          ? t("actions.addFavorite", { defaultValue: "Agregado a favoritos" })
+          : t("actions.removeFavorite", {
+              defaultValue: "Quitado de favoritos",
+            }),
+      });
+    } catch (error) {
+      showToast({
+        type: "error",
+        message: getErrorMessage(
+          error,
+          t("client:propertyDetail.favorites.error", {
+            defaultValue: "No se pudo actualizar favoritos.",
+          }),
+        ),
+      });
+    } finally {
+      setFavoriteLoading(false);
+    }
+  }, [
+    authRedirectQuery,
+    favoriteLoading,
+    navigate,
+    property,
+    showToast,
+    t,
+    user?.$id,
+  ]);
 
   /** Owner avatar URL (from users collection if it stores avatarFileId) */
   const ownerAvatarUrl = useMemo(() => {
@@ -318,9 +466,7 @@ const PropertyDetail = () => {
     try {
       await startConversation({
         resourceId: property.$id,
-        propertyId: property.$id,
         resourceTitle: property.title,
-        propertyTitle: property.title,
         ownerUserId: property.ownerUserId,
         ownerName: owner?.firstName
           ? `${owner.firstName} ${owner.lastName || ""}`.trim()
@@ -470,6 +616,15 @@ const PropertyDetail = () => {
       {/* ── Mobile Hero Cover (auto-sliding) ──────────────── */}
       <section className="relative md:hidden">
         <div className="relative aspect-4/3 w-full overflow-hidden">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="absolute left-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-black/60"
+          >
+            <ArrowLeft size={14} />
+            {t("chat.actions.back", { defaultValue: "Volver" })}
+          </button>
+
           {/* Sliding container */}
           <div
             className="flex h-full transition-transform duration-500 ease-out"
@@ -572,6 +727,15 @@ const PropertyDetail = () => {
       {/* ── Desktop Image Gallery Grid ──────────────────── */}
       <section className="mx-auto hidden max-w-7xl px-4 sm:px-6 md:block lg:px-8">
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="absolute left-4 top-4 z-30 inline-flex items-center gap-2 rounded-xl bg-white/90 px-3.5 py-2 text-sm font-semibold text-slate-800 shadow-lg backdrop-blur-sm transition hover:bg-white dark:bg-slate-900/90 dark:text-slate-100 dark:hover:bg-slate-900"
+          >
+            <ArrowLeft size={16} />
+            {t("chat.actions.back", { defaultValue: "Volver" })}
+          </button>
+
           {/* Dynamic Masonry Grid based on image count */}
           {gallery.length === 1 && (
             // 1 imagen: Full width con altura controlada
@@ -803,6 +967,41 @@ const PropertyDetail = () => {
                   )}
                 </span>
               </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <Share2 size={15} />
+                  {t("client:propertyDetail.share.action", {
+                    defaultValue: "Compartir",
+                  })}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  disabled={favoriteLoading}
+                  className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold transition ${
+                    isFavorite
+                      ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-800/70 dark:bg-rose-950/30 dark:text-rose-300"
+                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  <Heart
+                    size={15}
+                    className={isFavorite ? "fill-current" : ""}
+                  />
+                  {isFavorite
+                    ? t("actions.removeFavorite", {
+                        defaultValue: "Quitar de favoritos",
+                      })
+                    : t("actions.addFavorite", {
+                        defaultValue: "Agregar a favoritos",
+                      })}
+                </button>
+              </div>
             </div>
 
             {/* Mobile: verified badge (title/location already in hero) */}
@@ -811,19 +1010,53 @@ const PropertyDetail = () => {
                 <ShieldCheck size={13} />
                 {t("client:propertyDetail.verifiedListing")}
               </span>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                aria-label={t("client:propertyDetail.share.action", {
+                  defaultValue: "Compartir",
+                })}
+              >
+                <Share2 size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleFavorite}
+                disabled={favoriteLoading}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition ${
+                  isFavorite
+                    ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800/70 dark:bg-rose-950/30 dark:text-rose-300"
+                    : "border-slate-300 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+                aria-label={
+                  isFavorite
+                    ? t("actions.removeFavorite", {
+                        defaultValue: "Quitar de favoritos",
+                      })
+                    : t("actions.addFavorite", {
+                        defaultValue: "Agregar a favoritos",
+                      })
+                }
+              >
+                <Heart
+                  size={14}
+                  className={isFavorite ? "fill-current" : ""}
+                />
+              </button>
             </div>
 
             {/* ── Price bar (mobile only – on desktop it's in sidebar) ── */}
             <div className="lg:hidden">
               <PriceCard
                 t={t}
-                amount={amount}
+                amountParts={amountParts}
                 priceSuffix={priceSuffix}
                 priceLabel={priceLabel}
                 property={property}
                 opType={opType}
                 bookingType={resourceBehavior.bookingType}
-                ctaBlockedMessage={ctaBlockedMessage}
+                isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
                 canChat={
                   isChatAuth &&
@@ -1155,13 +1388,14 @@ const PropertyDetail = () => {
                 <SectionHeading>
                   {t("client:propertyDetail.amenitiesTitle")}
                 </SectionHeading>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 dark:border-slate-700 dark:bg-slate-900/60">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {amenities.map((amenity) => {
                     const AmenityIconComp = getAmenityIcon(amenity);
                     return (
                       <div
                         key={amenity.$id}
-                        className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm transition hover:border-cyan-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-cyan-700"
+                        className="flex items-center gap-2.5 px-2 py-1.5 text-sm"
                       >
                         <span
                           aria-hidden="true"
@@ -1182,6 +1416,7 @@ const PropertyDetail = () => {
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               </section>
             )}
@@ -1248,13 +1483,13 @@ const PropertyDetail = () => {
             <div className="hidden lg:block">
               <PriceCard
                 t={t}
-                amount={amount}
+                amountParts={amountParts}
                 priceSuffix={priceSuffix}
                 priceLabel={priceLabel}
                 property={property}
                 opType={opType}
                 bookingType={resourceBehavior.bookingType}
-                ctaBlockedMessage={ctaBlockedMessage}
+                isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
                 canChat={
                   isChatAuth &&
@@ -1267,24 +1502,26 @@ const PropertyDetail = () => {
             </div>
 
             {/* ── Calendar placeholder ───────────────── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-              <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
-                <Calendar
-                  size={18}
-                  className="text-cyan-600 dark:text-cyan-400"
-                />
-                {t("client:propertyDetail.calendar.title")}
-              </h2>
-              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
-                <Calendar
-                  size={32}
-                  className="mb-2 text-slate-300 dark:text-slate-600"
-                />
-                <p className="text-sm text-slate-400 dark:text-slate-500">
-                  {t("client:propertyDetail.calendar.placeholder")}
-                </p>
+            {resourceBehavior.requiresCalendar && resourceBehavior.canOperateMode && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+                  <Calendar
+                    size={18}
+                    className="text-cyan-600 dark:text-cyan-400"
+                  />
+                  {t("client:propertyDetail.calendar.title")}
+                </h2>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
+                  <Calendar
+                    size={32}
+                    className="mb-2 text-slate-300 dark:text-slate-600"
+                  />
+                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                    {t("client:propertyDetail.calendar.placeholder")}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* ── Agent Card (with integrated chat) ────── */}
             <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -1426,13 +1663,23 @@ const PropertyDetail = () => {
                   </motion.div>
                 ) : !isChatAuth ? (
                   /* Not logged in */
-                  <Link
-                    to="/login"
-                    className="flex w-full items-center justify-center gap-2 border-t border-slate-100 px-5 py-4 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/50"
-                  >
-                    <MessageCircle size={15} />
-                    {t("client:propertyDetail.agent.loginToChat")}
-                  </Link>
+                  <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+                    <Link
+                      to={registerToChatPath}
+                      state={{ from: location }}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50"
+                    >
+                      <MessageCircle size={15} />
+                      {t("client:propertyDetail.agent.loginToChat")}
+                    </Link>
+                    <Link
+                      to={loginToChatPath}
+                      state={{ from: location }}
+                      className="mt-2 block text-center text-xs font-medium text-cyan-600 transition-colors hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
+                    >
+                      {t("loginPage.actions.submit", { defaultValue: "Iniciar sesión" })}
+                    </Link>
+                  </div>
                 ) : null}
               </AnimatePresence>
             </article>
@@ -1458,10 +1705,11 @@ const PropertyDetail = () => {
 /** Reusable stat card for quick stats grid */
 function StatCard({ icon: Icon, label, value }) {
   if (value === undefined || value === null || value === 0) return null;
+  const IconComp = Icon;
   return (
     <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3.5 transition hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-slate-600">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-400">
-        <Icon size={20} />
+        <IconComp size={20} />
       </div>
       <div>
         <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
@@ -1487,10 +1735,11 @@ function SectionHeading({ children, icon: Icon, className = "" }) {
 
 /** Detail row for type-specific sections */
 function DetailRow({ icon: Icon, label, value }) {
+  const IconComp = Icon;
   return (
     <div className="flex items-center gap-3 rounded-xl bg-white/60 px-4 py-3 dark:bg-slate-800/40">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-400">
-        <Icon size={18} />
+        <IconComp size={18} />
       </div>
       <div className="min-w-0">
         <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
@@ -1505,13 +1754,13 @@ function DetailRow({ icon: Icon, label, value }) {
 /** Price + CTA card – adapts per operationType */
 function PriceCard({
   t,
-  amount,
+  amountParts,
   priceSuffix,
   priceLabel,
   property,
   opType,
   bookingType,
-  ctaBlockedMessage,
+  isCtaBlocked,
   onContactAgent,
   canChat,
   chatLoading,
@@ -1562,7 +1811,6 @@ function PriceCard({
           defaultValue: "Confirma disponibilidad por bloques de tiempo.",
         })
       : t(`client:propertyDetail.cta.${ctaKey}.hint`);
-  const isBlocked = Boolean(ctaBlockedMessage);
 
   return (
     <article className={`rounded-2xl border p-5 shadow-sm ${s.bg}`}>
@@ -1572,9 +1820,15 @@ function PriceCard({
           {priceLabel}
         </p>
         <p className={`mt-1 text-3xl font-extrabold ${s.priceColor}`}>
-          {amount}
+          <span>{amountParts?.main || "$0"}</span>
+          <span className="ml-0.5 align-top text-base font-semibold opacity-85">
+            {amountParts?.decimals || ".00"}
+          </span>
+          <span className="ml-1 text-sm font-semibold opacity-85">
+            {amountParts?.denomination || property.currency || "MXN"}
+          </span>
           {priceSuffix && (
-            <span className="text-lg font-semibold opacity-70">
+            <span className="ml-2 text-lg font-semibold opacity-70">
               {priceSuffix}
             </span>
           )}
@@ -1586,21 +1840,15 @@ function PriceCard({
         )}
       </div>
 
-      {/* Hint */}
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-        {ctaHint}
-      </p>
+      {!isCtaBlocked && (
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          {ctaHint}
+        </p>
+      )}
 
       {/* CTA Button */}
-      {isBlocked ? (
-        <button
-          type="button"
-          disabled
-          className="mt-4 inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
-        >
-          {ctaBlockedMessage}
-        </button>
-      ) : isBookFlow ? (
+      {!isCtaBlocked &&
+        (isBookFlow ? (
         <Link
           to={`/reservar/${property.slug}`}
           className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition ${s.btn}`}
@@ -1609,18 +1857,19 @@ function PriceCard({
           <ArrowRight size={16} />
         </Link>
       ) : (
-        <button
-          type="button"
-          onClick={canChat ? onContactAgent : undefined}
-          disabled={chatLoading || !canChat}
-          className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
-        >
-          {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
-          {ctaLabel}
-        </button>
-      )}
+          <button
+            type="button"
+            onClick={canChat ? onContactAgent : undefined}
+            disabled={chatLoading || !canChat}
+            className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
+          >
+            {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
+            {ctaLabel}
+          </button>
+        ))}
     </article>
   );
 }
 
 export default PropertyDetail;
+

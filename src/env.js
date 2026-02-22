@@ -61,6 +61,7 @@ const env = {
       emailVerifications: get("APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID"),
       conversations: get("APPWRITE_COLLECTION_CONVERSATIONS_ID", "conversations"),
       messages: get("APPWRITE_COLLECTION_MESSAGES_ID", "messages"),
+      favorites: get("APPWRITE_COLLECTION_FAVORITES_ID", "favorites"),
     },
     buckets: {
       resourceImages: get("APPWRITE_BUCKET_RESOURCE_IMAGES_ID"),

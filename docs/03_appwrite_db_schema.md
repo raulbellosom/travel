@@ -90,6 +90,7 @@ Regla:
 | ------------------------ | -------------------------------------- | ----- |
 | `users`                  | Perfiles y roles internos + clientes   | 0     |
 | `user_preferences`       | Preferencias de UI                     | 0     |
+| `favorites`              | Favoritos por usuario                  | 0     |
 | `resources`              | Catalogo principal de recursos         | 0     |
 | `resource_images`        | Galeria por recurso                    | 0     |
 | `rate_plans`             | Reglas de pricing y booking            | 0     |
@@ -173,6 +174,36 @@ Purpose: preferencias de UI por usuario.
 ### Permissions
 
 - `Role.user(userId)` para lectura y escritura.
+
+---
+
+## Collection: favorites
+
+Purpose: lista de recursos favoritos por usuario (cliente o usuario autenticado).
+
+### Attributes
+
+| Attribute             | Type    | Size | Required | Default | Constraint                    |
+| --------------------- | ------- | ---- | -------- | ------- | ----------------------------- |
+| `userId`              | string  | 64   | yes      | -       | FK logical `users.$id`        |
+| `resourceId`          | string  | 64   | yes      | -       | FK logical `resources.$id`    |
+| `resourceSlug`        | string  | 150  | no       | -       | Denormalizado para links      |
+| `resourceTitle`       | string  | 200  | no       | -       | Denormalizado para display    |
+| `resourceOwnerUserId` | string  | 64   | no       | -       | FK logical `users.$id`        |
+
+### Indexes
+
+| Index Name                 | Type | Attributes                   | Notes                               |
+| -------------------------- | ---- | ---------------------------- | ----------------------------------- |
+| `uq_favorites_user_resource` | uq | `userId ↑, resourceId ↑`     | Un favorito por usuario y recurso   |
+| `idx_favorites_user`         | idx | `userId ↑`                  | Lista de favoritos por usuario      |
+| `idx_favorites_resource`     | idx | `resourceId ↑`              | Conteo/consulta por recurso         |
+| `idx_favorites_createdat`    | idx | `$createdAt ↓`              | Orden reciente                      |
+
+### Permissions
+
+- `Role.users("verified")`: create, read, delete.
+- Seguridad operacional: filtrar siempre por `userId` del usuario autenticado.
 
 ---
 
@@ -910,7 +941,9 @@ Purpose: configuracion de la instancia para plan, modulos y limites.
 ## Relationships Summary
 
 - `users (1) -> (1) user_preferences`
+- `users (1) -> (N) favorites`
 - `users (1) -> (N) resources`
+- `resources (1) -> (N) favorites`
 - `resources (1) -> (N) resource_images`
 - `resources (1) -> (N) rate_plans`
 - `resources (1) -> (N) leads`
@@ -986,6 +1019,22 @@ Formato obligatorio:
 - `rentPeriod` del contrato de captura del wizard/editor.
 - Duplicidad conceptual entre reglas comerciales y pricing.
 
+## Migration: 2026-02-22-favorites-collection
+
+### Added
+
+- Coleccion `favorites` para relacion `userId + resourceId`.
+- Indice unico `uq_favorites_user_resource` para evitar duplicados por usuario/recurso.
+
+### Modified
+
+- Relaciones del schema para incluir favoritos de usuario y favoritos por recurso.
+- Eliminado enfoque de soft delete para favoritos; al quitar favorito se elimina documento.
+
+### Removed
+
+- Uso de `user_preferences` como candidato para almacenar listas N de favoritos.
+
 ---
 
 ## Estado del Documento
@@ -995,5 +1044,5 @@ Formato obligatorio:
 
 ---
 
-Ultima actualizacion: 2026-02-20
+Ultima actualizacion: 2026-02-22
 Schema Mode: resource-only

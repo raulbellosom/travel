@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { MessageCircle, ShieldCheck } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useChat } from "../../contexts/ChatContext";
 import { cn } from "../../utils/cn";
+import { buildPathFromLocation } from "../../utils/authRedirect";
 import { Spinner } from "../common";
 
 /**
@@ -24,9 +25,14 @@ const PropertyChatButton = ({
   className,
 }) => {
   const { t } = useTranslation();
+  const location = useLocation();
   const { user } = useAuth();
   const { startConversation, isAuthenticated } = useChat();
   const [loading, setLoading] = useState(false);
+  const authRedirectPath = buildPathFromLocation(location);
+  const authRedirectQuery = authRedirectPath
+    ? `?redirect=${encodeURIComponent(authRedirectPath)}`
+    : "";
 
   const isClient = user?.role === "client";
   const isVerified = Boolean(user?.emailVerified);
@@ -62,7 +68,8 @@ const PropertyChatButton = ({
   if (!isAuthenticated) {
     return (
       <Link
-        to="/login"
+        to={`/register${authRedirectQuery}`}
+        state={{ from: location }}
         className={cn(
           "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition",
           "border-2 border-slate-300 text-slate-500",

@@ -37,6 +37,7 @@
 | `/voucher/:code` | lookup de voucher |
 | `/login` | auth |
 | `/register` | auth |
+| `/mis-favoritos` | lista de recursos favoritos del usuario |
 
 Compatibilidad:
 
@@ -60,6 +61,7 @@ Compatibilidad:
 | `/app/reviews` | `ScopeRoute` | `reviews.moderate` |
 | `/app/team` | `ScopeRoute` | `staff.manage` |
 | `/perfil` | `ProtectedRoute` | cualquier auth |
+| `/mis-favoritos` | `ProtectedRoute` | cualquier auth |
 
 ---
 
@@ -150,5 +152,17 @@ Nota: backend vuelve a validar siempre.
 
 ---
 
-Ultima actualizacion: 2026-02-20
-Version: 3.3.0
+## 10. Favoritos y compartir (detalle publico)
+
+- Vista `PropertyDetail` incluye accion `Compartir`:
+  - usa `navigator.share` cuando existe;
+  - fallback a copiar URL al portapapeles.
+- Vista `PropertyDetail` incluye accion `Favoritos`:
+  - usuario autenticado: toggle persistente en coleccion `favorites`;
+  - usuario anonimo: redireccion a `/register?redirect=<ruta-actual>`.
+- Al quitar favorito, el documento se elimina fisicamente (hard delete).
+
+---
+
+Ultima actualizacion: 2026-02-22
+Version: 3.4.0
