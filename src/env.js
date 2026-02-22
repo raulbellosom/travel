@@ -59,7 +59,10 @@ const env = {
       analyticsDaily: get("APPWRITE_COLLECTION_ANALYTICS_DAILY_ID"),
       activityLogs: get("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID"),
       emailVerifications: get("APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID"),
-      conversations: get("APPWRITE_COLLECTION_CONVERSATIONS_ID", "conversations"),
+      conversations: get(
+        "APPWRITE_COLLECTION_CONVERSATIONS_ID",
+        "conversations",
+      ),
       messages: get("APPWRITE_COLLECTION_MESSAGES_ID", "messages"),
       favorites: get("APPWRITE_COLLECTION_FAVORITES_ID", "favorites"),
     },
@@ -103,6 +106,7 @@ const env = {
       rootDiagnostics: get("APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID"),
       deepSearchQuery: get("APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID"),
       sendChatNotification: get("APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID"),
+      sendPasswordReset: get("APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID"),
     },
   },
   app: {

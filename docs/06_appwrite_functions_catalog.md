@@ -145,22 +145,32 @@ Errores estandar:
 
 - Notificacion email para chat offline.
 
+## 4.20 `send-password-reset`
+
+- HTTP POST publico (acceso anonimo necesario para el flujo de olvide contrasena).
+- Actions: `send` (genera token y envia correo SMTP propio) | `reset` (valida token y actualiza contrasena).
+- Reemplaza el sistema nativo `account.createRecovery` / `account.updateRecovery` de Appwrite.
+- Guarda tokens en coleccion `password_resets` con TTL configurado (`PASSWORD_RESET_TTL_MINUTES`).
+- Cooldown por correo para evitar spam (`PASSWORD_RESET_COOLDOWN_SECONDS`).
+- No expone el token en la URL de forma rastreable por Appwrite.
+- ENV requeridas: `APPWRITE_COLLECTION_PASSWORD_RESETS_ID`, `APP_BASE_URL`, `APP_NAME`, `EMAIL_SMTP_*`.
+
 ---
 
 ## 5. Execute permissions (resumen)
 
-| Function | Execute |
-| --- | --- |
-| `create-lead-public` | `any` |
-| `create-reservation-public` | `users` |
-| `create-payment-session` | `users` |
-| `create-review-public` | `users` |
-| `moderate-review` | `users` |
-| `staff-user-management` | `users` |
-| `activity-log-query` | `users` (root only) |
+| Function                     | Execute             |
+| ---------------------------- | ------------------- |
+| `create-lead-public`         | `any`               |
+| `create-reservation-public`  | `users`             |
+| `create-payment-session`     | `users`             |
+| `create-review-public`       | `users`             |
+| `moderate-review`            | `users`             |
+| `staff-user-management`      | `users`             |
+| `activity-log-query`         | `users` (root only) |
 | `root-functions-diagnostics` | `users` (root only) |
-| webhooks | `any` |
-| triggers/cron | `[]` |
+| webhooks                     | `any`               |
+| triggers/cron                | `[]`                |
 
 ---
 
@@ -171,6 +181,9 @@ Nuevas/actualizadas:
 - `APPWRITE_COLLECTION_RESOURCES_ID`
 - `APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID`
 - `APPWRITE_COLLECTION_RATE_PLANS_ID` (si aplica)
+- `APPWRITE_COLLECTION_PASSWORD_RESETS_ID` (send-password-reset)
+- `APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID` (frontend)
+- `PASSWORD_RESET_TTL_MINUTES` / `PASSWORD_RESET_COOLDOWN_SECONDS`
 
 Nota:
 
@@ -200,5 +213,5 @@ Nota:
 
 ---
 
-Ultima actualizacion: 2026-02-18
-Version: 3.0.0
+Ultima actualizacion: 2026-02-22
+Version: 3.1.0

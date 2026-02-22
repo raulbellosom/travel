@@ -236,8 +236,8 @@ export function AuthProvider({ children }) {
     return authService.requestPasswordRecovery(email);
   }, []);
 
-  const resetPassword = useCallback(async ({ userId, secret, password }) => {
-    return authService.resetPassword({ userId, secret, password });
+  const resetPassword = useCallback(async ({ token, password }) => {
+    return authService.resetPassword({ token, password });
   }, []);
 
   const logout = useCallback(async () => {

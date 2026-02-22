@@ -9,8 +9,7 @@ const ResetPassword = () => {
   const { t } = useTranslation();
   const { resetPassword } = useAuth();
   const [searchParams] = useSearchParams();
-  const userId = searchParams.get("userId") || "";
-  const secret = searchParams.get("secret") || "";
+  const token = searchParams.get("token") || "";
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,7 +19,7 @@ const ResetPassword = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const canSubmit = useMemo(() => Boolean(userId && secret), [secret, userId]);
+  const canSubmit = useMemo(() => Boolean(token), [token]);
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -39,7 +38,7 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      await resetPassword({ userId, secret, password });
+      await resetPassword({ token, password });
       setSuccess(t("resetPasswordPage.messages.success"));
       setPassword("");
       setConfirmPassword("");
@@ -59,7 +58,10 @@ const ResetPassword = () => {
         <p className="text-sm text-slate-600 dark:text-slate-300">
           {t("resetPasswordPage.invalid.subtitle")}
         </p>
-        <Link to="/recuperar-password" className="text-sm font-medium text-sky-700 hover:underline dark:text-sky-400">
+        <Link
+          to="/recuperar-password"
+          className="text-sm font-medium text-sky-700 hover:underline dark:text-sky-400"
+        >
           {t("resetPasswordPage.invalid.action")}
         </Link>
       </div>
@@ -92,7 +94,9 @@ const ResetPassword = () => {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? t("passwordField.hide") : t("passwordField.show")}
+              aria-label={
+                showPassword ? t("passwordField.hide") : t("passwordField.show")
+              }
               className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -114,7 +118,11 @@ const ResetPassword = () => {
             <button
               type="button"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
-              aria-label={showConfirmPassword ? t("passwordField.hide") : t("passwordField.show")}
+              aria-label={
+                showConfirmPassword
+                  ? t("passwordField.hide")
+                  : t("passwordField.show")
+              }
               className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
             >
               {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -139,12 +147,17 @@ const ResetPassword = () => {
           disabled={loading}
           className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {loading ? t("resetPasswordPage.actions.updating") : t("resetPasswordPage.actions.submit")}
+          {loading
+            ? t("resetPasswordPage.actions.updating")
+            : t("resetPasswordPage.actions.submit")}
         </button>
       </form>
 
       <p className="text-sm text-slate-600 dark:text-slate-300">
-        <Link to="/login" className="font-medium text-sky-700 hover:underline dark:text-sky-400">
+        <Link
+          to="/login"
+          className="font-medium text-sky-700 hover:underline dark:text-sky-400"
+        >
           {t("resetPasswordPage.links.backToLogin")}
         </Link>
       </p>

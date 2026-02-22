@@ -54,6 +54,7 @@ APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID=email_verifications
 APPWRITE_COLLECTION_CONVERSATIONS_ID=conversations
 APPWRITE_COLLECTION_MESSAGES_ID=messages
 APPWRITE_COLLECTION_FAVORITES_ID=favorites
+APPWRITE_COLLECTION_PASSWORD_RESETS_ID=password_resets
 
 APPWRITE_BUCKET_RESOURCE_IMAGES_ID=resource-images
 APPWRITE_BUCKET_AVATARS_ID=avatars
@@ -85,6 +86,7 @@ APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID=activity-log-query
 APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID=root-functions-diagnostics
 APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID=deep-search-query
 APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID=send-chat-notification
+APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID=send-password-reset
 ```
 
 ---
@@ -105,6 +107,9 @@ APPWRITE_FUNCTION_API_KEY=
 ```bash
 EMAIL_VERIFICATION_TTL_MINUTES=120
 EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS=180
+
+PASSWORD_RESET_TTL_MINUTES=60
+PASSWORD_RESET_COOLDOWN_SECONDS=60
 
 EMAIL_SMTP_HOST=
 EMAIL_SMTP_PORT=587
@@ -150,12 +155,12 @@ MAPBOX_ACCESS_TOKEN=
 GA_MEASUREMENT_ID=
 ```
 
-| Variable                 | Descripción                                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------------------- |
-| `FEATURE_GEOLOCATION`    | Habilita geolocalización en el mapa                                                         |
-| `FEATURE_DARK_MODE`      | Habilita selector de tema oscuro                                                            |
-| `FEATURE_I18N`           | Habilita selector de idioma                                                                 |
-| `FEATURE_VERBOSE_LOGS`   | Activa logs detallados en consola                                                           |
+| Variable                 | Descripción                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `FEATURE_GEOLOCATION`    | Habilita geolocalización en el mapa                                                      |
+| `FEATURE_DARK_MODE`      | Habilita selector de tema oscuro                                                         |
+| `FEATURE_I18N`           | Habilita selector de idioma                                                              |
+| `FEATURE_VERBOSE_LOGS`   | Activa logs detallados en consola                                                        |
 | `FEATURE_MARKETING_SITE` | `true` = landing CRM marketing en `/`, `false` = catálogo de recursos del cliente en `/` |
 
 ---

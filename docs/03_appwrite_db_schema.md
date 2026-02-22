@@ -86,28 +86,29 @@ Regla:
 
 ## Collections - Resumen
 
-| Collection ID            | Purpose                                | Phase |
-| ------------------------ | -------------------------------------- | ----- |
-| `users`                  | Perfiles y roles internos + clientes   | 0     |
-| `user_preferences`       | Preferencias de UI                     | 0     |
-| `favorites`              | Favoritos por usuario                  | 0     |
-| `resources`              | Catalogo principal de recursos         | 0     |
-| `resource_images`        | Galeria por recurso                    | 0     |
-| `rate_plans`             | Reglas de pricing y booking            | 0     |
-| `amenities`              | Catalogo de amenidades                 | 0     |
-| `leads`                  | Mensajes/contactos                     | 0     |
-| `marketing_contacts`     | Contactos del CRM landing              | 0     |
-| `newsletter_subscribers` | Suscriptores de newsletter landing     | 0     |
-| `reservations`           | Reservaciones                          | 0     |
-| `reservation_payments`   | Intentos/confirmaciones de pago        | 0     |
-| `reservation_vouchers`   | Voucher emitido por reserva pagada     | 0     |
-| `reviews`                | Resenas de clientes                    | 0     |
-| `analytics_daily`        | Agregados diarios para dashboard       | 0     |
-| `activity_logs`          | Auditoria detallada                    | 0     |
-| `email_verifications`    | Tokens de verificacion de correo       | 0     |
-| `conversations`          | Hilos de chat cliente-propietario      | 0     |
-| `messages`               | Mensajes individuales por conversacion | 0     |
-| `instance_settings`      | Configuracion de plan/modulos/limites  | 0     |
+| Collection ID            | Purpose                                                  | Phase |
+| ------------------------ | -------------------------------------------------------- | ----- |
+| `users`                  | Perfiles y roles internos + clientes                     | 0     |
+| `user_preferences`       | Preferencias de UI                                       | 0     |
+| `favorites`              | Favoritos por usuario                                    | 0     |
+| `resources`              | Catalogo principal de recursos                           | 0     |
+| `resource_images`        | Galeria por recurso                                      | 0     |
+| `rate_plans`             | Reglas de pricing y booking                              | 0     |
+| `amenities`              | Catalogo de amenidades                                   | 0     |
+| `leads`                  | Mensajes/contactos                                       | 0     |
+| `marketing_contacts`     | Contactos del CRM landing                                | 0     |
+| `newsletter_subscribers` | Suscriptores de newsletter landing                       | 0     |
+| `reservations`           | Reservaciones                                            | 0     |
+| `reservation_payments`   | Intentos/confirmaciones de pago                          | 0     |
+| `reservation_vouchers`   | Voucher emitido por reserva pagada                       | 0     |
+| `reviews`                | Resenas de clientes                                      | 0     |
+| `analytics_daily`        | Agregados diarios para dashboard                         | 0     |
+| `activity_logs`          | Auditoria detallada                                      | 0     |
+| `email_verifications`    | Tokens de verificacion de correo                         | 0     |
+| `conversations`          | Hilos de chat cliente-propietario                        | 0     |
+| `messages`               | Mensajes individuales por conversacion                   | 0     |
+| `instance_settings`      | Configuracion de plan/modulos/limites                    | 0     |
+| `password_resets`        | Tokens de restablecimiento de contrasena via SMTP propio | 0     |
 
 ---
 
@@ -183,22 +184,22 @@ Purpose: lista de recursos favoritos por usuario (cliente o usuario autenticado)
 
 ### Attributes
 
-| Attribute             | Type    | Size | Required | Default | Constraint                    |
-| --------------------- | ------- | ---- | -------- | ------- | ----------------------------- |
-| `userId`              | string  | 64   | yes      | -       | FK logical `users.$id`        |
-| `resourceId`          | string  | 64   | yes      | -       | FK logical `resources.$id`    |
-| `resourceSlug`        | string  | 150  | no       | -       | Denormalizado para links      |
-| `resourceTitle`       | string  | 200  | no       | -       | Denormalizado para display    |
-| `resourceOwnerUserId` | string  | 64   | no       | -       | FK logical `users.$id`        |
+| Attribute             | Type   | Size | Required | Default | Constraint                 |
+| --------------------- | ------ | ---- | -------- | ------- | -------------------------- |
+| `userId`              | string | 64   | yes      | -       | FK logical `users.$id`     |
+| `resourceId`          | string | 64   | yes      | -       | FK logical `resources.$id` |
+| `resourceSlug`        | string | 150  | no       | -       | Denormalizado para links   |
+| `resourceTitle`       | string | 200  | no       | -       | Denormalizado para display |
+| `resourceOwnerUserId` | string | 64   | no       | -       | FK logical `users.$id`     |
 
 ### Indexes
 
-| Index Name                 | Type | Attributes                   | Notes                               |
-| -------------------------- | ---- | ---------------------------- | ----------------------------------- |
-| `uq_favorites_user_resource` | uq | `userId ↑, resourceId ↑`     | Un favorito por usuario y recurso   |
-| `idx_favorites_user`         | idx | `userId ↑`                  | Lista de favoritos por usuario      |
-| `idx_favorites_resource`     | idx | `resourceId ↑`              | Conteo/consulta por recurso         |
-| `idx_favorites_createdat`    | idx | `$createdAt ↓`              | Orden reciente                      |
+| Index Name                   | Type | Attributes               | Notes                             |
+| ---------------------------- | ---- | ------------------------ | --------------------------------- |
+| `uq_favorites_user_resource` | uq   | `userId ↑, resourceId ↑` | Un favorito por usuario y recurso |
+| `idx_favorites_user`         | idx  | `userId ↑`               | Lista de favoritos por usuario    |
+| `idx_favorites_resource`     | idx  | `resourceId ↑`           | Conteo/consulta por recurso       |
+| `idx_favorites_createdat`    | idx  | `$createdAt ↓`           | Orden reciente                    |
 
 ### Permissions
 
@@ -858,13 +859,14 @@ Purpose: hilos de chat en tiempo real entre clientes y propietarios/staff.
 ### Estado de conversacion (operativo)
 
 - No se requiere un campo extra para "estado de conversacion": se usa `conversations.status`.
-Transiciones sugeridas en UI admin:
+  Transiciones sugeridas en UI admin:
 - `active -> archived` (ocultar/sacar de seguimiento activo)
 - `active -> closed` (finalizar conversacion)
 - `archived -> active` (reactivar)
 - `closed -> active` (reabrir)
 
 Comportamiento recomendado en producto:
+
 - Si el cliente intenta iniciar chat de nuevo sobre el mismo recurso y existe un hilo `archived` o `closed`, el sistema debe reabrir ese hilo cambiandolo a `active` (sin crear un hilo duplicado).
 
 ### Indexes
@@ -947,6 +949,39 @@ Purpose: configuracion de la instancia para plan, modulos y limites.
 
 - Lectura: root y owner segun UI interna.
 - Escritura: solo root via Functions/panel root.
+
+---
+
+## Collection: password_resets
+
+Purpose: tokens de un solo uso para el flujo de restablecimiento de contrasena
+generados y enviados por la funcion `send-password-reset` via SMTP propio
+(no se usa el sistema nativo de recovery de Appwrite).
+
+### Attributes
+
+| Attribute     | Type     | Size | Required | Default | Constraint                           |
+| ------------- | -------- | ---- | -------- | ------- | ------------------------------------ |
+| `userId`      | string   | 64   | yes      | -       | FK logical `users.$id` (Auth UID)    |
+| `email`       | email    | 254  | yes      | -       | correo del usuario al momento        |
+| `token`       | string   | 64   | yes      | -       | ID.unique(); lookup key              |
+| `expireAt`    | datetime | -    | yes      | -       | ISO 8601 UTC; TTL por defecto 60min  |
+| `used`        | boolean  | -    | no       | false   | true tras reseteo exitoso            |
+| `invalidated` | boolean  | -    | no       | false   | true al emitir un token mas reciente |
+
+### Indexes
+
+| Index Name              | Type | Attributes     | Notes                        |
+| ----------------------- | ---- | -------------- | ---------------------------- |
+| `uq_pwreset_token`      | uq   | `token ↑`      | Lookup unico por token       |
+| `idx_pwreset_userid`    | idx  | `userId ↑`     | Invalidar tokens anteriores  |
+| `idx_pwreset_email`     | idx  | `email ↑`      | Cooldown por correo          |
+| `idx_pwreset_createdat` | idx  | `$createdAt ↓` | Orden reciente para cooldown |
+
+### Permissions
+
+- Sin permisos de usuario: acceso exclusivo via API Key desde la funcion `send-password-reset`.
+- No exponer en frontend directo.
 
 ---
 
@@ -1053,6 +1088,25 @@ Formato obligatorio:
 
 - Definitivo para el schema Appwrite actual de la instancia.
 - Alineado con recursos, reservas, pagos, vouchers, chat, auditoria y modulos por plan.
+
+---
+
+## Migration: 2026-02-22-password-reset-collection
+
+### Added
+
+- Coleccion `password_resets` con atributos `userId`, `email`, `token`, `expireAt`, `used`, `invalidated`.
+- Funcion `send-password-reset` (actions: `send` + `reset`) que reemplaza el recovery nativo de Appwrite.
+- ENV vars: `APPWRITE_COLLECTION_PASSWORD_RESETS_ID`, `APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID`, `PASSWORD_RESET_TTL_MINUTES`, `PASSWORD_RESET_COOLDOWN_SECONDS`.
+
+### Modified
+
+- `authService.js`: `requestPasswordRecovery` y `resetPassword` ahora llaman a la funcion via `executeJsonFunction`.
+- `ResetPassword.jsx`: URL param cambiado de `?userId=&secret=` a `?token=`.
+
+### Removed
+
+- Dependencia de `account.createRecovery` y `account.updateRecovery` de Appwrite para el flujo de reset.
 
 ---
 

@@ -1,9 +1,5 @@
 import env from "../env";
-import {
-  account,
-  ensureAppwriteConfigured,
-  ID,
-} from "../api/appwriteClient";
+import { account, ensureAppwriteConfigured, ID } from "../api/appwriteClient";
 import { executeJsonFunction } from "../utils/functions";
 
 const getVerifyRedirectUrl = () => {
@@ -15,7 +11,7 @@ const callEmailVerificationFunction = async (payload) => {
   const functionId = env.appwrite.functions.emailVerification;
   if (!functionId) {
     throw new Error(
-      "No esta configurada APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID."
+      "No esta configurada APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID.",
     );
   }
 
@@ -55,7 +51,7 @@ export const authService = {
         sessionId: "current",
       });
       const error = new Error(
-        "Tu correo no esta verificado. Revisa tu email antes de iniciar sesion."
+        "Tu correo no esta verificado. Revisa tu email antes de iniciar sesion.",
       );
       error.code = "EMAIL_NOT_VERIFIED";
       throw error;
@@ -67,7 +63,9 @@ export const authService = {
   async createSetupSession(email, password) {
     ensureAppwriteConfigured();
     return account.createEmailPasswordSession({
-      email: String(email || "").trim().toLowerCase(),
+      email: String(email || "")
+        .trim()
+        .toLowerCase(),
       password,
     });
   },
@@ -132,22 +130,38 @@ export const authService = {
   },
 
   async requestPasswordRecovery(email) {
-    ensureAppwriteConfigured();
-    const base = env.app.url?.replace(/\/$/, "") || window.location.origin;
-    const redirectUrl = `${base}/reset-password`;
-    return account.createRecovery({
-      email: email.trim().toLowerCase(),
-      url: redirectUrl,
+    const functionId = env.appwrite.functions.sendPasswordReset;
+    if (!functionId) {
+      throw new Error(
+        "No está configurada APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID.",
+      );
+    }
+    return executeJsonFunction(functionId, {
+      action: "send",
+      email: String(email || "")
+        .trim()
+        .toLowerCase(),
     });
   },
 
-  async resetPassword({ userId, secret, password }) {
-    ensureAppwriteConfigured();
-    return account.updateRecovery({
-      userId,
-      secret,
+  async resetPassword({ token, password }) {
+    const functionId = env.appwrite.functions.sendPasswordReset;
+    if (!functionId) {
+      throw new Error(
+        "No está configurada APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID.",
+      );
+    }
+    const result = await executeJsonFunction(functionId, {
+      action: "reset",
+      token,
       password,
     });
+    if (!result?.ok) {
+      throw new Error(
+        result?.message || "No se pudo restablecer la contraseña.",
+      );
+    }
+    return result;
   },
 
   async updatePrefs(patch) {
