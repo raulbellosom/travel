@@ -1,8 +1,9 @@
 ﻿import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useToast } from "../hooks/useToast";
 import { getErrorMessage } from "../utils/errors";
 import {
   getPasswordChecks,
@@ -13,6 +14,8 @@ import {
 const ResetPassword = () => {
   const { t } = useTranslation();
   const { resetPassword } = useAuth();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
 
@@ -21,8 +24,6 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
   const passwordScore = useMemo(
@@ -36,32 +37,49 @@ const ResetPassword = () => {
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (!isStrongPassword(password)) {
-      setError(
-        t(
+      showToast({
+        type: "warning",
+        message: t(
           "resetPasswordPage.errors.passwordWeak",
           t("registerPage.errors.passwordWeak"),
         ),
-      );
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(t("resetPasswordPage.errors.passwordMismatch"));
+      showToast({
+        type: "warning",
+        message: t("resetPasswordPage.errors.passwordMismatch"),
+      });
       return;
     }
 
     setLoading(true);
     try {
       await resetPassword({ token, password });
-      setSuccess(t("resetPasswordPage.messages.success"));
+      showToast({
+        type: "success",
+        title: t(
+          "resetPasswordPage.messages.successTitle",
+          "Contraseña actualizada",
+        ),
+        message: t("resetPasswordPage.messages.success"),
+      });
       setPassword("");
       setConfirmPassword("");
+      setTimeout(() => navigate("/login", { replace: true }), 2500);
     } catch (err) {
-      setError(getErrorMessage(err, t("resetPasswordPage.errors.update")));
+      showToast({
+        type: "error",
+        title: t(
+          "resetPasswordPage.errors.updateTitle",
+          "Error al cambiar contraseña",
+        ),
+        message: getErrorMessage(err, t("resetPasswordPage.errors.update")),
+      });
     } finally {
       setLoading(false);
     }
@@ -199,18 +217,6 @@ const ResetPassword = () => {
             </p>
           )}
         </label>
-
-        {error ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-            {error}
-          </p>
-        ) : null}
-
-        {success ? (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-200">
-            {success}
-          </p>
-        ) : null}
 
         <button
           type="submit"

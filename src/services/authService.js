@@ -156,9 +156,9 @@ export const authService = {
       token,
       password,
     });
-    if (!result?.ok) {
+    if (!result?.body?.ok) {
       throw new Error(
-        result?.message || "No se pudo restablecer la contraseña.",
+        result?.body?.message || "No se pudo restablecer la contraseña.",
       );
     }
     return result;
