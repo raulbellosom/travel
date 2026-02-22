@@ -2404,7 +2404,8 @@
     },
     "messages": {
       "empty": "Envía el primer mensaje para iniciar la conversación.",
-      "inputPlaceholder": "Escribe un mensaje..."
+      "inputPlaceholder": "Escribe un mensaje...",
+      "closedInputPlaceholder": "Esta conversación está cerrada."
     },
     "time": {
       "now": "ahora",
@@ -2420,9 +2421,14 @@
     },
     "presence": {
       "online": "En línea",
+      "active": "Activo",
+      "inactive": "Inactivo",
       "minutesAgo": "hace {{count}} min",
       "hoursAgo": "hace {{count}} h",
-      "daysAgo": "hace {{count}} d"
+      "daysAgo": "hace {{count}} d",
+      "inactiveMinutesAgo": "Inactivo hace {{count}} min",
+      "inactiveHoursAgo": "Inactivo hace {{count}} h",
+      "inactiveDaysAgo": "Inactivo hace {{count}} d"
     }
   },
   "calendarPage": {
@@ -2511,7 +2517,10 @@
     "subtitle": "Gestiona tus conversaciones con clientes e inquilinos.",
     "selectConversation": "Selecciona una conversación para ver los mensajes.",
     "actions": {
-      "newConversation": "Nueva conversación"
+      "newConversation": "Nueva conversación",
+      "markActive": "Reactivar",
+      "archive": "Archivar",
+      "closeConversation": "Finalizar"
     },
     "metrics": {
       "total": "Total",

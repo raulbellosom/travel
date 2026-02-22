@@ -2404,7 +2404,8 @@
     },
     "messages": {
       "empty": "Send the first message to start the conversation.",
-      "inputPlaceholder": "Type a message..."
+      "inputPlaceholder": "Type a message...",
+      "closedInputPlaceholder": "This conversation is closed."
     },
     "time": {
       "now": "now",
@@ -2420,9 +2421,14 @@
     },
     "presence": {
       "online": "Online",
+      "active": "Active",
+      "inactive": "Inactive",
       "minutesAgo": "{{count}}m ago",
       "hoursAgo": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago"
+      "daysAgo": "{{count}}d ago",
+      "inactiveMinutesAgo": "Inactive {{count}}m ago",
+      "inactiveHoursAgo": "Inactive {{count}}h ago",
+      "inactiveDaysAgo": "Inactive {{count}}d ago"
     }
   },
   "calendarPage": {
@@ -2511,7 +2517,10 @@
     "subtitle": "Manage your conversations with clients and tenants.",
     "selectConversation": "Select a conversation to view messages.",
     "actions": {
-      "newConversation": "New conversation"
+      "newConversation": "New conversation",
+      "markActive": "Reopen",
+      "archive": "Archive",
+      "closeConversation": "Close"
     },
     "metrics": {
       "total": "Total",

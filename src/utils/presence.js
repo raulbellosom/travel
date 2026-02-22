@@ -13,7 +13,7 @@ const parseDate = (value) => {
 /**
  * Check if a user is currently online based on their lastSeenAt timestamp
  * @param {string} lastSeenAt - ISO 8601 datetime string
- * @returns {boolean} - True if user was seen within the last 30 seconds
+ * @returns {boolean} - True if user was seen within the online time window
  */
 export const isUserOnline = (lastSeenAt) => {
   if (!lastSeenAt) return false;
@@ -38,7 +38,7 @@ export const getLastSeenText = (lastSeenAt, t) => {
   if (!lastSeenAt) return "";
 
   if (isUserOnline(lastSeenAt)) {
-    return t("chat.presence.online");
+    return t("chat.presence.active");
   }
 
   const lastSeen = parseDate(lastSeenAt);
@@ -50,14 +50,14 @@ export const getLastSeenText = (lastSeenAt, t) => {
   const diffInMinutes = Math.max(1, Math.floor((now - lastSeen) / 60000));
 
   if (diffInMinutes < 60) {
-    return t("chat.presence.minutesAgo", { count: diffInMinutes });
+    return t("chat.presence.inactiveMinutesAgo", { count: diffInMinutes });
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return t("chat.presence.hoursAgo", { count: diffInHours });
+    return t("chat.presence.inactiveHoursAgo", { count: diffInHours });
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
-  return t("chat.presence.daysAgo", { count: diffInDays });
+  return t("chat.presence.inactiveDaysAgo", { count: diffInDays });
 };

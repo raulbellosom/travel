@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, Minimize2, Send, Smile, X } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useChatPresence } from "../../hooks/useChatPresence";
 import { useChat } from "../../contexts/ChatContext";
 import { profileService } from "../../services/profileService";
 import { getConversationCounterparty } from "../../utils/chatParticipants";
@@ -39,13 +40,12 @@ const ConversationView = () => {
     goBackToList,
     toggleChat,
     chatRole,
+    isUserRecentlyActive,
   } = useChat();
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [contactProfile, setContactProfile] = useState(null);
-  const [presenceRefresh, setPresenceRefresh] = useState(0); // Trigger to refresh presence text
   const [isScrollReady, setIsScrollReady] = useState(false);
   const [viewerImage, setViewerImage] = useState(null);
   const messagesContainerRef = useRef(null);
@@ -60,38 +60,20 @@ const ConversationView = () => {
   const contactName = contact.name;
   const contactUserId = contact.userId;
   const ownUserId = user?.$id;
+  const activeConversationStatus = String(
+    activeConversation?.status || "active",
+  )
+    .trim()
+    .toLowerCase();
+  const isConversationClosed = activeConversationStatus === "closed";
 
-  /** Load contact user profile for avatar and presence */
-  useEffect(() => {
-    if (!contactUserId) {
-      setContactProfile(null);
-      return;
-    }
-
-    let mounted = true;
-
-    const fetchProfile = () => {
-      profileService
-        .getProfile(contactUserId)
-        .then((profile) => {
-          if (mounted) setContactProfile(profile);
-        })
-        .catch(() => {
-          if (mounted) setContactProfile(null);
-        });
-    };
-
-    // Initial load
-    fetchProfile();
-
-    // Refresh profile every 30s to get updated lastSeenAt for presence
-    const interval = setInterval(fetchProfile, 30000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [contactUserId]);
+  const presenceUserIds = useMemo(
+    () =>
+      contactUserId && contactUserId !== ownUserId ? [contactUserId] : [],
+    [contactUserId, ownUserId],
+  );
+  const { profilesById } = useChatPresence(presenceUserIds);
+  const contactProfile = contactUserId ? profilesById[contactUserId] : null;
 
   /** Contact avatar URL from loaded profile */
   const contactAvatarUrl = useMemo(() => {
@@ -117,26 +99,36 @@ const ConversationView = () => {
   }, [messages, ownUserId]);
 
   /** Contact presence status */
-  const contactPresence = useMemo(() => {
+  const contactPresence = (() => {
     const lastSeenAt = contactProfile?.lastSeenAt;
-    if (!lastSeenAt) return null;
-    void presenceRefresh;
+    const recentlyActive = isUserRecentlyActive(contactUserId);
+
+    if (lastSeenAt && isUserOnline(lastSeenAt)) {
+      return {
+        isOnline: true,
+        text: t("chat.presence.active"),
+      };
+    }
+
+    if (recentlyActive) {
+      return {
+        isOnline: true,
+        text: t("chat.presence.active"),
+      };
+    }
+
+    if (!lastSeenAt) {
+      return {
+        isOnline: false,
+        text: t("chat.presence.inactive"),
+      };
+    }
 
     return {
-      isOnline: isUserOnline(lastSeenAt),
+      isOnline: false,
       text: getLastSeenText(lastSeenAt, t),
     };
-  }, [contactProfile?.lastSeenAt, t, presenceRefresh]);
-
-  /** Refresh presence calculation periodically in addition to profile polling */
-  useEffect(() => {
-    // This ensures UI updates even between profile fetches
-    const interval = setInterval(() => {
-      setPresenceRefresh((prev) => prev + 1);
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  })();
 
   /* ── Auto-resize textarea ────────────────────────────── */
 
@@ -311,7 +303,7 @@ const ConversationView = () => {
   const handleSend = async (e) => {
     e?.preventDefault();
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || isConversationClosed) return;
 
     setInput("");
     setShowEmojiPicker(false);
@@ -339,6 +331,7 @@ const ConversationView = () => {
   };
 
   const toggleEmojiPicker = () => {
+    if (isConversationClosed) return;
     setShowEmojiPicker((prev) => {
       const next = !prev;
       if (next) {
@@ -376,37 +369,32 @@ const ConversationView = () => {
               {getInitials(contactName)}
             </div>
           )}
-          {/* Online indicator dot */}
-          {contactPresence?.isOnline && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
-          )}
+          {/* Presence indicator dot */}
+          <span
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-900",
+              contactPresence.isOnline
+                ? "bg-green-500"
+                : "bg-slate-300 dark:bg-slate-600",
+            )}
+          />
         </div>
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
             {contactName || t("chat.conversations.unknownUser")}
           </p>
-          {contactPresence && (
-            <div className="flex items-center gap-1.5 text-[11px]">
-              {contactPresence.isOnline && (
-                <span className="h-2 w-2 rounded-full bg-green-500" />
+          <div className="flex items-center gap-1.5 text-[11px]">
+            <span
+              className={cn(
+                contactPresence.isOnline
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-slate-500 dark:text-slate-400",
               )}
-              <span
-                className={cn(
-                  contactPresence.isOnline
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-slate-500 dark:text-slate-400",
-                )}
-              >
-                {contactPresence.text}
-              </span>
-            </div>
-          )}
-          {!contactPresence && activeConversation?.propertyTitle && (
-            <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-              {activeConversation.propertyTitle}
-            </p>
-          )}
+            >
+              {contactPresence.text}
+            </span>
+          </div>
         </div>
 
         {/* Minimize button - icon on desktop, X on mobile */}
@@ -479,7 +467,7 @@ const ConversationView = () => {
       {/* Input */}
       <div className="relative border-t border-slate-200 dark:border-slate-700">
         {/* Emoji Picker */}
-        {showEmojiPicker && (
+        {!isConversationClosed && showEmojiPicker && (
           <div
             ref={emojiPickerRef}
             className="absolute bottom-full left-3 mb-2 z-50"
@@ -502,9 +490,12 @@ const ConversationView = () => {
           <button
             type="button"
             onClick={toggleEmojiPicker}
+            disabled={isConversationClosed}
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-              showEmojiPicker
+              isConversationClosed
+                ? "cursor-not-allowed text-slate-300 dark:text-slate-600"
+                : showEmojiPicker
                 ? "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400"
                 : "text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300",
             )}
@@ -518,20 +509,26 @@ const ConversationView = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t("chat.messages.inputPlaceholder")}
+            placeholder={
+              isConversationClosed
+                ? t("chat.messages.closedInputPlaceholder")
+                : t("chat.messages.inputPlaceholder")
+            }
+            disabled={isConversationClosed}
             className={cn(
-              "min-h-10 flex-1 resize-none overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition",
-              "focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20",
-              "dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400",
+              "min-h-10 flex-1 resize-none overflow-y-auto rounded-xl border px-3 py-2.5 text-sm outline-none transition",
+              isConversationClosed
+                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
+                : "border-slate-200 bg-slate-50 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400",
             )}
             style={{ maxHeight: "96px" }}
           />
           <button
             type="submit"
-            disabled={!input.trim() || sending}
+            disabled={!input.trim() || sending || isConversationClosed}
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-              input.trim() && !sending
+              input.trim() && !sending && !isConversationClosed
                 ? "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600"
                 : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600",
             )}

@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ExternalLink, MessageCircle, Search, Minimize2, X } from "lucide-react";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useChatPresence } from "../../hooks/useChatPresence";
 import { useChat } from "../../contexts/ChatContext";
 import { profileService } from "../../services/profileService";
 import { getConversationsRoute } from "../../utils/internalRoutes";
@@ -41,9 +42,9 @@ const ConversationList = () => {
     chatRole,
     closeChat,
     toggleChat,
+    isUserRecentlyActive,
   } = useChat();
   const [search, setSearch] = useState("");
-  const [contactProfiles, setContactProfiles] = useState({});
   const [viewerImage, setViewerImage] = useState(null);
 
   /** Get contact user ID from a conversation */
@@ -69,57 +70,30 @@ const ConversationList = () => {
     [chatRole, user?.$id],
   );
 
-  /** Load contact profiles for presence indicators */
-  useEffect(() => {
-    if (conversations.length === 0) return;
-
-    let mounted = true;
-
-    const fetchProfiles = async () => {
-      const contactIds = [
-        ...new Set(conversations.map(getContactUserId).filter(Boolean)),
-      ];
-
-      const profiles = {};
-      // Load profiles in parallel (max 10 at a time to avoid overwhelming)
-      const chunks = [];
-      for (let i = 0; i < contactIds.length; i += 10) {
-        chunks.push(contactIds.slice(i, i + 10));
-      }
-
-      for (const chunk of chunks) {
-        const results = await Promise.allSettled(
-          chunk.map((id) => profileService.getProfile(id)),
-        );
-        results.forEach((result, idx) => {
-          if (result.status === "fulfilled" && result.value) {
-            profiles[chunk[idx]] = result.value;
-          }
-        });
-      }
-
-      if (mounted) setContactProfiles(profiles);
-    };
-
-    fetchProfiles();
-
-    // Refresh profiles every 30s for presence updates
-    const interval = setInterval(fetchProfiles, 30000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [conversations, getContactUserId]);
+  const presenceUserIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          conversations
+            .map(getContactUserId)
+            .filter((id) => id && id !== user?.$id),
+        ),
+      ),
+    [conversations, getContactUserId, user?.$id],
+  );
+  const { profilesById: contactProfiles } = useChatPresence(presenceUserIds);
 
   /** Check if a contact is online */
   const isContactOnline = useCallback(
     (conv) => {
       const contactId = getContactUserId(conv);
       const profile = contactProfiles[contactId];
-      return profile?.lastSeenAt ? isUserOnline(profile.lastSeenAt) : false;
+      if (profile?.lastSeenAt && isUserOnline(profile.lastSeenAt)) {
+        return true;
+      }
+      return isUserRecentlyActive(contactId);
     },
-    [contactProfiles, getContactUserId],
+    [contactProfiles, getContactUserId, isUserRecentlyActive],
   );
 
   const filtered = useMemo(() => {
@@ -268,9 +242,14 @@ const ConversationList = () => {
                   </div>
                 )}
                 {/* Online indicator dot */}
-                {online && (
-                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
-                )}
+                <span
+                  className={cn(
+                    "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900",
+                    online
+                      ? "bg-green-500"
+                      : "bg-slate-300 dark:bg-slate-600",
+                  )}
+                />
               </div>
 
               {/* Content */}

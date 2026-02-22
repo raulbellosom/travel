@@ -116,7 +116,15 @@ export const chatService = {
       params.resourceId || params.propertyId,
       params.clientUserId,
     );
-    if (existing) return existing;
+    if (existing) {
+      const existingStatus = String(existing?.status || "active")
+        .trim()
+        .toLowerCase();
+      if (existingStatus !== "active") {
+        return this.updateConversation(existing.$id, { status: "active" });
+      }
+      return existing;
+    }
     return this.createConversation(params);
   },
 

@@ -8,21 +8,23 @@ import {
   Send,
   Inbox,
   CheckCheck,
-  CheckCircle2,
-  Archive,
-  XCircle,
   UserPlus,
   Smile,
   X,
+  Archive,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../hooks/useAuth";
+import { useChatPresence } from "../hooks/useChatPresence";
 import { useChat } from "../contexts/ChatContext";
 import { profileService } from "../services/profileService";
 import {
   getConversationCounterparty,
   getConversationUnreadCount,
 } from "../utils/chatParticipants";
+import { isInternalRole } from "../utils/roles";
 import { isUserOnline, getLastSeenText } from "../utils/presence";
 import { cn } from "../utils/cn";
 import { Badge, Spinner, StatsCardsRow, ImageViewerModal } from "../components/common";
@@ -52,6 +54,8 @@ const Conversations = () => {
     chatRole,
     totalUnread,
     isRestoringConversation,
+    isUserRecentlyActive,
+    updateConversationStatus,
   } = useChat();
 
   const [searchParams] = useSearchParams();
@@ -59,12 +63,13 @@ const Conversations = () => {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [contactProfile, setContactProfile] = useState(null);
-  const [contactProfiles, setContactProfiles] = useState({}); // Profiles for conversation list
   const [showNewConversationModal, setShowNewConversationModal] = useState(false);
   const [newConversationSearch, setNewConversationSearch] = useState("");
   const [startingDirectConversationFor, setStartingDirectConversationFor] = useState("");
-  const [presenceRefresh, setPresenceRefresh] = useState(0);
+  const [statusMutation, setStatusMutation] = useState({
+    conversationId: "",
+    status: "",
+  });
   const [isScrollReady, setIsScrollReady] = useState(false);
   const [viewerImage, setViewerImage] = useState(null);
   const messagesContainerRef = useRef(null);
@@ -119,30 +124,38 @@ const Conversations = () => {
     [t],
   );
 
-  // Get status badge configuration
-  const getStatusConfig = useCallback(
+  const getConversationStatusConfig = useCallback(
     (status) => {
-      const configs = {
-        active: {
-          variant: "success",
-          icon: CheckCircle2,
-          label: t("conversationsPage.status.active"),
-        },
-        archived: {
+      const normalizedStatus = String(status || "active").toLowerCase();
+      if (normalizedStatus === "archived") {
+        return {
           variant: "warning",
-          icon: Archive,
           label: t("conversationsPage.status.archived"),
-        },
-        closed: {
+        };
+      }
+      if (normalizedStatus === "closed") {
+        return {
           variant: "secondary",
-          icon: XCircle,
           label: t("conversationsPage.status.closed"),
-        },
+        };
+      }
+      return {
+        variant: "success",
+        label: t("conversationsPage.status.active"),
       };
-      return configs[status] || configs.active;
     },
     [t],
   );
+
+  const activeConversationStatus = String(
+    activeConversation?.status || "active",
+  )
+    .trim()
+    .toLowerCase();
+  const isConversationClosed = activeConversationStatus === "closed";
+  const canManageConversationStatus = isInternalRole(user?.role);
+  const isUpdatingActiveConversationStatus =
+    statusMutation.conversationId === activeConversation?.$id;
 
   // Focus on a specific conversation from URL param
   useEffect(() => {
@@ -280,100 +293,37 @@ const Conversations = () => {
     }
   }, [messages, activeConversationId, loadingMessages, user?.$id]);
 
-  /** Load contact user profile for presence */
-  useEffect(() => {
-    const contactUserId = getContactUserId(activeConversation);
+  const activeContactUserId = useMemo(
+    () => getContactUserId(activeConversation),
+    [activeConversation, getContactUserId],
+  );
 
-    if (!contactUserId) {
-      setContactProfile(null);
-      return;
+  const presenceUserIds = useMemo(() => {
+    const contactIds = conversations
+      .map(getContactUserId)
+      .filter((id) => id && id !== user?.$id);
+    if (activeContactUserId && activeContactUserId !== user?.$id) {
+      contactIds.push(activeContactUserId);
     }
+    return Array.from(new Set(contactIds));
+  }, [activeContactUserId, conversations, getContactUserId, user?.$id]);
 
-    let mounted = true;
-
-    const fetchProfile = () => {
-      profileService
-        .getProfile(contactUserId)
-        .then((profile) => {
-          if (mounted) setContactProfile(profile);
-        })
-        .catch(() => {
-          if (mounted) setContactProfile(null);
-        });
-    };
-
-    // Initial load
-    fetchProfile();
-
-    // Refresh profile every 30s for presence updates
-    const interval = setInterval(fetchProfile, 30000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [activeConversation, getContactUserId]);
-
-  /** Refresh presence calculation periodically */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPresenceRefresh((prev) => prev + 1);
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  /** Load contact profiles for conversation list avatars and presence */
-  useEffect(() => {
-    if (conversations.length === 0) return;
-
-    let mounted = true;
-
-    const fetchProfiles = async () => {
-      const contactIds = [
-        ...new Set(conversations.map(getContactUserId).filter(Boolean)),
-      ];
-
-      const profiles = {};
-      // Load profiles in parallel (max 10 at a time)
-      const chunks = [];
-      for (let i = 0; i < contactIds.length; i += 10) {
-        chunks.push(contactIds.slice(i, i + 10));
-      }
-
-      for (const chunk of chunks) {
-        const results = await Promise.allSettled(
-          chunk.map((id) => profileService.getProfile(id)),
-        );
-        results.forEach((result, idx) => {
-          if (result.status === "fulfilled" && result.value) {
-            profiles[chunk[idx]] = result.value;
-          }
-        });
-      }
-
-      if (mounted) setContactProfiles(profiles);
-    };
-
-    fetchProfiles();
-
-    // Refresh profiles every 30s for presence updates
-    const interval = setInterval(fetchProfiles, 30000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [conversations, getContactUserId]);
+  const { profilesById: contactProfiles } = useChatPresence(presenceUserIds);
+  const contactProfile = activeContactUserId
+    ? contactProfiles[activeContactUserId]
+    : null;
 
   /** Check if a contact in the list is online */
   const isListContactOnline = useCallback(
     (conv) => {
       const contactId = getContactUserId(conv);
       const profile = contactProfiles[contactId];
-      return profile?.lastSeenAt ? isUserOnline(profile.lastSeenAt) : false;
+      if (profile?.lastSeenAt && isUserOnline(profile.lastSeenAt)) {
+        return true;
+      }
+      return isUserRecentlyActive(contactId);
     },
-    [contactProfiles, getContactUserId],
+    [contactProfiles, getContactUserId, isUserRecentlyActive],
   );
 
   /** Get avatar URL for a contact in the list */
@@ -451,6 +401,42 @@ const Conversations = () => {
     ],
   );
 
+  const handleConversationStatusChange = useCallback(
+    async (nextStatus) => {
+      const conversationId = String(activeConversation?.$id || "").trim();
+      const normalizedNextStatus = String(nextStatus || "").trim().toLowerCase();
+      const currentStatus = String(activeConversation?.status || "active")
+        .trim()
+        .toLowerCase();
+
+      if (!conversationId || !normalizedNextStatus) return;
+      if (normalizedNextStatus === currentStatus) return;
+      if (statusMutation.conversationId === conversationId) return;
+
+      setStatusMutation({
+        conversationId,
+        status: normalizedNextStatus,
+      });
+
+      try {
+        await updateConversationStatus(conversationId, normalizedNextStatus);
+      } catch (err) {
+        console.error("Failed to update conversation status:", err);
+      } finally {
+        setStatusMutation({
+          conversationId: "",
+          status: "",
+        });
+      }
+    },
+    [
+      activeConversation?.$id,
+      activeConversation?.status,
+      statusMutation.conversationId,
+      updateConversationStatus,
+    ],
+  );
+
   /* ── Summary stats ───────────────────────────────────── */
 
   const stats = useMemo(() => {
@@ -480,7 +466,7 @@ const Conversations = () => {
   const handleSend = async (e) => {
     e?.preventDefault();
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || isConversationClosed) return;
     setInput("");
     setShowEmojiPicker(false);
     setSending(true);
@@ -507,6 +493,7 @@ const Conversations = () => {
   };
 
   const toggleEmojiPicker = () => {
+    if (isConversationClosed) return;
     setShowEmojiPicker((prev) => {
       const next = !prev;
       if (next) inputRef.current?.blur();
@@ -548,16 +535,36 @@ const Conversations = () => {
   const contactName = getContactName;
 
   /** Contact presence status */
-  const contactPresence = useMemo(() => {
+  const contactPresence = (() => {
     const lastSeenAt = contactProfile?.lastSeenAt;
-    if (!lastSeenAt) return null;
+    const recentlyActive = isUserRecentlyActive(activeContactUserId);
+
+    if (lastSeenAt && isUserOnline(lastSeenAt)) {
+      return {
+        isOnline: true,
+        text: t("chat.presence.active"),
+      };
+    }
+
+    if (recentlyActive) {
+      return {
+        isOnline: true,
+        text: t("chat.presence.active"),
+      };
+    }
+
+    if (!lastSeenAt) {
+      return {
+        isOnline: false,
+        text: t("chat.presence.inactive"),
+      };
+    }
 
     return {
-      isOnline: isUserOnline(lastSeenAt),
+      isOnline: false,
       text: getLastSeenText(lastSeenAt, t),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contactProfile?.lastSeenAt, t, presenceRefresh]);
+  })();
 
   /** Contact avatar URL for active conversation header */
   const contactAvatarUrl = useMemo(() => {
@@ -706,10 +713,15 @@ const Conversations = () => {
                         {getInitials(contactName(conv))}
                       </div>
                     )}
-                    {/* Online indicator dot */}
-                    {online && (
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
-                    )}
+                    {/* Presence indicator dot */}
+                    <span
+                      className={cn(
+                        "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900",
+                        online
+                          ? "bg-green-500"
+                          : "bg-slate-300 dark:bg-slate-600",
+                      )}
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -796,64 +808,105 @@ const Conversations = () => {
                       {getInitials(contactName(activeConversation || {}))}
                     </div>
                   )}
-                  {/* Online indicator dot */}
-                  {contactPresence?.isOnline && (
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
-                  )}
+                  {/* Presence indicator dot */}
+                  <span
+                    className={cn(
+                      "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-900",
+                      contactPresence.isOnline
+                        ? "bg-green-500"
+                        : "bg-slate-300 dark:bg-slate-600",
+                    )}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                     {contactName(activeConversation || {}) ||
                       t("chat.conversations.unknownUser")}
                   </p>
-                  {contactPresence && (
-                    <div className="flex items-center gap-1.5 text-[11px]">
-                      {contactPresence.isOnline && (
-                        <span className="h-2 w-2 rounded-full bg-green-500" />
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <span
+                      className={cn(
+                        contactPresence.isOnline
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-slate-500 dark:text-slate-400"
                       )}
-                      <span
-                        className={cn(
-                          contactPresence.isOnline
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-slate-500 dark:text-slate-400"
-                        )}
-                      >
-                        {contactPresence.text}
-                      </span>
+                    >
+                      {contactPresence.text}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={getConversationStatusConfig(activeConversation?.status).variant}
+                    size="sm"
+                  >
+                    {getConversationStatusConfig(activeConversation?.status).label}
+                  </Badge>
+
+                  {canManageConversationStatus && activeConversation?.$id && (
+                    <div className="hidden items-center gap-1 sm:flex">
+                      {activeConversationStatus !== "active" && (
+                        <button
+                          type="button"
+                          onClick={() => handleConversationStatusChange("active")}
+                          disabled={isUpdatingActiveConversationStatus}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-2 text-xs font-medium text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900/60 dark:bg-green-900/25 dark:text-green-300 dark:hover:bg-green-900/35"
+                          title={t("conversationsPage.actions.markActive")}
+                        >
+                          {statusMutation.status === "active" ? (
+                            <Spinner size="xs" />
+                          ) : (
+                            <RotateCcw size={12} />
+                          )}
+                          {t("conversationsPage.actions.markActive")}
+                        </button>
+                      )}
+
+                      {activeConversationStatus !== "archived" && (
+                        <button
+                          type="button"
+                          onClick={() => handleConversationStatusChange("archived")}
+                          disabled={isUpdatingActiveConversationStatus}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900/60 dark:bg-amber-900/25 dark:text-amber-300 dark:hover:bg-amber-900/35"
+                          title={t("conversationsPage.actions.archive")}
+                        >
+                          {statusMutation.status === "archived" ? (
+                            <Spinner size="xs" />
+                          ) : (
+                            <Archive size={12} />
+                          )}
+                          {t("conversationsPage.actions.archive")}
+                        </button>
+                      )}
+
+                      {activeConversationStatus !== "closed" && (
+                        <button
+                          type="button"
+                          onClick={() => handleConversationStatusChange("closed")}
+                          disabled={isUpdatingActiveConversationStatus}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:bg-red-900/25 dark:text-red-300 dark:hover:bg-red-900/35"
+                          title={t("conversationsPage.actions.closeConversation")}
+                        >
+                          {statusMutation.status === "closed" ? (
+                            <Spinner size="xs" />
+                          ) : (
+                            <CheckCircle2 size={12} />
+                          )}
+                          {t("conversationsPage.actions.closeConversation")}
+                        </button>
+                      )}
                     </div>
                   )}
-                  {!contactPresence &&
-                    (activeConversation?.resourceTitle ||
-                      activeConversation?.propertyTitle) && (
-                    <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                      {activeConversation.resourceTitle ||
-                        activeConversation.propertyTitle}
-                    </p>
-                  )}
+
+                  {/* Close conversation panel button */}
+                  <button
+                    onClick={goBackToList}
+                    className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 md:flex dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                    title={t("chat.actions.close")}
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
-                {activeConversation?.status &&
-                  (() => {
-                    const statusConfig = getStatusConfig(
-                      activeConversation.status,
-                    );
-                    return (
-                      <Badge
-                        variant={statusConfig.variant}
-                        size="sm"
-                        icon={statusConfig.icon}
-                      >
-                        {statusConfig.label}
-                      </Badge>
-                    );
-                  })()}
-                {/* Close conversation button */}
-                <button
-                  onClick={goBackToList}
-                  className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 md:flex dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-                  title={t("chat.actions.close")}
-                >
-                  <X size={18} />
-                </button>
               </header>
 
               {/* Messages */}
@@ -894,7 +947,7 @@ const Conversations = () => {
               {/* Input */}
               <div className="relative border-t border-slate-200 dark:border-slate-700">
                 {/* Emoji Picker */}
-                {showEmojiPicker && (
+                {!isConversationClosed && showEmojiPicker && (
                   <div
                     ref={emojiPickerRef}
                     className="absolute bottom-full left-3 mb-2 z-50"
@@ -920,7 +973,13 @@ const Conversations = () => {
                   <button
                     type="button"
                     onClick={toggleEmojiPicker}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                    disabled={isConversationClosed}
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
+                      isConversationClosed
+                        ? "cursor-not-allowed text-slate-300 dark:text-slate-600"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-300",
+                    )}
                     aria-label={t("chat.actions.emoji")}
                   >
                     <Smile size={20} />
@@ -931,16 +990,26 @@ const Conversations = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={t("chat.messages.inputPlaceholder")}
+                    placeholder={
+                      isConversationClosed
+                        ? t("chat.messages.closedInputPlaceholder")
+                        : t("chat.messages.inputPlaceholder")
+                    }
                     rows={1}
-                    className="max-h-24 min-h-10 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400"
+                    disabled={isConversationClosed}
+                    className={cn(
+                      "max-h-24 min-h-10 flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm outline-none transition",
+                      isConversationClosed
+                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
+                        : "border-slate-200 bg-slate-50 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400",
+                    )}
                   />
                   <button
                     type="submit"
-                    disabled={!input.trim() || sending}
+                    disabled={!input.trim() || sending || isConversationClosed}
                     className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-                      input.trim() && !sending
+                      input.trim() && !sending && !isConversationClosed
                         ? "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600"
                         : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600",
                     )}

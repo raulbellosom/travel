@@ -855,6 +855,18 @@ Purpose: hilos de chat en tiempo real entre clientes y propietarios/staff.
 | `status`        | enum     | -    | no       | `active` | `active`,`archived`,`closed` |
 | `enabled`       | boolean  | -    | no       | true     | Soft delete                  |
 
+### Estado de conversacion (operativo)
+
+- No se requiere un campo extra para "estado de conversacion": se usa `conversations.status`.
+Transiciones sugeridas en UI admin:
+- `active -> archived` (ocultar/sacar de seguimiento activo)
+- `active -> closed` (finalizar conversacion)
+- `archived -> active` (reactivar)
+- `closed -> active` (reabrir)
+
+Comportamiento recomendado en producto:
+- Si el cliente intenta iniciar chat de nuevo sobre el mismo recurso y existe un hilo `archived` o `closed`, el sistema debe reabrir ese hilo cambiandolo a `active` (sin crear un hilo duplicado).
+
 ### Indexes
 
 | Index Name                | Type | Attributes                     | Notes                       |

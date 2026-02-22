@@ -32,6 +32,7 @@ export const useChat = () => {
 
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
+  const normalizeId = (value) => String(value || "").trim();
 
   // Global state
   const [conversations, setConversations] = useState([]);
@@ -42,6 +43,7 @@ export const ChatProvider = ({ children }) => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [internalChatUsers, setInternalChatUsers] = useState([]);
   const [loadingInternalChatUsers, setLoadingInternalChatUsers] = useState(false);
+  const [peerActivityByUserId, setPeerActivityByUserId] = useState({});
   const [isRestoringConversation, setIsRestoringConversation] = useState(() =>
     Boolean(localStorage.getItem("activeConversationId")),
   );
@@ -55,6 +57,40 @@ export const ChatProvider = ({ children }) => {
   const isAuthenticated = Boolean(user?.$id);
   const isInternal = isInternalRole(user?.role);
   const chatRole = isInternal ? "owner" : "client";
+
+  const markPeerActive = useCallback((peerUserId, at) => {
+    const normalizedPeerId = normalizeId(peerUserId);
+    if (!normalizedPeerId) return;
+
+    const parsedAt = new Date(at || Date.now());
+    const timestamp = Number.isNaN(parsedAt.getTime())
+      ? new Date().toISOString()
+      : parsedAt.toISOString();
+
+    setPeerActivityByUserId((prev) => {
+      if (prev[normalizedPeerId] === timestamp) return prev;
+      return {
+        ...prev,
+        [normalizedPeerId]: timestamp,
+      };
+    });
+  }, []);
+
+  const isUserRecentlyActive = useCallback(
+    (peerUserId, windowMs = 90000) => {
+      const normalizedPeerId = normalizeId(peerUserId);
+      if (!normalizedPeerId) return false;
+
+      const rawTimestamp = peerActivityByUserId[normalizedPeerId];
+      if (!rawTimestamp) return false;
+
+      const activityTime = new Date(rawTimestamp).getTime();
+      if (Number.isNaN(activityTime)) return false;
+
+      return Date.now() - activityTime <= windowMs;
+    },
+    [peerActivityByUserId],
+  );
 
   // Initialize presence heartbeat for authenticated users
   usePresence();
@@ -143,6 +179,7 @@ export const ChatProvider = ({ children }) => {
       setConversations([]);
       setMessages([]);
       setInternalChatUsers([]);
+      setPeerActivityByUserId({});
     }
   }, [isAuthenticated]);
 
@@ -185,6 +222,34 @@ export const ChatProvider = ({ children }) => {
       setLoadingInternalChatUsers(false);
     }
   }, [isInternal, user?.$id]);
+
+  const updateConversationStatus = useCallback(async (conversationId, nextStatus) => {
+    const normalizedConversationId = String(conversationId || "").trim();
+    const normalizedStatus = String(nextStatus || "").trim().toLowerCase();
+    const allowedStatuses = new Set(["active", "archived", "closed"]);
+
+    if (!normalizedConversationId) {
+      throw new Error("Invalid conversation id.");
+    }
+    if (!allowedStatuses.has(normalizedStatus)) {
+      throw new Error("Invalid conversation status.");
+    }
+
+    const updatedConversation = await chatService.updateConversation(
+      normalizedConversationId,
+      { status: normalizedStatus },
+    );
+
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.$id === normalizedConversationId
+          ? { ...conversation, ...updatedConversation, status: normalizedStatus }
+          : conversation,
+      ),
+    );
+
+    return updatedConversation;
+  }, []);
 
   /* ── Load messages for active conversation ───────────── */
 
@@ -293,9 +358,11 @@ export const ChatProvider = ({ children }) => {
 
       // Add to local list if new
       setConversations((prev) => {
-        const exists = prev.find((c) => c.$id === conversation.$id);
-        if (exists) return prev;
-        return [conversation, ...prev];
+        const exists = prev.some((c) => c.$id === conversation.$id);
+        if (!exists) return [conversation, ...prev];
+        return prev.map((c) =>
+          c.$id === conversation.$id ? { ...c, ...conversation } : c,
+        );
       });
 
       await openConversation(conversation.$id);
@@ -340,6 +407,15 @@ export const ChatProvider = ({ children }) => {
   const sendMessage = useCallback(
     async (body) => {
       if (!activeConversationId || !user?.$id || !body.trim()) return null;
+
+      const normalizedConversationStatus = String(
+        activeConversation?.status || "active",
+      )
+        .trim()
+        .toLowerCase();
+      if (normalizedConversationStatus === "closed") {
+        throw new Error("Cannot send messages to a closed conversation.");
+      }
 
       const trimmedBody = body.trim();
       const senderSide = getConversationSide(activeConversation, user.$id, chatRole);
@@ -464,7 +540,31 @@ export const ChatProvider = ({ children }) => {
           }
         } else if (event.includes(".update")) {
           setConversations((prev) =>
-            prev.map((c) => (c.$id === doc.$id ? { ...c, ...doc } : c)),
+            prev.map((c) => {
+              if (c.$id !== doc.$id) return c;
+
+              const prevClientUnread = Number(c.clientUnread || 0);
+              const prevOwnerUnread = Number(c.ownerUnread || 0);
+              const next = { ...c, ...doc };
+              const nextClientUnread = Number(next.clientUnread || 0);
+              const nextOwnerUnread = Number(next.ownerUnread || 0);
+              const currentUserId = normalizeId(user?.$id);
+
+              if (currentUserId && normalizeId(c.clientUserId) === currentUserId) {
+                if (nextClientUnread > prevClientUnread) {
+                  markPeerActive(c.ownerUserId, next.lastMessageAt || next.$updatedAt);
+                }
+              } else if (
+                currentUserId &&
+                normalizeId(c.ownerUserId) === currentUserId
+              ) {
+                if (nextOwnerUnread > prevOwnerUnread) {
+                  markPeerActive(c.clientUserId, next.lastMessageAt || next.$updatedAt);
+                }
+              }
+
+              return next;
+            }),
           );
         } else if (event.includes(".delete")) {
           setConversations((prev) => prev.filter((c) => c.$id !== doc.$id));
@@ -484,6 +584,7 @@ export const ChatProvider = ({ children }) => {
     user?.$id,
     loadConversations,
     loadInternalChatUsers,
+    markPeerActive,
   ]);
 
   /* ── Real-time: messages ─────────────────────────────── */
@@ -564,6 +665,7 @@ export const ChatProvider = ({ children }) => {
 
           // If message is from the other party, play notification sound and auto-mark as read
           if (doc.senderUserId !== user.$id) {
+            markPeerActive(doc.senderUserId, doc.$createdAt);
             playNotificationSound();
 
             chatService
@@ -605,7 +707,7 @@ export const ChatProvider = ({ children }) => {
         unsubMessagesRef.current = null;
       }
     };
-  }, [activeConversationId, isAuthenticated, user?.$id, chatRole]);
+  }, [activeConversationId, isAuthenticated, user?.$id, chatRole, markPeerActive]);
 
   /* ── Context value ───────────────────────────────────── */
 
@@ -625,6 +727,7 @@ export const ChatProvider = ({ children }) => {
       chatRole,
       isAuthenticated,
       isRestoringConversation,
+      isUserRecentlyActive,
 
       // Actions
       loadConversations,
@@ -632,6 +735,7 @@ export const ChatProvider = ({ children }) => {
       openConversation,
       startConversation,
       startDirectConversation,
+      updateConversationStatus,
       sendMessage,
       toggleChat,
       closeChat,
@@ -651,11 +755,13 @@ export const ChatProvider = ({ children }) => {
       chatRole,
       isAuthenticated,
       isRestoringConversation,
+      isUserRecentlyActive,
       loadConversations,
       loadInternalChatUsers,
       openConversation,
       startConversation,
       startDirectConversation,
+      updateConversationStatus,
       sendMessage,
       toggleChat,
       closeChat,
