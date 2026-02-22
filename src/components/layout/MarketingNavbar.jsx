@@ -350,10 +350,10 @@ const MarketingNavbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 z-210 w-[85%] max-w-sm bg-white dark:bg-slate-900 shadow-2xl lg:hidden overflow-y-auto"
+              className="fixed top-0 right-0 bottom-0 z-210 w-[85%] max-w-sm bg-white dark:bg-slate-900 shadow-2xl lg:hidden flex flex-col"
             >
               {/* Sidebar header */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
                   <BrandLogo className="h-9 w-auto" />
                   <p className="text-lg font-bold text-slate-900 dark:text-white">
@@ -368,7 +368,7 @@ const MarketingNavbar = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-6 p-6">
+              <div className="flex-1 overflow-y-auto flex flex-col gap-6 p-6">
                 {/* Section links */}
                 <div className="space-y-1">
                   {sections.map((s, idx) => (

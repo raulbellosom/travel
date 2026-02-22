@@ -665,9 +665,9 @@ const PublicNavbar = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 z-210 w-[85%] max-w-md overflow-y-auto bg-white shadow-2xl dark:bg-slate-950 lg:hidden"
+              className="fixed top-0 right-0 bottom-0 z-210 w-[85%] max-w-md flex flex-col bg-white shadow-2xl dark:bg-slate-950 lg:hidden"
             >
-              <div className="flex items-center justify-between border-b border-slate-100 px-6 pb-4 pt-6 dark:border-slate-800">
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-100 px-6 pb-4 pt-6 dark:border-slate-800">
                 <div className="flex items-center gap-3">
                   <BrandLogo className="h-9 w-auto" />
                   <p className="text-lg font-bold text-slate-900 dark:text-white">
@@ -682,7 +682,7 @@ const PublicNavbar = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4 p-5">
+              <div className="flex-1 overflow-y-auto flex flex-col gap-4 p-5">
                 {navLinks.map((link) => (
                   <div
                     key={link.name}

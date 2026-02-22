@@ -484,10 +484,15 @@ const InfiniteRow = ({ items, direction = "left", speed = 0.4 }) => {
         className="flex gap-3 md:gap-4 will-change-transform"
         style={{
           "--cat-row-shift": `${segWidth}px`,
-          animation:
+          animationName:
             segWidth > 0
-              ? `${direction === "right" ? "cat-row-marquee-right" : "cat-row-marquee-left"} ${duration}s linear infinite`
+              ? direction === "right"
+                ? "cat-row-marquee-right"
+                : "cat-row-marquee-left"
               : "none",
+          animationDuration: `${duration}s`,
+          animationTimingFunction: "linear",
+          animationIterationCount: "infinite",
           animationPlayState: paused ? "paused" : "running",
         }}
       >
