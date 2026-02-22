@@ -203,20 +203,24 @@ export const ChatProvider = ({ children }) => {
 
   // Auto-load messages when active conversation changes
   useEffect(() => {
-    if (activeConversationId && conversations.length > 0) {
-      // Verify the conversation exists before loading messages
-      const conversationExists = conversations.some(
-        (c) => c.$id === activeConversationId,
-      );
-      if (conversationExists) {
-        loadMessages(activeConversationId);
-      } else {
-        // Conversation doesn't exist (maybe deleted), clear it
-        setActiveConversationId(null);
-        localStorage.removeItem("activeConversationId");
-      }
+    if (!activeConversationId) return;
+    loadMessages(activeConversationId);
+  }, [activeConversationId, loadMessages]);
+
+  // If active conversation disappears from the list, clear active state safely.
+  useEffect(() => {
+    if (!activeConversationId || loadingConversations) return;
+    if (conversations.length === 0) return;
+
+    const conversationExists = conversations.some(
+      (c) => c.$id === activeConversationId,
+    );
+    if (!conversationExists) {
+      setActiveConversationId(null);
+      setMessages([]);
+      localStorage.removeItem("activeConversationId");
     }
-  }, [activeConversationId, conversations, loadMessages]);
+  }, [activeConversationId, conversations, loadingConversations]);
 
   /* ── Open a conversation ─────────────────────────────── */
 

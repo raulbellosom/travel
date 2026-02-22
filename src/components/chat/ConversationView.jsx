@@ -208,9 +208,11 @@ const ConversationView = () => {
       return;
     }
 
-    // Still loading - wait
+    // Still loading - keep current visibility if we already have messages.
     if (loadingMessages) {
-      setIsScrollReady(false);
+      if (messages.length === 0) {
+        setIsScrollReady(false);
+      }
       return;
     }
 
@@ -227,6 +229,9 @@ const ConversationView = () => {
       scrolledConversationRef.current === activeConversation.$id &&
       prevMessagesCountRef.current === messages.length
     ) {
+      if (!isScrollReady) {
+        setIsScrollReady(true);
+      }
       return;
     }
 
@@ -280,7 +285,7 @@ const ConversationView = () => {
       if (timeoutId) clearTimeout(timeoutId);
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [activeConversation?.$id, messages.length, loadingMessages]);
+  }, [activeConversation?.$id, isScrollReady, messages.length, loadingMessages]);
 
   // Scroll to bottom when new messages arrive (smooth).
   // Always follows own sends; follows incoming only if user is near the bottom.
