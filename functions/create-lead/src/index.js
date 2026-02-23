@@ -1,4 +1,12 @@
-﻿import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
+﻿import {
+  Client,
+  Databases,
+  ID,
+  Permission,
+  Query,
+  Role,
+  Users,
+} from "node-appwrite";
 import {
   createModulesService,
   toModuleErrorResponse,
@@ -19,12 +27,14 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  resourcesCollectionId: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
+  resourcesCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   leadsCollectionId: getEnv("APPWRITE_COLLECTION_LEADS_ID") || "leads",
   conversationsCollectionId:
     getEnv("APPWRITE_COLLECTION_CONVERSATIONS_ID") || "conversations",
   messagesCollectionId: getEnv("APPWRITE_COLLECTION_MESSAGES_ID") || "messages",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
   instanceSettingsCollectionId:
     getEnv("APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID") || "instance_settings",
 });
@@ -39,7 +49,9 @@ const parseBody = (req) => {
 };
 
 const normalizeText = (value, maxLength = 0) => {
-  const normalized = String(value ?? "").trim().replace(/\s+/g, " ");
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
   if (!maxLength) return normalized;
   return normalized.slice(0, maxLength);
 };
@@ -67,30 +79,33 @@ const getRequestId = (req) => {
   );
 };
 
-const buildLeadPermissions = (ownerUserId, clientUserId) =>
-  [...new Set([
+const buildLeadPermissions = (ownerUserId, clientUserId) => [
+  ...new Set([
     Permission.read(Role.user(ownerUserId)),
     Permission.update(Role.user(ownerUserId)),
     Permission.delete(Role.user(ownerUserId)),
     Permission.read(Role.user(clientUserId)),
-  ])];
+  ]),
+];
 
-const buildConversationPermissions = (ownerUserId, clientUserId) =>
-  [...new Set([
+const buildConversationPermissions = (ownerUserId, clientUserId) => [
+  ...new Set([
     Permission.read(Role.user(ownerUserId)),
     Permission.update(Role.user(ownerUserId)),
     Permission.delete(Role.user(ownerUserId)),
     Permission.read(Role.user(clientUserId)),
     Permission.update(Role.user(clientUserId)),
-  ])];
+  ]),
+];
 
-const buildMessagePermissions = (ownerUserId, clientUserId) =>
-  [...new Set([
+const buildMessagePermissions = (ownerUserId, clientUserId) => [
+  ...new Set([
     Permission.read(Role.user(ownerUserId)),
     Permission.update(Role.user(ownerUserId)),
     Permission.delete(Role.user(ownerUserId)),
     Permission.read(Role.user(clientUserId)),
-  ])];
+  ]),
+];
 
 const safeActivityLog = async ({ db, config, logger, data }) => {
   if (!config.activityLogsCollectionId) return;
@@ -108,14 +123,18 @@ const safeActivityLog = async ({ db, config, logger, data }) => {
 
 const findOpenLead = async ({ db, config, resourceId, userId }) => {
   try {
-    const response = await db.listDocuments(config.databaseId, config.leadsCollectionId, [
-      Query.equal("resourceId", resourceId),
-      Query.equal("userId", userId),
-      Query.equal("status", ["new", "contacted"]),
-      Query.equal("enabled", true),
-      Query.orderDesc("$createdAt"),
-      Query.limit(1),
-    ]);
+    const response = await db.listDocuments(
+      config.databaseId,
+      config.leadsCollectionId,
+      [
+        Query.equal("resourceId", resourceId),
+        Query.equal("userId", userId),
+        Query.equal("status", ["new", "contacted"]),
+        Query.equal("enabled", true),
+        Query.orderDesc("$createdAt"),
+        Query.limit(1),
+      ],
+    );
     return response.documents?.[0] || null;
   } catch {
     return null;
@@ -206,7 +225,6 @@ const createMessage = async ({
       body: message,
       readBySender: true,
       readByRecipient: false,
-      type: "text",
       enabled: true,
     },
     buildMessagePermissions(ownerUserId, clientUserId),
@@ -224,7 +242,8 @@ const createMessage = async ({
     conversationId,
     {
       status: "active",
-      lastMessage: message.length > 120 ? `${message.slice(0, 120)}...` : message,
+      lastMessage:
+        message.length > 120 ? `${message.slice(0, 120)}...` : message,
       lastMessageAt: new Date().toISOString(),
       ownerUnread: Number(conversation.ownerUnread || 0) + 1,
     },
@@ -296,7 +315,11 @@ export default async ({ req, res, log, error }) => {
     await modulesService.assertModuleEnabled("module.messaging.realtime");
 
     const [resource, clientUser] = await Promise.all([
-      db.getDocument(config.databaseId, config.resourcesCollectionId, resourceId),
+      db.getDocument(
+        config.databaseId,
+        config.resourcesCollectionId,
+        resourceId,
+      ),
       users.get(authenticatedUserId),
     ]);
 
@@ -411,9 +434,14 @@ export default async ({ req, res, log, error }) => {
     });
 
     await db
-      .updateDocument(config.databaseId, config.resourcesCollectionId, resourceId, {
-        contactCount: Number(resource.contactCount || 0) + 1,
-      })
+      .updateDocument(
+        config.databaseId,
+        config.resourcesCollectionId,
+        resourceId,
+        {
+          contactCount: Number(resource.contactCount || 0) + 1,
+        },
+      )
       .catch(() => {});
 
     await safeActivityLog({
@@ -426,13 +454,16 @@ export default async ({ req, res, log, error }) => {
         action: "lead.create_authenticated",
         entityType: "leads",
         entityId: lead.$id,
-        afterData: safeJson({
-          resourceId,
-          resourceOwnerUserId,
-          userId: authenticatedUserId,
-          leadId: lead.$id,
-          conversationId: conversation.$id,
-        }, 20000),
+        afterData: safeJson(
+          {
+            resourceId,
+            resourceOwnerUserId,
+            userId: authenticatedUserId,
+            leadId: lead.$id,
+            conversationId: conversation.$id,
+          },
+          20000,
+        ),
         requestId: String(getRequestId(req)).slice(0, 100),
         severity: "info",
       },
