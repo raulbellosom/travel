@@ -85,6 +85,9 @@ const env = {
         "APPWRITE_FUNCTION_RESERVATION_CREATED_NOTIFICATION_ID",
       ),
       createPaymentSession: get("APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID"),
+      expirePendingReservations: get(
+        "APPWRITE_FUNCTION_EXPIRE_PENDING_RESERVATIONS_ID",
+      ),
       paymentWebhookStripe: get("APPWRITE_FUNCTION_PAYMENT_WEBHOOK_STRIPE_ID"),
       paymentWebhookMercadoPago: get(
         "APPWRITE_FUNCTION_PAYMENT_WEBHOOK_MERCADOPAGO_ID",
@@ -107,6 +110,18 @@ const env = {
       deepSearchQuery: get("APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID"),
       sendChatNotification: get("APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID"),
       sendPasswordReset: get("APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID"),
+      stripeCreateConnectedAccount: get(
+        "APPWRITE_FUNCTION_STRIPE_CREATE_CONNECTED_ACCOUNT_ID",
+      ),
+      stripeCreateAccountLink: get(
+        "APPWRITE_FUNCTION_STRIPE_CREATE_ACCOUNT_LINK_ID",
+      ),
+      stripeRefreshAccountLink: get(
+        "APPWRITE_FUNCTION_STRIPE_REFRESH_ACCOUNT_LINK_ID",
+      ),
+      stripeGetAccountStatus: get(
+        "APPWRITE_FUNCTION_STRIPE_GET_ACCOUNT_STATUS_ID",
+      ),
     },
   },
   app: {

@@ -21,4 +21,4 @@ Stripe webhook handler with idempotency and reservation reconciliation.
 - Optional Stripe signature validation via `STRIPE_WEBHOOK_SECRET`.
 - Idempotency enforced by `providerEventId`.
 - Writes `reservation_payments` and updates `reservations.paymentStatus`.
-- Triggers `issue-reservation-voucher` when payment is approved.
+- Triggers `issue-reservation-voucher` when payment succeeds.

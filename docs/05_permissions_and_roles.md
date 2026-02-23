@@ -71,15 +71,16 @@ Definir acceso por rol + scopes + modulos habilitados para arquitectura v3:
 
 ### leads
 
-- create: `create-lead-public`.
+- create: `create-lead` (auth required, `client` verificado).
 - gestion interna: owner/staff con scope.
-- canonical id: `resourceId` (compat temporal `propertyId`).
+- canonical id: `resourceId`.
 
 ### reservations / reservation_payments / reservation_vouchers
 
 - create reservation: `client` verificado via Function.
 - pagos: system-only por functions/webhooks.
 - owner/staff: lectura operativa segun scope.
+- payouts Stripe: por default solo `owner/root`; se puede delegar a usuario interno con `users.stripePayoutsEnabled=true`.
 
 ### conversations / messages
 
@@ -133,7 +134,7 @@ Regla:
 | Chat interno | Yes | Yes | Yes | Optional | Yes | No | No |
 | Root modules/limits | Yes | No | No | No | No | No | No |
 | Reserva publica | No | No | No | No | No | Yes | No |
-| Lead publico | No | No | No | No | No | Optional | Yes |
+| Lead autenticado | No | No | No | No | No | Yes | No |
 
 ---
 

@@ -42,7 +42,7 @@ La fuente de verdad vive en `docs/`:
 ## Estado actual (resumen)
 
 - Existe base de autenticacion, perfil, propiedades, leads y design system.
-- Existen functions: `user-create-profile`, `create-lead-public`,
+- Existen functions: `user-create-profile`, `create-lead`,
   `send-lead-notification`, `email-verification`, `sync-user-profile`.
 - Falta implementar rutas y modulos completos de reservas, pagos, staff,
   vouchers, reviews y actividad root segun `docs/07_frontend_routes_and_flows.md`.

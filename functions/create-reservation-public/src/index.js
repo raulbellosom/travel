@@ -1,4 +1,4 @@
-import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
+﻿import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
 import {
   createModulesService,
   getBookingType,
@@ -10,6 +10,7 @@ import {
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SUPPORTED_CURRENCIES = ["MXN", "USD", "EUR"];
+const DEFAULT_HOLD_MINUTES = 15;
 
 const hasValue = (value) =>
   value !== undefined && value !== null && String(value).trim() !== "";
@@ -113,81 +114,101 @@ const buildReservationPermissions = (ownerUserId, guestUserId) =>
     Permission.read(Role.user(guestUserId)),
   ])];
 
-const buildReservationData = ({
-  resource,
-  payload,
-  guestUserId,
-  authUser,
-  guestCount,
-  checkInIso,
-  checkOutIso,
-  nights,
-  baseAmount,
-  feesAmount,
-  taxAmount,
-  totalAmount,
-  currency,
-}) => {
-  const data = {
-    resourceId: resource.$id,
-    resourceOwnerUserId: resource.ownerUserId,
-    guestUserId,
-    guestName:
-      normalizeText(payload.guestName, 120) ||
-      normalizeText(authUser.name, 120) ||
-      "Guest",
-    guestEmail: normalizeText(authUser.email, 254).toLowerCase(),
-    checkInDate: checkInIso,
-    checkOutDate: checkOutIso,
-    guestCount,
-    nights,
-    baseAmount,
-    feesAmount,
-    taxAmount,
-    totalAmount,
-    currency,
-    status: "pending",
-    paymentStatus: "unpaid",
-    enabled: true,
+const resolveBaseAmount = ({ resource, bookingType, nights }) => {
+  const unitAmount = toMoney(resource.price || 0);
+  if (unitAmount === null || unitAmount <= 0) return null;
+
+  const pricingModel = normalizeText(resource.pricingModel).toLowerCase();
+  const multiplier =
+    bookingType === "date_range" && ["per_night", "per_day"].includes(pricingModel)
+      ? Math.max(1, nights)
+      : 1;
+  return toMoney(unitAmount * multiplier);
+};
+
+const getHoldMinutes = async (modulesService) => {
+  const configured = Number(await modulesService.getLimit("reservationHoldMinutes", DEFAULT_HOLD_MINUTES));
+  if (!Number.isFinite(configured) || configured < 1 || configured > 240) {
+    return DEFAULT_HOLD_MINUTES;
+  }
+  return Math.trunc(configured);
+};
+
+const isPendingStillBlocking = (reservation, nowMs) => {
+  const status = normalizeText(reservation?.status).toLowerCase();
+  if (status === "confirmed") return true;
+  if (status !== "pending") return false;
+  const holdExpiresAt = reservation?.holdExpiresAt;
+  if (!holdExpiresAt) return true;
+  const holdExpiresMs = new Date(holdExpiresAt).getTime();
+  if (Number.isNaN(holdExpiresMs)) return true;
+  return holdExpiresMs > nowMs;
+};
+
+const dateRangeOverlap = (existing, incoming) =>
+  existing.startMs < incoming.endMs && existing.endMs > incoming.startMs;
+
+const toWindow = ({ startMs, endMs, bufferMinutes }) => {
+  const bufferMs = Math.max(0, Number(bufferMinutes || 0)) * 60 * 1000;
+  return {
+    startMs: startMs - bufferMs,
+    endMs: endMs + bufferMs,
   };
-
-  const guestPhone = toOptionalText(payload.guestPhone || authUser.phone, 20);
-  if (guestPhone) data.guestPhone = guestPhone;
-
-  const specialRequests = toOptionalText(payload.specialRequests, 2000);
-  if (specialRequests) data.specialRequests = specialRequests;
-
-  return data;
 };
 
-const createReservationDocument = async ({ db, config, data, permissions }) => {
-  return db.createDocument(
-    config.databaseId,
-    config.reservationsCollectionId,
-    ID.unique(),
-    data,
-    permissions,
-  );
+const resolveIncomingWindow = ({ bookingType, checkIn, checkOut, startDateTime, endDateTime, slotBufferMinutes }) => {
+  if (bookingType === "date_range") {
+    return toWindow({
+      startMs: checkIn.getTime(),
+      endMs: checkOut.getTime(),
+      bufferMinutes: slotBufferMinutes,
+    });
+  }
+
+  return toWindow({
+    startMs: startDateTime.getTime(),
+    endMs: endDateTime.getTime(),
+    bufferMinutes: slotBufferMinutes,
+  });
 };
 
-const listOverlaps = async ({ db, config, resourceId, checkInIso, checkOutIso }) => {
-  const baseQueries = [
-    Query.equal("enabled", true),
-    Query.equal("status", ["pending", "confirmed"]),
-    Query.lessThan("checkInDate", checkOutIso),
-    Query.greaterThan("checkOutDate", checkInIso),
-    Query.limit(1),
-  ];
+const resolveExistingWindow = (reservation, slotBufferMinutes) => {
+  const existingBookingType = normalizeText(reservation.bookingType).toLowerCase();
+  if (existingBookingType === "date_range") {
+    const start = new Date(reservation.checkInDate).getTime();
+    const end = new Date(reservation.checkOutDate).getTime();
+    if (Number.isNaN(start) || Number.isNaN(end)) return null;
+    return toWindow({ startMs: start, endMs: end, bufferMinutes: slotBufferMinutes });
+  }
 
+  const start = new Date(reservation.startDateTime || reservation.checkInDate).getTime();
+  const end = new Date(reservation.endDateTime || reservation.checkOutDate).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) return null;
+  return toWindow({ startMs: start, endMs: end, bufferMinutes: slotBufferMinutes });
+};
+
+const listCandidateReservations = async ({ db, config, resourceId }) => {
   try {
-    return await db.listDocuments(
-      config.databaseId,
-      config.reservationsCollectionId,
-      [Query.equal("resourceId", resourceId), ...baseQueries],
-    );
+    return await db.listDocuments(config.databaseId, config.reservationsCollectionId, [
+      Query.equal("resourceId", resourceId),
+      Query.equal("enabled", true),
+      Query.equal("status", ["pending", "confirmed"]),
+      Query.limit(100),
+    ]);
   } catch {
     return { total: 0, documents: [] };
   }
+};
+
+const hasOverlapConflict = ({ existingReservations, incomingWindow, slotBufferMinutes }) => {
+  const nowMs = Date.now();
+  for (const reservation of existingReservations) {
+    if (!isPendingStillBlocking(reservation, nowMs)) continue;
+    const existingWindow = resolveExistingWindow(reservation, slotBufferMinutes);
+    if (!existingWindow) continue;
+    if (dateRangeOverlap(existingWindow, incomingWindow)) return true;
+  }
+  return false;
 };
 
 const countActiveReservationsThisMonth = async ({ db, config }) => {
@@ -213,15 +234,103 @@ const countActiveReservationsThisMonth = async ({ db, config }) => {
   }
 };
 
-const resolveBaseAmount = ({ resource, nights }) => {
-  const unitAmount = toMoney(resource.price || 0);
-  if (unitAmount === null || unitAmount <= 0) return null;
+const findByClientRequestId = async ({
+  db,
+  config,
+  resourceId,
+  guestUserId,
+  clientRequestId,
+}) => {
+  if (!clientRequestId) return null;
 
-  const pricingModel = normalizeText(resource.pricingModel).toLowerCase();
-  const multiplier = ["per_night", "per_day"].includes(pricingModel)
-    ? Math.max(1, nights)
-    : 1;
-  return toMoney(unitAmount * multiplier);
+  try {
+    const response = await db.listDocuments(config.databaseId, config.reservationsCollectionId, [
+      Query.equal("resourceId", resourceId),
+      Query.equal("guestUserId", guestUserId),
+      Query.equal("status", "pending"),
+      Query.equal("paymentStatus", "unpaid"),
+      Query.equal("externalRef", `client:${clientRequestId}`),
+      Query.equal("enabled", true),
+      Query.orderDesc("$createdAt"),
+      Query.limit(1),
+    ]);
+
+    const reservation = response.documents?.[0] || null;
+    if (!reservation) return null;
+
+    if (!isPendingStillBlocking(reservation, Date.now())) return null;
+    return reservation;
+  } catch {
+    return null;
+  }
+};
+
+const buildReservationData = ({
+  resource,
+  payload,
+  guestUserId,
+  authUser,
+  guestCount,
+  bookingType,
+  commercialMode,
+  checkInIso,
+  checkOutIso,
+  startDateTimeIso,
+  endDateTimeIso,
+  nights,
+  baseAmount,
+  feesAmount,
+  taxAmount,
+  totalAmount,
+  currency,
+  holdExpiresAt,
+  clientRequestId,
+}) => {
+  const data = {
+    resourceId: resource.$id,
+    resourceOwnerUserId: resource.ownerUserId,
+    guestUserId,
+    guestName:
+      normalizeText(payload.guestName, 120) ||
+      normalizeText(authUser.name, 120) ||
+      "Guest",
+    guestEmail: normalizeText(authUser.email, 254).toLowerCase(),
+    guestCount,
+    commercialMode,
+    bookingType,
+    nights,
+    baseAmount,
+    feesAmount,
+    taxAmount,
+    totalAmount,
+    currency,
+    holdExpiresAt,
+    status: "pending",
+    paymentStatus: "unpaid",
+    enabled: true,
+  };
+
+  if (bookingType === "date_range") {
+    data.checkInDate = checkInIso;
+    data.checkOutDate = checkOutIso;
+  } else {
+    data.startDateTime = startDateTimeIso;
+    data.endDateTime = endDateTimeIso;
+    data.checkInDate = startDateTimeIso;
+    data.checkOutDate = endDateTimeIso;
+  }
+
+  const guestPhone = toOptionalText(payload.guestPhone || authUser.phone, 20);
+  if (guestPhone) data.guestPhone = guestPhone;
+
+  const specialRequests = toOptionalText(payload.specialRequests, 2000);
+  if (specialRequests) data.specialRequests = specialRequests;
+
+  if (clientRequestId) {
+    data.externalRef = `client:${clientRequestId}`;
+  }
+
+  return data;
 };
 
 export default async ({ req, res, log, error }) => {
@@ -255,18 +364,16 @@ export default async ({ req, res, log, error }) => {
   }
 
   const payload = parseBody(req);
-  const resourceId = normalizeText(payload.resourceId, 64);
-  const checkIn = parseDate(payload.checkInDate);
-  const checkOut = parseDate(payload.checkOutDate);
+  const resourceId = normalizeText(payload.resourceId || payload.propertyId, 64);
   const guestCount = toPositiveInt(payload.guestCount);
+  const clientRequestId = normalizeText(payload.clientRequestId, 120);
 
-  if (!resourceId || !checkIn || !checkOut || guestCount === null) {
+  if (!resourceId || guestCount === null) {
     return json(res, 400, {
       ok: false,
       success: false,
       code: "VALIDATION_ERROR",
-      message:
-        "resourceId, checkInDate, checkOutDate and guestCount are required",
+      message: "resourceId and guestCount are required",
     });
   }
 
@@ -276,27 +383,6 @@ export default async ({ req, res, log, error }) => {
       success: false,
       code: "VALIDATION_ERROR",
       message: "guestCount must be between 1 and 500",
-    });
-  }
-
-  const checkInMs = checkIn.getTime();
-  const checkOutMs = checkOut.getTime();
-  if (checkOutMs <= checkInMs) {
-    return json(res, 422, {
-      ok: false,
-      success: false,
-      code: "DATE_RANGE_INVALID",
-      message: "checkOutDate must be greater than checkInDate",
-    });
-  }
-
-  const nights = Math.ceil((checkOutMs - checkInMs) / DAY_IN_MS);
-  if (nights < 1 || nights > 365) {
-    return json(res, 422, {
-      ok: false,
-      success: false,
-      code: "DATE_RANGE_INVALID",
-      message: "Reservation nights must be between 1 and 365",
     });
   }
 
@@ -380,7 +466,7 @@ export default async ({ req, res, log, error }) => {
         ok: false,
         success: false,
         code: "MANUAL_CONTACT_ONLY",
-        message: "This resource uses manual contact flow and does not support checkout",
+        message: "This resource uses manual contact flow. Use create-lead instead.",
       });
     }
 
@@ -407,27 +493,105 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const checkInIso = checkIn.toISOString();
-    const checkOutIso = checkOut.toISOString();
-
-    const overlap = await listOverlaps({
+    const reusedReservation = await findByClientRequestId({
       db,
       config,
       resourceId,
-      checkInIso,
-      checkOutIso,
+      guestUserId: authenticatedUserId,
+      clientRequestId,
     });
 
-    if (overlap.total > 0) {
+    if (reusedReservation) {
+      return json(res, 200, {
+        ok: true,
+        success: true,
+        code: "RESERVATION_REUSED",
+        message: "Existing pending reservation reused",
+        data: {
+          reservationId: reusedReservation.$id,
+          resourceId,
+          holdExpiresAt: reusedReservation.holdExpiresAt || null,
+          reused: true,
+        },
+      });
+    }
+
+    const checkIn = parseDate(payload.checkInDate);
+    const checkOut = parseDate(payload.checkOutDate);
+    const startDateTime = parseDate(payload.startDateTime || payload.checkInDate);
+    const endDateTime = parseDate(payload.endDateTime || payload.checkOutDate);
+
+    if (bookingType === "date_range" && (!checkIn || !checkOut)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "DATE_RANGE_REQUIRED",
+        message: "checkInDate and checkOutDate are required for date_range bookings",
+      });
+    }
+
+    if (bookingType !== "date_range" && (!startDateTime || !endDateTime)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "TIME_SLOT_REQUIRED",
+        message: "startDateTime and endDateTime are required for slot/event bookings",
+      });
+    }
+
+    const incomingStart = bookingType === "date_range" ? checkIn : startDateTime;
+    const incomingEnd = bookingType === "date_range" ? checkOut : endDateTime;
+
+    if (incomingEnd.getTime() <= incomingStart.getTime()) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "DATE_RANGE_INVALID",
+        message: "End date/time must be greater than start date/time",
+      });
+    }
+
+    const nights =
+      bookingType === "date_range"
+        ? Math.ceil((incomingEnd.getTime() - incomingStart.getTime()) / DAY_IN_MS)
+        : 0;
+
+    if (bookingType === "date_range" && (nights < 1 || nights > 365)) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "DATE_RANGE_INVALID",
+        message: "Reservation nights must be between 1 and 365",
+      });
+    }
+
+    const slotBufferMinutes = Number(resource.slotBufferMinutes || 0);
+    const incomingWindow = resolveIncomingWindow({
+      bookingType,
+      checkIn,
+      checkOut,
+      startDateTime,
+      endDateTime,
+      slotBufferMinutes,
+    });
+
+    const candidates = await listCandidateReservations({ db, config, resourceId });
+    const hasConflict = hasOverlapConflict({
+      existingReservations: candidates.documents || [],
+      incomingWindow,
+      slotBufferMinutes,
+    });
+
+    if (hasConflict) {
       return json(res, 409, {
         ok: false,
         success: false,
         code: "RESERVATION_CONFLICT",
-        message: "The selected dates are not available",
+        message: "The selected schedule is not available",
       });
     }
 
-    const baseAmount = resolveBaseAmount({ resource, nights });
+    const baseAmount = resolveBaseAmount({ resource, bookingType, nights });
     if (baseAmount === null || baseAmount <= 0) {
       return json(res, 422, {
         ok: false,
@@ -469,31 +633,40 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
+    const holdMinutes = await getHoldMinutes(modulesService);
+    const holdExpiresAt = new Date(Date.now() + holdMinutes * 60 * 1000).toISOString();
+
     const reservationData = buildReservationData({
       resource,
       payload,
       guestUserId: authenticatedUserId,
       authUser,
       guestCount,
-      checkInIso,
-      checkOutIso,
+      bookingType,
+      commercialMode,
+      checkInIso: bookingType === "date_range" ? checkIn.toISOString() : undefined,
+      checkOutIso: bookingType === "date_range" ? checkOut.toISOString() : undefined,
+      startDateTimeIso:
+        bookingType !== "date_range" ? startDateTime.toISOString() : undefined,
+      endDateTimeIso:
+        bookingType !== "date_range" ? endDateTime.toISOString() : undefined,
       nights,
       baseAmount,
       feesAmount,
       taxAmount,
       totalAmount,
       currency,
+      holdExpiresAt,
+      clientRequestId,
     });
 
-    const reservation = await createReservationDocument({
-      db,
-      config,
-      data: reservationData,
-      permissions: buildReservationPermissions(
-        resource.ownerUserId,
-        authenticatedUserId,
-      ),
-    });
+    const reservation = await db.createDocument(
+      config.databaseId,
+      config.reservationsCollectionId,
+      ID.unique(),
+      reservationData,
+      buildReservationPermissions(resource.ownerUserId, authenticatedUserId),
+    );
 
     await db.updateDocument(
       config.databaseId,
@@ -518,8 +691,8 @@ export default async ({ req, res, log, error }) => {
           resourceId,
           guestUserId: authenticatedUserId,
           guestEmail: reservationData.guestEmail,
-          checkInDate: checkInIso,
-          checkOutDate: checkOutIso,
+          bookingType,
+          holdExpiresAt,
           totalAmount,
           currency,
           status: "pending",
@@ -541,6 +714,8 @@ export default async ({ req, res, log, error }) => {
         nights,
         totalAmount,
         currency,
+        holdExpiresAt,
+        reused: false,
         nextStep: "create-payment-session",
       },
     });

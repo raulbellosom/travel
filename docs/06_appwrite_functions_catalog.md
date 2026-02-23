@@ -55,12 +55,13 @@ Errores estandar:
 - Crea `users` + `user_preferences`.
 - Rol default: `client`.
 
-## 4.2 `create-lead-public`
+## 4.2 `create-lead`
 
-- HTTP POST publico.
-- Canonico: recibe `resourceId` (acepta `propertyId` como fallback).
-- Valida modulo: `module.resources`, `module.leads`.
-- Crea lead con `resourceId` + alias legacy `propertyId`.
+- HTTP POST autenticado.
+- Canonico: recibe `resourceId`.
+- Valida modulo: `module.resources`, `module.leads`, `module.messaging.realtime`.
+- Upsert de lead abierto por `resourceId + userId` (`status in new/contacted`).
+- Crea/reusa conversacion y agrega primer mensaje en `messages`.
 
 ## 4.3 `send-lead-notification`
 
@@ -83,6 +84,9 @@ Errores estandar:
 - Si requiere pago online: valida `module.payments.online`.
 - Valida limite `maxActiveReservationsPerMonth`.
 - Bloquea modos `manual_contact` con respuesta funcional.
+- Implementa anti double-booking con overlap backend y `slotBufferMinutes`.
+- Crea hold con `holdExpiresAt` y estado `pending`/`unpaid`.
+- Soporta idempotencia por `clientRequestId` (reuso de pending abierta).
 
 ## 4.6 `reservation-created-notification`
 
@@ -93,59 +97,68 @@ Errores estandar:
 - HTTP POST autenticado.
 - Resuelve `resourceId` desde reserva (`resourceId || propertyId`).
 - Valida modulos de booking + pagos online.
-- Crea/actualiza `reservation_payments` con `resourceId` + compat legacy.
+- Valida que la reserva siga `pending` y hold no vencido.
+- Crea/actualiza `reservation_payments`.
+- Stripe Connect: destination charge con `application_fee_amount` y `transfer_data[destination]`.
 
 ## 4.8 `payment-webhook-stripe`
 
 - Webhook Stripe.
 - Idempotencia por `providerEventId`.
+- Marca pagos `succeeded/failed/refunded` y confirma reserva en `succeeded`.
 
-## 4.9 `payment-webhook-mercadopago`
+## 4.9 `expire-pending-reservations`
+
+- Scheduled (cada 5 min) o HTTP POST interno.
+- Expira reservas `pending + unpaid` con `holdExpiresAt <= now`.
+- Registra auditoria en `activity_logs`.
+
+## 4.10 `payment-webhook-mercadopago`
 
 - Webhook Mercado Pago.
 - Idempotencia y reconciliacion.
 
-## 4.10 `issue-reservation-voucher`
+## 4.11 `issue-reservation-voucher`
 
 - Emite voucher cuando pago aprobado.
 
-## 4.11 `create-review-public`
+## 4.12 `create-review-public`
 
 - POST autenticado (`client` verificado).
 
-## 4.12 `moderate-review`
+## 4.13 `moderate-review`
 
 - Requiere scope `reviews.moderate`.
 
-## 4.13 `staff-user-management`
+## 4.14 `staff-user-management`
 
 - CRUD staff controlado por `owner/root`.
 
-## 4.14 `email-verification`
+## 4.15 `email-verification`
 
 - `send`, `resend`, `verify`.
 
-## 4.15 `sync-user-profile`
+## 4.16 `sync-user-profile`
 
 - Sincroniza Auth y `users`.
 
-## 4.16 `activity-log-query`
+## 4.17 `activity-log-query`
 
 - Root only.
 
-## 4.17 `dashboard-metrics-aggregator`
+## 4.18 `dashboard-metrics-aggregator`
 
 - Cron diario para `analytics_daily`.
 
-## 4.18 `root-functions-diagnostics`
+## 4.19 `root-functions-diagnostics`
 
 - Root only, diagnostico operativo.
 
-## 4.19 `send-chat-notification`
+## 4.20 `send-chat-notification`
 
 - Notificacion email para chat offline.
 
-## 4.20 `send-password-reset`
+## 4.21 `send-password-reset`
 
 - HTTP POST publico (acceso anonimo necesario para el flujo de olvide contrasena).
 - Actions: `send` (genera token y envia correo SMTP propio) | `reset` (valida token y actualiza contrasena).
@@ -155,20 +168,49 @@ Errores estandar:
 - No expone el token en la URL de forma rastreable por Appwrite.
 - ENV requeridas: `APPWRITE_COLLECTION_PASSWORD_RESETS_ID`, `APP_BASE_URL`, `APP_NAME`, `EMAIL_SMTP_*`.
 
+## 4.22 `stripe-create-connected-account`
+
+- HTTP POST autenticado (`owner/root`).
+- Crea connected account Express y guarda `stripeAccountId` + `stripeOnboardingStatus=pending`.
+- Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
+
+## 4.23 `stripe-create-account-link`
+
+- HTTP POST autenticado (`owner/root`).
+- Genera account link de onboarding y devuelve URL temporal.
+- Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
+
+## 4.24 `stripe-refresh-account-link`
+
+- HTTP POST autenticado (`owner/root`).
+- Regenera account link vencido.
+- Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
+
+## 4.25 `stripe-get-account-status`
+
+- HTTP POST autenticado (`owner/root`).
+- Consulta capabilities/requirements en Stripe y sincroniza `stripeOnboardingStatus`.
+- Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
+
 ---
 
 ## 5. Execute permissions (resumen)
 
 | Function                     | Execute             |
 | ---------------------------- | ------------------- |
-| `create-lead-public`         | `any`               |
+| `create-lead`                | `users`             |
 | `create-reservation-public`  | `users`             |
+| `expire-pending-reservations`| `[]` (scheduler)    |
 | `create-payment-session`     | `users`             |
 | `create-review-public`       | `users`             |
 | `moderate-review`            | `users`             |
 | `staff-user-management`      | `users`             |
 | `activity-log-query`         | `users` (root only) |
 | `root-functions-diagnostics` | `users` (root only) |
+| `stripe-create-connected-account` | `users`       |
+| `stripe-create-account-link` | `users`             |
+| `stripe-refresh-account-link`| `users`             |
+| `stripe-get-account-status`  | `users`             |
 | webhooks                     | `any`               |
 | triggers/cron                | `[]`                |
 

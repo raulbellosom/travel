@@ -12,7 +12,7 @@ Checklist maestro para migracion de `properties` a `resources` con sistema de mo
 - [x] Helper de comportamiento `getResourceBehavior` centralizado.
 - [x] Hook `useInstanceModules` y servicios de `instance_settings` integrados.
 - [x] Rutas root nuevas (`/app/root/instance`, `/app/root/modules`) disponibles.
-- [x] Functions criticas (`create-lead-public`, `create-reservation-public`, `create-payment-session`) migradas con `resourceId` canonico y fallback `propertyId`.
+- [x] Functions criticas (`create-lead`, `create-reservation-public`, `create-payment-session`) migradas con `resourceId` canonico y fallback `propertyId`.
 - [x] Helper de modulo/limites agregado en functions (`modulesService`).
 - [x] Documentacion v3 actualizada (`02`, `03`, `05`, `06`, `07`, `11`, `12`, `13`).
 - [x] Nuevos docs de arquitectura/modulos/migracion creados (`14`, `15`, `16`).

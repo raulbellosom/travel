@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { usePresence } from "../hooks/usePresence";
 import { chatService } from "../services/chatService";
+import { leadsService } from "../services/leadsService";
 import {
   getConversationSide,
   getConversationUnreadCount,
@@ -334,8 +335,7 @@ export const ChatProvider = ({ children }) => {
     async ({
       resourceId,
       resourceTitle,
-      ownerUserId,
-      ownerName,
+      initialMessage,
     }) => {
       if (!user?.$id) return null;
 
@@ -347,14 +347,25 @@ export const ChatProvider = ({ children }) => {
         throw new Error("Email must be verified to start a chat.");
       }
 
-      const conversation = await chatService.getOrCreateConversation({
+      const leadResult = await leadsService.createLead({
         resourceId,
-        resourceTitle,
-        clientUserId: user.$id,
-        clientName: user.name || user.email || "Cliente",
-        ownerUserId,
-        ownerName: ownerName || "Propietario",
+        message:
+          String(initialMessage || "").trim() ||
+          "Hola, me interesa este recurso. Quiero mas informacion.",
+        meta: {
+          source: "property_chat_button",
+          resourceTitle: resourceTitle || "",
+        },
       });
+      const conversationId = String(
+        leadResult?.body?.conversationId || "",
+      ).trim();
+      if (!conversationId) {
+        throw new Error("No se pudo resolver la conversacion del lead.");
+      }
+
+      await loadConversations();
+      const conversation = await chatService.getConversationById(conversationId);
 
       // Add to local list if new
       setConversations((prev) => {
@@ -368,7 +379,7 @@ export const ChatProvider = ({ children }) => {
       await openConversation(conversation.$id);
       return conversation;
     },
-    [user, openConversation],
+    [loadConversations, openConversation, user],
   );
 
   const startDirectConversation = useCallback(

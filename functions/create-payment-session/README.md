@@ -27,3 +27,10 @@ Creates a payment session/preference for an existing reservation.
 
 `guestEmail` is optional and, if provided, must match the authenticated account email.
 
+## Rules
+
+- Reservation must be `pending` and hold must be active.
+- Stripe provider requires owner onboarding (`stripeAccountId` + `stripeOnboardingStatus=complete`).
+- Stripe payouts are allowed for `owner/root` or delegated internal users (`stripePayoutsEnabled=true`).
+- Stripe session uses destination charge with platform fee (`application_fee_amount`).
+

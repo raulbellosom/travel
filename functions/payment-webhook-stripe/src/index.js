@@ -74,11 +74,11 @@ const verifyStripeSignature = ({ rawBody, signatureHeader, secret }) => {
 };
 
 const mapStripeStatus = (eventType, eventData) => {
-  if (eventType === "checkout.session.completed") return "approved";
+  if (eventType === "checkout.session.completed") return "succeeded";
   if (eventType === "charge.refunded") return "refunded";
-  if (eventType === "payment_intent.payment_failed") return "rejected";
-  if (eventData?.payment_status === "paid") return "approved";
-  if (eventData?.payment_status === "unpaid") return "rejected";
+  if (eventType === "payment_intent.payment_failed") return "failed";
+  if (eventData?.payment_status === "paid") return "succeeded";
+  if (eventData?.payment_status === "unpaid") return "failed";
   return "pending";
 };
 
@@ -192,7 +192,7 @@ export default async ({ req, res, log, error }) => {
       ID.unique(),
       {
         reservationId,
-        propertyOwnerId: reservation.propertyOwnerId,
+        resourceOwnerUserId: reservation.resourceOwnerUserId,
         provider: "stripe",
         providerPaymentId: providerPaymentId || eventId,
         providerEventId: eventId,
@@ -206,12 +206,12 @@ export default async ({ req, res, log, error }) => {
     );
 
     const reservationPatch = {};
-    if (status === "approved") {
+    if (status === "succeeded") {
       reservationPatch.paymentStatus = "paid";
       reservationPatch.status = reservation.status === "completed" ? "completed" : "confirmed";
       reservationPatch.paymentProvider = "stripe";
       reservationPatch.externalRef = providerPaymentId || eventId;
-    } else if (status === "rejected") {
+    } else if (status === "failed") {
       reservationPatch.paymentStatus = "failed";
       reservationPatch.paymentProvider = "stripe";
       reservationPatch.externalRef = providerPaymentId || eventId;
@@ -233,7 +233,7 @@ export default async ({ req, res, log, error }) => {
       config,
       log,
       data: {
-        actorUserId: reservation.propertyOwnerId,
+        actorUserId: reservation.resourceOwnerUserId || "system",
         actorRole: "owner",
         action: "payment.webhook_stripe_processed",
         entityType: "reservation_payments",
@@ -244,11 +244,11 @@ export default async ({ req, res, log, error }) => {
           providerPaymentId: providerPaymentId || eventId,
           status,
         }),
-        severity: status === "rejected" ? "warning" : "info",
+        severity: status === "failed" ? "warning" : "info",
       },
     });
 
-    if (status === "approved") {
+    if (status === "succeeded") {
       await maybeIssueVoucher({ functions, config, reservationId, log });
     }
 

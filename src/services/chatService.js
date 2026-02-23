@@ -422,6 +422,15 @@ export const chatService = {
     );
   },
 
+  async getConversationById(conversationId) {
+    ensureAppwriteConfigured();
+    return databases.getDocument({
+      databaseId: DB(),
+      collectionId: COL_CONVERSATIONS(),
+      documentId: conversationId,
+    });
+  },
+
   /* ─── Real-time subscriptions ──────────────────────── */
 
   /**

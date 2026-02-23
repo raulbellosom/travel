@@ -29,6 +29,7 @@ const cfg = () => ({
   appBaseUrl: getEnv("APP_BASE_URL") || "http://localhost:5173",
   resourcesCollectionId:
     getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
+  usersCollectionId: getEnv("APPWRITE_COLLECTION_USERS_ID") || "users",
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   reservationPaymentsCollectionId:
@@ -40,6 +41,8 @@ const cfg = () => ({
   paymentSuccessUrl: getEnv("PAYMENT_SUCCESS_URL") || "",
   paymentCancelUrl: getEnv("PAYMENT_CANCEL_URL") || "",
   stripeSecretKey: getEnv("STRIPE_SECRET_KEY") || "",
+  stripePlatformFeePercent: Number(getEnv("STRIPE_PLATFORM_FEE_PERCENT") || 10),
+  stripePlatformFeeFixed: Number(getEnv("STRIPE_PLATFORM_FEE_FIXED") || 0),
   mercadopagoAccessToken: getEnv("MERCADOPAGO_ACCESS_TOKEN") || "",
 });
 
@@ -72,6 +75,31 @@ const toMoney = (value) => {
 };
 
 const toMinorUnits = (amount) => Math.round(Number(amount) * 100);
+
+const normalizeDateMs = (value) => {
+  const parsed = new Date(value).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const isPayoutEnabledForUser = (userDoc = {}) => {
+  const role = normalizeText(userDoc.role, 40).toLowerCase();
+  if (role === "owner" || role === "root") return true;
+  return userDoc.stripePayoutsEnabled === true;
+};
+
+const computeApplicationFeeAmount = ({ amount, cfg }) => {
+  const totalMinor = toMinorUnits(amount);
+  if (totalMinor <= 0) return 0;
+
+  const percent = Number.isFinite(cfg.stripePlatformFeePercent)
+    ? Math.max(0, cfg.stripePlatformFeePercent)
+    : 0;
+  const fixedMinor = Number.isFinite(cfg.stripePlatformFeeFixed)
+    ? Math.max(0, Math.round(cfg.stripePlatformFeeFixed * 100))
+    : 0;
+  const feeByPercent = Math.round(totalMinor * (percent / 100));
+  return Math.min(totalMinor, feeByPercent + fixedMinor);
+};
 
 const safeJsonString = (value, maxLength = 20000) => {
   try {
@@ -141,7 +169,14 @@ const buildMockSession = ({ cfg, reservation, provider }) => {
   };
 };
 
-const createStripeSession = async ({ cfg, reservation, amount, currency }) => {
+const createStripeSession = async ({
+  cfg,
+  reservation,
+  amount,
+  currency,
+  stripeAccountId,
+  applicationFeeAmount,
+}) => {
   if (!cfg.stripeSecretKey) {
     return buildMockSession({ cfg, reservation, provider: "stripe" });
   }
@@ -170,6 +205,9 @@ const createStripeSession = async ({ cfg, reservation, amount, currency }) => {
     "line_items[0][quantity]": "1",
     "metadata[reservationId]": reservation.$id,
     "metadata[resourceId]": resourceId,
+    "payment_intent_data[transfer_data][destination]": stripeAccountId,
+    "payment_intent_data[application_fee_amount]": String(applicationFeeAmount),
+    "payment_intent_data[on_behalf_of]": stripeAccountId,
       });
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -497,6 +535,37 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
+    if (reservation.status !== "pending") {
+      return json(res, 409, {
+        ok: false,
+        success: false,
+        code: "RESERVATION_NOT_PENDING",
+        message: "Only pending reservations can start payment",
+      });
+    }
+
+    const holdExpiresMs = normalizeDateMs(reservation.holdExpiresAt);
+    if (
+      holdExpiresMs !== null &&
+      holdExpiresMs <= Date.now() &&
+      String(reservation.paymentStatus || "").toLowerCase() === "unpaid"
+    ) {
+      await db
+        .updateDocument(
+          config.databaseId,
+          config.reservationsCollectionId,
+          reservationId,
+          { status: "expired" },
+        )
+        .catch(() => {});
+      return json(res, 409, {
+        ok: false,
+        success: false,
+        code: "RESERVATION_HOLD_EXPIRED",
+        message: "Reservation hold expired. Please create a new reservation.",
+      });
+    }
+
     const resourceId = resolveReservationResourceId(reservation);
     if (!resourceId) {
       return json(res, 422, {
@@ -534,6 +603,58 @@ export default async ({ req, res, log, error }) => {
 
     if (requiresOnlinePayments(commercialMode, bookingType)) {
       await modulesService.assertModuleEnabled("module.payments.online");
+    }
+
+    const reservationOwnerUserId = normalizeText(
+      reservation.resourceOwnerUserId || reservation.propertyOwnerId,
+      64,
+    );
+    if (!reservationOwnerUserId) {
+      return json(res, 422, {
+        ok: false,
+        success: false,
+        code: "RESOURCE_OWNER_MISSING",
+        message: "Reservation owner is not configured",
+      });
+    }
+
+    const owner = await db.getDocument(
+      config.databaseId,
+      config.usersCollectionId,
+      reservationOwnerUserId,
+    );
+    const stripeAccountId = normalizeText(owner.stripeAccountId, 120);
+    const stripeOnboardingStatus = normalizeText(
+      owner.stripeOnboardingStatus || "not_started",
+      40,
+    ).toLowerCase();
+
+    if (providerRaw === "stripe") {
+      if (!isPayoutEnabledForUser(owner)) {
+        return json(res, 409, {
+          ok: false,
+          success: false,
+          code: "OWNER_PAYOUT_NOT_ENABLED",
+          message:
+            "Stripe payouts are not enabled for this resource owner user.",
+        });
+      }
+      if (!stripeAccountId) {
+        return json(res, 409, {
+          ok: false,
+          success: false,
+          code: "OWNER_STRIPE_ACCOUNT_REQUIRED",
+          message: "Owner Stripe account is missing. Online payments are blocked.",
+        });
+      }
+      if (stripeOnboardingStatus !== "complete") {
+        return json(res, 409, {
+          ok: false,
+          success: false,
+          code: "OWNER_STRIPE_ONBOARDING_INCOMPLETE",
+          message: "Owner Stripe onboarding is incomplete. Online payments are blocked.",
+        });
+      }
     }
 
     const amount = toMoney(reservation.totalAmount || 0);
@@ -599,6 +720,11 @@ export default async ({ req, res, log, error }) => {
             reservation,
             amount,
             currency,
+            stripeAccountId,
+            applicationFeeAmount: computeApplicationFeeAmount({
+              amount,
+              cfg: config,
+            }),
           })
         : await createMercadoPagoPreference({
             cfg: config,
@@ -610,7 +736,7 @@ export default async ({ req, res, log, error }) => {
     const paymentData = {
       reservationId,
       resourceId,
-      resourceOwnerUserId: reservation.resourceOwnerUserId,
+      resourceOwnerUserId: reservationOwnerUserId,
       provider: providerRaw,
       providerPaymentId: String(session.providerPaymentId || "").slice(0, 120),
       amount,

@@ -95,7 +95,7 @@ Regla:
 | `resource_images`        | Galeria por recurso                                      | 0     |
 | `rate_plans`             | Reglas de pricing y booking                              | 0     |
 | `amenities`              | Catalogo de amenidades                                   | 0     |
-| `leads`                  | Mensajes/contactos                                       | 0     |
+| `leads`                  | Pipeline de intenciones autenticadas por recurso         | 0     |
 | `marketing_contacts`     | Contactos del CRM landing                                | 0     |
 | `newsletter_subscribers` | Suscriptores de newsletter landing                       | 0     |
 | `reservations`           | Reservaciones                                            | 0     |
@@ -118,22 +118,27 @@ Purpose: perfiles de usuarios de la instancia (internos + clientes finales).
 
 ### Attributes
 
-| Attribute             | Type     | Size | Required | Default | Constraint                                                             |
-| --------------------- | -------- | ---- | -------- | ------- | ---------------------------------------------------------------------- |
-| `email`               | email    | 254  | yes      | -       | email valido                                                           |
-| `firstName`           | string   | 80   | yes      | -       | min 1                                                                  |
-| `lastName`            | string   | 80   | yes      | -       | min 1                                                                  |
-| `avatarFileId`        | string   | 64   | no       | -       | FK logical bucket `avatars`                                            |
-| `phoneCountryCode`    | string   | 5    | no       | -       | regex `^\+[1-9][0-9]{0,3}$`                                            |
-| `phone`               | string   | 15   | no       | -       | regex `^[0-9]{6,15}$`                                                  |
-| `whatsappCountryCode` | string   | 5    | no       | -       | regex `^\+[1-9][0-9]{0,3}$`                                            |
-| `whatsappNumber`      | string   | 15   | no       | -       | regex `^[0-9]{6,15}$`                                                  |
-| `birthDate`           | string   | 10   | no       | -       | regex `^\d{4}-\d{2}-\d{2}$`                                            |
-| `lastSeenAt`          | datetime | -    | no       | -       | ISO 8601 UTC                                                           |
-| `role`                | enum     | -    | yes      | -       | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
-| `scopesJson`          | string   | 4000 | no       | -       | JSON array serializado                                                 |
-| `isHidden`            | boolean  | -    | no       | false   | -                                                                      |
-| `enabled`             | boolean  | -    | no       | true    | -                                                                      |
+| Attribute                      | Type     | Size | Required | Default       | Constraint                                                             |
+| ------------------------------ | -------- | ---- | -------- | ------------- | ---------------------------------------------------------------------- |
+| `email`                        | email    | 254  | yes      | -             | email valido                                                           |
+| `firstName`                    | string   | 80   | yes      | -             | min 1                                                                  |
+| `lastName`                     | string   | 80   | yes      | -             | min 1                                                                  |
+| `avatarFileId`                 | string   | 64   | no       | -             | FK logical bucket `avatars`                                            |
+| `phoneCountryCode`             | string   | 5    | no       | -             | regex `^\+[1-9][0-9]{0,3}$`                                            |
+| `phone`                        | string   | 15   | no       | -             | regex `^[0-9]{6,15}$`                                                  |
+| `whatsappCountryCode`          | string   | 5    | no       | -             | regex `^\+[1-9][0-9]{0,3}$`                                            |
+| `whatsappNumber`               | string   | 15   | no       | -             | regex `^[0-9]{6,15}$`                                                  |
+| `birthDate`                    | string   | 10   | no       | -             | regex `^\d{4}-\d{2}-\d{2}$`                                            |
+| `lastSeenAt`                   | datetime | -    | no       | -             | ISO 8601 UTC                                                           |
+| `role`                         | enum     | -    | yes      | -             | `root`,`owner`,`staff_manager`,`staff_editor`,`staff_support`,`client` |
+| `scopesJson`                   | string   | 4000 | no       | -             | JSON array serializado                                                 |
+| `isHidden`                     | boolean  | -    | no       | false         | -                                                                      |
+| `enabled`                      | boolean  | -    | no       | true          | -                                                                      |
+| `stripeAccountId`              | string   | 120  | no       | -             | Connected account Stripe (owners)                                      |
+| `stripeOnboardingStatus`       | enum     | -    | no       | `not_started` | `not_started`,`pending`,`complete`,`restricted`                        |
+| `stripeOnboardingUrl`          | URL      | -    | no       | -             | URL temporal de onboarding                                             |
+| `stripePayoutsEnabled`         | boolean  | -    | no       | false         | habilita payouts Stripe para usuarios internos no-owner                |
+| `stripePayoutsGrantedByUserId` | string   | 64   | no       | -             | FK logical `users.$id` del owner/root que autoriza payouts             |
 
 ### Indexes
 
@@ -466,21 +471,23 @@ Purpose: catalogo global de amenidades.
 
 ## Collection: leads
 
-Purpose: mensajes de contacto del sitio publico.
+Purpose: pipeline CRM de intenciones de usuarios autenticados por recurso.
 
 ### Attributes
 
-| Attribute             | Type    | Size | Required | Default | Constraint                                   |
-| --------------------- | ------- | ---- | -------- | ------- | -------------------------------------------- |
-| `resourceId`          | string  | 64   | yes      | -       | FK logical `resources.$id`                   |
-| `resourceOwnerUserId` | string  | 64   | yes      | -       | FK logical `users.$id` (denormalizado)       |
-| `name`                | string  | 120  | yes      | -       | min 2                                        |
-| `email`               | email   | 254  | yes      | -       | email valido                                 |
-| `phone`               | string  | 20   | no       | -       | regex telefono internacional                 |
-| `message`             | string  | 2000 | yes      | -       | min 5                                        |
-| `status`              | enum    | -    | no       | `new`   | `new`,`contacted`,`closed_won`,`closed_lost` |
-| `notes`               | string  | 4000 | no       | -       | notas internas                               |
-| `enabled`             | boolean | -    | no       | true    | -                                            |
+| Attribute             | Type    | Size | Required | Default              | Constraint                                   |
+| --------------------- | ------- | ---- | -------- | -------------------- | -------------------------------------------- |
+| `resourceId`          | string  | 64   | yes      | -                    | FK logical `resources.$id`                   |
+| `resourceOwnerUserId` | string  | 64   | yes      | -                    | FK logical `users.$id` (denormalizado)       |
+| `userId`              | string  | 64   | yes      | -                    | FK logical `users.$id` del cliente           |
+| `lastMessage`         | string  | 2000 | yes      | -                    | mensaje inicial/resumen                      |
+| `conversationId`      | string  | 64   | no       | -                    | FK logical `conversations.$id`               |
+| `source`              | enum    | -    | no       | `authenticated_chat` | `authenticated_chat`,`authenticated_form`    |
+| `isArchived`          | boolean | -    | no       | false                | ocultar en inbox sin cerrar pipeline         |
+| `metaJson`            | string  | 8000 | no       | -                    | JSON serializado (presupuesto/fechas/etc.)   |
+| `status`              | enum    | -    | no       | `new`                | `new`,`contacted`,`closed_won`,`closed_lost` |
+| `notes`               | string  | 4000 | no       | -                    | notas internas                               |
+| `enabled`             | boolean | -    | no       | true                 | -                                            |
 
 ### Indexes
 
@@ -488,13 +495,14 @@ Purpose: mensajes de contacto del sitio publico.
 | ---------------------- | ---- | ------------------------------------- | ----------------- |
 | `idx_leads_resourceid` | idx  | `resourceId ↑`                        | Leads por recurso |
 | `idx_leads_ownerid`    | idx  | `resourceOwnerUserId ↑`               | Inbox por owner   |
+| `idx_leads_userid`     | idx  | `userId ↑`                            | Leads por cliente |
 | `idx_leads_status`     | idx  | `status ↑`                            | Filtro pipeline   |
 | `idx_leads_createdat`  | idx  | `$createdAt ↓`                        | Recientes         |
 | `idx_leads_ownerdate`  | idx  | `resourceOwnerUserId ↑, $createdAt ↓` | Dashboard rapido  |
 
 ### Permissions
 
-- Creacion publica via Function.
+- Creacion autenticada via Function `create-lead`.
 - Lectura/escritura interna por owner/staff con scope de leads.
 
 ---
@@ -597,6 +605,7 @@ Purpose: reservaciones por recurso.
 | `paymentStatus`       | enum     | -    | no       | `unpaid`  | `unpaid`,`pending`,`paid`,`failed`,`refunded`           |
 | `paymentProvider`     | enum     | -    | no       | `manual`  | `stripe`,`mercadopago`,`manual`                         |
 | `externalRef`         | string   | 120  | no       | -         | id externo de reserva/pago                              |
+| `holdExpiresAt`       | datetime | -    | no       | -         | expiracion de hold para reservas `pending`              |
 | `specialRequests`     | string   | 2000 | no       | -         | texto libre                                             |
 | `enabled`             | boolean  | -    | no       | true      | -                                                       |
 
@@ -610,6 +619,7 @@ Purpose: reservaciones por recurso.
 | `idx_reservations_checkin`       | idx  | `checkInDate ↑`                       | Agenda date_range      |
 | `idx_reservations_startdatetime` | idx  | `startDateTime ↑`                     | Agenda time_slot/event |
 | `idx_reservations_status`        | idx  | `status ↑`                            | Filtro estado          |
+| `idx_reservations_holdexpires`   | idx  | `holdExpiresAt ↑`                     | Expiracion de holds    |
 | `idx_reservations_paymentstatus` | idx  | `paymentStatus ↑`                     | Filtro pago            |
 | `idx_reservations_createdat`     | idx  | `$createdAt ↓`                        | Recientes              |
 | `idx_reservations_ownerdate`     | idx  | `resourceOwnerUserId ↑, $createdAt ↓` | Dashboard              |

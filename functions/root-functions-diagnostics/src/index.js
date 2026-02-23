@@ -73,12 +73,14 @@ const APPWRITE_AUTH_ENV_GROUPS = [
 const DIAGNOSTICS_CATALOG = [
   {
     key: "createLead",
-    title: "create-lead-public",
+    title: "create-lead",
     functionIdEnvKey: "APPWRITE_FUNCTION_CREATE_LEAD_ID",
     requiredEnv: ["APPWRITE_DATABASE_ID"],
     recommendedEnv: [
       "APPWRITE_COLLECTION_RESOURCES_ID",
       "APPWRITE_COLLECTION_LEADS_ID",
+      "APPWRITE_COLLECTION_CONVERSATIONS_ID",
+      "APPWRITE_COLLECTION_MESSAGES_ID",
       "APPWRITE_COLLECTION_ACTIVITY_LOGS_ID",
     ],
     smokePayload: {},

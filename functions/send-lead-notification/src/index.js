@@ -71,6 +71,7 @@ export default async ({ req, res, log, error }) => {
 
   const resourceId = body.resourceId;
   const resourceOwnerUserId = body.resourceOwnerUserId;
+  const clientUserId = body.userId;
   if (!resourceId || !resourceOwnerUserId) {
     return res.json({ ok: false, error: "Invalid lead payload" }, 400);
   }
@@ -82,9 +83,14 @@ export default async ({ req, res, log, error }) => {
   const db = new Databases(client);
 
   try {
-    const [resource, owner] = await Promise.all([
+    const [resource, owner, clientUser] = await Promise.all([
       db.getDocument(config.databaseId, config.resourcesCollectionId, resourceId),
       db.getDocument(config.databaseId, config.usersCollectionId, resourceOwnerUserId),
+      clientUserId
+        ? db.getDocument(config.databaseId, config.usersCollectionId, clientUserId).catch(
+            () => null,
+          )
+        : Promise.resolve(null),
     ]);
 
     const ownerEmail = owner.email;
@@ -110,11 +116,11 @@ export default async ({ req, res, log, error }) => {
       html: `
         <h2>Nuevo lead recibido</h2>
         <p><strong>Recurso:</strong> ${resource.title}</p>
-        <p><strong>Nombre:</strong> ${body.name || "-"}</p>
-        <p><strong>Email:</strong> ${body.email || "-"}</p>
-        <p><strong>Telefono:</strong> ${body.phone || "-"}</p>
+        <p><strong>Cliente:</strong> ${clientUser?.name || body.name || "-"}</p>
+        <p><strong>Email:</strong> ${clientUser?.email || body.email || "-"}</p>
+        <p><strong>Telefono:</strong> ${clientUser?.phone || body.phone || "-"}</p>
         <p><strong>Mensaje:</strong></p>
-        <p>${body.message || "-"}</p>
+        <p>${body.lastMessage || body.message || "-"}</p>
         <p><a href="${config.appUrl}/app/leads">Ver leads en dashboard</a></p>
       `,
     });
