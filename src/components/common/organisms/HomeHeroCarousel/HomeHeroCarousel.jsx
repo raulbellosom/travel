@@ -11,9 +11,11 @@ import {
   Star,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { storage } from "../../../../api/appwriteClient";
-import env from "../../../../env";
 import { propertiesService } from "../../../../services/propertiesService";
+import {
+  getOptimizedImage,
+  getFileViewUrl,
+} from "../../../../utils/imageOptimization";
 import { getAllowedCategories } from "../../../../utils/resourceTaxonomy";
 import { getPublicPropertyRoute } from "../../../../utils/internalRoutes";
 import fallbackImage from "../../../../assets/img/examples/house/fachada.webp";
@@ -116,6 +118,10 @@ const TypewriterWord = ({ words }) => {
   );
 };
 
+/**
+ * Returns an optimised hero-preset URL for the resource's main gallery image.
+ * Falls back through: mainImageUrl → images[0] → hero preview → view → fallbackImage.
+ */
 const getResourceImage = (resource) => {
   if (resource?.mainImageUrl) return resource.mainImageUrl;
   if (Array.isArray(resource?.images) && resource.images[0])
@@ -125,15 +131,10 @@ const getResourceImage = (resource) => {
     ? resource.galleryImageIds.find(Boolean)
     : "";
 
-  const bucketId =
-    env.appwrite?.buckets?.resourceImages ||
-    env.appwrite?.buckets?.propertyImages;
-
-  if (firstGalleryImageId && bucketId) {
-    return storage.getFileView({
-      bucketId,
-      fileId: firstGalleryImageId,
-    });
+  if (firstGalleryImageId) {
+    // Use the hero preset (1920px / q70 / webp) for the full-screen background.
+    const optimized = getOptimizedImage(firstGalleryImageId, "hero");
+    return optimized || getFileViewUrl(firstGalleryImageId) || fallbackImage;
   }
 
   return fallbackImage;
@@ -317,9 +318,17 @@ const HomeHeroCarousel = () => {
               alt={activeResource?.title || "Featured"}
               className="h-full w-full object-cover will-change-[filter] transition-[filter] duration-700 ease-out"
               style={{ filter: bgImgLoaded ? "blur(0px)" : "blur(16px)" }}
+              fetchpriority="high"
+              loading="eager"
+              decoding="async"
               onError={(event) => {
                 event.target.onerror = null;
-                event.target.src = fallbackImage;
+                // If the optimised URL failed, retry with the raw view URL.
+                const fid = Array.isArray(activeResource?.galleryImageIds)
+                  ? activeResource.galleryImageIds.find(Boolean)
+                  : "";
+                const viewFallback = fid ? getFileViewUrl(fid) : "";
+                event.target.src = viewFallback || fallbackImage;
                 setBgImgLoaded(true);
               }}
               onLoad={() => setBgImgLoaded(true)}

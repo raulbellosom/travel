@@ -31,6 +31,7 @@ const IMAGE_PRESETS = {
   card: { width: 600, quality: 50, output: "webp" },
   "detail-low": { width: 900, quality: 60, output: "webp" },
   "detail-hd": { width: 1400, quality: 80, output: "webp" },
+  hero: { width: 1920, quality: 70, output: "webp" },
 };
 
 // Milliseconds to delay the HD request on a 3g connection so the low-quality
@@ -103,9 +104,10 @@ const buildPreviewUrl = (fileId, preset, bucketId) => {
   const config = IMAGE_PRESETS[preset] || IMAGE_PRESETS.card;
 
   // Explicit array order guarantees a stable query string for caching.
+  // Do NOT include height — Appwrite auto-calculates height from width to
+  // preserve aspect ratio. Some self-hosted versions reject height=0.
   const params = new URLSearchParams([
     ["width", String(config.width)],
-    ["height", "0"],
     ["quality", String(config.quality)],
     ["output", config.output],
     ["project", projectId],
@@ -125,6 +127,27 @@ const buildPreviewUrl = (fileId, preset, bucketId) => {
 const getOptimizedImage = (fileId, preset, bucketId) =>
   buildPreviewUrl(fileId, preset, bucketId);
 
+/**
+ * Builds a raw Appwrite /view URL (original file, no transformations).
+ * Used as a fallback when the /preview endpoint fails.
+ *
+ * @param {string} fileId
+ * @param {string} [bucketId]
+ * @returns {string}
+ */
+const getFileViewUrl = (fileId, bucketId) => {
+  const endpoint = String(env.appwrite.endpoint || "").replace(/\/+$/, "");
+  const projectId = env.appwrite.projectId;
+  const resolvedBucketId =
+    bucketId ||
+    env.appwrite.buckets.resourceImages ||
+    env.appwrite.buckets.propertyImages;
+
+  if (!endpoint || !projectId || !resolvedBucketId || !fileId) return "";
+
+  return `${endpoint}/storage/buckets/${resolvedBucketId}/files/${fileId}/view?project=${projectId}`;
+};
+
 export {
   IMAGE_PRESETS,
   HD_DELAY_3G_MS,
@@ -133,4 +156,5 @@ export {
   getHDDelay,
   buildPreviewUrl,
   getOptimizedImage,
+  getFileViewUrl,
 };

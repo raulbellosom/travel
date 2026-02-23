@@ -5,7 +5,10 @@ import { LocateFixed, Loader2, MapPin, Search } from "lucide-react";
 
 import Select from "../../../components/common/atoms/Select/Select";
 import Combobox from "../../../components/common/molecules/Combobox/Combobox";
-import { storage } from "../../../api/appwriteClient";
+import {
+  getOptimizedImage,
+  getFileViewUrl,
+} from "../../../utils/imageOptimization";
 import { useAuth } from "../../../hooks/useAuth";
 import { favoritesService } from "../../../services/favoritesService";
 import {
@@ -136,13 +139,10 @@ const coverImageFromResource = (resource) => {
     ? resource.galleryImageIds.find(Boolean)
     : "";
 
-  const bucketId = env.appwrite.buckets.resourceImages;
-  if (!fileId || !bucketId) return "";
+  if (!fileId) return "";
 
-  return storage.getFileView({
-    bucketId,
-    fileId,
-  });
+  // Use card preset (600px/q50/webp) for map popup thumbnails.
+  return getOptimizedImage(fileId, "card") || getFileViewUrl(fileId) || "";
 };
 
 const formatDistance = (distanceKm, t) => {

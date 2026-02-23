@@ -12,8 +12,7 @@ import { TablePagination } from "../components/common";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
-import { storage } from "../api/appwriteClient";
-import env from "../env";
+import { getOptimizedImage, getFileViewUrl } from "../utils/imageOptimization";
 import { INTERNAL_ROUTES } from "../utils/internalRoutes";
 import {
   ResourceTableHeader,
@@ -402,12 +401,13 @@ const MyProperties = () => {
       if (!item.galleryImageIds || item.galleryImageIds.length === 0)
         return null;
       const firstImageId = item.galleryImageIds[0];
-      if (!firstImageId || !env.appwrite.buckets.propertyImages) return null;
+      if (!firstImageId) return null;
 
-      return storage.getFileView({
-        bucketId: env.appwrite.buckets.propertyImages,
-        fileId: firstImageId,
-      });
+      return (
+        getOptimizedImage(firstImageId, "thumb") ||
+        getFileViewUrl(firstImageId) ||
+        null
+      );
     },
     [thumbnailCache],
   );

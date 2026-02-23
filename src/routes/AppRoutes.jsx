@@ -89,6 +89,12 @@ const LegacyPropertyDetailRedirect = () => {
   return <Navigate to={getInternalPropertyDetailRoute(id)} replace />;
 };
 
+/** Redirect legacy /propiedades/:slug → /recursos/:slug (and /properties → /resources) */
+const LegacyPublicSlugRedirect = ({ base }) => {
+  const { slug } = useParams();
+  return <Navigate to={`/${base}/${slug}`} replace />;
+};
+
 const MarketingEntryRoute = () => {
   const { t } = useTranslation();
   const { loading } = useAuth();
@@ -142,17 +148,23 @@ const AppRoutes = () => {
                         element={<MapExplorePage />}
                       />
                       <Route path="map-explore" element={<MapExplorePage />} />
+                      {/* ── Canonical public detail routes ── */}
                       <Route
-                        path="propiedades/:slug"
-                        element={<PropertyDetail />}
-                      />
-                      <Route
-                        path="properties/:slug"
+                        path="recursos/:slug"
                         element={<PropertyDetail />}
                       />
                       <Route
                         path="resources/:slug"
                         element={<PropertyDetail />}
+                      />
+                      {/* ── Legacy public detail redirects (backward-compat) ── */}
+                      <Route
+                        path="propiedades/:slug"
+                        element={<LegacyPublicSlugRedirect base="recursos" />}
+                      />
+                      <Route
+                        path="properties/:slug"
+                        element={<LegacyPublicSlugRedirect base="resources" />}
                       />
                       <Route
                         path="reservar/:slug"

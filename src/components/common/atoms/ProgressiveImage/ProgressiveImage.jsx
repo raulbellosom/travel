@@ -8,15 +8,17 @@
  * ─────────────
  * card / thumb presets (single phase):
  *   1. Container renders immediately at fixed aspect-ratio → no CLS.
- *   2. Low-quality image (400-600px / q40-50 / webp) streams in with a blur
- *      filter applied so JPEG band-rendering is never visible.
+ *   2. Optimised image (300-600px / q40-50 / webp) streams in with a blur
+ *      filter applied so band-rendering is never visible.
  *   3. Once loaded, the blur transitions out smoothly (500ms ease-out).
+ *   4. If the /preview URL fails, the component transparently retries with
+ *      the raw /view URL before falling back to a placeholder icon.
  *
  * detail preset (two phase):
  *   1. Low-quality version (900px / q60) renders with a mild blur.
  *   2. IntersectionObserver fires when the element enters the viewport.
  *   3. Network quality is checked via Navigator.connection:
- *        slow-2g / 2g  → skip HD entirely
+ *        slow-2g / 2g  → skip HD, remove blur after 2s so image is usable
  *        3g            → delay HD request by 1500ms
  *        4g / unknown  → load HD immediately
  *   4. HD version (1400px / q80) loads in a transparent layer.
@@ -33,14 +35,15 @@
  * ─────
  * fileId      {string}   Appwrite file $id — drives URL generation.
  * src         {string}   Fallback URL when fileId is unavailable.
- * preset      {string}   "thumb" | "card" | "detail"  (default: "card")
+ * preset      {string}   "thumb" | "card" | "detail" | "hero"  (default: "card")
  * aspectRatio {string}   CSS aspect-ratio value, e.g. "16/9" (default: "16/9")
  * alt         {string}   Accessible alt text.
  * className   {string}   Applied to the wrapper div (size, rounding, etc.).
  * bucketId    {string}   Appwrite bucket override (uses resourceImages bucket).
  * propertyType{string}   Passed to placeholder icon when no image is available.
  * eager       {boolean}  Skip lazy loading; force immediate fetch.
- * onLoad      {function} Called after the low-quality image loads successfully.
+ * priority    {boolean}  Set fetchpriority="high" for above-the-fold images.
+ * onLoad      {function} Called after the image loads successfully.
  * onError     {function} Called on image load failure.
  */
 
@@ -48,6 +51,7 @@ import { useCallback, useEffect, useRef, useState, memo } from "react";
 import { cn } from "../../../../utils/cn";
 import {
   getOptimizedImage,
+  getFileViewUrl,
   shouldLoadHD,
   getHDDelay,
 } from "../../../../utils/imageOptimization";
@@ -63,6 +67,15 @@ const prefersReducedMotion =
     ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
     : false;
 
+// Maximum time (ms) to wait for the preview URL before trying the fallback.
+const PREVIEW_TIMEOUT_MS = 6000;
+
+// Time (ms) to wait before removing blur on detail preset when HD is skipped.
+const DETAIL_BLUR_REMOVE_MS = 2000;
+
+// Maximum time (ms) to wait for the HD image before giving up and removing blur.
+const HD_LOAD_TIMEOUT_MS = 8000;
+
 const ProgressiveImage = memo(function ProgressiveImage({
   fileId,
   src,
@@ -73,6 +86,7 @@ const ProgressiveImage = memo(function ProgressiveImage({
   bucketId,
   propertyType,
   eager = false,
+  priority = false,
   onLoad,
   onError,
 }) {
@@ -83,16 +97,23 @@ const ProgressiveImage = memo(function ProgressiveImage({
   const highPreset = isDetailPreset ? "detail-hd" : null;
 
   // Build stable, cacheable URLs. If fileId is absent, fall back to the raw src.
-  const lowUrl = fileId
+  const previewUrl = fileId
     ? getOptimizedImage(fileId, lowPreset, bucketId)
-    : String(src || "");
+    : "";
+  const viewUrl = fileId ? getFileViewUrl(fileId, bucketId) : "";
+  const externalSrc = String(src || "");
   const highUrl =
     fileId && highPreset ? getOptimizedImage(fileId, highPreset, bucketId) : "";
 
+  // The effective URL to load — starts with preview, falls back to view, then src.
+  const primaryUrl = previewUrl || viewUrl || externalSrc;
+
   // ─── State ──────────────────────────────────────────────────────────────────
 
-  // Initialise from cache to skip animation when the image is already loaded.
-  const [lowLoaded, setLowLoaded] = useState(() => loadedUrlCache.has(lowUrl));
+  const [activeSrc, setActiveSrc] = useState(() => primaryUrl);
+  const [lowLoaded, setLowLoaded] = useState(
+    () => loadedUrlCache.has(primaryUrl) || loadedUrlCache.has(viewUrl),
+  );
   const [highLoaded, setHighLoaded] = useState(() =>
     loadedUrlCache.has(highUrl),
   );
@@ -100,34 +121,105 @@ const ProgressiveImage = memo(function ProgressiveImage({
     loadedUrlCache.has(highUrl) ? highUrl : "",
   );
   const [hasError, setHasError] = useState(false);
+  // When HD is skipped (slow network) or unavailable, remove the detail blur
+  // so the low-q image is at least fully visible.
+  const [detailBlurRemoved, setDetailBlurRemoved] = useState(false);
 
   // ─── Refs ────────────────────────────────────────────────────────────────────
 
   const containerRef = useRef(null);
   const observerRef = useRef(null);
   const hdTimerRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const blurTimerRef = useRef(null);
   const mountedRef = useRef(true);
+  const fallbackAttemptedRef = useRef(false);
 
   // ─── Image event handlers ────────────────────────────────────────────────────
 
   const handleLowLoad = useCallback(() => {
     if (!mountedRef.current) return;
-    loadedUrlCache.add(lowUrl);
+    loadedUrlCache.add(activeSrc);
     setLowLoaded(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     onLoad?.();
-  }, [lowUrl, onLoad]);
+  }, [activeSrc, onLoad]);
 
   const handleLowError = useCallback(() => {
     if (!mountedRef.current) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    // Fallback chain: preview → view → src → placeholder
+    if (!fallbackAttemptedRef.current) {
+      fallbackAttemptedRef.current = true;
+      const fallback =
+        activeSrc === previewUrl && viewUrl ? viewUrl : externalSrc;
+      if (fallback && fallback !== activeSrc) {
+        setActiveSrc(fallback);
+        return; // retry with fallback URL instead of showing placeholder
+      }
+    }
+
     setHasError(true);
     onError?.();
-  }, [onError]);
+  }, [activeSrc, previewUrl, viewUrl, externalSrc, onError]);
 
   const handleHighLoad = useCallback(() => {
     if (!mountedRef.current) return;
     loadedUrlCache.add(highUrl);
     setHighLoaded(true);
   }, [highUrl]);
+
+  // If the HD image fails to load, remove the blur from the low-q layer
+  // so the user at least sees a clear (though lower resolution) image.
+  const handleHighError = useCallback(() => {
+    if (!mountedRef.current) return;
+    setDetailBlurRemoved(true);
+  }, []);
+
+  // ─── Preview timeout ────────────────────────────────────────────────────────
+  // If the preview URL doesn't load within PREVIEW_TIMEOUT_MS, fall back to
+  // the view URL so the user at least sees the original image.
+
+  useEffect(() => {
+    if (lowLoaded || !primaryUrl || !previewUrl || !viewUrl) return;
+
+    timeoutRef.current = setTimeout(() => {
+      if (!mountedRef.current || lowLoaded) return;
+      if (!fallbackAttemptedRef.current) {
+        fallbackAttemptedRef.current = true;
+        setActiveSrc(viewUrl);
+      }
+    }, PREVIEW_TIMEOUT_MS);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ─── Detail blur removal safety net ────────────────────────────────────────
+  // Remove blur(6px) from the low-q layer when:
+  //   • slow network → HD skipped entirely (after DETAIL_BLUR_REMOVE_MS)
+  //   • normal network → HD hasn't loaded after HD_LOAD_TIMEOUT_MS
+  // This guarantees the image is always usable even if the HD request stalls.
+
+  useEffect(() => {
+    if (!isDetailPreset || !lowLoaded || highLoaded || detailBlurRemoved)
+      return;
+
+    // On slow networks HD is skipped — remove blur quickly.
+    // On fast networks give HD a generous window, then remove blur anyway.
+    const delay = !shouldLoadHD() ? DETAIL_BLUR_REMOVE_MS : HD_LOAD_TIMEOUT_MS;
+
+    blurTimerRef.current = setTimeout(() => {
+      if (mountedRef.current && !highLoaded) setDetailBlurRemoved(true);
+    }, delay);
+
+    return () => {
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+    };
+  }, [isDetailPreset, lowLoaded, highLoaded, detailBlurRemoved]);
 
   // ─── HD trigger ─────────────────────────────────────────────────────────────
 
@@ -163,8 +255,6 @@ const ProgressiveImage = memo(function ProgressiveImage({
     const el = containerRef.current;
     if (!el) return;
 
-    // Start loading 200px before the element enters the viewport to give the
-    // HD image time to stream in before it becomes visible.
     observerRef.current = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
@@ -190,18 +280,16 @@ const ProgressiveImage = memo(function ProgressiveImage({
       mountedRef.current = false;
       observerRef.current?.disconnect();
       if (hdTimerRef.current) clearTimeout(hdTimerRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
     };
   }, []);
 
   // ─── Style computation ───────────────────────────────────────────────────────
-  //
-  // Blur values are applied via inline style (not Tailwind) because we need
-  // arbitrary pixel values that change based on runtime state.
 
   const TRANSITION_BASE = "opacity 500ms ease-out, filter 600ms ease-out";
 
   const getLowStyle = () => {
-    // Skip all animation for users who prefer reduced motion.
     if (prefersReducedMotion) {
       return { opacity: lowLoaded ? 1 : 0 };
     }
@@ -216,24 +304,30 @@ const ProgressiveImage = memo(function ProgressiveImage({
     }
 
     if (isDetailPreset && highLoaded) {
+      // HD loaded — fade out low-q layer.
       return {
         opacity: 0,
-        filter: "blur(6px)",
         transition: TRANSITION_BASE,
-        willChange: "opacity, filter",
+        willChange: "opacity",
       };
     }
 
-    if (isDetailPreset) {
+    if (isDetailPreset && !detailBlurRemoved) {
+      // Priority images are above-the-fold — show low-q sharp immediately.
+      // HD will silently upgrade in the background.
+      if (priority) {
+        return { opacity: 1, filter: "blur(0px)", transition: TRANSITION_BASE };
+      }
+      // Low-q loaded, HD not yet — show with mild blur.
       return {
         opacity: 1,
         filter: "blur(6px)",
         transition: TRANSITION_BASE,
-        willChange: "opacity, filter",
+        willChange: "filter",
       };
     }
 
-    // Card / thumb: sharp and fully visible. Release willChange hint.
+    // Card / thumb OR detail with blur removed: sharp and fully visible.
     return { opacity: 1, filter: "blur(0px)", transition: TRANSITION_BASE };
   };
 
@@ -250,9 +344,6 @@ const ProgressiveImage = memo(function ProgressiveImage({
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
-  // aspectRatio is only applied when a value is provided. When null/false/empty
-  // the component is used inside a fixed-size parent (e.g. a carousel slide)
-  // and does not add its own sizing constraints.
   const aspectRatioStyle = aspectRatio ? { aspectRatio } : {};
 
   // No usable source → show icon placeholder.
@@ -274,9 +365,6 @@ const ProgressiveImage = memo(function ProgressiveImage({
   return (
     <div
       ref={containerRef}
-      // The aspect-ratio on the wrapper guarantees the space is reserved in the
-      // document before any image bytes arrive → zero CLS contribution.
-      // When aspectRatio is null/false the parent container controls sizing.
       className={cn(
         "relative overflow-hidden bg-slate-100 dark:bg-slate-800",
         className,
@@ -291,18 +379,17 @@ const ProgressiveImage = memo(function ProgressiveImage({
         />
       )}
 
-      {/* Low-quality layer ─────────────────────────────────────────────────── */}
+      {/* Low-quality / primary layer ──────────────────────────────────────── */}
       <img
-        src={lowUrl}
+        src={activeSrc}
         alt={alt}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
+        loading={eager || priority ? "eager" : "lazy"}
+        decoding={priority ? "sync" : "async"}
+        {...(priority ? { fetchpriority: "high" } : {})}
         onLoad={handleLowLoad}
         onError={handleLowError}
         className="absolute inset-0 h-full w-full object-cover"
         style={getLowStyle()}
-        // Screen-readers get the alt from the wrapper or the HD layer; hide
-        // the low-q duplicate once HD takes over.
         aria-hidden={isDetailPreset && highLoaded ? "true" : undefined}
       />
 
@@ -313,6 +400,7 @@ const ProgressiveImage = memo(function ProgressiveImage({
           alt={alt}
           decoding="async"
           onLoad={handleHighLoad}
+          onError={handleHighError}
           className="absolute inset-0 h-full w-full object-cover"
           style={getHighStyle()}
         />

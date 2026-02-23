@@ -39,8 +39,8 @@ export const getLegacyInternalPropertyDetailRoute = (id) =>
 export const getPublicPropertyRoute = (slug, language = "es") => {
   const normalizedLanguage = String(language || "es").toLowerCase();
   const basePath = normalizedLanguage.startsWith("en")
-    ? "/properties"
-    : "/propiedades";
+    ? "/resources"
+    : "/recursos";
   return `${basePath}/${slug}`;
 };
 

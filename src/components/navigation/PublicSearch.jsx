@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion as Motion } from "framer-motion";
-import { storage } from "../../api/appwriteClient";
-import env from "../../env";
+import {
+  getOptimizedImage,
+  getFileViewUrl,
+} from "../../utils/imageOptimization";
 import { cn } from "../../utils/cn";
 import { getPublicPropertyRoute } from "../../utils/internalRoutes";
 import { formatMoneyWithDenomination } from "../../utils/money";
@@ -84,12 +86,12 @@ const PublicSearch = ({
     if (property?.mainImageUrl) return String(property.mainImageUrl);
 
     const firstImageId = property?.galleryImageIds?.[0];
-    const bucketId = env.appwrite.buckets.propertyImages;
-    if (firstImageId && bucketId) {
-      return storage.getFileView({
-        bucketId,
-        fileId: firstImageId,
-      });
+    if (firstImageId) {
+      return (
+        getOptimizedImage(firstImageId, "thumb") ||
+        getFileViewUrl(firstImageId) ||
+        FALLBACK_IMAGE
+      );
     }
 
     return FALLBACK_IMAGE;
@@ -137,10 +139,7 @@ const PublicSearch = ({
       items.push({ type: "search", action: () => doSearch(trimmedQuery) });
     }
 
-    if (
-      trimmedQuery.length >= PUBLIC_SEARCH_MIN_QUERY_LENGTH &&
-      !liveLoading
-    ) {
+    if (trimmedQuery.length >= PUBLIC_SEARCH_MIN_QUERY_LENGTH && !liveLoading) {
       decoratedLiveResults.forEach((property) => {
         items.push({
           type: "property",

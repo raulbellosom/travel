@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -8,7 +8,12 @@ import PropertyCard from "../../molecules/PropertyCard";
 import Button from "../../atoms/Button";
 
 /**
- * Generic property grid section with title, subtitle, and filters
+ * Generic property grid section with title, subtitle, and filters.
+ *
+ * Data fetching is deferred until the section is within 400px of the viewport,
+ * so below-the-fold sections on the Home page don't fire API calls or trigger
+ * image downloads until the user scrolls near them.
+ *
  * @param {Object} props
  * @param {string} props.title - Section title
  * @param {string} props.subtitle - Section subtitle
@@ -17,6 +22,7 @@ import Button from "../../atoms/Button";
  * @param {string} props.viewAllLink - Link for "View All" button
  * @param {number} props.limit - Number of properties to show (default 3)
  * @param {string} props.bgClass - Background class (default: "bg-white dark:bg-slate-900/30")
+ * @param {boolean} props.eager - Skip lazy loading, fetch immediately (default: false)
  */
 const PropertyGridSection = ({
   title,
@@ -26,12 +32,44 @@ const PropertyGridSection = ({
   viewAllLink,
   limit = 3,
   bgClass = "bg-white dark:bg-slate-900/30",
+  eager = false,
 }) => {
   const { t } = useTranslation();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isNearViewport, setIsNearViewport] = useState(eager);
+  const sectionRef = useRef(null);
 
+  // ─── Viewport proximity detection ──────────────────────────────────────────
+  // Observe the section wrapper. Once it enters a 400px margin from the
+  // viewport, flip `isNearViewport` and disconnect — data will start fetching.
   useEffect(() => {
+    if (eager || isNearViewport) return;
+
+    const el = sectionRef.current;
+    if (!el) {
+      setIsNearViewport(true); // safety fallback
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsNearViewport(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "400px 0px", threshold: 0 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [eager, isNearViewport]);
+
+  // ─── Fetch data only when the section is near the viewport ─────────────────
+  useEffect(() => {
+    if (!isNearViewport) return;
+
     propertiesService
       .listPublic({
         limit,
@@ -42,12 +80,13 @@ const PropertyGridSection = ({
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [limit, JSON.stringify(filters)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNearViewport, limit, JSON.stringify(filters)]);
 
   if (!loading && properties.length === 0) return null;
 
   return (
-    <section className={`py-16 ${bgClass}`}>
+    <section ref={sectionRef} className={`py-16 ${bgClass}`}>
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <div className="mb-10 flex flex-col items-center justify-between gap-4 md:flex-row md:items-end">
           <div className="max-w-xl">

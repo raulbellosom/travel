@@ -1,5 +1,9 @@
 import env from "../env";
 import {
+  getOptimizedImage as _getOptimizedImage,
+  getFileViewUrl as _getFileViewUrl,
+} from "../utils/imageOptimization";
+import {
   databases,
   ensureAppwriteConfigured,
   ID,
@@ -112,10 +116,14 @@ const normalizeResourceInput = (
   };
 
   const hasResourceTypeField = hasOwn(source, "resourceType");
-  const hasCategoryField = hasOwn(source, "category") || hasOwn(source, "propertyType");
-  const hasCommercialField = hasOwn(source, "commercialMode") || hasOwn(source, "operationType");
+  const hasCategoryField =
+    hasOwn(source, "category") || hasOwn(source, "propertyType");
+  const hasCommercialField =
+    hasOwn(source, "commercialMode") || hasOwn(source, "operationType");
 
-  const baseCategoryRaw = normalizeCategoryToken(base.category || base.propertyType);
+  const baseCategoryRaw = normalizeCategoryToken(
+    base.category || base.propertyType,
+  );
   const baseCommercialRaw = normalizeCommercialMode(
     base.commercialMode || base.operationType || "sale",
   );
@@ -137,7 +145,11 @@ const normalizeResourceInput = (
     rawCategory || baseCategoryRaw,
   );
 
-  if (hasCategoryField && rawCategory && !isAllowedCategory(normalizedResourceType, rawCategory)) {
+  if (
+    hasCategoryField &&
+    rawCategory &&
+    !isAllowedCategory(normalizedResourceType, rawCategory)
+  ) {
     throw createValidationError(
       "La categoria seleccionada no es valida para este tipo de recurso.",
       "category",
@@ -361,10 +373,12 @@ const toPreviewUrl = (fileId) => {
   const { resourceImagesBucketId } = getCollectionConfig();
   if (!fileId || !resourceImagesBucketId) return "";
 
-  return storage.getFileView({
-    bucketId: resourceImagesBucketId,
-    fileId,
-  });
+  // Use the card preset (600px / q50 / webp) for admin image thumbnails.
+  return (
+    _getOptimizedImage(fileId, "card", resourceImagesBucketId) ||
+    _getFileViewUrl(fileId, resourceImagesBucketId) ||
+    ""
+  );
 };
 
 const normalizeGalleryImageIds = (ids = []) =>
@@ -387,7 +401,9 @@ const resolveCommercialFilter = (filters = {}) =>
   );
 
 const resolveCategoryFilter = (filters = {}) =>
-  String(filters.category || filters.propertyType || "").trim().toLowerCase();
+  String(filters.category || filters.propertyType || "")
+    .trim()
+    .toLowerCase();
 
 const listImagesWithFallbackField = async ({
   databaseId,
@@ -461,7 +477,8 @@ const createImageDocWithFallbackField = async ({
       payload: firstPayload,
     });
   } catch {
-    const fallbackField = preferredIdField === "resourceId" ? "propertyId" : "resourceId";
+    const fallbackField =
+      preferredIdField === "resourceId" ? "propertyId" : "resourceId";
     return createImageDocWithPayloadRetry({
       databaseId,
       collectionId,
@@ -505,7 +522,8 @@ export const propertiesService = {
 
   async listPublic({ page = 1, limit = 20, filters = {} } = {}) {
     ensureAppwriteConfigured();
-    const { resourcesCollectionId, useCanonicalResources } = getCollectionConfig();
+    const { resourcesCollectionId, useCanonicalResources } =
+      getCollectionConfig();
 
     const offset = (Math.max(1, Number(page)) - 1) * Number(limit);
     const queries = [
@@ -523,7 +541,9 @@ export const propertiesService = {
       .trim()
       .toLowerCase();
     if (resourceTypeFilter && useCanonicalResources) {
-      queries.push(Query.equal("resourceType", normalizeResourceType(resourceTypeFilter)));
+      queries.push(
+        Query.equal("resourceType", normalizeResourceType(resourceTypeFilter)),
+      );
     }
 
     if (filters.city) queries.push(Query.equal("city", filters.city));
@@ -532,7 +552,10 @@ export const propertiesService = {
     const categoryFilter = resolveCategoryFilter(filters);
     if (categoryFilter) {
       queries.push(
-        Query.equal(useCanonicalResources ? "category" : "propertyType", categoryFilter),
+        Query.equal(
+          useCanonicalResources ? "category" : "propertyType",
+          categoryFilter,
+        ),
       );
     }
 
@@ -544,7 +567,9 @@ export const propertiesService = {
       queries.push(
         Query.equal(
           useCanonicalResources ? "commercialMode" : "operationType",
-          useCanonicalResources ? commercial : toLegacyOperationType(commercial),
+          useCanonicalResources
+            ? commercial
+            : toLegacyOperationType(commercial),
         ),
       );
     }
@@ -652,7 +677,9 @@ export const propertiesService = {
       ],
     });
 
-    return (response.documents || []).map((doc) => normalizeResourceDocument(doc));
+    return (response.documents || []).map((doc) =>
+      normalizeResourceDocument(doc),
+    );
   },
 
   async getById(resourceId) {
@@ -734,7 +761,8 @@ export const propertiesService = {
 
   async create(userId, payload) {
     ensureAppwriteConfigured();
-    const { resourcesCollectionId, useCanonicalResources } = getCollectionConfig();
+    const { resourcesCollectionId, useCanonicalResources } =
+      getCollectionConfig();
     const normalized = normalizeResourceInput(payload, {
       forUpdate: false,
       target: useCanonicalResources ? "canonical" : "legacy",
@@ -765,7 +793,8 @@ export const propertiesService = {
 
   async update(resourceId, _userId, payload) {
     ensureAppwriteConfigured();
-    const { resourcesCollectionId, useCanonicalResources } = getCollectionConfig();
+    const { resourcesCollectionId, useCanonicalResources } =
+      getCollectionConfig();
     const needsResourceContext = [
       "resourceType",
       "category",
@@ -822,10 +851,8 @@ export const propertiesService = {
 
   async listImages(resourceId) {
     ensureAppwriteConfigured();
-    const {
-      resourceImagesCollectionId,
-      useCanonicalResources,
-    } = getCollectionConfig();
+    const { resourceImagesCollectionId, useCanonicalResources } =
+      getCollectionConfig();
     const normalizedId = String(resourceId || "").trim();
     if (!normalizedId) return [];
 

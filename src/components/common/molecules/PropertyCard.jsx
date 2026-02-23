@@ -300,30 +300,44 @@ const PropertyCard = ({
         <Link to={publicDetailPath} className="block h-full w-full">
           {hasImages ? (
             <>
-              {/* Sliding container */}
+              {/* Sliding container — only mount visible + adjacent slides to avoid
+                  downloading every gallery image upfront. Slides outside the
+                  render window get a lightweight placeholder div that preserves
+                  the flex layout without triggering any network requests. */}
               <div
                 className="flex h-full transition-transform duration-500 ease-out"
                 style={{
                   transform: `translateX(-${currentImageIndex * 100}%)`,
                 }}
               >
-                {images.map((imgItem, idx) => (
-                  <div
-                    key={imgItem.fileId || String(imgItem.url || idx)}
-                    className="h-full w-full shrink-0"
-                  >
-                    <ProgressiveImage
-                      fileId={imgItem.fileId}
-                      src={imgItem.url}
-                      preset="card"
-                      aspectRatio={null}
-                      alt={`${property.title} ${idx + 1}`}
-                      className="h-full w-full"
-                      onError={() => setImageError(true)}
-                      eager={idx === 0}
-                    />
-                  </div>
-                ))}
+                {images.map((imgItem, idx) => {
+                  const isNearVisible =
+                    idx >= currentImageIndex - 1 &&
+                    idx <= currentImageIndex + 1;
+
+                  return (
+                    <div
+                      key={imgItem.fileId || String(imgItem.url || idx)}
+                      className="h-full w-full shrink-0"
+                    >
+                      {isNearVisible ? (
+                        <ProgressiveImage
+                          fileId={imgItem.fileId}
+                          src={imgItem.url}
+                          preset="card"
+                          aspectRatio={null}
+                          alt={`${property.title} ${idx + 1}`}
+                          className="h-full w-full"
+                          onError={() => setImageError(true)}
+                          eager={idx === 0}
+                          priority={idx === 0}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-slate-200 dark:bg-slate-700" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Overlay Gradient */}

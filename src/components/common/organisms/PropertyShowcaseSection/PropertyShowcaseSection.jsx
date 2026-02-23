@@ -7,8 +7,10 @@ import Button from "../../atoms/Button";
 import ListingCard from "../ListingCard";
 import Spinner from "../../atoms/Spinner";
 import { propertiesService } from "../../../../services/propertiesService";
-import { storage } from "../../../../api/appwriteClient";
-import env from "../../../../env";
+import {
+  getOptimizedImage,
+  getFileViewUrl,
+} from "../../../../utils/imageOptimization";
 import { getErrorMessage } from "../../../../utils/errors";
 import { getPublicPropertyRoute } from "../../../../utils/internalRoutes";
 
@@ -110,16 +112,14 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
         {!loading && !error && properties.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {properties.map((property, index) => {
-              // Build images array from galleryImageIds - using regular function, not useMemo
+              // Build images array from galleryImageIds with optimised URLs
               const propertyImages =
-                property.galleryImageIds &&
-                property.galleryImageIds.length > 0 &&
-                env.appwrite.buckets.propertyImages
-                  ? property.galleryImageIds.map((fileId) =>
-                      storage.getFileView({
-                        bucketId: env.appwrite.buckets.propertyImages,
-                        fileId,
-                      }),
+                property.galleryImageIds && property.galleryImageIds.length > 0
+                  ? property.galleryImageIds.map(
+                      (fileId) =>
+                        getOptimizedImage(fileId, "card") ||
+                        getFileViewUrl(fileId) ||
+                        "",
                     )
                   : [];
 

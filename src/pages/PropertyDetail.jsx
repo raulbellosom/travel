@@ -659,7 +659,8 @@ const PropertyDetail = () => {
                   aspectRatio={null}
                   alt={`${property.title} ${i + 1}`}
                   className="h-full w-full"
-                  eager
+                  eager={i === 0}
+                  priority={i === 0}
                 />
               </div>
             ))}
@@ -777,6 +778,7 @@ const PropertyDetail = () => {
                   alt={property.title}
                   className="h-full w-full"
                   eager
+                  priority
                 />
                 <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
               </button>
@@ -806,6 +808,7 @@ const PropertyDetail = () => {
                     }
                     className="h-full w-full"
                     eager={i === 0}
+                    priority={i === 0}
                   />
                   <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
                 </button>
@@ -831,6 +834,7 @@ const PropertyDetail = () => {
                   alt={property.title}
                   className="h-full w-full"
                   eager
+                  priority
                 />
                 <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
               </button>
@@ -881,6 +885,7 @@ const PropertyDetail = () => {
                     }
                     className="h-full w-full"
                     eager={i === 0}
+                    priority={i === 0}
                   />
                   <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
                 </button>
@@ -906,6 +911,7 @@ const PropertyDetail = () => {
                   alt={property.title}
                   className="h-full w-full"
                   eager
+                  priority
                 />
                 <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
               </button>
