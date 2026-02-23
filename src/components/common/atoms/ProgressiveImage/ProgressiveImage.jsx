@@ -250,6 +250,11 @@ const ProgressiveImage = memo(function ProgressiveImage({
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
+  // aspectRatio is only applied when a value is provided. When null/false/empty
+  // the component is used inside a fixed-size parent (e.g. a carousel slide)
+  // and does not add its own sizing constraints.
+  const aspectRatioStyle = aspectRatio ? { aspectRatio } : {};
+
   // No usable source → show icon placeholder.
   if ((!fileId && !src) || hasError) {
     return (
@@ -258,7 +263,7 @@ const ProgressiveImage = memo(function ProgressiveImage({
           "relative overflow-hidden bg-slate-100 dark:bg-slate-800",
           className,
         )}
-        style={{ aspectRatio }}
+        style={aspectRatioStyle}
         aria-label={alt || undefined}
       >
         <PropertyImagePlaceholder propertyType={propertyType} iconSize={32} />
@@ -271,11 +276,12 @@ const ProgressiveImage = memo(function ProgressiveImage({
       ref={containerRef}
       // The aspect-ratio on the wrapper guarantees the space is reserved in the
       // document before any image bytes arrive → zero CLS contribution.
+      // When aspectRatio is null/false the parent container controls sizing.
       className={cn(
         "relative overflow-hidden bg-slate-100 dark:bg-slate-800",
         className,
       )}
-      style={{ aspectRatio }}
+      style={aspectRatioStyle}
     >
       {/* Skeleton shimmer — visible until the first byte of pixel data arrives */}
       {!lowLoaded && (

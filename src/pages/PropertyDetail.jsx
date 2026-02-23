@@ -63,7 +63,7 @@ import { useChat } from "../contexts/ChatContext";
 import { Spinner } from "../components/common";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
-import LazyImage from "../components/common/atoms/LazyImage";
+import ProgressiveImage from "../components/common/atoms/ProgressiveImage";
 import { usePageSeo } from "../hooks/usePageSeo";
 import { getResourceBehavior } from "../utils/resourceModel";
 import { useInstanceModules } from "../hooks/useInstanceModules";
@@ -259,6 +259,13 @@ const PropertyDetail = () => {
       ...FALLBACK_BANNERS,
     ].filter(Boolean);
   }, [images, property]);
+
+  // Parallel array of Appwrite fileIds for each gallery entry.
+  // Used by ProgressiveImage to generate optimised preview URLs.
+  const galleryFileIds = useMemo(
+    () => (images.length > 0 ? images.map((item) => item.fileId || null) : []),
+    [images],
+  );
 
   /* ─── Mobile hero auto-slide ─────────────────────────── */
   useEffect(() => {
@@ -645,10 +652,13 @@ const PropertyDetail = () => {
           >
             {gallery.slice(0, 6).map((url, i) => (
               <div key={url + i} className="h-full w-full shrink-0">
-                <LazyImage
+                <ProgressiveImage
+                  fileId={galleryFileIds[i] || null}
                   src={url || FALLBACK_BANNERS[0]}
+                  preset={i === 0 ? "detail" : "card"}
+                  aspectRatio={null}
                   alt={`${property.title} ${i + 1}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full"
                   eager
                 />
               </div>
@@ -759,10 +769,13 @@ const PropertyDetail = () => {
                 onClick={() => openImageViewer(gallery[0], 0)}
                 aria-label={property.title}
               >
-                <LazyImage
+                <ProgressiveImage
+                  fileId={galleryFileIds[0] || null}
                   src={gallery[0] || FALLBACK_BANNERS[0]}
+                  preset="detail"
+                  aspectRatio={null}
                   alt={property.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full"
                   eager
                 />
                 <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
@@ -783,12 +796,15 @@ const PropertyDetail = () => {
                     i === 0 ? property.title : `${property.title} ${i + 1}`
                   }
                 >
-                  <LazyImage
+                  <ProgressiveImage
+                    fileId={galleryFileIds[i] || null}
                     src={url || FALLBACK_BANNERS[0]}
+                    preset={i === 0 ? "detail" : "card"}
+                    aspectRatio={null}
                     alt={
                       i === 0 ? property.title : `${property.title} ${i + 1}`
                     }
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-full"
                     eager={i === 0}
                   />
                   <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
@@ -807,10 +823,13 @@ const PropertyDetail = () => {
                 onClick={() => openImageViewer(gallery[0], 0)}
                 aria-label={property.title}
               >
-                <LazyImage
+                <ProgressiveImage
+                  fileId={galleryFileIds[0] || null}
                   src={gallery[0] || FALLBACK_BANNERS[0]}
+                  preset="detail"
+                  aspectRatio={null}
                   alt={property.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full"
                   eager
                 />
                 <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
@@ -825,10 +844,13 @@ const PropertyDetail = () => {
                   onClick={() => openImageViewer(url, i + 1)}
                   aria-label={`${property.title} ${i + 2}`}
                 >
-                  <LazyImage
+                  <ProgressiveImage
+                    fileId={galleryFileIds[i + 1] || null}
                     src={url || FALLBACK_BANNERS[0]}
+                    preset="card"
+                    aspectRatio={null}
                     alt={`${property.title} ${i + 2}`}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-full"
                   />
                   <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
                 </button>
@@ -849,12 +871,15 @@ const PropertyDetail = () => {
                     i === 0 ? property.title : `${property.title} ${i + 1}`
                   }
                 >
-                  <LazyImage
+                  <ProgressiveImage
+                    fileId={galleryFileIds[i] || null}
                     src={url || FALLBACK_BANNERS[0]}
+                    preset={i === 0 ? "detail" : "card"}
+                    aspectRatio={null}
                     alt={
                       i === 0 ? property.title : `${property.title} ${i + 1}`
                     }
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-full"
                     eager={i === 0}
                   />
                   <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
@@ -873,10 +898,13 @@ const PropertyDetail = () => {
                 onClick={() => openImageViewer(gallery[0], 0)}
                 aria-label={property.title}
               >
-                <LazyImage
+                <ProgressiveImage
+                  fileId={galleryFileIds[0] || null}
                   src={gallery[0] || FALLBACK_BANNERS[0]}
+                  preset="detail"
+                  aspectRatio={null}
                   alt={property.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full"
                   eager
                 />
                 <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
@@ -891,10 +919,13 @@ const PropertyDetail = () => {
                   onClick={() => openImageViewer(url, i + 1)}
                   aria-label={`${property.title} ${i + 2}`}
                 >
-                  <LazyImage
+                  <ProgressiveImage
+                    fileId={galleryFileIds[i + 1] || null}
                     src={url || FALLBACK_BANNERS[0]}
+                    preset="card"
+                    aspectRatio={null}
                     alt={`${property.title} ${i + 2}`}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-full"
                   />
 
                   {/* Overlay en la última imagen si hay más fotos */}

@@ -32,10 +32,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { cn } from "../../../utils/cn";
-import { storage } from "../../../api/appwriteClient";
-import env from "../../../env";
 import PropertyImagePlaceholder from "../atoms/PropertyImagePlaceholder";
-import LazyImage from "../atoms/LazyImage";
+import ProgressiveImage from "../atoms/ProgressiveImage";
 import { getResourceBehavior } from "../../../utils/resourceModel";
 import { getPublicPropertyRoute } from "../../../utils/internalRoutes";
 import { formatMoneyParts } from "../../../utils/money";
@@ -124,28 +122,18 @@ const PropertyCard = ({
   );
 
   // Build image URLs from galleryImageIds
+  // Build image descriptors. Prefer galleryImageIds so ProgressiveImage can
+  // generate optimised preview URLs (card preset: 600px / q50 / webp).
+  // Fall back to pre-built URLs when only those are available.
   const images = useMemo(() => {
-    // If property already has pre-processed images array (from detail pages), use it
-    if (property.images && property.images.length > 0) {
-      return property.images;
+    if (property.galleryImageIds?.length > 0) {
+      return property.galleryImageIds
+        .filter(Boolean)
+        .map((id) => ({ fileId: id, url: null }));
     }
-
-    // Build URLs from galleryImageIds
-    if (
-      property.galleryImageIds &&
-      Array.isArray(property.galleryImageIds) &&
-      property.galleryImageIds.length > 0 &&
-      env.appwrite.buckets.propertyImages
-    ) {
-      return property.galleryImageIds.filter(Boolean).map((fileId) =>
-        storage.getFileView({
-          bucketId: env.appwrite.buckets.propertyImages,
-          fileId,
-        }),
-      );
+    if (property.images?.length > 0) {
+      return property.images.map((url) => ({ fileId: null, url }));
     }
-
-    // No images available
     return [];
   }, [property.images, property.galleryImageIds]);
 
@@ -319,12 +307,18 @@ const PropertyCard = ({
                   transform: `translateX(-${currentImageIndex * 100}%)`,
                 }}
               >
-                {images.map((imgSrc, idx) => (
-                  <div key={idx} className="h-full w-full shrink-0">
-                    <LazyImage
-                      src={imgSrc}
+                {images.map((imgItem, idx) => (
+                  <div
+                    key={imgItem.fileId || String(imgItem.url || idx)}
+                    className="h-full w-full shrink-0"
+                  >
+                    <ProgressiveImage
+                      fileId={imgItem.fileId}
+                      src={imgItem.url}
+                      preset="card"
+                      aspectRatio={null}
                       alt={`${property.title} ${idx + 1}`}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="h-full w-full"
                       onError={() => setImageError(true)}
                       eager={idx === 0}
                     />

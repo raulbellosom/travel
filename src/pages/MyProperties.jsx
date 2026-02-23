@@ -751,6 +751,7 @@ const MyProperties = () => {
                     isFocused={Boolean(focusId) && item.$id === focusId}
                     isBusy={busyId === item.$id}
                     thumbnailUrl={getResourceThumbnail(item)}
+                    fileId={item.galleryImageIds?.[0] || null}
                     statusOptions={statusSelectOptions}
                     onStatusChange={handleStatusChange}
                     staffUsers={staffUsers}

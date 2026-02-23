@@ -6,7 +6,7 @@ import {
   Loader2,
   Star,
 } from "lucide-react";
-import LazyImage from "../../../components/common/atoms/LazyImage";
+import ProgressiveImage from "../../../components/common/atoms/ProgressiveImage";
 import { Select } from "../../../components/common";
 import ResourceTypeBadge from "./ResourceTypeBadge";
 import ResourceDetailsCell from "./ResourceDetailsCell";
@@ -51,6 +51,7 @@ const ResourceTableRow = ({
   isFocused,
   isBusy,
   thumbnailUrl,
+  fileId,
   statusOptions,
   staffUsers = [],
   loadingStaff = false,
@@ -86,10 +87,13 @@ const ResourceTableRow = ({
             onClick={() => onImageClick(item, 0)}
             className="group relative h-16 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition hover:border-cyan-500 dark:border-slate-700 dark:bg-slate-800"
           >
-            <LazyImage
+            <ProgressiveImage
+              fileId={fileId}
               src={thumbnailUrl}
+              preset="thumb"
+              aspectRatio={null}
               alt={item.title}
-              className="h-full w-full object-cover transition group-hover:scale-105"
+              className="h-full w-full"
               eager
             />
             <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
