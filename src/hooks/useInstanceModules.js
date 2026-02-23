@@ -1,15 +1,39 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { instanceSettingsService } from "../services/instanceSettingsService";
+import { useAuth } from "./useAuth";
+
+const INTERNAL_ROLES_ALLOWED_INSTANCE_SETTINGS = new Set([
+  "root",
+  "owner",
+  "staff_manager",
+  "staff_editor",
+  "staff_support",
+]);
 
 export const useInstanceModules = () => {
+  const { user, loading: authLoading } = useAuth();
   const [settings, setSettings] = useState(() =>
     instanceSettingsService.getDefaults(),
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const role = String(user?.role || "")
+    .trim()
+    .toLowerCase();
+  const canReadRemoteSettings =
+    Boolean(user?.$id) &&
+    INTERNAL_ROLES_ALLOWED_INSTANCE_SETTINGS.has(role);
 
   const refresh = useCallback(async () => {
+    if (!canReadRemoteSettings) {
+      const defaults = instanceSettingsService.getDefaults();
+      setSettings(defaults);
+      setError("");
+      setLoading(false);
+      return defaults;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -24,11 +48,12 @@ export const useInstanceModules = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canReadRemoteSettings]);
 
   useEffect(() => {
+    if (authLoading) return;
     refresh();
-  }, [refresh]);
+  }, [authLoading, refresh]);
 
   const isEnabled = useCallback(
     (moduleKey) => {
