@@ -785,21 +785,21 @@
     }
   },
   "createPropertyPage": {
-    "title": "Create property",
+    "title": "Create resource",
     "subtitle": "Complete the information to save your listing.",
-    "submit": "Save property",
+    "submit": "Save resource",
     "errors": {
-      "create": "Could not create the property."
+      "create": "Could not create the resource."
     }
   },
   "editPropertyPage": {
-    "title": "Edit property",
-    "loading": "Loading property...",
+    "title": "Edit resource",
+    "loading": "Loading resource...",
     "submit": "Save changes",
     "errors": {
-      "load": "Could not load the property.",
-      "save": "Could not save the property.",
-      "notFound": "Property not found."
+      "load": "Could not load the resource.",
+      "save": "Could not save the resource.",
+      "notFound": "Resource not found."
     }
   },
   "settingsPage": {
@@ -1354,19 +1354,19 @@
     },
     "wizard": {
       "progress": "Step {{current}} of {{total}}",
-      "hint": "Complete each step to create a property with real-time validation.",
-      "title": "Create property",
+      "hint": "Complete each step to create a resource with real-time validation.",
+      "title": "Create resource",
       "readyToSave": "Ready to save!",
       "saveDraft": "Save as draft",
       "draftNotice": "Will be saved as draft",
-      "draftNoticeBody": "Review the information before saving. You can publish your property later from the edit panel.",
+      "draftNoticeBody": "Review the information before saving. You can publish your resource later from the edit panel.",
       "steps": {
         "typeAndInfo": "Type & Info",
         "typeAndInfoDesc": "Set resource type, commercial mode, and core listing details.",
         "location": "Location",
-        "locationDesc": "Select the property location and address.",
+        "locationDesc": "Select the resource location and address.",
         "features": "Features",
-        "featuresDesc": "Detail the physical characteristics of the property.",
+        "featuresDesc": "Detail the physical characteristics of the resource.",
         "pricing": "Pricing",
         "pricingDesc": "Set the price and economic conditions.",
         "amenities": "Amenities",
@@ -1392,6 +1392,7 @@
         "shortTerm": "Configure stay and operating rules for date-based bookings.",
         "hourly": "Configure booking windows and limits for hourly/event offers."
       },
+      "cancelTitle": "Cancel resource creation",
       "noSpecificCommercialConditions": "This resource type does not require additional commercial conditions."
     },
     "tabs": {
@@ -2546,5 +2547,91 @@
     "selectConversation": "Select a conversation to view messages.",
     "empty": "You don't have any conversations yet",
     "emptyHint": "Start a conversation from any property page."
+  },
+  "rootInstancePage": {
+    "title": "Instance Settings",
+    "subtitle": "Operational summary of the instance and module configuration.",
+    "actions": {
+      "configure": "Configure"
+    },
+    "info": {
+      "title": "Instance",
+      "key": "Key",
+      "plan": "Plan",
+      "status": "Status",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "activeModules": "Active modules"
+    },
+    "limits": {
+      "title": "Limits",
+      "resources": "Published resources",
+      "staff": "Staff users",
+      "reservations": "Reservations/month"
+    },
+    "modules": {
+      "title": "Active Modules",
+      "empty": "No active modules",
+      "more": "+{{count}} more"
+    },
+    "note": {
+      "title": "Backend Enforcement",
+      "body": "create-lead: module.resources + module.leads + module.messaging.realtime. create-reservation-public: module.resources + module.booking.* + module.payments.online. create-payment-session: module.resources + module.booking.* + module.payments.online."
+    }
+  },
+  "rootModulesPage": {
+    "title": "Modules & Plan",
+    "subtitle": "Control enabled modules and commercial limits of the instance.",
+    "plan": {
+      "title": "Plan",
+      "key": "Plan key",
+      "enabled": "Instance enabled"
+    },
+    "modules": {
+      "title": "Enabled Modules"
+    },
+    "limits": {
+      "title": "Limits"
+    },
+    "actions": {
+      "save": "Save changes",
+      "saving": "Saving...",
+      "saved": "Settings saved successfully."
+    },
+    "note": {
+      "title": "Backend enforcement required",
+      "body": "Module toggles must be reflected in Appwrite Functions with 403 MODULE_DISABLED block."
+    }
+  },
+  "modulesModal": {
+    "title": "Configure Plan & Modules",
+    "description": "Manage enabled modules and limits of the instance.",
+    "save": "Save changes",
+    "saving": "Saving...",
+    "plan": {
+      "title": "Plan",
+      "key": "Plan type",
+      "enabled": "Instance enabled"
+    },
+    "modules": {
+      "title": "Modules",
+      "enabled": "active"
+    },
+    "categories": {
+      "core": "Core",
+      "booking": "Booking & Payments",
+      "extras": "Extras",
+      "other": "Other"
+    },
+    "limits": {
+      "title": "Limits",
+      "maxResources": "Published resources",
+      "maxStaff": "Staff users",
+      "maxReservations": "Reservations/month"
+    },
+    "note": {
+      "title": "Backend enforcement required",
+      "body": "Module toggles must be reflected in Appwrite Functions with 403 MODULE_DISABLED block."
+    }
   }
 }

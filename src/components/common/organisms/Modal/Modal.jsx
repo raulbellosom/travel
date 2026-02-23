@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
@@ -77,8 +77,18 @@ const Modal = ({
     }
   }, [isOpen]);
 
+  const mouseDownTarget = useRef(null);
+
+  const handleBackdropMouseDown = (event) => {
+    mouseDownTarget.current = event.target;
+  };
+
   const handleBackdropClick = (event) => {
-    if (closeOnBackdrop && event.target === event.currentTarget) {
+    if (
+      closeOnBackdrop &&
+      event.target === event.currentTarget &&
+      mouseDownTarget.current === event.currentTarget
+    ) {
       onClose?.();
     }
   };
@@ -133,6 +143,7 @@ const Modal = ({
           initial="hidden"
           animate="visible"
           exit="hidden"
+          onMouseDown={handleBackdropMouseDown}
           onClick={handleBackdropClick}
           {...props}
         >

@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -28,6 +29,17 @@ export default function CalendarEventModal({ reservation, open, onClose }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const MotionDiv = motion.div;
+  const mouseDownTarget = useRef(null);
+
+  const handleBackdropMouseDown = (event) => {
+    mouseDownTarget.current = event.target;
+  };
+
+  const handleBackdropClick = (event) => {
+    if (mouseDownTarget.current === event.currentTarget) {
+      onClose?.();
+    }
+  };
 
   if (!reservation) return null;
 
@@ -74,7 +86,8 @@ export default function CalendarEventModal({ reservation, open, onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onMouseDown={handleBackdropMouseDown}
+            onClick={handleBackdropClick}
           />
 
           {/* Modal */}

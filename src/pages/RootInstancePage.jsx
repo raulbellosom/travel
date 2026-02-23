@@ -10,6 +10,7 @@ import {
   Users,
   Home,
   Calendar,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useInstanceModules } from "../hooks/useInstanceModules";
@@ -107,7 +108,7 @@ const RootInstancePage = () => {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Plan
+                  {t("rootInstancePage.info.plan", { defaultValue: "Plan" })}
                 </span>
                 <Badge
                   variant={getPlanBadgeVariant(settings.planKey)}
@@ -119,24 +120,32 @@ const RootInstancePage = () => {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Estado
+                  {t("rootInstancePage.info.status", {
+                    defaultValue: "Estado",
+                  })}
                 </span>
                 {isEnabled ? (
                   <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
                     <CheckCircle2 size={14} />
-                    Activa
+                    {t("rootInstancePage.info.statusActive", {
+                      defaultValue: "Activa",
+                    })}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400">
                     <XCircle size={14} />
-                    Inactiva
+                    {t("rootInstancePage.info.statusInactive", {
+                      defaultValue: "Inactiva",
+                    })}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Módulos activos
+                  {t("rootInstancePage.info.activeModules", {
+                    defaultValue: "Módulos activos",
+                  })}
                 </span>
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {enabledModulesCount}
@@ -162,7 +171,9 @@ const RootInstancePage = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Recursos publicados
+                    {t("rootInstancePage.limits.resources", {
+                      defaultValue: "Recursos publicados",
+                    })}
                   </p>
                   <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {settings.limits?.maxPublishedResources ?? 0}
@@ -179,7 +190,9 @@ const RootInstancePage = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Usuarios staff
+                    {t("rootInstancePage.limits.staff", {
+                      defaultValue: "Usuarios staff",
+                    })}
                   </p>
                   <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {settings.limits?.maxStaffUsers ?? 0}
@@ -196,7 +209,9 @@ const RootInstancePage = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Reservas/mes
+                    {t("rootInstancePage.limits.reservations", {
+                      defaultValue: "Reservas/mes",
+                    })}
                   </p>
                   <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {settings.limits?.maxActiveReservationsPerMonth ?? 0}
@@ -224,7 +239,10 @@ const RootInstancePage = () => {
                 ))}
                 {enabledModulesCount > 8 && (
                   <Badge variant="default" size="sm">
-                    +{enabledModulesCount - 8} más
+                    {t("rootInstancePage.modules.more", {
+                      count: enabledModulesCount - 8,
+                      defaultValue: "+{{count}} más",
+                    })}
                   </Badge>
                 )}
               </div>
@@ -236,6 +254,29 @@ const RootInstancePage = () => {
               </p>
             )}
           </article>
+        </div>
+      )}
+
+      {/* Backend enforcement note */}
+      {!loading && (
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+          <ShieldCheck
+            size={18}
+            className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+          />
+          <div className="text-xs text-emerald-800 dark:text-emerald-200">
+            <p className="font-semibold">
+              {t("rootInstancePage.note.title", {
+                defaultValue: "Backend enforcement",
+              })}
+            </p>
+            <p className="mt-1">
+              {t("rootInstancePage.note.body", {
+                defaultValue:
+                  "create-lead: module.resources + module.leads + module.messaging.realtime. create-reservation-public: module.resources + module.booking.* + module.payments.online. create-payment-session: module.resources + module.booking.* + module.payments.online.",
+              })}
+            </p>
+          </div>
         </div>
       )}
 

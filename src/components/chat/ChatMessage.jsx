@@ -15,11 +15,16 @@ const getMessageStatus = (message, isOwn) => {
   if (!isOwn) return null;
 
   if (message.status === "failed") return "failed";
-  if (message.status === "sending" || String(message.$id || "").startsWith("temp-")) {
+  if (
+    message.status === "sending" ||
+    String(message.$id || "").startsWith("temp-")
+  ) {
     return "sending";
   }
+  // readByRecipient is a DB field — takes priority over frontend status
   if (message.readByRecipient) return "read";
-  if (message.status === "sent") return "sent";
+  // Any confirmed (real $id, not still sending) message = delivered (2 muted ticks).
+  // "sent" (1 tick) only shows during the optimistic/sending phase above.
   return "delivered";
 };
 
@@ -40,21 +45,21 @@ const MessageStatus = ({ status }) => {
     case "sent":
       return (
         <Check
-          className="ml-1 inline-block h-3 w-3 text-cyan-200"
+          className="ml-1 inline-block h-3 w-3 text-white/40"
           aria-label="Enviado"
         />
       );
     case "delivered":
       return (
         <CheckCheck
-          className="ml-1 inline-block h-3 w-3 text-cyan-200/90"
+          className="ml-1 inline-block h-3 w-3 text-white/40"
           aria-label="Entregado"
         />
       );
     case "read":
       return (
         <CheckCheck
-          className="ml-1 inline-block h-3 w-3 text-emerald-200"
+          className="ml-1 inline-block h-3 w-3 text-white"
           aria-label="Visto"
         />
       );

@@ -43,7 +43,8 @@ export const ChatProvider = ({ children }) => {
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [internalChatUsers, setInternalChatUsers] = useState([]);
-  const [loadingInternalChatUsers, setLoadingInternalChatUsers] = useState(false);
+  const [loadingInternalChatUsers, setLoadingInternalChatUsers] =
+    useState(false);
   const [peerActivityByUserId, setPeerActivityByUserId] = useState({});
   const [isRestoringConversation, setIsRestoringConversation] = useState(() =>
     Boolean(localStorage.getItem("activeConversationId")),
@@ -100,8 +101,7 @@ export const ChatProvider = ({ children }) => {
     if (!isAuthenticated) return 0;
     return conversations.reduce(
       (acc, conversation) =>
-        acc +
-        getConversationUnreadCount(conversation, user?.$id, chatRole),
+        acc + getConversationUnreadCount(conversation, user?.$id, chatRole),
       0,
     );
   }, [conversations, chatRole, isAuthenticated, user?.$id]);
@@ -224,33 +224,42 @@ export const ChatProvider = ({ children }) => {
     }
   }, [isInternal, user?.$id]);
 
-  const updateConversationStatus = useCallback(async (conversationId, nextStatus) => {
-    const normalizedConversationId = String(conversationId || "").trim();
-    const normalizedStatus = String(nextStatus || "").trim().toLowerCase();
-    const allowedStatuses = new Set(["active", "archived", "closed"]);
+  const updateConversationStatus = useCallback(
+    async (conversationId, nextStatus) => {
+      const normalizedConversationId = String(conversationId || "").trim();
+      const normalizedStatus = String(nextStatus || "")
+        .trim()
+        .toLowerCase();
+      const allowedStatuses = new Set(["active", "archived", "closed"]);
 
-    if (!normalizedConversationId) {
-      throw new Error("Invalid conversation id.");
-    }
-    if (!allowedStatuses.has(normalizedStatus)) {
-      throw new Error("Invalid conversation status.");
-    }
+      if (!normalizedConversationId) {
+        throw new Error("Invalid conversation id.");
+      }
+      if (!allowedStatuses.has(normalizedStatus)) {
+        throw new Error("Invalid conversation status.");
+      }
 
-    const updatedConversation = await chatService.updateConversation(
-      normalizedConversationId,
-      { status: normalizedStatus },
-    );
+      const updatedConversation = await chatService.updateConversation(
+        normalizedConversationId,
+        { status: normalizedStatus },
+      );
 
-    setConversations((prev) =>
-      prev.map((conversation) =>
-        conversation.$id === normalizedConversationId
-          ? { ...conversation, ...updatedConversation, status: normalizedStatus }
-          : conversation,
-      ),
-    );
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          conversation.$id === normalizedConversationId
+            ? {
+                ...conversation,
+                ...updatedConversation,
+                status: normalizedStatus,
+              }
+            : conversation,
+        ),
+      );
 
-    return updatedConversation;
-  }, []);
+      return updatedConversation;
+    },
+    [],
+  );
 
   /* ── Load messages for active conversation ───────────── */
 
@@ -314,9 +323,7 @@ export const ChatProvider = ({ children }) => {
         );
         setMessages((prev) =>
           prev.map((m) =>
-            m.senderUserId === user?.$id
-              ? m
-              : { ...m, readByRecipient: true },
+            m.senderUserId === user?.$id ? m : { ...m, readByRecipient: true },
           ),
         );
       } catch {
@@ -332,11 +339,7 @@ export const ChatProvider = ({ children }) => {
      but don't create new ones from the public property page. */
 
   const startConversation = useCallback(
-    async ({
-      resourceId,
-      resourceTitle,
-      initialMessage,
-    }) => {
+    async ({ resourceId, resourceTitle, initialMessage }) => {
       if (!user?.$id) return null;
 
       // Guard: only verified clients can initiate
@@ -365,7 +368,8 @@ export const ChatProvider = ({ children }) => {
       }
 
       await loadConversations();
-      const conversation = await chatService.getConversationById(conversationId);
+      const conversation =
+        await chatService.getConversationById(conversationId);
 
       // Add to local list if new
       setConversations((prev) => {
@@ -401,8 +405,12 @@ export const ChatProvider = ({ children }) => {
           ...prev.filter((item) => item.$id !== conversation.$id),
         ];
         return next.sort((a, b) => {
-          const aTime = new Date(a?.lastMessageAt || a?.$updatedAt || 0).getTime();
-          const bTime = new Date(b?.lastMessageAt || b?.$updatedAt || 0).getTime();
+          const aTime = new Date(
+            a?.lastMessageAt || a?.$updatedAt || 0,
+          ).getTime();
+          const bTime = new Date(
+            b?.lastMessageAt || b?.$updatedAt || 0,
+          ).getTime();
           return bTime - aTime;
         });
       });
@@ -429,7 +437,11 @@ export const ChatProvider = ({ children }) => {
       }
 
       const trimmedBody = body.trim();
-      const senderSide = getConversationSide(activeConversation, user.$id, chatRole);
+      const senderSide = getConversationSide(
+        activeConversation,
+        user.$id,
+        chatRole,
+      );
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       // Optimistic update: add message immediately with "sending" status
@@ -456,10 +468,11 @@ export const ChatProvider = ({ children }) => {
           body: trimmedBody,
         });
 
-        // Replace optimistic message with real one (real-time also handles this but may be slow)
+        // Replace optimistic message with real one (real-time also handles this but may be slow).
+        // Server-confirmed = "delivered" (2 muted ticks); skip the 1-tick "sent" state.
         setMessages((prev) =>
           prev.map((m) =>
-            m.$id === tempId ? { ...message, status: "sent" } : m,
+            m.$id === tempId ? { ...message, status: "delivered" } : m,
           ),
         );
       } catch (error) {
@@ -561,16 +574,25 @@ export const ChatProvider = ({ children }) => {
               const nextOwnerUnread = Number(next.ownerUnread || 0);
               const currentUserId = normalizeId(user?.$id);
 
-              if (currentUserId && normalizeId(c.clientUserId) === currentUserId) {
+              if (
+                currentUserId &&
+                normalizeId(c.clientUserId) === currentUserId
+              ) {
                 if (nextClientUnread > prevClientUnread) {
-                  markPeerActive(c.ownerUserId, next.lastMessageAt || next.$updatedAt);
+                  markPeerActive(
+                    c.ownerUserId,
+                    next.lastMessageAt || next.$updatedAt,
+                  );
                 }
               } else if (
                 currentUserId &&
                 normalizeId(c.ownerUserId) === currentUserId
               ) {
                 if (nextOwnerUnread > prevOwnerUnread) {
-                  markPeerActive(c.clientUserId, next.lastMessageAt || next.$updatedAt);
+                  markPeerActive(
+                    c.clientUserId,
+                    next.lastMessageAt || next.$updatedAt,
+                  );
                 }
               }
 
@@ -626,10 +648,8 @@ export const ChatProvider = ({ children }) => {
 
               if (doc.senderUserId === user.$id && doc.readByRecipient) {
                 merged.status = "read";
-              } else if (
-                doc.senderUserId === user.$id &&
-                current.status === "sent"
-              ) {
+              } else if (doc.senderUserId === user.$id) {
+                // Already confirmed, ensure it shows as delivered (2 muted ticks)
                 merged.status = "delivered";
               }
 
@@ -701,9 +721,8 @@ export const ChatProvider = ({ children }) => {
 
               if (doc.senderUserId === user.$id && doc.readByRecipient) {
                 merged.status = "read";
-              } else if (doc.senderUserId === user.$id && m.status === "sent") {
-                merged.status = "delivered";
               }
+              // No else-if: keep current "delivered" status if readByRecipient is still false
 
               return merged;
             }),
@@ -718,7 +737,13 @@ export const ChatProvider = ({ children }) => {
         unsubMessagesRef.current = null;
       }
     };
-  }, [activeConversationId, isAuthenticated, user?.$id, chatRole, markPeerActive]);
+  }, [
+    activeConversationId,
+    isAuthenticated,
+    user?.$id,
+    chatRole,
+    markPeerActive,
+  ]);
 
   /* ── Context value ───────────────────────────────────── */
 

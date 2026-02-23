@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
-import { INTERNAL_ROUTES } from "../utils/internalRoutes";
+import { getInternalPropertyDetailRoute } from "../utils/internalRoutes";
 import { useToast } from "../hooks/useToast";
 import { X } from "lucide-react";
 
@@ -109,7 +109,7 @@ const CreateProperty = () => {
           "Publicacion creada correctamente.",
         ),
       });
-      navigate(INTERNAL_ROUTES.myProperties, { replace: true });
+      navigate(getInternalPropertyDetailRoute(created.$id), { replace: true });
     } catch (err) {
       const message = getErrorMessage(err, t("createPropertyPage.errors.create"));
       setError(message);

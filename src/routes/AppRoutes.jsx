@@ -77,7 +77,6 @@ const RootFunctionsDiagnostics = lazy(
   () => import("../pages/RootFunctionsDiagnostics"),
 );
 const RootInstancePage = lazy(() => import("../pages/RootInstancePage"));
-const RootModulesPage = lazy(() => import("../pages/RootModulesPage"));
 const ChatBubble = lazy(() => import("../components/chat/ChatBubble"));
 
 const LegacyEditPropertyRedirect = () => {
@@ -123,535 +122,588 @@ const AppRoutes = () => {
           <ToastProvider>
             <ChatProvider>
               <Suspense fallback={<RoutesFallback />}>
-              {env.features.marketingSite ? (
-                <Routes>
-                  {/* Marketing Mode: Only Landing + Redirects */}
-                  <Route path="/" element={<MarketingEntryRoute />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              ) : (
-                <Routes>
-                {/* Client Mode: Full Application */}
-                <Route element={<MainLayout />}>
-                  {!env.features.marketingSite && (
-                    <Route index element={<Home />} />
-                  )}
-                  <Route path="buscar" element={<SearchPage />} />
-                  <Route path="search" element={<SearchPage />} />
-                  <Route path="explorar-mapa" element={<MapExplorePage />} />
-                  <Route path="map-explore" element={<MapExplorePage />} />
-                  <Route
-                    path="propiedades/:slug"
-                    element={<PropertyDetail />}
-                  />
-                  <Route path="properties/:slug" element={<PropertyDetail />} />
-                  <Route path="resources/:slug" element={<PropertyDetail />} />
-                  <Route path="reservar/:slug" element={<ReserveProperty />} />
-                  <Route path="reserve/:slug" element={<ReserveProperty />} />
-                  <Route path="voucher/:code" element={<VoucherLookup />} />
-                  <Route
-                    path="perfil"
-                    element={
-                      <ClientRoute>
-                        <Profile mode="client" />
-                      </ClientRoute>
-                    }
-                  />
-                  <Route
-                    path="profile"
-                    element={
-                      <ClientRoute>
-                        <Profile mode="client" />
-                      </ClientRoute>
-                    }
-                  />
-                  <Route
-                    path="mis-reservas"
-                    element={
-                      <ProtectedRoute>
-                        <MyReservations />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="my-reservations"
-                    element={
-                      <ProtectedRoute>
-                        <MyReservations />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="mis-resenas"
-                    element={
-                      <ProtectedRoute>
-                        <MyReviews />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="my-reviews"
-                    element={
-                      <ProtectedRoute>
-                        <MyReviews />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="mis-conversaciones"
-                    element={
-                      <ProtectedRoute>
-                        <MyConversations />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="my-conversations"
-                    element={
-                      <ProtectedRoute>
-                        <MyConversations />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="mis-favoritos"
-                    element={
-                      <ProtectedRoute>
-                        <MyFavorites />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="my-favorites"
-                    element={
-                      <ProtectedRoute>
-                        <MyFavorites />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="aviso-privacidad" element={<PrivacyNotice />} />
-                  <Route path="privacy-notice" element={<PrivacyNotice />} />
-                  <Route
-                    path="terminos-condiciones"
-                    element={<TermsConditions />}
-                  />
-                  <Route
-                    path="terms-conditions"
-                    element={<TermsConditions />}
-                  />
-                  <Route path="ui-docs" element={<UIDocsPage />} />
-                  <Route path="errors-demo" element={<ErrorsDemo />} />
-                </Route>
+                {env.features.marketingSite ? (
+                  <Routes>
+                    {/* Marketing Mode: Only Landing + Redirects */}
+                    <Route path="/" element={<MarketingEntryRoute />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                ) : (
+                  <Routes>
+                    {/* Client Mode: Full Application */}
+                    <Route element={<MainLayout />}>
+                      {!env.features.marketingSite && (
+                        <Route index element={<Home />} />
+                      )}
+                      <Route path="buscar" element={<SearchPage />} />
+                      <Route path="search" element={<SearchPage />} />
+                      <Route
+                        path="explorar-mapa"
+                        element={<MapExplorePage />}
+                      />
+                      <Route path="map-explore" element={<MapExplorePage />} />
+                      <Route
+                        path="propiedades/:slug"
+                        element={<PropertyDetail />}
+                      />
+                      <Route
+                        path="properties/:slug"
+                        element={<PropertyDetail />}
+                      />
+                      <Route
+                        path="resources/:slug"
+                        element={<PropertyDetail />}
+                      />
+                      <Route
+                        path="reservar/:slug"
+                        element={<ReserveProperty />}
+                      />
+                      <Route
+                        path="reserve/:slug"
+                        element={<ReserveProperty />}
+                      />
+                      <Route path="voucher/:code" element={<VoucherLookup />} />
+                      <Route
+                        path="perfil"
+                        element={
+                          <ClientRoute>
+                            <Profile mode="client" />
+                          </ClientRoute>
+                        }
+                      />
+                      <Route
+                        path="profile"
+                        element={
+                          <ClientRoute>
+                            <Profile mode="client" />
+                          </ClientRoute>
+                        }
+                      />
+                      <Route
+                        path="mis-reservas"
+                        element={
+                          <ProtectedRoute>
+                            <MyReservations />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-reservations"
+                        element={
+                          <ProtectedRoute>
+                            <MyReservations />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="mis-resenas"
+                        element={
+                          <ProtectedRoute>
+                            <MyReviews />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-reviews"
+                        element={
+                          <ProtectedRoute>
+                            <MyReviews />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="mis-conversaciones"
+                        element={
+                          <ProtectedRoute>
+                            <MyConversations />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-conversations"
+                        element={
+                          <ProtectedRoute>
+                            <MyConversations />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="mis-favoritos"
+                        element={
+                          <ProtectedRoute>
+                            <MyFavorites />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="my-favorites"
+                        element={
+                          <ProtectedRoute>
+                            <MyFavorites />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="aviso-privacidad"
+                        element={<PrivacyNotice />}
+                      />
+                      <Route
+                        path="privacy-notice"
+                        element={<PrivacyNotice />}
+                      />
+                      <Route
+                        path="terminos-condiciones"
+                        element={<TermsConditions />}
+                      />
+                      <Route
+                        path="terms-conditions"
+                        element={<TermsConditions />}
+                      />
+                      <Route path="ui-docs" element={<UIDocsPage />} />
+                      <Route path="errors-demo" element={<ErrorsDemo />} />
+                    </Route>
 
-                {/* Public Routes */}
-                <Route element={<AuthLayout />}>
-                  <Route
-                    path="login"
-                    element={
-                      <PublicOnlyRoute>
-                        <Login />
-                      </PublicOnlyRoute>
-                    }
-                  />
-                  <Route
-                    path="register"
-                    element={
-                      <PublicOnlyRoute>
-                        <Register />
-                      </PublicOnlyRoute>
-                    }
-                  />
-                  <Route
-                    path="recuperar-password"
-                    element={<ForgotPassword />}
-                  />
-                  <Route path="reset-password" element={<ResetPassword />} />
-                  <Route path="verify-email" element={<VerifyEmail />} />
-                </Route>
+                    {/* Public Routes */}
+                    <Route element={<AuthLayout />}>
+                      <Route
+                        path="login"
+                        element={
+                          <PublicOnlyRoute>
+                            <Login />
+                          </PublicOnlyRoute>
+                        }
+                      />
+                      <Route
+                        path="register"
+                        element={
+                          <PublicOnlyRoute>
+                            <Register />
+                          </PublicOnlyRoute>
+                        }
+                      />
+                      <Route
+                        path="recuperar-password"
+                        element={<ForgotPassword />}
+                      />
+                      <Route
+                        path="reset-password"
+                        element={<ResetPassword />}
+                      />
+                      <Route path="verify-email" element={<VerifyEmail />} />
+                    </Route>
 
-                <Route
-                  path={INTERNAL_BASE_PATH}
-                  element={
-                    <InternalRoute>
-                      <DashboardLayout />
-                    </InternalRoute>
-                  }
-                >
-                  <Route
-                    index
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.dashboard} replace />
-                    }
-                  />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route
-                    path="my-resources"
-                    element={
-                      <ScopeRoute scope="resources.read">
-                        <MyProperties />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="resources/new"
-                    element={
-                      <ScopeRoute scope="resources.write">
-                        <CreateProperty />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="resources/:id/edit"
-                    element={
-                      <ScopeRoute scope="resources.write">
-                        <EditProperty />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="resources/:id"
-                    element={
-                      <ScopeRoute scope="resources.read">
-                        <AppPropertyDetail />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="leads"
-                    element={
-                      <ScopeRoute scope="leads.read">
-                        <Leads />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="conversations"
-                    element={
-                      <ScopeRoute scope="messaging.read">
-                        <Conversations />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="reservations"
-                    element={
-                      <ScopeRoute scope="reservations.read">
-                        <AppReservations />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="calendar"
-                    element={
-                      <ScopeRoute scope="reservations.read">
-                        <AppCalendar />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="payments"
-                    element={
-                      <ScopeRoute scope="payments.read">
-                        <AppPayments />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="reviews"
-                    element={
-                      <ScopeRoute scope="reviews.moderate">
-                        <AppReviews />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="clients"
-                    element={
-                      <OwnerRoute>
-                        <Clients />
-                      </OwnerRoute>
-                    }
-                  />
-                  <Route
-                    path="team"
-                    element={
-                      <ScopeRoute scope="staff.manage">
-                        <Team />
-                      </ScopeRoute>
-                    }
-                  />
-                  <Route
-                    path="activity"
-                    element={
-                      <RootRoute>
-                        <RootActivityLog />
-                      </RootRoute>
-                    }
-                  />
-                  <Route
-                    path="amenities"
-                    element={
-                      <RootRoute>
-                        <RootAmenitiesPanel />
-                      </RootRoute>
-                    }
-                  />
-                  <Route
-                    path="functions-health"
-                    element={
-                      <RootRoute>
-                        <RootFunctionsDiagnostics />
-                      </RootRoute>
-                    }
-                  />
-                  <Route
-                    path="root/instance"
-                    element={
-                      <RootRoute>
-                        <RootInstancePage />
-                      </RootRoute>
-                    }
-                  />
-                  <Route
-                    path="root/modules"
-                    element={
-                      <RootRoute>
-                        <RootModulesPage />
-                      </RootRoute>
-                    }
-                  />
-                  <Route path="profile" element={<AppProfile />} />
-                  <Route
-                    path="my-properties"
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.myProperties} replace />
-                    }
-                  />
-                  <Route
-                    path="mis-propiedades"
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.myProperties} replace />
-                    }
-                  />
-                  <Route
-                    path="mis-recursos"
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.myProperties} replace />
-                    }
-                  />
-                  <Route
-                    path="properties/new"
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.createProperty} replace />
-                    }
-                  />
-                  <Route
-                    path="crear-recurso"
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.createProperty} replace />
-                    }
-                  />
-                  <Route
-                    path="properties/:id"
-                    element={<LegacyPropertyDetailRedirect />}
-                  />
-                  <Route
-                    path="propiedades/:id"
-                    element={<LegacyPropertyDetailRedirect />}
-                  />
-                  <Route
-                    path="crear-propiedad"
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.createProperty} replace />
-                    }
-                  />
-                  <Route
-                    path="properties/:id/edit"
-                    element={<LegacyEditPropertyRedirect />}
-                  />
-                  <Route
-                    path="editar-propiedad/:id"
-                    element={<LegacyEditPropertyRedirect />}
-                  />
-                  <Route
-                    path="editar-recurso/:id"
-                    element={<LegacyEditPropertyRedirect />}
-                  />
-                  <Route
-                    path="reservas"
-                    element={
-                      <Navigate to={INTERNAL_ROUTES.reservations} replace />
-                    }
-                  />
-                  <Route
-                    path="pagos"
-                    element={<Navigate to={INTERNAL_ROUTES.payments} replace />}
-                  />
-                  <Route
-                    path="resenas"
-                    element={<Navigate to={INTERNAL_ROUTES.reviews} replace />}
-                  />
-                  <Route
-                    path="clientes"
-                    element={<Navigate to={INTERNAL_ROUTES.clients} replace />}
-                  />
-                  <Route
-                    path="equipo"
-                    element={<Navigate to={INTERNAL_ROUTES.team} replace />}
-                  />
-                  <Route
-                    path="perfil"
-                    element={<Navigate to={INTERNAL_ROUTES.profile} replace />}
-                  />
-                </Route>
+                    <Route
+                      path={INTERNAL_BASE_PATH}
+                      element={
+                        <InternalRoute>
+                          <DashboardLayout />
+                        </InternalRoute>
+                      }
+                    >
+                      <Route
+                        index
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.dashboard} replace />
+                        }
+                      />
+                      <Route path="dashboard" element={<Dashboard />} />
+                      <Route
+                        path="my-resources"
+                        element={
+                          <ScopeRoute scope="resources.read">
+                            <MyProperties />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="resources/new"
+                        element={
+                          <ScopeRoute scope="resources.write">
+                            <CreateProperty />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="resources/:id/edit"
+                        element={
+                          <ScopeRoute scope="resources.write">
+                            <EditProperty />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="resources/:id"
+                        element={
+                          <ScopeRoute scope="resources.read">
+                            <AppPropertyDetail />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="leads"
+                        element={
+                          <ScopeRoute scope="leads.read">
+                            <Leads />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="conversations"
+                        element={
+                          <ScopeRoute scope="messaging.read">
+                            <Conversations />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="reservations"
+                        element={
+                          <ScopeRoute scope="reservations.read">
+                            <AppReservations />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="calendar"
+                        element={
+                          <ScopeRoute scope="reservations.read">
+                            <AppCalendar />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="payments"
+                        element={
+                          <ScopeRoute scope="payments.read">
+                            <AppPayments />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="reviews"
+                        element={
+                          <ScopeRoute scope="reviews.moderate">
+                            <AppReviews />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="clients"
+                        element={
+                          <OwnerRoute>
+                            <Clients />
+                          </OwnerRoute>
+                        }
+                      />
+                      <Route
+                        path="team"
+                        element={
+                          <ScopeRoute scope="staff.manage">
+                            <Team />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="activity"
+                        element={
+                          <RootRoute>
+                            <RootActivityLog />
+                          </RootRoute>
+                        }
+                      />
+                      <Route
+                        path="amenities"
+                        element={
+                          <RootRoute>
+                            <RootAmenitiesPanel />
+                          </RootRoute>
+                        }
+                      />
+                      <Route
+                        path="functions-health"
+                        element={
+                          <RootRoute>
+                            <RootFunctionsDiagnostics />
+                          </RootRoute>
+                        }
+                      />
+                      <Route
+                        path="root/instance"
+                        element={
+                          <RootRoute>
+                            <RootInstancePage />
+                          </RootRoute>
+                        }
+                      />
+                      <Route
+                        path="root/modules"
+                        element={<Navigate to="/app/root/instance" replace />}
+                      />
+                      <Route path="profile" element={<AppProfile />} />
+                      <Route
+                        path="my-properties"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                        }
+                      />
+                      <Route
+                        path="mis-propiedades"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                        }
+                      />
+                      <Route
+                        path="mis-recursos"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                        }
+                      />
+                      <Route
+                        path="properties/new"
+                        element={
+                          <Navigate
+                            to={INTERNAL_ROUTES.createProperty}
+                            replace
+                          />
+                        }
+                      />
+                      <Route
+                        path="crear-recurso"
+                        element={
+                          <Navigate
+                            to={INTERNAL_ROUTES.createProperty}
+                            replace
+                          />
+                        }
+                      />
+                      <Route
+                        path="properties/:id"
+                        element={<LegacyPropertyDetailRedirect />}
+                      />
+                      <Route
+                        path="propiedades/:id"
+                        element={<LegacyPropertyDetailRedirect />}
+                      />
+                      <Route
+                        path="crear-propiedad"
+                        element={
+                          <Navigate
+                            to={INTERNAL_ROUTES.createProperty}
+                            replace
+                          />
+                        }
+                      />
+                      <Route
+                        path="properties/:id/edit"
+                        element={<LegacyEditPropertyRedirect />}
+                      />
+                      <Route
+                        path="editar-propiedad/:id"
+                        element={<LegacyEditPropertyRedirect />}
+                      />
+                      <Route
+                        path="editar-recurso/:id"
+                        element={<LegacyEditPropertyRedirect />}
+                      />
+                      <Route
+                        path="reservas"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.reservations} replace />
+                        }
+                      />
+                      <Route
+                        path="pagos"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.payments} replace />
+                        }
+                      />
+                      <Route
+                        path="resenas"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.reviews} replace />
+                        }
+                      />
+                      <Route
+                        path="clientes"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.clients} replace />
+                        }
+                      />
+                      <Route
+                        path="equipo"
+                        element={<Navigate to={INTERNAL_ROUTES.team} replace />}
+                      />
+                      <Route
+                        path="perfil"
+                        element={
+                          <Navigate to={INTERNAL_ROUTES.profile} replace />
+                        }
+                      />
+                    </Route>
 
-                <Route
-                  path="/dashboard"
-                  element={<Navigate to={INTERNAL_ROUTES.dashboard} replace />}
-                />
-                <Route
-                  path="/mis-propiedades"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.myProperties} replace />
-                  }
-                />
-                <Route
-                  path="/my-properties"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.myProperties} replace />
-                  }
-                />
-                <Route
-                  path="/mis-recursos"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.myProperties} replace />
-                  }
-                />
-                <Route
-                  path="/my-resources"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.myProperties} replace />
-                  }
-                />
-                <Route
-                  path="/properties/:id"
-                  element={<LegacyPropertyDetailRedirect />}
-                />
-                <Route
-                  path="/resources/:id"
-                  element={<LegacyPropertyDetailRedirect />}
-                />
-                <Route
-                  path="/crear-propiedad"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.createProperty} replace />
-                  }
-                />
-                <Route
-                  path="/crear-recurso"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.createProperty} replace />
-                  }
-                />
-                <Route
-                  path="/properties/new"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.createProperty} replace />
-                  }
-                />
-                <Route
-                  path="/resources/new"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.createProperty} replace />
-                  }
-                />
-                <Route
-                  path="/editar-propiedad/:id"
-                  element={<LegacyEditPropertyRedirect />}
-                />
-                <Route
-                  path="/editar-recurso/:id"
-                  element={<LegacyEditPropertyRedirect />}
-                />
-                <Route
-                  path="/properties/:id/edit"
-                  element={<LegacyEditPropertyRedirect />}
-                />
-                <Route
-                  path="/resources/:id/edit"
-                  element={<LegacyEditPropertyRedirect />}
-                />
-                <Route
-                  path="/leads"
-                  element={<Navigate to={INTERNAL_ROUTES.leads} replace />}
-                />
-                <Route
-                  path="/reservas"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.reservations} replace />
-                  }
-                />
-                <Route
-                  path="/reservations"
-                  element={
-                    <Navigate to={INTERNAL_ROUTES.reservations} replace />
-                  }
-                />
-                <Route
-                  path="/pagos"
-                  element={<Navigate to={INTERNAL_ROUTES.payments} replace />}
-                />
-                <Route
-                  path="/payments"
-                  element={<Navigate to={INTERNAL_ROUTES.payments} replace />}
-                />
-                <Route
-                  path="/resenas"
-                  element={<Navigate to={INTERNAL_ROUTES.reviews} replace />}
-                />
-                <Route
-                  path="/reviews"
-                  element={<Navigate to={INTERNAL_ROUTES.reviews} replace />}
-                />
-                <Route
-                  path="/clientes"
-                  element={<Navigate to={INTERNAL_ROUTES.clients} replace />}
-                />
-                <Route
-                  path="/clients"
-                  element={<Navigate to={INTERNAL_ROUTES.clients} replace />}
-                />
-                <Route
-                  path="/equipo"
-                  element={<Navigate to={INTERNAL_ROUTES.team} replace />}
-                />
-                <Route
-                  path="/team"
-                  element={<Navigate to={INTERNAL_ROUTES.team} replace />}
-                />
-                <Route
-                  path="/app/profile"
-                  element={<Navigate to={INTERNAL_ROUTES.profile} replace />}
-                />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.dashboard} replace />
+                      }
+                    />
+                    <Route
+                      path="/mis-propiedades"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                      }
+                    />
+                    <Route
+                      path="/my-properties"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                      }
+                    />
+                    <Route
+                      path="/mis-recursos"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                      }
+                    />
+                    <Route
+                      path="/my-resources"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.myProperties} replace />
+                      }
+                    />
+                    <Route
+                      path="/properties/:id"
+                      element={<LegacyPropertyDetailRedirect />}
+                    />
+                    <Route
+                      path="/resources/:id"
+                      element={<LegacyPropertyDetailRedirect />}
+                    />
+                    <Route
+                      path="/crear-propiedad"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                      }
+                    />
+                    <Route
+                      path="/crear-recurso"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                      }
+                    />
+                    <Route
+                      path="/properties/new"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                      }
+                    />
+                    <Route
+                      path="/resources/new"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.createProperty} replace />
+                      }
+                    />
+                    <Route
+                      path="/editar-propiedad/:id"
+                      element={<LegacyEditPropertyRedirect />}
+                    />
+                    <Route
+                      path="/editar-recurso/:id"
+                      element={<LegacyEditPropertyRedirect />}
+                    />
+                    <Route
+                      path="/properties/:id/edit"
+                      element={<LegacyEditPropertyRedirect />}
+                    />
+                    <Route
+                      path="/resources/:id/edit"
+                      element={<LegacyEditPropertyRedirect />}
+                    />
+                    <Route
+                      path="/leads"
+                      element={<Navigate to={INTERNAL_ROUTES.leads} replace />}
+                    />
+                    <Route
+                      path="/reservas"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.reservations} replace />
+                      }
+                    />
+                    <Route
+                      path="/reservations"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.reservations} replace />
+                      }
+                    />
+                    <Route
+                      path="/pagos"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.payments} replace />
+                      }
+                    />
+                    <Route
+                      path="/payments"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.payments} replace />
+                      }
+                    />
+                    <Route
+                      path="/resenas"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.reviews} replace />
+                      }
+                    />
+                    <Route
+                      path="/reviews"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.reviews} replace />
+                      }
+                    />
+                    <Route
+                      path="/clientes"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.clients} replace />
+                      }
+                    />
+                    <Route
+                      path="/clients"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.clients} replace />
+                      }
+                    />
+                    <Route
+                      path="/equipo"
+                      element={<Navigate to={INTERNAL_ROUTES.team} replace />}
+                    />
+                    <Route
+                      path="/team"
+                      element={<Navigate to={INTERNAL_ROUTES.team} replace />}
+                    />
+                    <Route
+                      path="/app/profile"
+                      element={
+                        <Navigate to={INTERNAL_ROUTES.profile} replace />
+                      }
+                    />
 
-                <Route
-                  path="/auth/login"
-                  element={<Navigate to="/login" replace />}
-                />
-                <Route
-                  path="/auth/register"
-                  element={<Navigate to="/register" replace />}
-                />
+                    <Route
+                      path="/auth/login"
+                      element={<Navigate to="/login" replace />}
+                    />
+                    <Route
+                      path="/auth/register"
+                      element={<Navigate to="/register" replace />}
+                    />
 
-                <Route path="/error/400" element={<BadRequest />} />
-                <Route path="/error/403" element={<Forbidden />} />
-                <Route path="/error/404" element={<NotFound />} />
-                <Route path="/error/500" element={<ServerError />} />
-                <Route path="/error/503" element={<ServiceUnavailable />} />
+                    <Route path="/error/400" element={<BadRequest />} />
+                    <Route path="/error/403" element={<Forbidden />} />
+                    <Route path="/error/404" element={<NotFound />} />
+                    <Route path="/error/500" element={<ServerError />} />
+                    <Route path="/error/503" element={<ServiceUnavailable />} />
 
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              )}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                )}
               </Suspense>
               <Suspense fallback={null}>
                 <ChatBubble />

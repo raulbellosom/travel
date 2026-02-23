@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Eye, X } from "lucide-react";
 import PropertyEditor from "../features/listings/components/editor/PropertyEditor";
@@ -17,7 +17,6 @@ const EditProperty = () => {
   const { t } = useTranslation();
   const { id } = useParams();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [initialValues, setInitialValues] = useState(null);
   const [amenities, setAmenities] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
@@ -126,7 +125,6 @@ const EditProperty = () => {
           "Cambios guardados correctamente.",
         ),
       });
-      navigate(INTERNAL_ROUTES.myProperties, { replace: true });
     } catch (err) {
       const message = getErrorMessage(err, t("editPropertyPage.errors.save"));
       setError(message);

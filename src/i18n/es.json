@@ -785,21 +785,21 @@
     }
   },
   "createPropertyPage": {
-    "title": "Crear propiedad",
+    "title": "Crear recurso",
     "subtitle": "Completa la informacion para guardar tu publicacion.",
-    "submit": "Guardar propiedad",
+    "submit": "Guardar recurso",
     "errors": {
-      "create": "No se pudo crear la propiedad."
+      "create": "No se pudo crear el recurso."
     }
   },
   "editPropertyPage": {
-    "title": "Editar propiedad",
-    "loading": "Cargando propiedad...",
+    "title": "Editar recurso",
+    "loading": "Cargando recurso...",
     "submit": "Guardar cambios",
     "errors": {
-      "load": "No se pudo cargar la propiedad.",
-      "save": "No se pudo guardar la propiedad.",
-      "notFound": "Propiedad no encontrada."
+      "load": "No se pudo cargar el recurso.",
+      "save": "No se pudo guardar el recurso.",
+      "notFound": "Recurso no encontrado."
     }
   },
   "settingsPage": {
@@ -1354,19 +1354,19 @@
     },
     "wizard": {
       "progress": "Paso {{current}} de {{total}}",
-      "hint": "Completa cada paso para crear una propiedad con validaciones en tiempo real.",
-      "title": "Crear propiedad",
+      "hint": "Completa cada paso para crear un recurso con validaciones en tiempo real.",
+      "title": "Crear recurso",
       "readyToSave": "¡Listo para guardar!",
       "saveDraft": "Guardar como borrador",
       "draftNotice": "Se guardará como borrador",
-      "draftNoticeBody": "Revisa la información antes de guardar. Podrás publicar tu propiedad después desde el panel de edición.",
+      "draftNoticeBody": "Revisa la información antes de guardar. Podrás publicar tu recurso después desde el panel de edición.",
       "steps": {
         "typeAndInfo": "Tipo e información",
         "typeAndInfoDesc": "Define tipo de recurso, modo comercial y datos base.",
         "location": "Ubicación",
-        "locationDesc": "Selecciona la ubicación y dirección de la propiedad.",
+        "locationDesc": "Selecciona la ubicación y dirección del recurso.",
         "features": "Características",
-        "featuresDesc": "Detalla las características físicas de la propiedad.",
+        "featuresDesc": "Detalla las características físicas del recurso.",
         "pricing": "Precio",
         "pricingDesc": "Establece el precio y condiciones económicas.",
         "amenities": "Amenidades",
@@ -1392,6 +1392,7 @@
         "shortTerm": "Configura reglas de estancia y operacion para reservas por fecha.",
         "hourly": "Configura ventanas y limites de reserva para ofertas por hora/evento."
       },
+      "cancelTitle": "Cancelar creación de recurso",
       "noSpecificCommercialConditions": "Este tipo de recurso no requiere condiciones comerciales adicionales."
     },
     "tabs": {
@@ -2546,5 +2547,91 @@
     "selectConversation": "Selecciona una conversación para ver los mensajes.",
     "empty": "Aún no tienes conversaciones",
     "emptyHint": "Inicia una conversación desde la página de cualquier propiedad."
+  },
+  "rootInstancePage": {
+    "title": "Configuración de Instancia",
+    "subtitle": "Resumen operativo de la instancia y configuración de módulos.",
+    "actions": {
+      "configure": "Configurar"
+    },
+    "info": {
+      "title": "Instancia",
+      "key": "Clave",
+      "plan": "Plan",
+      "status": "Estado",
+      "statusActive": "Activa",
+      "statusInactive": "Inactiva",
+      "activeModules": "Módulos activos"
+    },
+    "limits": {
+      "title": "Límites",
+      "resources": "Recursos publicados",
+      "staff": "Usuarios staff",
+      "reservations": "Reservas/mes"
+    },
+    "modules": {
+      "title": "Módulos activos",
+      "empty": "No hay módulos activos",
+      "more": "+{{count}} más"
+    },
+    "note": {
+      "title": "Backend Enforcement",
+      "body": "create-lead: module.resources + module.leads + module.messaging.realtime. create-reservation-public: module.resources + module.booking.* + module.payments.online. create-payment-session: module.resources + module.booking.* + module.payments.online."
+    }
+  },
+  "rootModulesPage": {
+    "title": "Módulos y Plan",
+    "subtitle": "Controla los módulos habilitados y los límites comerciales de la instancia.",
+    "plan": {
+      "title": "Plan",
+      "key": "Clave del plan",
+      "enabled": "Instancia habilitada"
+    },
+    "modules": {
+      "title": "Módulos habilitados"
+    },
+    "limits": {
+      "title": "Límites"
+    },
+    "actions": {
+      "save": "Guardar cambios",
+      "saving": "Guardando...",
+      "saved": "Configuración guardada correctamente."
+    },
+    "note": {
+      "title": "Backend enforcement requerido",
+      "body": "Los toggles de este panel deben estar reflejados en Functions con bloqueo 403 MODULE_DISABLED."
+    }
+  },
+  "modulesModal": {
+    "title": "Configurar Plan y Módulos",
+    "description": "Administra los módulos habilitados y límites de la instancia.",
+    "save": "Guardar cambios",
+    "saving": "Guardando...",
+    "plan": {
+      "title": "Plan",
+      "key": "Tipo de plan",
+      "enabled": "Instancia habilitada"
+    },
+    "modules": {
+      "title": "Módulos",
+      "enabled": "activos"
+    },
+    "categories": {
+      "core": "Core",
+      "booking": "Reservas y Pagos",
+      "extras": "Extras",
+      "other": "Otros"
+    },
+    "limits": {
+      "title": "Límites",
+      "maxResources": "Recursos publicados",
+      "maxStaff": "Usuarios staff",
+      "maxReservations": "Reservas/mes"
+    },
+    "note": {
+      "title": "Backend enforcement requerido",
+      "body": "Los toggles de este panel deben estar reflejados en Functions con bloqueo 403 MODULE_DISABLED."
+    }
   }
 }

@@ -3,8 +3,10 @@ import { client } from "../api/appwriteClient";
 import env from "../env";
 import { profileService } from "../services/profileService";
 
-const PROFILE_POLL_INTERVAL_MS = 30000;
-const PRESENCE_TICK_INTERVAL_MS = 15000;
+// Poll as a safety net in case real-time misses an update.
+// Matches the heartbeat interval so we always catch the latest lastSeenAt.
+const PROFILE_POLL_INTERVAL_MS = 20_000;
+const PRESENCE_TICK_INTERVAL_MS = 10_000;
 
 const normalizeId = (value) => String(value || "").trim();
 
@@ -19,9 +21,7 @@ export const useChatPresence = (userIds = []) => {
     () =>
       Array.from(
         new Set(
-          (userIds || [])
-            .map((userId) => normalizeId(userId))
-            .filter(Boolean),
+          (userIds || []).map((userId) => normalizeId(userId)).filter(Boolean),
         ),
       ).join("|"),
     [userIds],

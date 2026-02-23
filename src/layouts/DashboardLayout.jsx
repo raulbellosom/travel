@@ -78,7 +78,7 @@ const DashboardLayout = () => {
 
   return (
     <div
-      className="relative min-h-dvh overflow-x-hidden bg-slate-100 dark:bg-slate-950"
+      className="relative min-h-dvh overflow-x-clip bg-slate-100 dark:bg-slate-950"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

@@ -2,7 +2,9 @@
  * Utility functions for user online presence
  */
 
-const ONLINE_WINDOW_SECONDS = 75;
+// Must be at least 2× the heartbeat interval in usePresence (15 s) so a
+// temporary delay never causes a false-offline flicker.
+const ONLINE_WINDOW_SECONDS = 90;
 
 const parseDate = (value) => {
   const parsed = new Date(value);
