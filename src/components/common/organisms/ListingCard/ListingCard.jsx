@@ -1,40 +1,42 @@
 ﻿import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
 import Button from "../../atoms/Button";
 import PriceBadge from "../../molecules/PriceBadge";
-import PropertyImagePlaceholder from "../../atoms/PropertyImagePlaceholder";
+import ProgressiveImage from "../../atoms/ProgressiveImage";
 
 const ListingCard = ({ listing, onCardClick, className = "", ...props }) => {
   const { t } = useTranslation();
-  const [imageError, setImageError] = useState(false);
 
   const handleCardClick = () => {
     onCardClick?.(listing);
   };
 
-  const hasImage = listing?.images?.[0] && !imageError;
+  // Prefer fileId so ProgressiveImage can generate optimised preview URLs.
+  // Fall back to a pre-built URL when only that is available.
+  const fileId =
+    listing?.galleryImageIds?.[0] || listing?.mainImageFileId || null;
+  const fallbackSrc =
+    listing?.images?.[0] ||
+    listing?.thumbnailUrl ||
+    listing?.mainImageUrl ||
+    listing?.coverImageUrl ||
+    "";
 
   return (
     <article
       className={`overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 ${className}`}
       {...props}
     >
-      <div className="h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
-        {hasImage ? (
-          <img
-            src={listing.images[0]}
-            alt={listing.title || t("listingCard.fallbackTitle")}
-            className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <PropertyImagePlaceholder
-            propertyType={listing?.propertyType || listing?.type}
-            iconSize={40}
-          />
-        )}
-      </div>
+      {/* aspect-ratio reserves layout space before any image byte arrives → no CLS */}
+      <ProgressiveImage
+        fileId={fileId}
+        src={fallbackSrc}
+        preset="card"
+        aspectRatio="16/9"
+        alt={listing?.title || t("listingCard.fallbackTitle")}
+        propertyType={listing?.propertyType || listing?.type}
+        className="w-full transition-transform duration-300 hover:scale-105"
+      />
       <div className="space-y-3 p-4">
         <h3 className="line-clamp-2 text-base font-semibold text-slate-900 dark:text-slate-100">
           {listing?.title || t("listingCard.fallbackTitle")}

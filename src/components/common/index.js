@@ -1,5 +1,6 @@
 // === ATOMS ===
 export { default as Button } from "./atoms/Button";
+export { default as ProgressiveImage } from "./atoms/ProgressiveImage";
 export { default as TextInput } from "./atoms/TextInput";
 export { default as TextInputWithCharCounter } from "./atoms/TextInputWithCharCounter";
 export { default as NumberInput } from "./atoms/NumberInput";

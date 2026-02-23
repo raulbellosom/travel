@@ -1,4 +1,5 @@
 export { default as Button } from "./Button";
+export { default as ProgressiveImage } from "./ProgressiveImage";
 export { default as TextInput } from "./TextInput";
 export { default as TextInputWithCharCounter } from "./TextInputWithCharCounter";
 export { default as NumberInput } from "./NumberInput";
