@@ -1,5 +1,9 @@
 import env from "../env";
-import { databases, ensureAppwriteConfigured, Query } from "../api/appwriteClient";
+import {
+  databases,
+  ensureAppwriteConfigured,
+  Query,
+} from "../api/appwriteClient";
 import { executeJsonFunction } from "../utils/functions";
 
 const MAX_LIMIT = 200;
@@ -20,6 +24,14 @@ export const reviewsService = {
     });
   },
 
+  /**
+   * Returns reviews for moderation.
+   * NOTE: The `reviews` collection has no `resourceOwnerUserId` field, so
+   * ownership filtering cannot be pushed to the DB layer. All reviews are
+   * returned regardless of who calls this. Access should be gated at the
+   * route level (`reviews.moderate` scope) and will feel global for any
+   * user that reaches this call.
+   */
   async listForModeration(_ownerUserId, { status = "" } = {}) {
     ensureAppwriteConfigured();
 

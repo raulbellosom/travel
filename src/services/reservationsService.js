@@ -1,5 +1,9 @@
 import env from "../env";
-import { databases, ensureAppwriteConfigured, Query } from "../api/appwriteClient";
+import {
+  databases,
+  ensureAppwriteConfigured,
+  Query,
+} from "../api/appwriteClient";
 import { executeJsonFunction } from "../utils/functions";
 
 const MAX_LIMIT = 200;
@@ -18,6 +22,17 @@ export const reservationsService = {
         Query.orderDesc("$createdAt"),
         Query.limit(MAX_LIMIT),
       ],
+    });
+  },
+
+  async getById(reservationId) {
+    ensureAppwriteConfigured();
+    const id = String(reservationId || "").trim();
+    if (!id) throw new Error("reservationId es requerido.");
+    return databases.getDocument({
+      databaseId: env.appwrite.databaseId,
+      collectionId: env.appwrite.collections.reservations,
+      documentId: id,
     });
   },
 
@@ -44,7 +59,8 @@ export const reservationsService = {
     ];
 
     if (status) queries.push(Query.equal("status", status));
-    if (paymentStatus) queries.push(Query.equal("paymentStatus", paymentStatus));
+    if (paymentStatus)
+      queries.push(Query.equal("paymentStatus", paymentStatus));
     if (resolvedOwnerUserId) {
       try {
         queries.push(Query.equal("resourceOwnerUserId", resolvedOwnerUserId));
@@ -69,7 +85,13 @@ export const reservationsService = {
 
   async updateStatus(
     reservationId,
-    { status, paymentStatus, externalRef, specialRequests, paymentProvider } = {},
+    {
+      status,
+      paymentStatus,
+      externalRef,
+      specialRequests,
+      paymentProvider,
+    } = {},
   ) {
     ensureAppwriteConfigured();
     const patch = {};
@@ -95,7 +117,9 @@ export const reservationsService = {
     ensureAppwriteConfigured();
     const functionId = env.appwrite.functions.createReservation;
     if (!functionId) {
-      throw new Error("No esta configurada APPWRITE_FUNCTION_CREATE_RESERVATION_ID.");
+      throw new Error(
+        "No esta configurada APPWRITE_FUNCTION_CREATE_RESERVATION_ID.",
+      );
     }
 
     const resolvedResourceId = String(
@@ -112,7 +136,9 @@ export const reservationsService = {
     ensureAppwriteConfigured();
     const functionId = env.appwrite.functions.createPaymentSession;
     if (!functionId) {
-      throw new Error("No esta configurada APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID.");
+      throw new Error(
+        "No esta configurada APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID.",
+      );
     }
 
     return executeJsonFunction(functionId, payload);

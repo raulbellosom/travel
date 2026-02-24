@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -184,7 +184,8 @@ const ReserveProperty = () => {
     if (!behavior.canOperateMode) {
       setError(
         t("reservePropertyPage.errors.moduleDisabled", {
-          defaultValue: "El modulo de reservaciones para este recurso no esta habilitado.",
+          defaultValue:
+            "El modulo de reservaciones para este recurso no esta habilitado.",
         }),
       );
       return;
@@ -193,7 +194,8 @@ const ReserveProperty = () => {
     if (behavior.requiresPayments && !behavior.canUsePayments) {
       setError(
         t("reservePropertyPage.errors.paymentsDisabled", {
-          defaultValue: "Los pagos en linea no estan habilitados para esta instancia.",
+          defaultValue:
+            "Los pagos en linea no estan habilitados para esta instancia.",
         }),
       );
       return;
@@ -262,7 +264,7 @@ const ReserveProperty = () => {
   if (loading) {
     return (
       <section className="mx-auto max-w-5xl px-4 py-8">
-        <LoadingState text={t("reservePropertyPage.loading")} />
+        <SkeletonLoader variant="detail" count={6} />
       </section>
     );
   }

@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -59,21 +59,79 @@ const parseRoleValue = (value) =>
   STAFF_ROLES.includes(String(value || "")) ? value : "all";
 
 const SCOPE_OPTIONS = [
+  // Staff management
   "staff.manage",
-  "resources.read",
-  "resources.write",
-  "leads.read",
-  "leads.write",
-  "reservations.read",
-  "reservations.write",
-  "payments.read",
-  "reviews.moderate",
+  // Resources
+  "resources.read", // view own resources
+  "resources.read.all", // view all resources
+  "resources.write", // edit own resources
+  // Leads
+  "leads.read", // view own leads
+  "leads.read.all", // view all leads
+  "leads.write", // manage own leads
+  "leads.write.all", // manage all leads
+  // Reservations
+  "reservations.read", // view own reservations
+  "reservations.read.all", // view all reservations
+  "reservations.write", // manage own reservations
+  "reservations.write.all", // manage all reservations
+  // Payments
+  "payments.read", // view own payments
+  "payments.read.all", // view all payments
+  // Reviews
+  "reviews.moderate", // moderate own reviews
+  "reviews.moderate.all", // moderate all reviews
+  // Messaging (no .all — always scoped to participant)
   "messaging.read",
   "messaging.write",
+  // Profile & Preferences (personal — no .all)
   "profile.read",
   "profile.write",
   "preferences.write",
 ];
+
+/**
+ * Default scopes suggested for each staff role.
+ * Mirrors ROLE_DEFAULT_SCOPES in utils/roles.js but lives locally so
+ * the UI can pre-check checkboxes when a role is selected.
+ * root / owner always get "*" — they never use this form.
+ */
+const ROLE_SCOPE_DEFAULTS = {
+  staff_manager: [
+    "resources.read",
+    "resources.write",
+    "leads.read",
+    "leads.write",
+    "reservations.read",
+    "reservations.write",
+    "payments.read",
+    "reviews.moderate",
+    "messaging.read",
+    "messaging.write",
+    "profile.read",
+    "profile.write",
+    "preferences.write",
+  ],
+  staff_editor: [
+    "resources.read",
+    "resources.write",
+    "reviews.moderate",
+    "profile.read",
+    "profile.write",
+    "preferences.write",
+  ],
+  staff_support: [
+    "leads.read",
+    "leads.write",
+    "reservations.read",
+    "reservations.write",
+    "messaging.read",
+    "messaging.write",
+    "profile.read",
+    "profile.write",
+    "preferences.write",
+  ],
+};
 
 const EMPTY_FORM = {
   firstName: "",
@@ -82,7 +140,7 @@ const EMPTY_FORM = {
   role: "staff_support",
   password: "",
   confirmPassword: "",
-  scopes: [],
+  scopes: [...(ROLE_SCOPE_DEFAULTS.staff_support ?? [])],
   avatarFile: null,
   avatarFileId: "",
   avatarPreviewUrl: "",
@@ -155,6 +213,8 @@ const Team = () => {
   const [success, setSuccess] = useState("");
   const rowActionMenuRef = useRef(null);
   const rowActionTriggerRefs = useRef({});
+  // prevents duplicate concurrent loadStaff calls (React StrictMode fires effects twice)
+  const staffLoadingRef = useRef(false);
   const isEditing = Boolean(editingUserId);
   const focusId = String(searchParams.get("focus") || "").trim();
 
@@ -238,18 +298,28 @@ const Team = () => {
     [isEnabled],
   );
 
-  const loadStaff = useCallback(async () => {
-    setLoadingList(true);
-    setError("");
-    try {
-      const documents = await staffService.listStaff();
-      setStaff((documents || []).filter(isTeamListableUser));
-    } catch (err) {
-      setError(getErrorMessage(err, t("teamPage.errors.load")));
-    } finally {
-      setLoadingList(false);
-    }
-  }, [t]);
+  const loadStaff = useCallback(
+    async ({ silent = false } = {}) => {
+      // Bail out if another load is already in flight — prevents the
+      // React StrictMode double-invoke from firing two concurrent requests
+      // where one can fail and override the successful result.
+      if (staffLoadingRef.current) return;
+      staffLoadingRef.current = true;
+      setLoadingList(true);
+      if (!silent) setError("");
+      try {
+        const documents = await staffService.listStaff();
+        setStaff((documents || []).filter(isTeamListableUser));
+        setError(""); // clear any previous error on success
+      } catch (err) {
+        setError(getErrorMessage(err, t("teamPage.errors.load")));
+      } finally {
+        setLoadingList(false);
+        staffLoadingRef.current = false;
+      }
+    },
+    [t],
+  );
 
   useEffect(() => {
     loadStaff();
@@ -414,13 +484,29 @@ const Team = () => {
 
   const openCreateModal = () => {
     resetForm();
+    // Pre-select default scopes for the initial role
+    setForm((prev) => ({
+      ...prev,
+      scopes: [...(ROLE_SCOPE_DEFAULTS[prev.role] ?? [])].filter((s) =>
+        availableScopeOptions.includes(s),
+      ),
+    }));
     setError("");
     setSuccess("");
     setIsFormModalOpen(true);
   };
 
   const onFormChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    if (field === "role") {
+      // When the role changes, reset scopes to the new role's defaults
+      // so the admin starts from a sensible baseline (they can still adjust).
+      const defaults = (ROLE_SCOPE_DEFAULTS[value] ?? []).filter((s) =>
+        availableScopeOptions.includes(s),
+      );
+      setForm((prev) => ({ ...prev, role: value, scopes: defaults }));
+    } else {
+      setForm((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const clearAvatarSelection = () => {
@@ -534,7 +620,7 @@ const Team = () => {
 
         setSuccess(t("teamPage.messages.updated"));
         closeFormModal();
-        await loadStaff();
+        await loadStaff({ silent: true });
         return;
       }
 
@@ -562,7 +648,7 @@ const Team = () => {
 
       setSuccess(t("teamPage.messages.created"));
       closeFormModal();
-      await loadStaff();
+      await loadStaff({ silent: true });
     } catch (err) {
       if (uploadedAvatarWasNew && resolvedAvatarFileId) {
         await profileService.deleteAvatar(resolvedAvatarFileId).catch(() => {});
@@ -619,7 +705,7 @@ const Team = () => {
           ? t("teamPage.messages.disabled")
           : t("teamPage.messages.enabled"),
       );
-      await loadStaff();
+      await loadStaff({ silent: true });
     } catch (err) {
       setError(getErrorMessage(err, t("teamPage.errors.toggle")));
     } finally {
@@ -695,7 +781,9 @@ const Team = () => {
     setSuccess("");
 
     try {
-      const effectiveScopes = sanitizeScopesForInstance(permissionsEditor.scopes);
+      const effectiveScopes = sanitizeScopesForInstance(
+        permissionsEditor.scopes,
+      );
       await staffService.updateStaff({
         userId: permissionsEditor.userId,
         role: permissionsEditor.role,
@@ -703,7 +791,7 @@ const Team = () => {
       });
       setSuccess(t("teamPage.messages.updated"));
       setPermissionsEditor(null);
-      await loadStaff();
+      await loadStaff({ silent: true });
     } catch (err) {
       setError(getErrorMessage(err, t("teamPage.errors.update")));
     } finally {
@@ -948,24 +1036,12 @@ const Team = () => {
             </label>
           </div>
         </div>
-
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
         {loadingList ? (
-          <div className="space-y-3 p-4 sm:p-5">
-            <p className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <Loader2 size={14} className="animate-spin" />
-              <LoadingState text={t("teamPage.loading")} />
-            </p>
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map((row) => (
-                <div
-                  key={`team-loading-row-${row}`}
-                  className="h-11 w-full animate-pulse rounded-lg bg-slate-200/80 dark:bg-slate-700/70"
-                />
-              ))}
-            </div>
+          <div className="p-4 sm:p-5">
+            <SkeletonLoader count={4} />
           </div>
         ) : null}
 
@@ -1644,20 +1720,36 @@ const Team = () => {
             </p>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {availableScopeOptions.map((scope) => (
-                <label
-                  key={scope}
-                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900 ${loadingCreate ? "cursor-not-allowed opacity-60" : ""}`}
-                >
-                  <input
-                    type="checkbox"
-                    disabled={loadingCreate}
-                    checked={form.scopes.includes(scope)}
-                    onChange={() => toggleScope(scope)}
-                  />
-                  <span>{getScopeLabel(scope, t)}</span>
-                </label>
-              ))}
+              {availableScopeOptions.map((scope) => {
+                const isDefault = (
+                  ROLE_SCOPE_DEFAULTS[form.role] ?? []
+                ).includes(scope);
+                return (
+                  <label
+                    key={scope}
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-xs transition ${
+                      isDefault
+                        ? "border-cyan-200 bg-cyan-50/60 dark:border-cyan-800/50 dark:bg-cyan-950/30"
+                        : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+                    } ${loadingCreate ? "cursor-not-allowed opacity-60" : ""}`}
+                  >
+                    <input
+                      type="checkbox"
+                      disabled={loadingCreate}
+                      checked={form.scopes.includes(scope)}
+                      onChange={() => toggleScope(scope)}
+                    />
+                    <span className="flex-1">{getScopeLabel(scope, t)}</span>
+                    {isDefault ? (
+                      <span className="shrink-0 rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-medium text-cyan-600 dark:bg-cyan-900/50 dark:text-cyan-400">
+                        {t("teamPage.scopeDefault", {
+                          defaultValue: "defecto",
+                        })}
+                      </span>
+                    ) : null}
+                  </label>
+                );
+              })}
             </div>
           </section>
         </form>

@@ -52,6 +52,15 @@ const Conversations = lazy(() => import("../pages/Conversations"));
 const Clients = lazy(() => import("../pages/Clients"));
 const Team = lazy(() => import("../pages/Team"));
 const AppReservations = lazy(() => import("../pages/AppReservations"));
+const ReservationsOverviewPage = lazy(
+  () => import("../features/reservations/pages/ReservationsOverviewPage"),
+);
+const ReservationNewPage = lazy(
+  () => import("../features/reservations/pages/ReservationNewPage"),
+);
+const ReservationDetailPage = lazy(
+  () => import("../features/reservations/pages/ReservationDetailPage"),
+);
 const AppCalendar = lazy(() => import("../pages/AppCalendar"));
 const AppPayments = lazy(() => import("../pages/AppPayments"));
 const AppReviews = lazy(() => import("../pages/AppReviews"));
@@ -379,11 +388,28 @@ const AppRoutes = () => {
                           </ScopeRoute>
                         }
                       />
+                      {/* ── Reservations ── */}
                       <Route
                         path="reservations"
                         element={
                           <ScopeRoute scope="reservations.read">
-                            <AppReservations />
+                            <ReservationsOverviewPage />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="reservations/new"
+                        element={
+                          <ScopeRoute scope="reservations.write">
+                            <ReservationNewPage />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="reservations/:id"
+                        element={
+                          <ScopeRoute scope="reservations.read">
+                            <ReservationDetailPage />
                           </ScopeRoute>
                         }
                       />

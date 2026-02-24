@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CreditCard, Filter, Search } from "lucide-react";
@@ -9,6 +9,7 @@ import { paymentsService } from "../services/paymentsService";
 import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import { formatMoneyWithDenomination } from "../utils/money";
+import { hasScope } from "../utils/roles";
 
 const PROVIDERS = ["stripe", "mercadopago"];
 const STATUSES = ["pending", "approved", "rejected", "refunded"];
@@ -43,14 +44,22 @@ const AppPayments = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await paymentsService.listForOwner(user.$id, filters);
+      const role = String(user?.role || "").toLowerCase();
+      const canViewAll =
+        role === "root" ||
+        role === "owner" ||
+        hasScope(user, "payments.read.all");
+      const response = await paymentsService.listForOwner(user.$id, {
+        ...filters,
+        ...(!canViewAll && { resourceOwnerUserId: user.$id }),
+      });
       setPayments(response.documents || []);
     } catch (err) {
       setError(getErrorMessage(err, i18n.t("appPaymentsPage.errors.load")));
     } finally {
       setLoading(false);
     }
-  }, [filters, user?.$id]);
+  }, [filters, user]);
 
   useEffect(() => {
     load();
@@ -191,7 +200,7 @@ const AppPayments = () => {
         </label>
       </div>
 
-      {loading ? <LoadingState text={t("appPaymentsPage.loading")} /> : null}
+      {loading ? <SkeletonLoader /> : null}
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
@@ -260,12 +269,15 @@ const AppPayments = () => {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {formatMoneyWithDenomination(Number(payment.amount || 0), {
-                          locale,
-                          currency: payment.currency || "MXN",
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {formatMoneyWithDenomination(
+                          Number(payment.amount || 0),
+                          {
+                            locale,
+                            currency: payment.currency || "MXN",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        )}
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-300">
                         {payment.providerPaymentId || "-"}

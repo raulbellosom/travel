@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -47,7 +47,6 @@ import Button from "../components/common/atoms/Button";
 import Select from "../components/common/atoms/Select";
 import LazyImage from "../components/common/atoms/LazyImage";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
-import LoadingSpinner from "../components/loaders/LoadingSpinner";
 import { DEFAULT_AMENITIES_CATALOG } from "../data/amenitiesCatalog";
 import {
   CATEGORY_BY_RESOURCE_TYPE,
@@ -1055,12 +1054,11 @@ const SearchPage = () => {
 
             {/* Results */}
             {loading ? (
-              <div className="flex min-h-[400px] items-center justify-center">
-                <LoadingSpinner
-                  size="lg"
-                  message=<LoadingState text={t("client:search.loadingResults")} />
-                />
-              </div>
+              <SkeletonLoader
+                variant="cards"
+                count={9}
+                className="min-h-[400px]"
+              />
             ) : error ? (
               <div className="flex flex-col items-center justify-center gap-6 rounded-3xl border border-dashed border-red-200 bg-red-50/50 py-20 text-center dark:border-red-900/30 dark:bg-red-900/10">
                 <h3 className="text-xl font-bold text-red-800 dark:text-red-400">

@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MessageSquareText, Star } from "lucide-react";
@@ -121,7 +121,7 @@ const MyReviews = () => {
         </article>
       </div>
 
-      {loading ? <LoadingState text={t("myReviewsPage.loading")} /> : null}
+      {loading ? <SkeletonLoader /> : null}
 
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">

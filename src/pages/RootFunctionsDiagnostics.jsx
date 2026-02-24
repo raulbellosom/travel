@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlaskConical, RefreshCw, ShieldCheck, Wrench } from "lucide-react";
@@ -198,7 +198,7 @@ const RootFunctionsDiagnostics = () => {
         </article>
       ) : null}
 
-      {loading ? <LoadingState text={t("rootFunctionsDiagnosticsPage.loading")} /> : null}
+      {loading ? <SkeletonLoader /> : null}
 
       {error ? (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200">

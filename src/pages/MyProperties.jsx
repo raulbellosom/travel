@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
@@ -8,7 +8,7 @@ import { useAuth } from "../hooks/useAuth";
 import { resourcesService } from "../services/resourcesService";
 import { staffService } from "../services/staffService";
 import { getErrorMessage } from "../utils/errors";
-import { hasRoleAtLeast } from "../utils/roles";
+import { hasRoleAtLeast, hasScope } from "../utils/roles";
 import { TablePagination } from "../components/common";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
@@ -239,8 +239,10 @@ const MyProperties = () => {
   const focusId = String(searchParams.get("focus") || "").trim();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const canViewAll = useMemo(
-    () => hasRoleAtLeast(user?.role, "owner"),
-    [user?.role],
+    () =>
+      hasRoleAtLeast(user?.role, "owner") ||
+      hasScope(user, "resources.read.all"),
+    [user],
   );
 
   // ─── Data loading ───────────────────────────────────────────
@@ -708,7 +710,7 @@ const MyProperties = () => {
       />
 
       {/* Loading */}
-      {loading ? <LoadingState text={t("myResourcesPage.loading")} /> : null}
+      {loading ? <SkeletonLoader variant="list" /> : null}
 
       {/* Error */}
       {error ? (

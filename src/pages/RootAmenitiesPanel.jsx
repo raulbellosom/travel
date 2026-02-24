@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -438,7 +438,7 @@ const RootAmenitiesPanel = () => {
           />
         </div>
 
-        {loading ? <LoadingState text={t("rootAmenitiesPage.loading")} /> : null}
+        {loading ? <SkeletonLoader /> : null}
 
         {!loading && filteredAmenities.length === 0 ? (
           <EmptyStatePanel
@@ -600,7 +600,7 @@ const RootAmenitiesPanel = () => {
         }
       >
         <div className="space-y-4">
-          {seedPreviewLoading ? <LoadingState text={t("rootAmenitiesPage.seedModal.loading")} /> : null}
+          {seedPreviewLoading ? <SkeletonLoader count={3} /> : null}
 
           {!seedPreviewLoading && seedPlan ? (
             <>

@@ -1,0 +1,359 @@
+/**
+ * ReservationForm – create / edit a reservation.
+ *
+ * Used in:
+ *   /app/reservations/new          → mode="create"
+ *   /app/reservations/:id          → mode="edit"
+ *
+ * Sections (mobile-stacked, desktop 2-col grid):
+ *   1. Recurso & Tipo de agenda
+ *   2. Fechas
+ *   3. Huésped
+ *   4. Detalles (pax, notas)
+ *   5. Montos & Moneda
+ *   6. Estado de reserva + pago
+ *   7. Referencia externa
+ */
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { Select } from "../../../components/common";
+import DateRangePicker from "./DateRangePicker";
+import {
+  RESERVATION_STATUSES,
+  PAYMENT_STATUSES,
+  CURRENCIES,
+  MANUAL_FORM_INITIAL_STATE,
+} from "../constants";
+
+// ── Shared field wrapper ─────────────────────────────────────────────────────
+const Field = ({ label, required, children, error, hint, colSpan = "" }) => (
+  <div className={`grid gap-1 ${colSpan}`}>
+    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+      {label}
+      {required && <span className="ml-0.5 text-rose-500">*</span>}
+    </label>
+    {children}
+    {error && (
+      <p className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
+        <AlertCircle size={11} /> {error}
+      </p>
+    )}
+    {hint && !error && <p className="text-xs text-slate-400">{hint}</p>}
+  </div>
+);
+
+// ── Shared input classes ─────────────────────────────────────────────────────
+const inputCls = (hasError = false) =>
+  `min-h-11 w-full rounded-lg border px-3 py-2 text-sm outline-none transition
+  ${
+    hasError
+      ? "border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+      : "border-slate-300 dark:border-slate-600 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+  }
+  bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100`;
+
+const sectionTitleCls =
+  "text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400";
+const sectionDividerCls =
+  "mt-1 mb-4 border-b border-slate-100 dark:border-slate-800";
+
+// ── Main component ───────────────────────────────────────────────────────────
+const ReservationForm = ({
+  form,
+  errors = {},
+  resources = [],
+  loading = false,
+  submitting = false,
+  mode = "create",
+  onChange, // (field, value) => void
+  onSubmit, // (e) => void
+}) => {
+  const { t } = useTranslation();
+
+  const resourceOptions = useMemo(
+    () => [
+      { value: "", label: "Selecciona un recurso" },
+      ...resources.map((r) => ({ value: r.$id, label: r.title || r.$id })),
+    ],
+    [resources],
+  );
+
+  const scheduleTypeOptions = [
+    { value: "date_range", label: "Rango de fechas" },
+    { value: "time_slot", label: "Horario (hora/turno)" },
+  ];
+
+  const currencyOptions = CURRENCIES.map((c) => ({ value: c, label: c }));
+
+  const statusOptions = RESERVATION_STATUSES.map((s) => ({
+    value: s,
+    label: t(`reservationStatus.${s}`, { defaultValue: s }),
+  }));
+
+  const paymentOptions = PAYMENT_STATUSES.map((s) => ({
+    value: s,
+    label: t(`paymentStatus.${s}`, { defaultValue: s }),
+  }));
+
+  const isEdit = mode === "edit";
+  const submitLabel = submitting
+    ? isEdit
+      ? "Guardando…"
+      : "Creando…"
+    : isEdit
+      ? "Guardar cambios"
+      : "Crear reserva";
+
+  return (
+    <form onSubmit={onSubmit} noValidate className="space-y-6">
+      {/* ── 1. Recurso ──────────────────────────────────────────────────── */}
+      <section>
+        <p className={sectionTitleCls}>Recurso</p>
+        <div className={sectionDividerCls} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Recurso"
+            required
+            error={errors.resourceId}
+            colSpan="sm:col-span-2"
+          >
+            <Select
+              value={form.resourceId}
+              onChange={(v) => onChange("resourceId", v)}
+              options={resourceOptions}
+              size="md"
+              disabled={loading}
+            />
+          </Field>
+          <Field label="Tipo de agenda" error={errors.scheduleType}>
+            <Select
+              value={form.scheduleType}
+              onChange={(v) => onChange("scheduleType", v)}
+              options={scheduleTypeOptions}
+              size="md"
+              disabled={loading}
+            />
+          </Field>
+          <Field label="Moneda" error={errors.currency}>
+            <Select
+              value={form.currency}
+              onChange={(v) => onChange("currency", v)}
+              options={currencyOptions}
+              size="md"
+              disabled={loading}
+            />
+          </Field>
+        </div>
+      </section>
+
+      {/* ── 2. Fechas ───────────────────────────────────────────────────── */}
+      <section>
+        <p className={sectionTitleCls}>Fechas</p>
+        <div className={sectionDividerCls} />
+
+        {form.scheduleType === "date_range" ? (
+          <Field
+            label="Rango de fechas"
+            required
+            error={errors.checkInDate || errors.checkOutDate}
+          >
+            <DateRangePicker
+              startDate={form.checkInDate}
+              endDate={form.checkOutDate}
+              onChange={(from, to) => {
+                onChange("checkInDate", from);
+                onChange("checkOutDate", to);
+              }}
+              minDate={new Date().toISOString().slice(0, 10)}
+              disabled={loading}
+            />
+          </Field>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Inicio" required error={errors.startDateTime}>
+              <input
+                type="datetime-local"
+                value={form.startDateTime}
+                onChange={(e) => onChange("startDateTime", e.target.value)}
+                disabled={loading}
+                className={inputCls(!!errors.startDateTime)}
+              />
+            </Field>
+            <Field label="Fin" required error={errors.endDateTime}>
+              <input
+                type="datetime-local"
+                value={form.endDateTime}
+                onChange={(e) => onChange("endDateTime", e.target.value)}
+                disabled={loading}
+                className={inputCls(!!errors.endDateTime)}
+              />
+            </Field>
+          </div>
+        )}
+      </section>
+
+      {/* ── 3. Huésped ──────────────────────────────────────────────────── */}
+      <section>
+        <p className={sectionTitleCls}>Huésped</p>
+        <div className={sectionDividerCls} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Nombre" error={errors.guestName}>
+            <input
+              type="text"
+              autoComplete="name"
+              value={form.guestName}
+              onChange={(e) => onChange("guestName", e.target.value)}
+              disabled={loading}
+              className={inputCls(!!errors.guestName)}
+            />
+          </Field>
+          <Field label="Email" error={errors.guestEmail}>
+            <input
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              value={form.guestEmail}
+              onChange={(e) => onChange("guestEmail", e.target.value)}
+              disabled={loading}
+              className={inputCls(!!errors.guestEmail)}
+            />
+          </Field>
+          <Field label="Teléfono" error={errors.guestPhone}>
+            <input
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              value={form.guestPhone}
+              onChange={(e) => onChange("guestPhone", e.target.value)}
+              disabled={loading}
+              className={inputCls(!!errors.guestPhone)}
+            />
+          </Field>
+          <Field label="N° de huéspedes" error={errors.guestCount}>
+            <input
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={form.guestCount}
+              onChange={(e) => onChange("guestCount", e.target.value)}
+              disabled={loading}
+              className={inputCls(!!errors.guestCount)}
+            />
+          </Field>
+        </div>
+      </section>
+
+      {/* ── 4. Montos ───────────────────────────────────────────────────── */}
+      <section>
+        <p className={sectionTitleCls}>Montos</p>
+        <div className={sectionDividerCls} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Monto base" error={errors.baseAmount}>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
+              value={form.baseAmount}
+              onChange={(e) => onChange("baseAmount", e.target.value)}
+              disabled={loading}
+              className={inputCls(!!errors.baseAmount)}
+            />
+          </Field>
+          <Field
+            label="Monto total"
+            error={errors.totalAmount}
+            hint="Incluye impuestos, extras, etc."
+          >
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
+              value={form.totalAmount}
+              onChange={(e) => onChange("totalAmount", e.target.value)}
+              disabled={loading}
+              className={inputCls(!!errors.totalAmount)}
+            />
+          </Field>
+        </div>
+      </section>
+
+      {/* ── 5. Estados ──────────────────────────────────────────────────── */}
+      <section>
+        <p className={sectionTitleCls}>Estado</p>
+        <div className={sectionDividerCls} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Estado de reserva" error={errors.status}>
+            <Select
+              value={form.status}
+              onChange={(v) => onChange("status", v)}
+              options={statusOptions}
+              size="md"
+              disabled={loading}
+            />
+          </Field>
+          <Field label="Estado de pago" error={errors.paymentStatus}>
+            <Select
+              value={form.paymentStatus}
+              onChange={(v) => onChange("paymentStatus", v)}
+              options={paymentOptions}
+              size="md"
+              disabled={loading}
+            />
+          </Field>
+        </div>
+      </section>
+
+      {/* ── 6. Referencia & Notas ────────────────────────────────────────── */}
+      <section>
+        <p className={sectionTitleCls}>Extras</p>
+        <div className={sectionDividerCls} />
+        <div className="grid gap-4">
+          <Field
+            label="Referencia externa"
+            error={errors.externalRef}
+            hint="Folio de otra plataforma (Airbnb, Booking, etc.)"
+          >
+            <input
+              type="text"
+              value={form.externalRef}
+              onChange={(e) => onChange("externalRef", e.target.value)}
+              disabled={loading}
+              className={inputCls(!!errors.externalRef)}
+            />
+          </Field>
+          <Field
+            label="Notas internas / solicitudes"
+            error={errors.specialRequests}
+          >
+            <textarea
+              rows={3}
+              value={form.specialRequests}
+              onChange={(e) => onChange("specialRequests", e.target.value)}
+              disabled={loading}
+              className={`${inputCls(!!errors.specialRequests)} resize-y`}
+            />
+          </Field>
+        </div>
+      </section>
+
+      {/* ── Sticky submit (mobile) ────────────────────────────────────── */}
+      <div className="sticky bottom-4 z-10">
+        <button
+          type="submit"
+          disabled={submitting || loading}
+          className="flex w-full min-h-12 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition
+            hover:bg-cyan-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60
+            sm:w-auto sm:ml-auto sm:min-h-11"
+        >
+          {submitting && <Loader2 size={16} className="animate-spin" />}
+          {submitLabel}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default ReservationForm;

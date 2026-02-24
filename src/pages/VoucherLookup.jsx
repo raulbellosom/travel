@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -81,7 +81,7 @@ const VoucherLookup = () => {
   if (loading) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-8">
-        <LoadingState text={t("voucherPage.loading")} />
+        <SkeletonLoader variant="detail" count={4} />
       </section>
     );
   }

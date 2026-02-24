@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import {
   useCallback,
   useEffect,
@@ -362,12 +362,7 @@ const AppPropertyDetail = () => {
   // ── Loading state ─────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <p className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-          <Loader2 size={16} className="animate-spin text-cyan-500" />
-          <LoadingState text={t("appPropertyDetailPage.loading")} />
-        </p>
-      </div>
+      <SkeletonLoader variant="detail" className="py-4" />
     );
   }
 
@@ -755,9 +750,7 @@ const AppPropertyDetail = () => {
               <div className="mt-4">
                 <Suspense
                   fallback={
-                    <div className="flex h-50 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-500 dark:bg-slate-800">
-                      <LoadingState text={t("common.loading")} />
-                    </div>
+                    <div className="h-50 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-700" />
                   }
                 >
                   <MapDisplay
@@ -1006,7 +999,7 @@ const AppPropertyDetail = () => {
               {staffLoading ? (
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Loader2 size={14} className="animate-spin" />
-                  <LoadingState text={t("common.loading")} />
+                  <span>{t("common.loading")}</span>
                 </div>
               ) : staffList.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Save,
@@ -68,6 +68,57 @@ const CATEGORY_STYLES = {
     dot: "bg-slate-400",
     iconColor: "text-slate-400",
   },
+};
+
+/**
+ * Controlled number input that allows free editing (empty string, backspace)
+ * and commits the parsed integer value only on blur.
+ */
+const LimitInput = ({ value, onChange, className }) => {
+  const [raw, setRaw] = useState(String(value ?? 0));
+  const isFocused = useRef(false);
+
+  // Sync external value changes when not focused
+  useEffect(() => {
+    if (!isFocused.current) {
+      setRaw(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleFocus = () => {
+    isFocused.current = true;
+    // Select all on focus so the user can just type the new value
+    if (raw === "0") setRaw("");
+  };
+
+  const handleChange = (e) => {
+    const next = e.target.value;
+    // Only allow digits (no decimals, no negatives in the raw string)
+    if (next === "" || /^\d+$/.test(next)) {
+      setRaw(next);
+    }
+  };
+
+  const handleBlur = () => {
+    isFocused.current = false;
+    const parsed = raw === "" ? 0 : parseInt(raw, 10);
+    const safe = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+    setRaw(String(safe));
+    onChange(safe);
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      value={raw}
+      onFocus={handleFocus}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className={className}
+    />
+  );
 };
 
 const PLAN_OPTIONS = [
@@ -457,11 +508,9 @@ const ModulesConfigModal = ({
                     {t(labelKey, { defaultValue: defaultLabel })}
                   </label>
                 </div>
-                <input
-                  type="number"
-                  min={0}
+                <LimitInput
                   value={value}
-                  onChange={(e) => handleLimitChange(key, e.target.value)}
+                  onChange={(parsed) => handleLimitChange(key, parsed)}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:bg-slate-700/60"
                 />
               </div>

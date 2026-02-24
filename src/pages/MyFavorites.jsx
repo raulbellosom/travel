@@ -1,7 +1,7 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { favoritesService } from "../services/favoritesService";
 import { propertiesService } from "../services/propertiesService";
@@ -95,12 +95,7 @@ const MyFavorites = () => {
         </p>
       </header>
 
-      {loading && (
-        <div className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <LoadingState text={t("client:common.loading")} />
-        </div>
-      )}
+      {loading && <SkeletonLoader variant="cards" count={3} />}
 
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">

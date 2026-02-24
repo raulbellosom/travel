@@ -12,7 +12,10 @@ const ScopeRoute = ({ children, scope }) => {
   const { loading: modulesLoading, isEnabled } = useInstanceModules();
   const location = useLocation();
 
-  if (loading || modulesLoading) {
+  // Only block on the cold-start auth check (user is still unknown).
+  // If the user is already resolved, don't re-show the full-screen overlay
+  // while modules reload on each navigation — they default safely.
+  if (loading && !user) {
     return <LoadingScreen transparent title={t("routeGuards.validatingSession")} />;
   }
 

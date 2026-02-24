@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -213,7 +213,7 @@ const Dashboard = () => {
         </p>
       </header>
 
-      {loading ? <LoadingState text={t("dashboardPage.loading")} /> : null}
+      {loading ? <SkeletonLoader variant="dashboard" /> : null}
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}

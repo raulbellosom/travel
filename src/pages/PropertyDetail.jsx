@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import {
   useEffect,
   useMemo,
@@ -172,7 +172,8 @@ const PropertyDetail = () => {
     [property, modulesApi.isEnabled],
   );
   const scheduleType = resourceBehavior.effectiveScheduleType;
-  const isManualContactBooking = resourceBehavior.bookingType === "manual_contact";
+  const isManualContactBooking =
+    resourceBehavior.bookingType === "manual_contact";
   const isDateRangeSchedule = scheduleType === "date_range";
   const isTimeSlotSchedule = scheduleType === "time_slot";
   const canUseClientCalendar = Boolean(user?.$id) && user?.role === "client";
@@ -331,7 +332,10 @@ const PropertyDetail = () => {
       Number(property?.slotBufferMinutes || 0),
     );
     const rangeStartMinutes = parseClockTime(property?.checkInTime, 9 * 60);
-    const configuredEndMinutes = parseClockTime(property?.checkOutTime, 20 * 60);
+    const configuredEndMinutes = parseClockTime(
+      property?.checkOutTime,
+      20 * 60,
+    );
     const rangeEndMinutes =
       configuredEndMinutes > rangeStartMinutes
         ? configuredEndMinutes
@@ -1961,9 +1965,7 @@ const PropertyDetail = () => {
                 <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
                   <Suspense
                     fallback={
-                      <div className="flex h-80 items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-slate-800">
-                        <LoadingState text={t("client:common.loading")} />
-                      </div>
+                      <div className="h-80 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-700" />
                     }
                   >
                     <MapDisplay
@@ -2072,128 +2074,128 @@ const PropertyDetail = () => {
 
             {/* ── Calendar placeholder ───────────────── */}
             {canRenderScheduleAside && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                  <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
-                    <Calendar
-                      size={18}
-                      className="text-cyan-600 dark:text-cyan-400"
-                    />
-                    {t("client:propertyDetail.calendar.title")}
-                  </h2>
-                  {availabilityError ? (
-                    <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
-                      {availabilityError}
-                    </p>
-                  ) : null}
-                  {availabilityLoading ? (
-                    <div className="flex min-h-32 items-center justify-center">
-                      <Spinner size="sm" />
-                    </div>
-                  ) : isDateRangeSchedule ? (
-                    <PropertyAvailabilityCalendar
-                      property={property}
-                      pricing={{}}
-                      disabledDates={disabledCalendarDates}
-                      selectedRange={selectedDateRange}
-                      onRangeChange={setSelectedDateRange}
-                      onReserveClick={handleCalendarReserve}
-                    />
-                  ) : isTimeSlotSchedule && isManualContactBooking ? (
-                    <div className="space-y-3">
-                      <label className="grid gap-1 text-sm">
-                        <span className="font-medium text-slate-700 dark:text-slate-200">
-                          {t("client:propertyDetail.calendar.selectDate", {
-                            defaultValue: "Selecciona una fecha",
-                          })}
-                        </span>
-                        <input
-                          type="date"
-                          min={formatDateForQuery(new Date())}
-                          value={selectedSlotDate}
-                          onChange={(event) =>
-                            setSelectedSlotDate(
-                              normalizeDateKey(event.target.value),
-                            )
-                          }
-                          className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                        />
-                      </label>
-
-                      {blockedDateSet.has(selectedSlotDate) ? (
-                        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                          {t("client:propertyDetail.calendar.dayUnavailable", {
-                            defaultValue:
-                              "La fecha seleccionada no esta disponible.",
-                          })}
-                        </p>
-                      ) : availableTimeSlots.length === 0 ? (
-                        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                          {t("client:propertyDetail.calendar.noSlots", {
-                            defaultValue:
-                              "No hay horarios disponibles para la fecha seleccionada.",
-                          })}
-                        </p>
-                      ) : (
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          {availableTimeSlots.map((slot) => {
-                            const isSelected =
-                              selectedTimeSlot?.startDateTime ===
-                                slot.startDateTime &&
-                              selectedTimeSlot?.endDateTime === slot.endDateTime;
-                            return (
-                              <button
-                                key={slot.startDateTime}
-                                type="button"
-                                disabled={!slot.isAvailable}
-                                onClick={() => setSelectedTimeSlot(slot)}
-                                className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                                  !slot.isAvailable
-                                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
-                                    : isSelected
-                                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
-                                      : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
-                                }`}
-                              >
-                                {slot.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {selectedTimeSlot ? (
-                        <button
-                          type="button"
-                          onClick={handleManualSlotContact}
-                          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
-                        >
-                          {t("client:propertyDetail.calendar.contactForSlot", {
-                            defaultValue: "Solicitar este horario",
-                          })}
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
-                      <Calendar
-                        size={32}
-                        className="mb-2 text-slate-300 dark:text-slate-600"
-                      />
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {t("client:propertyDetail.calendar.placeholder")}
-                      </p>
-                      <Link
-                        to={`/reservar/${property.slug}`}
-                        className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
-                      >
-                        {t("client:propertyDetail.cta.hourly.button", {
-                          defaultValue: "Reservar horario",
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+                  <Calendar
+                    size={18}
+                    className="text-cyan-600 dark:text-cyan-400"
+                  />
+                  {t("client:propertyDetail.calendar.title")}
+                </h2>
+                {availabilityError ? (
+                  <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+                    {availabilityError}
+                  </p>
+                ) : null}
+                {availabilityLoading ? (
+                  <div className="flex min-h-32 items-center justify-center">
+                    <Spinner size="sm" />
+                  </div>
+                ) : isDateRangeSchedule ? (
+                  <PropertyAvailabilityCalendar
+                    property={property}
+                    pricing={{}}
+                    disabledDates={disabledCalendarDates}
+                    selectedRange={selectedDateRange}
+                    onRangeChange={setSelectedDateRange}
+                    onReserveClick={handleCalendarReserve}
+                  />
+                ) : isTimeSlotSchedule && isManualContactBooking ? (
+                  <div className="space-y-3">
+                    <label className="grid gap-1 text-sm">
+                      <span className="font-medium text-slate-700 dark:text-slate-200">
+                        {t("client:propertyDetail.calendar.selectDate", {
+                          defaultValue: "Selecciona una fecha",
                         })}
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
+                      </span>
+                      <input
+                        type="date"
+                        min={formatDateForQuery(new Date())}
+                        value={selectedSlotDate}
+                        onChange={(event) =>
+                          setSelectedSlotDate(
+                            normalizeDateKey(event.target.value),
+                          )
+                        }
+                        className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      />
+                    </label>
+
+                    {blockedDateSet.has(selectedSlotDate) ? (
+                      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                        {t("client:propertyDetail.calendar.dayUnavailable", {
+                          defaultValue:
+                            "La fecha seleccionada no esta disponible.",
+                        })}
+                      </p>
+                    ) : availableTimeSlots.length === 0 ? (
+                      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                        {t("client:propertyDetail.calendar.noSlots", {
+                          defaultValue:
+                            "No hay horarios disponibles para la fecha seleccionada.",
+                        })}
+                      </p>
+                    ) : (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {availableTimeSlots.map((slot) => {
+                          const isSelected =
+                            selectedTimeSlot?.startDateTime ===
+                              slot.startDateTime &&
+                            selectedTimeSlot?.endDateTime === slot.endDateTime;
+                          return (
+                            <button
+                              key={slot.startDateTime}
+                              type="button"
+                              disabled={!slot.isAvailable}
+                              onClick={() => setSelectedTimeSlot(slot)}
+                              className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                                !slot.isAvailable
+                                  ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                                  : isSelected
+                                    ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
+                                    : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
+                              }`}
+                            >
+                              {slot.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {selectedTimeSlot ? (
+                      <button
+                        type="button"
+                        onClick={handleManualSlotContact}
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
+                      >
+                        {t("client:propertyDetail.calendar.contactForSlot", {
+                          defaultValue: "Solicitar este horario",
+                        })}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
+                    <Calendar
+                      size={32}
+                      className="mb-2 text-slate-300 dark:text-slate-600"
+                    />
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {t("client:propertyDetail.calendar.placeholder")}
+                    </p>
+                    <Link
+                      to={`/reservar/${property.slug}`}
+                      className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
+                    >
+                      {t("client:propertyDetail.cta.hourly.button", {
+                        defaultValue: "Reservar horario",
+                      })}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ── Agent Card (with integrated chat) ────── */}
             <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">

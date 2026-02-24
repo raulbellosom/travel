@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -141,9 +141,7 @@ const EditProperty = () => {
   };
 
   if (loading) {
-    return (
-      <LoadingState text={t("editPropertyPage.loading")} />
-    );
+    return <SkeletonLoader variant="detail" className="py-4" />;
   }
 
   if (!initialValues) {

@@ -1,4 +1,4 @@
-import LoadingState from "../components/common/molecules/LoadingState";
+import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, Inbox, Search, Sparkles, Users } from "lucide-react";
@@ -36,7 +36,9 @@ const getLeadSchedulePayload = (lead) => {
     (meta.requestSchedule && typeof meta.requestSchedule === "object"
       ? meta.requestSchedule
       : null) ||
-    (meta.schedule && typeof meta.schedule === "object" ? meta.schedule : null) ||
+    (meta.schedule && typeof meta.schedule === "object"
+      ? meta.schedule
+      : null) ||
     {};
 
   const scheduleType = String(
@@ -327,7 +329,9 @@ const Leads = () => {
     }
 
     const guestName = String(lead.mappedName || "").trim();
-    const guestEmail = String(lead.mappedEmail || "").trim().toLowerCase();
+    const guestEmail = String(lead.mappedEmail || "")
+      .trim()
+      .toLowerCase();
     const normalizedPhone = String(lead.mappedPhone || "")
       .replace(/\s+/g, " ")
       .trim()
@@ -398,7 +402,7 @@ const Leads = () => {
         </label>
       </div>
 
-      {loading ? <LoadingState text={t("leadsPage.loading")} /> : null}
+      {loading ? <SkeletonLoader /> : null}
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
@@ -498,7 +502,9 @@ const Leads = () => {
                           </a>
                           <button
                             type="button"
-                            disabled={busyId === lead.$id || !lead.hasReservableSchedule}
+                            disabled={
+                              busyId === lead.$id || !lead.hasReservableSchedule
+                            }
                             onClick={() => onConvertToReservation(lead)}
                             className="inline-flex min-h-9 items-center justify-center rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
                           >

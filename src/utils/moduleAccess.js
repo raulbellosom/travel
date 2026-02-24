@@ -6,13 +6,18 @@ const RESERVATION_MODULE_KEYS = Object.freeze([
 
 const SCOPE_ALL_MODULE_REQUIREMENTS = Object.freeze({
   "resources.read": Object.freeze(["module.resources"]),
+  "resources.read.all": Object.freeze(["module.resources"]),
   "resources.write": Object.freeze(["module.resources"]),
   "leads.read": Object.freeze(["module.leads"]),
+  "leads.read.all": Object.freeze(["module.leads"]),
   "leads.write": Object.freeze(["module.leads"]),
+  "leads.write.all": Object.freeze(["module.leads"]),
   "messaging.read": Object.freeze(["module.messaging.realtime"]),
   "messaging.write": Object.freeze(["module.messaging.realtime"]),
   "payments.read": Object.freeze(["module.payments.online"]),
+  "payments.read.all": Object.freeze(["module.payments.online"]),
   "reviews.moderate": Object.freeze(["module.reviews"]),
+  "reviews.moderate.all": Object.freeze(["module.reviews"]),
   "staff.manage": Object.freeze(["module.staff"]),
   "profile.read": Object.freeze(["module.profile"]),
   "profile.write": Object.freeze(["module.profile"]),
@@ -20,7 +25,9 @@ const SCOPE_ALL_MODULE_REQUIREMENTS = Object.freeze({
 
 const SCOPE_ANY_MODULE_REQUIREMENTS = Object.freeze({
   "reservations.read": RESERVATION_MODULE_KEYS,
+  "reservations.read.all": RESERVATION_MODULE_KEYS,
   "reservations.write": RESERVATION_MODULE_KEYS,
+  "reservations.write.all": RESERVATION_MODULE_KEYS,
   "preferences.write": Object.freeze([
     "module.preferences.theme",
     "module.preferences.locale",
