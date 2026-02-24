@@ -410,18 +410,18 @@ const Dashboard = () => {
                   {properties.slice(0, 5).map((item) => (
                     <li
                       key={item.$id}
-                      className="group flex items-center justify-between rounded-xl border border-slate-100 bg-white px-4 py-3 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-800/80 dark:bg-slate-900/40 dark:hover:border-slate-700 dark:hover:bg-slate-800/80"
+                      className="group flex min-w-0 items-center justify-between rounded-xl border border-slate-100 bg-white px-4 py-3 transition-colors hover:border-slate-200 hover:bg-slate-50 dark:border-slate-800/80 dark:bg-slate-900/40 dark:hover:border-slate-700 dark:hover:bg-slate-800/80"
                     >
-                      <div className="min-w-0 pr-4">
+                      <div className="min-w-0 flex-1 overflow-hidden pr-3">
                         <p className="truncate font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
                           {item.title}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                           {item.city}, {item.state}
                         </p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${
+                        className={`ml-2 shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${
                           item.status === "published"
                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                             : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -461,9 +461,9 @@ const Dashboard = () => {
                   {leads.slice(0, 5).map((lead) => (
                     <li
                       key={lead.$id}
-                      className="group flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-3 last:border-0 dark:border-slate-800/80"
+                      className="group flex min-w-0 items-center justify-between gap-2 border-b border-slate-100 py-3 last:border-0 dark:border-slate-800/80"
                     >
-                      <div className="min-w-0 flex-1 pr-4">
+                      <div className="min-w-0 flex-1 overflow-hidden">
                         <p className="truncate font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
                           {lead.name ||
                             t("leadsPage.unknownUser", {
@@ -478,7 +478,7 @@ const Dashboard = () => {
                               })}
                         </p>
                       </div>
-                      <span className="shrink-0 rounded-full bg-cyan-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400">
+                      <span className="ml-2 shrink-0 rounded-full bg-cyan-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400">
                         {t(`leadStatus.${lead.status}`, {
                           defaultValue: lead.status,
                         })}
