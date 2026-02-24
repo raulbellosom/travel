@@ -8,6 +8,9 @@ import {
 } from "react-theme-switch-animation";
 import { useAuth } from "../../hooks/useAuth";
 import { useUI } from "../../contexts/UIContext";
+import { useInstanceModules } from "../../hooks/useInstanceModules";
+import { hasScope } from "../../utils/roles";
+import { isScopeAllowedByModules } from "../../utils/moduleAccess";
 import BrandLogo from "../common/BrandLogo";
 import GlobalSearch from "./GlobalSearch";
 import DashboardUserDropdown from "./DashboardUserDropdown";
@@ -20,6 +23,18 @@ const DashboardNavbar = ({
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { theme, changeTheme, changeLanguage } = useUI();
+  const { isEnabled } = useInstanceModules();
+  const canAccessScope = useCallback(
+    (scope) =>
+      hasScope(user, scope) && isScopeAllowedByModules(scope, isEnabled),
+    [user, isEnabled],
+  );
+  const canReadProfile = canAccessScope("profile.read");
+  const canManagePreferences = canAccessScope("preferences.write");
+  const canManageTheme =
+    canManagePreferences && isEnabled("module.preferences.theme");
+  const canManageLanguage =
+    canManagePreferences && isEnabled("module.preferences.locale");
   const languageCode = String(i18n.resolvedLanguage || i18n.language || "es")
     .toLowerCase()
     .startsWith("en")
@@ -131,14 +146,16 @@ const DashboardNavbar = ({
             <GlobalSearch showDesktopInput={false} />
           </div>
 
-          <button
-            onClick={onToggleLanguage}
-            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold uppercase tracking-wide text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            aria-label={t("dashboardNavbar.toggleLanguage")}
-            title={t("dashboardNavbar.toggleLanguage")}
-          >
-            <span>{String(nextLanguage || "en").toUpperCase()}</span>
-          </button>
+          {canManageLanguage ? (
+            <button
+              onClick={onToggleLanguage}
+              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold uppercase tracking-wide text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              aria-label={t("dashboardNavbar.toggleLanguage")}
+              title={t("dashboardNavbar.toggleLanguage")}
+            >
+              <span>{String(nextLanguage || "en").toUpperCase()}</span>
+            </button>
+          ) : null}
 
           <a
             href="/"
@@ -151,20 +168,23 @@ const DashboardNavbar = ({
             <Home size={18} />
           </a>
 
-          <button
-            ref={animRef}
-            onClick={onToggleTheme}
-            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            aria-label={themeToggleLabel}
-            title={themeToggleLabel}
-          >
-            <ThemeIcon size={15} />
-          </button>
+          {canManageTheme ? (
+            <button
+              ref={animRef}
+              onClick={onToggleTheme}
+              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              aria-label={themeToggleLabel}
+              title={themeToggleLabel}
+            >
+              <ThemeIcon size={15} />
+            </button>
+          ) : null}
 
           <DashboardUserDropdown
             user={user}
             onLogout={onLogout}
             showIdentity={Boolean(user)}
+            showProfile={canReadProfile}
           />
         </div>
       </div>

@@ -56,6 +56,7 @@ const Conversations = () => {
     isRestoringConversation,
     isUserRecentlyActive,
     updateConversationStatus,
+    canWriteMessaging,
   } = useChat();
 
   const [searchParams] = useSearchParams();
@@ -364,10 +365,11 @@ const Conversations = () => {
   }, [internalChatUsers, newConversationSearch, getInternalUserDisplayName]);
 
   const openNewConversationModal = useCallback(() => {
+    if (!canWriteMessaging) return;
     setShowNewConversationModal(true);
     setNewConversationSearch("");
     loadInternalChatUsers();
-  }, [loadInternalChatUsers]);
+  }, [canWriteMessaging, loadInternalChatUsers]);
 
   const closeNewConversationModal = useCallback(() => {
     setShowNewConversationModal(false);
@@ -377,6 +379,7 @@ const Conversations = () => {
 
   const handleStartDirectConversation = useCallback(
     async (staffUser) => {
+      if (!canWriteMessaging) return;
       const targetUserId = String(staffUser?.$id || "").trim();
       if (!targetUserId || startingDirectConversationFor) return;
 
@@ -395,6 +398,7 @@ const Conversations = () => {
     },
     [
       closeNewConversationModal,
+      canWriteMessaging,
       getInternalUserDisplayName,
       startDirectConversation,
       startingDirectConversationFor,
@@ -403,6 +407,7 @@ const Conversations = () => {
 
   const handleConversationStatusChange = useCallback(
     async (nextStatus) => {
+      if (!canWriteMessaging) return;
       const conversationId = String(activeConversation?.$id || "").trim();
       const normalizedNextStatus = String(nextStatus || "").trim().toLowerCase();
       const currentStatus = String(activeConversation?.status || "active")
@@ -432,6 +437,7 @@ const Conversations = () => {
     [
       activeConversation?.$id,
       activeConversation?.status,
+      canWriteMessaging,
       statusMutation.conversationId,
       updateConversationStatus,
     ],
@@ -466,7 +472,7 @@ const Conversations = () => {
   const handleSend = async (e) => {
     e?.preventDefault();
     const text = input.trim();
-    if (!text || sending || isConversationClosed) return;
+    if (!canWriteMessaging || !text || sending || isConversationClosed) return;
     setInput("");
     setShowEmojiPicker(false);
     setSending(true);
@@ -493,7 +499,7 @@ const Conversations = () => {
   };
 
   const toggleEmojiPicker = () => {
-    if (isConversationClosed) return;
+    if (isConversationClosed || !canWriteMessaging) return;
     setShowEmojiPicker((prev) => {
       const next = !prev;
       if (next) inputRef.current?.blur();
@@ -628,6 +634,7 @@ const Conversations = () => {
               <button
                 type="button"
                 onClick={openNewConversationModal}
+                disabled={!canWriteMessaging}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-900/50 dark:bg-cyan-950/30 dark:text-cyan-300 dark:hover:bg-cyan-950/50"
               >
                 <UserPlus size={16} />
@@ -849,7 +856,9 @@ const Conversations = () => {
                         <button
                           type="button"
                           onClick={() => handleConversationStatusChange("active")}
-                          disabled={isUpdatingActiveConversationStatus}
+                          disabled={
+                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                          }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-2 text-xs font-medium text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900/60 dark:bg-green-900/25 dark:text-green-300 dark:hover:bg-green-900/35"
                           title={t("conversationsPage.actions.markActive")}
                         >
@@ -866,7 +875,9 @@ const Conversations = () => {
                         <button
                           type="button"
                           onClick={() => handleConversationStatusChange("archived")}
-                          disabled={isUpdatingActiveConversationStatus}
+                          disabled={
+                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                          }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900/60 dark:bg-amber-900/25 dark:text-amber-300 dark:hover:bg-amber-900/35"
                           title={t("conversationsPage.actions.archive")}
                         >
@@ -883,7 +894,9 @@ const Conversations = () => {
                         <button
                           type="button"
                           onClick={() => handleConversationStatusChange("closed")}
-                          disabled={isUpdatingActiveConversationStatus}
+                          disabled={
+                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                          }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:bg-red-900/25 dark:text-red-300 dark:hover:bg-red-900/35"
                           title={t("conversationsPage.actions.closeConversation")}
                         >
@@ -947,7 +960,7 @@ const Conversations = () => {
               {/* Input */}
               <div className="relative border-t border-slate-200 dark:border-slate-700">
                 {/* Emoji Picker */}
-                {!isConversationClosed && showEmojiPicker && (
+                {!isConversationClosed && canWriteMessaging && showEmojiPicker && (
                   <div
                     ref={emojiPickerRef}
                     className="absolute bottom-full left-3 mb-2 z-50"
@@ -973,10 +986,10 @@ const Conversations = () => {
                   <button
                     type="button"
                     onClick={toggleEmojiPicker}
-                    disabled={isConversationClosed}
+                    disabled={isConversationClosed || !canWriteMessaging}
                     className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-                      isConversationClosed
+                      isConversationClosed || !canWriteMessaging
                         ? "cursor-not-allowed text-slate-300 dark:text-slate-600"
                         : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-300",
                     )}
@@ -991,25 +1004,33 @@ const Conversations = () => {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={
-                      isConversationClosed
+                      isConversationClosed || !canWriteMessaging
                         ? t("chat.messages.closedInputPlaceholder")
                         : t("chat.messages.inputPlaceholder")
                     }
                     rows={1}
-                    disabled={isConversationClosed}
+                    disabled={isConversationClosed || !canWriteMessaging}
                     className={cn(
                       "max-h-24 min-h-10 flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm outline-none transition",
-                      isConversationClosed
+                      isConversationClosed || !canWriteMessaging
                         ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
                         : "border-slate-200 bg-slate-50 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400",
                     )}
                   />
                   <button
                     type="submit"
-                    disabled={!input.trim() || sending || isConversationClosed}
+                    disabled={
+                      !canWriteMessaging ||
+                      !input.trim() ||
+                      sending ||
+                      isConversationClosed
+                    }
                     className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-                      input.trim() && !sending && !isConversationClosed
+                      input.trim() &&
+                        !sending &&
+                        !isConversationClosed &&
+                        canWriteMessaging
                         ? "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600"
                         : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600",
                     )}

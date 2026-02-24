@@ -14,7 +14,9 @@ import {
   Star,
   UserCircle2,
 } from "lucide-react";
-import { isInternalRole } from "../../../../utils/roles";
+import { useInstanceModules } from "../../../../hooks/useInstanceModules";
+import { hasScope, isInternalRole } from "../../../../utils/roles";
+import { isScopeAllowedByModules } from "../../../../utils/moduleAccess";
 import {
   INTERNAL_ROUTES,
   getConversationsRoute,
@@ -23,6 +25,7 @@ import {
 const UserDropdown = ({ user, onLogout }) => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { isEnabled } = useInstanceModules();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
@@ -65,6 +68,12 @@ const UserDropdown = ({ user, onLogout }) => {
   };
 
   const isInternalUser = isInternalRole(user?.role);
+  const canAccessScope = (scope) =>
+    hasScope(user, scope) && isScopeAllowedByModules(scope, isEnabled);
+  const canAccessProfile = !isInternalUser || canAccessScope("profile.read");
+  const canAccessConversations =
+    isEnabled("module.messaging.realtime") &&
+    (!isInternalUser || canAccessScope("messaging.read"));
 
   const userMenuItems = [
     ...(isInternalUser
@@ -76,11 +85,15 @@ const UserDropdown = ({ user, onLogout }) => {
           },
         ]
       : []),
-    {
-      to: "/profile",
-      icon: UserCircle2,
-      label: t("navbar.userMenu.profile"),
-    },
+    ...(canAccessProfile
+      ? [
+          {
+            to: "/profile",
+            icon: UserCircle2,
+            label: t("navbar.userMenu.profile"),
+          },
+        ]
+      : []),
     {
       to: "/my-reservations",
       icon: BookOpen,
@@ -98,11 +111,15 @@ const UserDropdown = ({ user, onLogout }) => {
         defaultValue: "Mis Favoritos",
       }),
     },
-    {
-      to: getConversationsRoute(user),
-      icon: MessageCircle,
-      label: t("navbar.userMenu.conversations"),
-    },
+    ...(canAccessConversations
+      ? [
+          {
+            to: getConversationsRoute(user),
+            icon: MessageCircle,
+            label: t("navbar.userMenu.conversations"),
+          },
+        ]
+      : []),
     {
       to: "/recuperar-password",
       icon: KeyRound,

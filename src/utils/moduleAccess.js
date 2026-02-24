@@ -14,11 +14,17 @@ const SCOPE_ALL_MODULE_REQUIREMENTS = Object.freeze({
   "payments.read": Object.freeze(["module.payments.online"]),
   "reviews.moderate": Object.freeze(["module.reviews"]),
   "staff.manage": Object.freeze(["module.staff"]),
+  "profile.read": Object.freeze(["module.profile"]),
+  "profile.write": Object.freeze(["module.profile"]),
 });
 
 const SCOPE_ANY_MODULE_REQUIREMENTS = Object.freeze({
   "reservations.read": RESERVATION_MODULE_KEYS,
   "reservations.write": RESERVATION_MODULE_KEYS,
+  "preferences.write": Object.freeze([
+    "module.preferences.theme",
+    "module.preferences.locale",
+  ]),
 });
 
 const isModuleEnabledSafe = (isModuleEnabled, moduleKey) => {
@@ -54,4 +60,3 @@ export const filterScopesByEnabledModules = (scopes, isModuleEnabled) => {
     isScopeAllowedByModules(scope, isModuleEnabled),
   );
 };
-

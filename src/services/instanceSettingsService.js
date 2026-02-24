@@ -2,7 +2,7 @@ import env from "../env";
 import { databases, ensureAppwriteConfigured, ID, Query } from "../api/appwriteClient";
 
 export const MODULE_CATALOG = Object.freeze([
-  { key: "module.resources", label: "Resources Core" },
+  { key: "module.resources", label: "Resources" },
   { key: "module.leads", label: "Leads" },
   { key: "module.staff", label: "Staff" },
   { key: "module.analytics.basic", label: "Analytics Basic" },
@@ -10,7 +10,10 @@ export const MODULE_CATALOG = Object.freeze([
   { key: "module.booking.short_term", label: "Booking Short Term" },
   { key: "module.booking.hourly", label: "Booking Hourly" },
   { key: "module.payments.online", label: "Payments Online" },
-  { key: "module.messaging.realtime", label: "Messaging Realtime" },
+  { key: "module.messaging.realtime", label: "Messages" },
+  { key: "module.profile", label: "Profile" },
+  { key: "module.preferences.theme", label: "Theme Preferences" },
+  { key: "module.preferences.locale", label: "Language Preferences" },
   { key: "module.reviews", label: "Reviews" },
   { key: "module.calendar.advanced", label: "Calendar Advanced" },
 ]);
@@ -28,6 +31,9 @@ const DEFAULT_MODULES = Object.freeze([
   "module.analytics.basic",
   "module.booking.long_term",
   "module.messaging.realtime",
+  "module.profile",
+  "module.preferences.theme",
+  "module.preferences.locale",
   "module.reviews",
 ]);
 

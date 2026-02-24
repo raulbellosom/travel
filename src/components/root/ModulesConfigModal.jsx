@@ -24,6 +24,16 @@ const MODULE_CATEGORIES = {
       "module.analytics.basic",
     ],
   },
+  account: {
+    labelKey: "modulesModal.categories.account",
+    defaultLabel: "Account & Preferences",
+    modules: [
+      "module.profile",
+      "module.preferences.theme",
+      "module.preferences.locale",
+      "module.messaging.realtime",
+    ],
+  },
   booking: {
     labelKey: "modulesModal.categories.booking",
     defaultLabel: "Booking & Payments",
@@ -38,7 +48,6 @@ const MODULE_CATEGORIES = {
     labelKey: "modulesModal.categories.extras",
     defaultLabel: "Extras",
     modules: [
-      "module.messaging.realtime",
       "module.reviews",
       "module.calendar.advanced",
     ],
@@ -179,7 +188,14 @@ const ModulesConfigModal = ({
   );
 
   const formatModuleLabel = (key) => {
-    // Convert module.resources to "Resources"
+    const catalogLabel = moduleCatalog.find((item) => item.key === key)?.label;
+    const labelFromI18n = t(
+      `modulesModal.moduleLabels.${String(key || "").replaceAll(".", "_")}`,
+      { defaultValue: catalogLabel || "" },
+    );
+    if (labelFromI18n) return labelFromI18n;
+
+    // Fallback: convert module.resources to "Resources"
     const parts = key.split(".");
     const lastPart = parts[parts.length - 1];
     return lastPart.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());

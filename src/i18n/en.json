@@ -2041,7 +2041,10 @@
       "payments_read": "View payments",
       "reviews_moderate": "Moderate reviews",
       "messaging_read": "View messages",
-      "messaging_write": "Manage messages"
+      "messaging_write": "Manage messages",
+      "profile_read": "View profile",
+      "profile_write": "Edit profile",
+      "preferences_write": "Manage preferences"
     },
     "status": {
       "enabled": "Active",
@@ -2669,9 +2672,26 @@
     },
     "categories": {
       "core": "Core",
+      "account": "Account & Preferences",
       "booking": "Booking & Payments",
       "extras": "Extras",
       "other": "Other"
+    },
+    "moduleLabels": {
+      "module_resources": "Resources",
+      "module_leads": "Leads",
+      "module_staff": "Staff",
+      "module_analytics_basic": "Basic Analytics",
+      "module_booking_long_term": "Long Term",
+      "module_booking_short_term": "Short Term",
+      "module_booking_hourly": "Hourly",
+      "module_payments_online": "Online Payments",
+      "module_messaging_realtime": "Messages",
+      "module_profile": "Profile",
+      "module_preferences_theme": "Theme",
+      "module_preferences_locale": "Language",
+      "module_reviews": "Reviews",
+      "module_calendar_advanced": "Advanced Calendar"
     },
     "limits": {
       "title": "Limits",

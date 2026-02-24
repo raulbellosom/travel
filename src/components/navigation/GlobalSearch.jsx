@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { useInstanceModules } from "../../hooks/useInstanceModules";
-import { hasRoleAtLeast, hasScope } from "../../utils/roles";
+import { hasRoleAtLeast, hasScope, isInternalRole } from "../../utils/roles";
 import { globalSearchService } from "../../services/globalSearchService";
 import { buildGlobalSearchResults } from "../../features/global-search/searchSuggestions";
 import SearchResultsList from "./global-search/SearchResultsList";
@@ -62,7 +62,10 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const canReadReviews = canAccessScope("reviews.moderate");
   const canManageTeam = canAccessScope("staff.manage");
   const canReadClients = hasRoleAtLeast(user?.role, "owner");
-  const canReadProfile = Boolean(user?.$id);
+  const isInternalUser = isInternalRole(user?.role);
+  const canReadProfile =
+    Boolean(user?.$id) &&
+    (!isInternalUser || canAccessScope("profile.read"));
   const hasOpenOverlay = isDesktopOpen || isMobileOpen;
   const normalizedQuery = String(query || "").trim();
 
@@ -118,6 +121,7 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
     };
   }, [
     canManageTeam,
+    canReadClients,
     canReadLeads,
     canReadPayments,
     canReadProfile,

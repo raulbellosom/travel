@@ -70,6 +70,9 @@ const SCOPE_OPTIONS = [
   "reviews.moderate",
   "messaging.read",
   "messaging.write",
+  "profile.read",
+  "profile.write",
+  "preferences.write",
 ];
 
 const EMPTY_FORM = {

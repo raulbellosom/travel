@@ -2041,7 +2041,10 @@
       "payments_read": "Ver pagos",
       "reviews_moderate": "Moderar reseñas",
       "messaging_read": "Ver mensajes",
-      "messaging_write": "Gestionar mensajes"
+      "messaging_write": "Gestionar mensajes",
+      "profile_read": "Ver perfil",
+      "profile_write": "Editar perfil",
+      "preferences_write": "Gestionar preferencias"
     },
     "status": {
       "enabled": "Activo",
@@ -2669,9 +2672,26 @@
     },
     "categories": {
       "core": "Core",
+      "account": "Cuenta y Preferencias",
       "booking": "Reservas y Pagos",
       "extras": "Extras",
       "other": "Otros"
+    },
+    "moduleLabels": {
+      "module_resources": "Recursos",
+      "module_leads": "Leads",
+      "module_staff": "Staff",
+      "module_analytics_basic": "Analitica Basica",
+      "module_booking_long_term": "Larga Estancia",
+      "module_booking_short_term": "Corta Estancia",
+      "module_booking_hourly": "Por Hora",
+      "module_payments_online": "Pagos en Linea",
+      "module_messaging_realtime": "Mensajes",
+      "module_profile": "Perfil",
+      "module_preferences_theme": "Tema",
+      "module_preferences_locale": "Idioma",
+      "module_reviews": "Resenas",
+      "module_calendar_advanced": "Calendario Avanzado"
     },
     "limits": {
       "title": "Límites",

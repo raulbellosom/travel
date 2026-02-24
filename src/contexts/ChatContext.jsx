@@ -17,7 +17,8 @@ import {
   getConversationUnreadResetPatch,
 } from "../utils/chatParticipants";
 import { playNotificationSound } from "../utils/notificationSound";
-import { isInternalRole } from "../utils/roles";
+import { useInstanceModules } from "../hooks/useInstanceModules";
+import { hasScope, isInternalRole } from "../utils/roles";
 
 /* ─── Context ──────────────────────────────────────────── */
 
@@ -33,6 +34,7 @@ export const useChat = () => {
 
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
+  const { isEnabled } = useInstanceModules();
   const normalizeId = (value) => String(value || "").trim();
 
   // Global state
@@ -59,6 +61,12 @@ export const ChatProvider = ({ children }) => {
   const isAuthenticated = Boolean(user?.$id);
   const isInternal = isInternalRole(user?.role);
   const chatRole = isInternal ? "owner" : "client";
+  const canReadMessaging =
+    isAuthenticated &&
+    isEnabled("module.messaging.realtime") &&
+    (!isInternal || hasScope(user, "messaging.read"));
+  const canWriteMessaging =
+    canReadMessaging && (!isInternal || hasScope(user, "messaging.write"));
 
   const markPeerActive = useCallback((peerUserId, at) => {
     const normalizedPeerId = normalizeId(peerUserId);
@@ -98,13 +106,13 @@ export const ChatProvider = ({ children }) => {
   usePresence();
 
   const totalUnread = useMemo(() => {
-    if (!isAuthenticated) return 0;
+    if (!canReadMessaging) return 0;
     return conversations.reduce(
       (acc, conversation) =>
         acc + getConversationUnreadCount(conversation, user?.$id, chatRole),
       0,
     );
-  }, [conversations, chatRole, isAuthenticated, user?.$id]);
+  }, [canReadMessaging, conversations, chatRole, user?.$id]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.$id === activeConversationId) || null,
@@ -124,7 +132,7 @@ export const ChatProvider = ({ children }) => {
     }
 
     // Not authenticated yet
-    if (!isAuthenticated || !user?.$id) return;
+    if (!canReadMessaging || !user?.$id) return;
 
     // Still loading conversations
     if (loadingConversations) return;
@@ -156,7 +164,7 @@ export const ChatProvider = ({ children }) => {
     }
     setIsRestoringConversation(false);
   }, [
-    isAuthenticated,
+    canReadMessaging,
     user?.$id,
     conversations,
     loadingConversations,
@@ -174,20 +182,21 @@ export const ChatProvider = ({ children }) => {
 
   // Clear persisted conversation on logout
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!canReadMessaging) {
       localStorage.removeItem("activeConversationId");
       setActiveConversationId(null);
       setConversations([]);
       setMessages([]);
       setInternalChatUsers([]);
       setPeerActivityByUserId({});
+      setIsChatOpen(false);
     }
-  }, [isAuthenticated]);
+  }, [canReadMessaging]);
 
   /* ── Load conversations ──────────────────────────────── */
 
   const loadConversations = useCallback(async () => {
-    if (!user?.$id) return;
+    if (!canReadMessaging || !user?.$id) return;
     setLoadingConversations(true);
     try {
       const res = await chatService.listConversations(user.$id, {
@@ -200,10 +209,10 @@ export const ChatProvider = ({ children }) => {
     } finally {
       setLoadingConversations(false);
     }
-  }, [user?.$id, chatRole, isInternal]);
+  }, [canReadMessaging, user?.$id, chatRole, isInternal]);
 
   const loadInternalChatUsers = useCallback(async () => {
-    if (!isInternal || !user?.$id) {
+    if (!canReadMessaging || !isInternal || !user?.$id) {
       setInternalChatUsers([]);
       return [];
     }
@@ -222,7 +231,7 @@ export const ChatProvider = ({ children }) => {
     } finally {
       setLoadingInternalChatUsers(false);
     }
-  }, [isInternal, user?.$id]);
+  }, [canReadMessaging, isInternal, user?.$id]);
 
   const updateConversationStatus = useCallback(
     async (conversationId, nextStatus) => {
@@ -301,6 +310,7 @@ export const ChatProvider = ({ children }) => {
 
   const openConversation = useCallback(
     async (conversationId, options = {}) => {
+      if (!canReadMessaging) return;
       const { openChatBubble = true } = options;
       setActiveConversationId(conversationId);
       if (openChatBubble) {
@@ -330,7 +340,7 @@ export const ChatProvider = ({ children }) => {
         // Silent fail for mark-as-read
       }
     },
-    [chatRole, user?.$id],
+    [canReadMessaging, chatRole, user?.$id],
   );
 
   /* ── Start or resume a conversation from property ────── */
@@ -340,6 +350,9 @@ export const ChatProvider = ({ children }) => {
 
   const startConversation = useCallback(
     async ({ resourceId, resourceTitle, initialMessage, meta = {} }) => {
+      if (!canWriteMessaging) {
+        throw new Error("Messaging is disabled for this user.");
+      }
       if (!user?.$id) return null;
 
       // Guard: only verified clients can initiate
@@ -387,11 +400,14 @@ export const ChatProvider = ({ children }) => {
       await openConversation(conversation.$id);
       return conversation;
     },
-    [loadConversations, openConversation, user],
+    [canWriteMessaging, loadConversations, openConversation, user],
   );
 
   const startDirectConversation = useCallback(
     async ({ targetUserId, targetName }) => {
+      if (!canWriteMessaging) {
+        throw new Error("Messaging is disabled for this user.");
+      }
       if (!isInternal || !user?.$id) {
         throw new Error("Only internal users can start direct conversations.");
       }
@@ -422,13 +438,16 @@ export const ChatProvider = ({ children }) => {
       await openConversation(conversation.$id, { openChatBubble: false });
       return conversation;
     },
-    [isInternal, user, openConversation],
+    [canWriteMessaging, isInternal, user, openConversation],
   );
 
   /* ── Send a message ──────────────────────────────────── */
 
   const sendMessage = useCallback(
     async (body) => {
+      if (!canWriteMessaging) {
+        throw new Error("Messaging is disabled for this user.");
+      }
       if (!activeConversationId || !user?.$id || !body.trim()) return null;
 
       const normalizedConversationStatus = String(
@@ -517,14 +536,15 @@ export const ChatProvider = ({ children }) => {
 
       return message;
     },
-    [activeConversation, activeConversationId, user, chatRole],
+    [canWriteMessaging, activeConversation, activeConversationId, user, chatRole],
   );
 
   /* ── Toggle chat ─────────────────────────────────────── */
 
   const toggleChat = useCallback(() => {
+    if (!canReadMessaging) return;
     setIsChatOpen((prev) => !prev);
-  }, []);
+  }, [canReadMessaging]);
 
   const closeChat = useCallback(() => {
     setIsChatOpen(false);
@@ -542,7 +562,7 @@ export const ChatProvider = ({ children }) => {
   /* ── Real-time: conversations ────────────────────────── */
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!canReadMessaging) return;
     loadConversations();
     if (isInternal) {
       loadInternalChatUsers();
@@ -616,7 +636,7 @@ export const ChatProvider = ({ children }) => {
       }
     };
   }, [
-    isAuthenticated,
+    canReadMessaging,
     isInternal,
     user?.$id,
     loadConversations,
@@ -633,7 +653,7 @@ export const ChatProvider = ({ children }) => {
       unsubMessagesRef.current = null;
     }
 
-    if (!activeConversationId || !isAuthenticated) return;
+    if (!activeConversationId || !canReadMessaging) return;
 
     unsubMessagesRef.current = chatService.subscribeToMessages(
       activeConversationId,
@@ -743,7 +763,7 @@ export const ChatProvider = ({ children }) => {
     };
   }, [
     activeConversationId,
-    isAuthenticated,
+    canReadMessaging,
     user?.$id,
     chatRole,
     markPeerActive,
@@ -766,6 +786,8 @@ export const ChatProvider = ({ children }) => {
       totalUnread,
       chatRole,
       isAuthenticated,
+      canReadMessaging,
+      canWriteMessaging,
       isRestoringConversation,
       isUserRecentlyActive,
 
@@ -794,6 +816,8 @@ export const ChatProvider = ({ children }) => {
       totalUnread,
       chatRole,
       isAuthenticated,
+      canReadMessaging,
+      canWriteMessaging,
       isRestoringConversation,
       isUserRecentlyActive,
       loadConversations,

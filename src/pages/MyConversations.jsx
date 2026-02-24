@@ -39,6 +39,8 @@ const MyConversations = () => {
     chatRole,
     isRestoringConversation,
     isUserRecentlyActive,
+    canReadMessaging,
+    canWriteMessaging,
   } = useChat();
 
   const [searchParams] = useSearchParams();
@@ -286,7 +288,7 @@ const MyConversations = () => {
   const handleSend = async (e) => {
     e?.preventDefault();
     const text = input.trim();
-    if (!text || sending || isConversationClosed) return;
+    if (!canWriteMessaging || !text || sending || isConversationClosed) return;
     setInput("");
     setShowEmojiPicker(false);
     setSending(true);
@@ -313,7 +315,7 @@ const MyConversations = () => {
   };
 
   const toggleEmojiPicker = () => {
-    if (isConversationClosed) return;
+    if (isConversationClosed || !canWriteMessaging) return;
     setShowEmojiPicker((prev) => {
       const next = !prev;
       if (next) inputRef.current?.blur();
@@ -410,6 +412,10 @@ const MyConversations = () => {
 
   if (isInternalRole(user?.role)) {
     return <Navigate to={INTERNAL_ROUTES.conversations} replace />;
+  }
+
+  if (!canReadMessaging) {
+    return <Navigate to="/error/403" replace />;
   }
 
   /* ── Render ──────────────────────────────────────────── */
@@ -711,7 +717,7 @@ const MyConversations = () => {
                     disabled={isConversationClosed}
                     className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-                      isConversationClosed
+                      isConversationClosed || !canWriteMessaging
                         ? "cursor-not-allowed text-slate-300 dark:text-slate-600"
                         : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-300",
                     )}
@@ -726,25 +732,33 @@ const MyConversations = () => {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={
-                      isConversationClosed
+                      isConversationClosed || !canWriteMessaging
                         ? t("chat.messages.closedInputPlaceholder")
                         : t("chat.messages.inputPlaceholder")
                     }
                     rows={1}
-                    disabled={isConversationClosed}
+                    disabled={isConversationClosed || !canWriteMessaging}
                     className={cn(
                       "max-h-24 min-h-10 flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm outline-none transition",
-                      isConversationClosed
+                      isConversationClosed || !canWriteMessaging
                         ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
                         : "border-slate-200 bg-slate-50 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-cyan-400",
                     )}
                   />
                   <button
                     type="submit"
-                    disabled={!input.trim() || sending || isConversationClosed}
+                    disabled={
+                      !canWriteMessaging ||
+                      !input.trim() ||
+                      sending ||
+                      isConversationClosed
+                    }
                     className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition",
-                      input.trim() && !sending && !isConversationClosed
+                      input.trim() &&
+                        !sending &&
+                        !isConversationClosed &&
+                        canWriteMessaging
                         ? "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600"
                         : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600",
                     )}

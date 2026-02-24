@@ -4,6 +4,9 @@ import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { useChat } from "../../contexts/ChatContext";
+import { useAuth } from "../../hooks/useAuth";
+import { useInstanceModules } from "../../hooks/useInstanceModules";
+import { hasScope, isInternalRole } from "../../utils/roles";
 import { cn } from "../../utils/cn";
 import ChatWindow from "./ChatWindow";
 
@@ -12,11 +15,21 @@ import ChatWindow from "./ChatWindow";
  * Visible on all pages when user is authenticated, EXCEPT on conversation pages.
  */
 const ChatBubble = () => {
+  const Motion = motion;
   const { t } = useTranslation();
   const location = useLocation();
+  const { user } = useAuth();
+  const { isEnabled, loading: modulesLoading } = useInstanceModules();
   const { isChatOpen, toggleChat, closeChat, totalUnread, isAuthenticated } =
     useChat();
   const [hasFocus, setHasFocus] = useState(false);
+  const role = String(user?.role || "")
+    .trim()
+    .toLowerCase();
+  const isInternalUser = isInternalRole(role);
+  const canAccessMessaging =
+    isEnabled("module.messaging.realtime") &&
+    (!isInternalUser || hasScope(user, "messaging.read"));
 
   // Don't show floating chat on dedicated conversation pages
   const isOnConversationsPage =
@@ -46,6 +59,11 @@ const ChatBubble = () => {
     return () => window.removeEventListener("keydown", handleKey);
   }, [isChatOpen, hasFocus, closeChat]);
 
+  useEffect(() => {
+    if (!isChatOpen || canAccessMessaging) return;
+    closeChat();
+  }, [canAccessMessaging, closeChat, isChatOpen]);
+
   // Lock body scroll on mobile when chat is open (full-screen mode)
   useEffect(() => {
     if (!isChatOpen) return;
@@ -68,14 +86,21 @@ const ChatBubble = () => {
     };
   }, [isChatOpen]);
 
-  if (!isAuthenticated || isOnConversationsPage) return null;
+  if (
+    modulesLoading ||
+    !isAuthenticated ||
+    isOnConversationsPage ||
+    !canAccessMessaging
+  ) {
+    return null;
+  }
 
   return (
     <>
       {/* ── Chat Window (animated) ───────────────────── */}
       <AnimatePresence mode="wait">
         {isChatOpen && (
-          <motion.div
+          <Motion.div
             key="chat-window"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -92,7 +117,7 @@ const ChatBubble = () => {
             )}
           >
             <ChatWindow />
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
 
@@ -114,7 +139,7 @@ const ChatBubble = () => {
       >
         <AnimatePresence mode="wait">
           {isChatOpen ? (
-            <motion.span
+            <Motion.span
               key="close"
               initial={{ rotate: -90, opacity: 0 }}
               animate={{ rotate: 0, opacity: 1 }}
@@ -122,9 +147,9 @@ const ChatBubble = () => {
               transition={{ duration: 0.15 }}
             >
               <X size={22} />
-            </motion.span>
+            </Motion.span>
           ) : (
-            <motion.span
+            <Motion.span
               key="open"
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -132,7 +157,7 @@ const ChatBubble = () => {
               transition={{ duration: 0.15 }}
             >
               <MessageCircle size={22} />
-            </motion.span>
+            </Motion.span>
           )}
         </AnimatePresence>
 

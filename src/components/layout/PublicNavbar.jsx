@@ -25,6 +25,7 @@ import {
 } from "react-theme-switch-animation";
 import { cn } from "../../utils/cn";
 import { useAuth } from "../../hooks/useAuth";
+import { useInstanceModules } from "../../hooks/useInstanceModules";
 import { useUI } from "../../contexts/UIContext";
 import BrandLogo from "../common/BrandLogo";
 import UserDropdown from "../common/organisms/Navbar/UserDropdown";
@@ -37,6 +38,7 @@ const PublicNavbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { isEnabled } = useInstanceModules();
   const { theme, effectiveTheme, changeTheme, changeLanguage } = useUI();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,6 +64,8 @@ const PublicNavbar = () => {
     ? "en"
     : "es";
   const nextLanguage = languageCode === "es" ? "en" : "es";
+  const canChangeLanguage = isEnabled("module.preferences.locale");
+  const canChangeTheme = isEnabled("module.preferences.theme");
 
   const currentTheme =
     theme === "light" || theme === "dark" || theme === "system"
@@ -89,6 +93,7 @@ const PublicNavbar = () => {
 
   const handleThemeChange = useCallback(
     (themeValue) => {
+      if (!canChangeTheme) return;
       const willBeDark =
         themeValue === "dark" ||
         (themeValue === "system" &&
@@ -106,7 +111,7 @@ const PublicNavbar = () => {
 
       setIsThemeDropdownOpen(false);
     },
-    [changeTheme, isDarkMode, toggleSwitchTheme],
+    [canChangeTheme, changeTheme, isDarkMode, toggleSwitchTheme],
   );
 
   const nextThemeMobile =
@@ -117,8 +122,9 @@ const PublicNavbar = () => {
         : "system";
 
   const handleThemeCycleMobile = useCallback(() => {
+    if (!canChangeTheme) return;
     changeTheme(nextThemeMobile);
-  }, [changeTheme, nextThemeMobile]);
+  }, [canChangeTheme, changeTheme, nextThemeMobile]);
 
   const themes = useMemo(
     () => [
@@ -245,8 +251,9 @@ const PublicNavbar = () => {
   }, [logout, navigate]);
 
   const onToggleLanguage = useCallback(() => {
+    if (!canChangeLanguage) return;
     changeLanguage(nextLanguage);
-  }, [changeLanguage, nextLanguage]);
+  }, [canChangeLanguage, changeLanguage, nextLanguage]);
 
   const circleBase =
     "inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border transition-colors";
@@ -464,6 +471,7 @@ const PublicNavbar = () => {
 
             {/* ── Right controls ── */}
             <div className="hidden items-center gap-2 lg:flex">
+              {canChangeLanguage ? (
               <button
                 onClick={onToggleLanguage}
                 className={cn(
@@ -477,6 +485,7 @@ const PublicNavbar = () => {
                   {String(nextLanguage || "en").toUpperCase()}
                 </span>
               </button>
+              ) : null}
 
               <div className="relative" ref={themeDropdownRef}>
                 <button

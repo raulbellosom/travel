@@ -4,7 +4,12 @@ import { useTranslation } from "react-i18next";
 import { FileText, LogOut, ShieldCheck, UserCircle2 } from "lucide-react";
 import { INTERNAL_ROUTES } from "../../utils/internalRoutes";
 
-const DashboardUserDropdown = ({ user, onLogout, showIdentity = false }) => {
+const DashboardUserDropdown = ({
+  user,
+  onLogout,
+  showIdentity = false,
+  showProfile = true,
+}) => {
   const { t } = useTranslation();
   const location = useLocation();
   const rootRef = useRef(null);
@@ -49,11 +54,15 @@ const DashboardUserDropdown = ({ user, onLogout, showIdentity = false }) => {
   };
 
   const primaryMenuItems = [
-    {
-      to: INTERNAL_ROUTES.profile,
-      icon: UserCircle2,
-      label: t("navbar.userMenu.profile"),
-    },
+    ...(showProfile
+      ? [
+          {
+            to: INTERNAL_ROUTES.profile,
+            icon: UserCircle2,
+            label: t("navbar.userMenu.profile"),
+          },
+        ]
+      : []),
   ];
 
   const legalMenuItems = [

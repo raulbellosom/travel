@@ -463,7 +463,14 @@ const AppRoutes = () => {
                         path="root/modules"
                         element={<Navigate to="/app/root/instance" replace />}
                       />
-                      <Route path="profile" element={<AppProfile />} />
+                      <Route
+                        path="profile"
+                        element={
+                          <ScopeRoute scope="profile.read">
+                            <AppProfile />
+                          </ScopeRoute>
+                        }
+                      />
                       <Route
                         path="my-properties"
                         element={

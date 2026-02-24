@@ -30,6 +30,9 @@ import {
   sanitizePhoneLocalNumber,
   splitE164Phone,
 } from "../utils/phone";
+import { useInstanceModules } from "../hooks/useInstanceModules";
+import { hasScope, isInternalRole } from "../utils/roles";
+import { isScopeAllowedByModules } from "../utils/moduleAccess";
 
 const PROFILE_TEXT_FIELDS = ["firstName", "lastName"];
 const PROFILE_EDIT_KEYS = [
@@ -152,6 +155,7 @@ const InfoField = ({ label, value, icon: Icon, empty }) => (
 const Profile = ({ mode = "client" }) => {
   const { t, i18n } = useTranslation();
   const isInternalPanel = mode === "internal";
+  const { isEnabled } = useInstanceModules();
   const { showToast } = useToast();
   const {
     user,
@@ -165,6 +169,18 @@ const Profile = ({ mode = "client" }) => {
   } = useAuth();
 
   const navigate = useNavigate();
+  const role = String(user?.role || "")
+    .trim()
+    .toLowerCase();
+  const isInternalUser = isInternalRole(role);
+  const canAccessScope = (scope) =>
+    hasScope(user, scope) && isScopeAllowedByModules(scope, isEnabled);
+  const canEditProfile =
+    !isInternalPanel || !isInternalUser || canAccessScope("profile.write");
+  const canEditPreferences =
+    !isInternalPanel ||
+    !isInternalUser ||
+    canAccessScope("preferences.write");
 
   const [sendingReset, setSendingReset] = useState(false);
 
@@ -359,6 +375,7 @@ const Profile = ({ mode = "client" }) => {
 
   const onSaveProfile = async (e) => {
     e.preventDefault();
+    if (!canEditProfile) return;
     if (!hasProfileChanges) return;
 
     if (phoneValidationCode !== PHONE_VALIDATION_CODES.NONE) {
@@ -421,6 +438,7 @@ const Profile = ({ mode = "client" }) => {
 
   const onSavePreferences = async (e) => {
     e.preventDefault();
+    if (!canEditPreferences) return;
     if (!hasPreferencesChanges) return;
     const nextPreferencesPatch = {
       theme: preferencesForm.theme,
@@ -449,6 +467,7 @@ const Profile = ({ mode = "client" }) => {
   };
 
   const onAvatarChange = async (e) => {
+    if (!canEditProfile) return;
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -479,6 +498,7 @@ const Profile = ({ mode = "client" }) => {
   };
 
   const onRemoveAvatar = async () => {
+    if (!canEditProfile) return;
     setShowAvatarMenu(false);
     setRemovingAvatar(true);
     try {
@@ -530,22 +550,27 @@ const Profile = ({ mode = "client" }) => {
         )}
       </div>
 
-      <button
-        ref={avatarMenuRef}
-        type="button"
-        onClick={() => {
-          const rect = avatarMenuRef.current?.getBoundingClientRect();
-          if (rect) setAvatarMenuPos({ top: rect.bottom + 8, left: rect.left });
-          setShowAvatarMenu((v) => !v);
-        }}
-        disabled={avatarBusy}
-        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-cyan-500 text-white shadow-md transition hover:bg-cyan-400 disabled:opacity-60 dark:border-slate-800"
-        aria-label="Opciones de avatar"
-      >
-        <Camera size={13} />
-      </button>
+      {canEditProfile ? (
+        <button
+          ref={avatarMenuRef}
+          type="button"
+          onClick={() => {
+            const rect = avatarMenuRef.current?.getBoundingClientRect();
+            if (rect) {
+              setAvatarMenuPos({ top: rect.bottom + 8, left: rect.left });
+            }
+            setShowAvatarMenu((v) => !v);
+          }}
+          disabled={avatarBusy}
+          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-cyan-500 text-white shadow-md transition hover:bg-cyan-400 disabled:opacity-60 dark:border-slate-800"
+          aria-label="Opciones de avatar"
+        >
+          <Camera size={13} />
+        </button>
+      ) : null}
 
-      {showAvatarMenu &&
+      {canEditProfile &&
+        showAvatarMenu &&
         createPortal(
           <div
             ref={avatarDropdownRef}
@@ -585,7 +610,7 @@ const Profile = ({ mode = "client" }) => {
         accept="image/*"
         className="hidden"
         onChange={onAvatarChange}
-        disabled={avatarBusy}
+        disabled={avatarBusy || !canEditProfile}
       />
     </div>
   );
@@ -631,7 +656,7 @@ const Profile = ({ mode = "client" }) => {
                   ? t("profilePage.emailVerified")
                   : t("profilePage.emailNotVerified")}
               </span>
-              {!isEditingProfile && (
+              {!isEditingProfile && canEditProfile && (
                 <button
                   type="button"
                   onClick={() => setIsEditingProfile(true)}
@@ -647,7 +672,7 @@ const Profile = ({ mode = "client" }) => {
       </div>
 
       {/* Personal info – view or edit */}
-      {isEditingProfile ? (
+      {isEditingProfile && canEditProfile ? (
         <form
           onSubmit={onSaveProfile}
           className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
@@ -905,6 +930,7 @@ const Profile = ({ mode = "client" }) => {
                 setPreferencesForm((prev) => ({ ...prev, theme: v }))
               }
               options={themeOptions}
+              disabled={!canEditPreferences}
               className={inputClass}
             />
           </label>
@@ -918,6 +944,7 @@ const Profile = ({ mode = "client" }) => {
                 setPreferencesForm((prev) => ({ ...prev, locale: v }))
               }
               options={localeOptions}
+              disabled={!canEditPreferences}
               className={inputClass}
             />
           </label>
@@ -926,7 +953,9 @@ const Profile = ({ mode = "client" }) => {
         <div className="mt-6 flex justify-end">
           <button
             type="submit"
-            disabled={!hasPreferencesChanges || savingPreferences}
+            disabled={
+              !canEditPreferences || !hasPreferencesChanges || savingPreferences
+            }
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-cyan-500 to-sky-600 px-5 text-sm font-semibold text-white transition hover:from-cyan-400 hover:to-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {savingPreferences && (

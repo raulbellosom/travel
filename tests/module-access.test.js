@@ -70,3 +70,21 @@ test("filters scopes to enabled-module envelope", () => {
   assert.deepEqual(filtered, ["resources.read", "messaging.read"]);
 });
 
+test("profile and preference scopes require module.staff", () => {
+  const isEnabledStaff = createIsEnabled(["module.staff"]);
+  const isEnabledNone = createIsEnabled([]);
+
+  assert.equal(isScopeAllowedByModules("profile.read", isEnabledStaff), true);
+  assert.equal(isScopeAllowedByModules("profile.write", isEnabledStaff), true);
+  assert.equal(
+    isScopeAllowedByModules("preferences.write", isEnabledStaff),
+    true,
+  );
+
+  assert.equal(isScopeAllowedByModules("profile.read", isEnabledNone), false);
+  assert.equal(isScopeAllowedByModules("profile.write", isEnabledNone), false);
+  assert.equal(
+    isScopeAllowedByModules("preferences.write", isEnabledNone),
+    false,
+  );
+});
