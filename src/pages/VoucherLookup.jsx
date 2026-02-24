@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -80,7 +81,7 @@ const VoucherLookup = () => {
   if (loading) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-8">
-        <p className="text-sm text-slate-600 dark:text-slate-300">{t("voucherPage.loading")}</p>
+        <LoadingState text={t("voucherPage.loading")} />
       </section>
     );
   }

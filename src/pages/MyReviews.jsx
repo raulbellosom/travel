@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MessageSquareText, Star } from "lucide-react";
@@ -120,11 +121,7 @@ const MyReviews = () => {
         </article>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("myReviewsPage.loading")}
-        </p>
-      ) : null}
+      {loading ? <LoadingState text={t("myReviewsPage.loading")} /> : null}
 
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">

@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -928,7 +929,7 @@ const Team = () => {
           <div className="space-y-3 p-4 sm:p-5">
             <p className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
               <Loader2 size={14} className="animate-spin" />
-              {t("teamPage.loading")}
+              <LoadingState text={t("teamPage.loading")} />
             </p>
             <div className="space-y-2">
               {[1, 2, 3, 4].map((row) => (

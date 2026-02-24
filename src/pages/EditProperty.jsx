@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -141,9 +142,7 @@ const EditProperty = () => {
 
   if (loading) {
     return (
-      <p className="text-sm text-slate-600 dark:text-slate-300">
-        {t("editPropertyPage.loading")}
-      </p>
+      <LoadingState text={t("editPropertyPage.loading")} />
     );
   }
 

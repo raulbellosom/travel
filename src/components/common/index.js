@@ -28,6 +28,7 @@ export { default as SearchBar } from "./molecules/SearchBar";
 export { default as Combobox } from "./molecules/Combobox";
 export { default as StatsCardsRow } from "./molecules/StatsCardsRow";
 export { default as TablePagination } from "./molecules/TablePagination";
+export { default as LoadingState } from "./molecules/LoadingState";
 
 // === ORGANISMS ===
 export { default as ListingCard } from "./organisms/ListingCard";

@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -437,11 +438,7 @@ const RootAmenitiesPanel = () => {
           />
         </div>
 
-        {loading ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {t("rootAmenitiesPage.loading")}
-          </p>
-        ) : null}
+        {loading ? <LoadingState text={t("rootAmenitiesPage.loading")} /> : null}
 
         {!loading && filteredAmenities.length === 0 ? (
           <EmptyStatePanel
@@ -603,11 +600,7 @@ const RootAmenitiesPanel = () => {
         }
       >
         <div className="space-y-4">
-          {seedPreviewLoading ? (
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              {t("rootAmenitiesPage.seedModal.loading")}
-            </p>
-          ) : null}
+          {seedPreviewLoading ? <LoadingState text={t("rootAmenitiesPage.seedModal.loading")} /> : null}
 
           {!seedPreviewLoading && seedPlan ? (
             <>

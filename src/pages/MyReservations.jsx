@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CalendarDays, CreditCard, MapPin, Users } from "lucide-react";
@@ -146,11 +147,7 @@ const MyReservations = () => {
         </article>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("myReservationsPage.loading")}
-        </p>
-      ) : null}
+      {loading ? <LoadingState text={t("myReservationsPage.loading")} /> : null}
 
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">

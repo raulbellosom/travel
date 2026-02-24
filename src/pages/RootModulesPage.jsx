@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Save, SlidersHorizontal, ShieldCheck, X } from "lucide-react";
@@ -121,11 +122,7 @@ const RootModulesPage = () => {
         </p>
       </header>
 
-      {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("common.loading")}
-        </p>
-      ) : null}
+      {loading ? <LoadingState text={t("common.loading")} /> : null}
 
       {error && !dismissedError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">

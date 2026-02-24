@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -188,11 +189,7 @@ const Clients = () => {
         </label>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("clientsPage.loading", { defaultValue: "Cargando clientes..." })}
-        </p>
-      ) : null}
+      {loading ? <LoadingState text={t("clientsPage.loading")} /> : null}
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">

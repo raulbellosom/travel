@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import {
   useEffect,
   useMemo,
@@ -1553,7 +1554,7 @@ const PropertyDetail = () => {
                   <Suspense
                     fallback={
                       <div className="flex h-80 items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-slate-800">
-                        {t("client:common.loading")}
+                        <LoadingState text={t("client:common.loading")} />
                       </div>
                     }
                   >

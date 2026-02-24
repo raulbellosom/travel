@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -1057,7 +1058,7 @@ const SearchPage = () => {
               <div className="flex min-h-[400px] items-center justify-center">
                 <LoadingSpinner
                   size="lg"
-                  message={t("client:search.loadingResults")}
+                  message=<LoadingState text={t("client:search.loadingResults")} />
                 />
               </div>
             ) : error ? (

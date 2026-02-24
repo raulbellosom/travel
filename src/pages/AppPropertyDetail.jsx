@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import {
   useCallback,
   useEffect,
@@ -343,7 +344,7 @@ const AppPropertyDetail = () => {
       <div className="flex items-center justify-center p-12">
         <p className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
           <Loader2 size={16} className="animate-spin text-cyan-500" />
-          {t("appPropertyDetailPage.loading")}
+          <LoadingState text={t("appPropertyDetailPage.loading")} />
         </p>
       </div>
     );
@@ -734,7 +735,7 @@ const AppPropertyDetail = () => {
                 <Suspense
                   fallback={
                     <div className="flex h-50 items-center justify-center rounded-xl bg-slate-100 text-sm text-slate-500 dark:bg-slate-800">
-                      {t("common.loading")}
+                      <LoadingState text={t("common.loading")} />
                     </div>
                   }
                 >
@@ -984,7 +985,7 @@ const AppPropertyDetail = () => {
               {staffLoading ? (
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Loader2 size={14} className="animate-spin" />
-                  {t("common.loading", { defaultValue: "Cargando..." })}
+                  <LoadingState text={t("common.loading")} />
                 </div>
               ) : staffList.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">

@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Heart, Loader2 } from "lucide-react";
@@ -97,7 +98,7 @@ const MyFavorites = () => {
       {loading && (
         <div className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
           <Loader2 className="h-4 w-4 animate-spin" />
-          {t("client:common.loading", { defaultValue: "Cargando..." })}
+          <LoadingState text={t("client:common.loading")} />
         </div>
       )}
 

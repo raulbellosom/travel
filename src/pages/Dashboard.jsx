@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import LoadingState from "../components/common/molecules/LoadingState";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -205,11 +206,7 @@ const Dashboard = () => {
         </p>
       </header>
 
-      {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("dashboardPage.loading")}
-        </p>
-      ) : null}
+      {loading ? <LoadingState text={t("dashboardPage.loading")} /> : null}
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
@@ -238,7 +235,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="h-72 w-full mt-2">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="99%" height={280}>
                   <AreaChart
                     data={viewDataMock}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
@@ -345,7 +342,7 @@ const Dashboard = () => {
                 </h2>
               </div>
               <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="99%" height={250}>
                   <PieChart>
                     <Pie
                       data={leadsPieData}

@@ -1,3 +1,4 @@
+import LoadingState from "../components/common/molecules/LoadingState";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
@@ -703,11 +704,7 @@ const MyProperties = () => {
       />
 
       {/* Loading */}
-      {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("myResourcesPage.loading")}
-        </p>
-      ) : null}
+      {loading ? <LoadingState text={t("myResourcesPage.loading")} /> : null}
 
       {/* Error */}
       {error ? (
