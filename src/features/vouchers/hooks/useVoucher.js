@@ -1,5 +1,10 @@
 /**
  * useVoucher – fetches a single voucher by code, plus its reservation & resource.
+ *
+ * Offline support:
+ *   On successful fetch → caches {voucher, reservation, resource} in localStorage.
+ *   On network failure  → serves cached data when available & sets isOffline=true.
+ *   Cache TTL: 30 days per voucher code.
  */
 import { useEffect, useState, useCallback } from "react";
 import { databases, Query } from "../../../api/appwriteClient";
@@ -9,12 +14,46 @@ import { getErrorMessage } from "../../../utils/errors";
 const db = env.appwrite.databaseId;
 const col = env.appwrite.collections;
 
+/* ── localStorage helpers ─────────────────────────────────────────────── */
+const CACHE_PREFIX = "inmobo_voucher_";
+const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function cacheKey(code) {
+  return `${CACHE_PREFIX}${String(code).trim().toUpperCase()}`;
+}
+
+function writeCache(code, data) {
+  try {
+    const payload = { ts: Date.now(), ...data };
+    localStorage.setItem(cacheKey(code), JSON.stringify(payload));
+  } catch {
+    /* Storage full or unavailable — silently ignore */
+  }
+}
+
+function readCache(code) {
+  try {
+    const raw = localStorage.getItem(cacheKey(code));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.ts > CACHE_TTL) {
+      localStorage.removeItem(cacheKey(code));
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/* ── Hook ─────────────────────────────────────────────────────────────── */
 export function useVoucher(code) {
   const [voucher, setVoucher] = useState(null);
   const [reservation, setReservation] = useState(null);
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isOffline, setIsOffline] = useState(false);
 
   const load = useCallback(async () => {
     if (!code) {
@@ -25,6 +64,7 @@ export function useVoucher(code) {
 
     setLoading(true);
     setError("");
+    setIsOffline(false);
 
     try {
       const vRes = await databases.listDocuments({
@@ -61,7 +101,27 @@ export function useVoucher(code) {
       setVoucher(doc);
       setReservation(resDoc);
       setResource(resResource);
+
+      // Persist to cache for offline use
+      writeCache(code, {
+        voucher: doc,
+        reservation: resDoc,
+        resource: resResource,
+      });
     } catch (err) {
+      // If network error, try to serve from cache
+      if (err.message !== "NOT_FOUND") {
+        const cached = readCache(code);
+        if (cached?.voucher) {
+          setVoucher(cached.voucher);
+          setReservation(cached.reservation);
+          setResource(cached.resource);
+          setIsOffline(true);
+          setLoading(false);
+          return;
+        }
+      }
+
       setError(
         err.message === "NOT_FOUND"
           ? "NOT_FOUND"
@@ -82,7 +142,15 @@ export function useVoucher(code) {
     };
   }, [load]);
 
-  return { voucher, reservation, resource, loading, error, reload: load };
+  return {
+    voucher,
+    reservation,
+    resource,
+    loading,
+    error,
+    isOffline,
+    reload: load,
+  };
 }
 
 export default useVoucher;

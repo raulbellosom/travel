@@ -28,7 +28,6 @@ import {
   Building2,
   CreditCard,
   QrCode,
-  Wallet,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { ReservationStatusBadge } from "../../reservations/components/ReservationStatusBadge";
@@ -438,9 +437,6 @@ const VoucherTicket = ({ voucher, reservation, resource }) => {
           disabled={exporting}
         />
       </div>
-
-      {/* ══════════════ WALLET SECTION ══════════════ */}
-      <WalletSection t={t} />
     </div>
   );
 };
@@ -459,72 +455,6 @@ const ActionBtn = ({ icon: Icon, label, onClick, disabled = false }) => (
   >
     <Icon className="h-3.5 w-3.5" aria-hidden="true" />
     <span className="hidden sm:inline">{label}</span>
-  </button>
-);
-
-/* ── Wallet section — prepared for future Apple/Google Wallet ──────────── */
-const WalletSection = ({ t }) => (
-  <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700/40 bg-slate-50 dark:bg-slate-800/40 p-4">
-    <div className="flex items-center gap-2 mb-3">
-      <Wallet className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-        {t("voucherPage.wallet.title", { defaultValue: "Digital Wallet" })}
-      </h3>
-    </div>
-
-    <div className="space-y-2">
-      {/* Apple Wallet — coming soon */}
-      <WalletButton
-        label={t("voucherPage.wallet.apple", {
-          defaultValue: "Add to Apple Wallet",
-        })}
-        sublabel={t("voucherPage.wallet.comingSoon", {
-          defaultValue: "Coming soon",
-        })}
-        disabled
-      />
-      {/* Google Wallet — coming soon */}
-      <WalletButton
-        label={t("voucherPage.wallet.google", {
-          defaultValue: "Save to Google Wallet",
-        })}
-        sublabel={t("voucherPage.wallet.comingSoon", {
-          defaultValue: "Coming soon",
-        })}
-        disabled
-      />
-      {/* PWA install hint */}
-      <div className="mt-2 flex items-start gap-2 rounded-xl bg-slate-100 dark:bg-slate-700/30 px-3 py-2.5">
-        <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
-        <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-          {t("voucherPage.wallet.pwaHint", {
-            defaultValue:
-              "You can add this app to your home screen for quick access to your vouchers.",
-          })}
-        </p>
-      </div>
-    </div>
-  </div>
-);
-
-const WalletButton = ({ label, sublabel, disabled }) => (
-  <button
-    type="button"
-    disabled={disabled}
-    className="flex w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-600/40
-               bg-white dark:bg-slate-800/60 px-4 py-3 text-left transition-colors
-               disabled:cursor-not-allowed disabled:opacity-50
-               [@media(hover:hover)]:hover:bg-slate-50 dark:[@media(hover:hover)]:hover:bg-slate-700/60"
-    aria-label={label}
-  >
-    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-      {label}
-    </span>
-    {sublabel && (
-      <span className="rounded-full bg-cyan-900/40 px-2 py-0.5 text-[10px] font-medium text-cyan-300">
-        {sublabel}
-      </span>
-    )}
   </button>
 );
 

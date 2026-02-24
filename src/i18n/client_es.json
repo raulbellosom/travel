@@ -724,16 +724,43 @@
     "subtitle": "Gestiona las reseñas que has dejado en las propiedades.",
     "loading": "Cargando reseñas...",
     "empty": "No has escrito reseñas aún",
+    "emptyDesc": "Cuando dejes una reseña, aparecerá aquí.",
+    "noResults": "Ninguna reseña coincide con tu filtro.",
+    "searchPlaceholder": "Buscar por propiedad, titulo, comentario...",
+    "footerHint": "Mostrando {{count}} reseña(s)",
     "errors": {
-      "load": "Error al cargar reseñas."
+      "load": "Error al cargar reseñas.",
+      "submit": "No se pudo enviar tu reseña."
     },
     "stats": {
       "total": "Total",
-      "average": "Calificación Promedio"
+      "average": "Promedio",
+      "pending": "Pendientes",
+      "published": "Publicadas",
+      "rejected": "Rechazadas"
     },
     "labels": {
       "property": "Propiedad",
       "created": "Publicado el"
+    },
+    "actions": {
+      "writeReview": "Escribir reseña",
+      "readMore": "Leer más",
+      "readLess": "Leer menos",
+      "clearFilters": "Limpiar filtros",
+      "explore": "Explorar propiedades"
+    },
+    "writeReview": {
+      "title": "Escribir una reseña",
+      "selectReservation": "Seleccionar reservación",
+      "choosePlaceholder": "— Elige una reservación —",
+      "rating": "Calificación",
+      "titleLabel": "Título (opcional)",
+      "titlePlaceholder": "Resume tu experiencia...",
+      "comment": "Tu reseña",
+      "commentPlaceholder": "Comparte tu experiencia (mínimo 10 caracteres)...",
+      "submit": "Enviar reseña",
+      "submitting": "Enviando..."
     }
   },
   "reserveProperty": {

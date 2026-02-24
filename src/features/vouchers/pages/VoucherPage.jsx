@@ -14,7 +14,7 @@ import { useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { ArrowLeft, Ticket, Home } from "lucide-react";
+import { ArrowLeft, Ticket, Home, WifiOff } from "lucide-react";
 import SkeletonLoader from "../../../components/common/molecules/SkeletonLoader";
 import { usePageSeo } from "../../../hooks/usePageSeo";
 import { useAuth } from "../../../hooks/useAuth";
@@ -102,7 +102,8 @@ const VoucherPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { voucher, reservation, resource, loading, error } = useVoucher(code);
+  const { voucher, reservation, resource, loading, error, isOffline } =
+    useVoucher(code);
 
   const {
     vouchers: historyVouchers,
@@ -214,7 +215,9 @@ const VoucherPage = () => {
                            transition-colors [@media(hover:hover)]:hover:bg-cyan-500"
               >
                 <ArrowLeft className="h-4 w-4" />
-                {t("voucherPage.breadcrumb.myReservations", { defaultValue: "My reservations" })}
+                {t("voucherPage.breadcrumb.myReservations", {
+                  defaultValue: "My reservations",
+                })}
               </Link>
             </div>
 
@@ -242,6 +245,17 @@ const VoucherPage = () => {
     <div className="min-h-screen pt-20 pb-12 sm:pt-24">
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <PageHeader t={t} code={code} />
+
+        {/* Offline indicator */}
+        {isOffline && (
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30 px-4 py-2.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+            <WifiOff className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {t("voucherPage.offlineBanner", {
+              defaultValue:
+                "Showing cached version — you appear to be offline.",
+            })}
+          </div>
+        )}
 
         {/* 2-column on lg, stacked on mobile */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">

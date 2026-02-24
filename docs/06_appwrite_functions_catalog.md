@@ -124,11 +124,17 @@ Errores estandar:
 
 ## 4.12 `create-review-public`
 
-- POST autenticado (`client` verificado).
+- POST autenticado (`client` verificado, requiere `x-appwrite-user-id`).
+- Solo clientes con reservacion completada/confirmada y pagada pueden crear resenas.
+- Valida: `resourceId`, `reservationId`, `rating` (1-5), `comment` (min 10 chars), `title` (opcional).
+- Verifica que el usuario autenticado sea el huesped de la reservacion.
+- Impide duplicados: una resena por reservacion.
+- Crea con `status: "pending"`, permisos para autor y dueño del recurso.
 
 ## 4.13 `moderate-review`
 
 - Requiere scope `reviews.moderate`.
+- Cambia status de resena a `published` o `rejected`.
 
 ## 4.14 `staff-user-management`
 

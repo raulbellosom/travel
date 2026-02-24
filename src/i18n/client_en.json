@@ -724,16 +724,43 @@
     "subtitle": "Manage the reviews you have left on properties.",
     "loading": "Loading reviews...",
     "empty": "No reviews written yet",
+    "emptyDesc": "When you leave a review, it will appear here.",
+    "noResults": "No reviews match your filter.",
+    "searchPlaceholder": "Search by property, title, comment...",
+    "footerHint": "Showing {{count}} review(s)",
     "errors": {
-      "load": "Error loading reviews."
+      "load": "Error loading reviews.",
+      "submit": "Could not submit your review."
     },
     "stats": {
       "total": "Total",
-      "average": "Average Rating"
+      "average": "Average",
+      "pending": "Pending",
+      "published": "Published",
+      "rejected": "Rejected"
     },
     "labels": {
       "property": "Property",
       "created": "Posted on"
+    },
+    "actions": {
+      "writeReview": "Write a review",
+      "readMore": "Read more",
+      "readLess": "Read less",
+      "clearFilters": "Clear filters",
+      "explore": "Explore properties"
+    },
+    "writeReview": {
+      "title": "Write a review",
+      "selectReservation": "Select reservation",
+      "choosePlaceholder": "— Choose a reservation —",
+      "rating": "Rating",
+      "titleLabel": "Title (optional)",
+      "titlePlaceholder": "Summarize your experience...",
+      "comment": "Your review",
+      "commentPlaceholder": "Share your experience (at least 10 characters)...",
+      "submit": "Submit review",
+      "submitting": "Submitting..."
     }
   },
   "reserveProperty": {

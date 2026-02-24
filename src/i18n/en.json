@@ -1251,16 +1251,43 @@
     "subtitle": "History of reviews submitted from your account.",
     "loading": "Loading reviews...",
     "empty": "You have not published reviews yet.",
+    "emptyDesc": "When you leave a review, it will appear here.",
+    "noResults": "No reviews match your filter.",
+    "searchPlaceholder": "Search by property, title, comment...",
+    "footerHint": "Showing {{count}} review(s)",
     "stats": {
-      "total": "Total reviews",
-      "average": "Average rating"
+      "total": "Total",
+      "average": "Average",
+      "pending": "Pending",
+      "published": "Published",
+      "rejected": "Rejected"
     },
     "labels": {
       "property": "Property",
       "created": "Created"
     },
+    "actions": {
+      "writeReview": "Write a review",
+      "readMore": "Read more",
+      "readLess": "Read less",
+      "clearFilters": "Clear filters",
+      "explore": "Explore properties"
+    },
+    "writeReview": {
+      "title": "Write a review",
+      "selectReservation": "Select reservation",
+      "choosePlaceholder": "— Choose a reservation —",
+      "rating": "Rating",
+      "titleLabel": "Title (optional)",
+      "titlePlaceholder": "Summarize your experience...",
+      "comment": "Your review",
+      "commentPlaceholder": "Share your experience (at least 10 characters)...",
+      "submit": "Submit review",
+      "submitting": "Submitting..."
+    },
     "errors": {
-      "load": "Could not load your reviews."
+      "load": "Could not load your reviews.",
+      "submit": "Could not submit your review."
     }
   },
   "privacyPage": {
@@ -2196,6 +2223,7 @@
     "title": "Reservation voucher",
     "subtitle": "Review official details of your confirmed reservation.",
     "loading": "Looking up voucher...",
+    "offlineBanner": "Showing cached version \u2014 you appear to be offline.",
     "breadcrumb": {
       "home": "Home",
       "myReservations": "My reservations",

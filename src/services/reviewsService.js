@@ -72,4 +72,18 @@ export const reviewsService = {
       data: patch,
     });
   },
+
+  /**
+   * Submit a new review for a completed reservation.
+   * Requires authenticated user (client role).
+   * @param {{ resourceId: string, reservationId: string, rating: number, comment: string, title?: string }} data
+   */
+  async createReview(data) {
+    ensureAppwriteConfigured();
+    const functionId = env.appwrite.functions.createReview;
+    if (!functionId) {
+      throw new Error("Review creation function is not configured");
+    }
+    return executeJsonFunction(functionId, data);
+  },
 };

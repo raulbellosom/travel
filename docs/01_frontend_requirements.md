@@ -105,6 +105,8 @@ Privadas:
 - `/app/reviews`
 - `/app/team`
 - `/perfil`
+- `/mis-resenas` / `/my-reviews` (client)
+- `/mis-reservas` / `/my-reservations` (client)
 
 Root oculta:
 
@@ -146,7 +148,14 @@ Root oculta:
 
 ## 8.5 Reviews
 
-- Moderacion (`pending/published/rejected`).
+- Moderacion admin (`pending/published/rejected`) en `/app/reviews`.
+- Vista cliente "Mis reseñas" (`/mis-resenas` / `/my-reviews`):
+  - Listado de reseñas propias con filtros por status.
+  - Estadisticas: total, promedio, conteo por status.
+  - Barra de busqueda.
+  - Formulario inline para escribir reseña (solo reservaciones elegibles: completadas/confirmadas + pagadas, sin reseña previa).
+  - Cards animados con accent line por status, expand/collapse comentarios largos.
+  - Diseño responsive mobile-first consistente con MyReservations.
 
 ## 8.6 Staff
 

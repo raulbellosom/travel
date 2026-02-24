@@ -1251,16 +1251,43 @@
     "subtitle": "Historial de reseñas enviadas desde tu cuenta.",
     "loading": "Cargando reseñas...",
     "empty": "Aun no has publicado reseñas.",
+    "emptyDesc": "Cuando dejes una reseña, aparecerá aquí.",
+    "noResults": "Ninguna reseña coincide con tu filtro.",
+    "searchPlaceholder": "Buscar por propiedad, titulo, comentario...",
+    "footerHint": "Mostrando {{count}} reseña(s)",
     "stats": {
-      "total": "Total de reseñas",
-      "average": "Promedio de calificacion"
+      "total": "Total",
+      "average": "Promedio",
+      "pending": "Pendientes",
+      "published": "Publicadas",
+      "rejected": "Rechazadas"
     },
     "labels": {
       "property": "Propiedad",
       "created": "Creada"
     },
+    "actions": {
+      "writeReview": "Escribir reseña",
+      "readMore": "Leer más",
+      "readLess": "Leer menos",
+      "clearFilters": "Limpiar filtros",
+      "explore": "Explorar propiedades"
+    },
+    "writeReview": {
+      "title": "Escribir una reseña",
+      "selectReservation": "Seleccionar reservación",
+      "choosePlaceholder": "— Elige una reservación —",
+      "rating": "Calificación",
+      "titleLabel": "Título (opcional)",
+      "titlePlaceholder": "Resume tu experiencia...",
+      "comment": "Tu reseña",
+      "commentPlaceholder": "Comparte tu experiencia (mínimo 10 caracteres)...",
+      "submit": "Enviar reseña",
+      "submitting": "Enviando..."
+    },
     "errors": {
-      "load": "No se pudieron cargar tus reseñas."
+      "load": "No se pudieron cargar tus reseñas.",
+      "submit": "No se pudo enviar tu reseña."
     }
   },
   "privacyPage": {
@@ -2196,6 +2223,7 @@
     "title": "Recibo de reserva",
     "subtitle": "Consulta la informacion oficial de tu reserva confirmada.",
     "loading": "Buscando recibo...",
+    "offlineBanner": "Mostrando version guardada \u2014 parece que no tienes conexion.",
     "breadcrumb": {
       "home": "Inicio",
       "myReservations": "Mis reservas",

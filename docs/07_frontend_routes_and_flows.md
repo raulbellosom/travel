@@ -62,6 +62,10 @@ Compatibilidad:
 | `/app/team` | `ScopeRoute` | `staff.manage` |
 | `/perfil` | `ProtectedRoute` | cualquier auth |
 | `/mis-favoritos` | `ProtectedRoute` | cualquier auth |
+| `/mis-resenas` | `ProtectedRoute` | cualquier auth (client) |
+| `/my-reviews` | `ProtectedRoute` | cualquier auth (client) |
+| `/mis-reservas` | `ProtectedRoute` | cualquier auth (client) |
+| `/my-reservations` | `ProtectedRoute` | cualquier auth (client) |
 
 ---
 
