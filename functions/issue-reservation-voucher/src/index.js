@@ -15,10 +15,13 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  reservationsCollectionId: getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
+  reservationsCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   reservationVouchersCollectionId:
-    getEnv("APPWRITE_COLLECTION_RESERVATION_VOUCHERS_ID") || "reservation_vouchers",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+    getEnv("APPWRITE_COLLECTION_RESERVATION_VOUCHERS_ID") ||
+    "reservation_vouchers",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
   appBaseUrl: getEnv("APP_BASE_URL") || "http://localhost:5173",
 });
 
@@ -122,7 +125,8 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const paid = normalize(reservation.paymentStatus, 20).toLowerCase() === "paid";
+    const paid =
+      normalize(reservation.paymentStatus, 20).toLowerCase() === "paid";
     const validStatus = ["confirmed", "completed"].includes(
       normalize(reservation.status, 20).toLowerCase(),
     );
@@ -167,6 +171,10 @@ export default async ({ req, res, log, error }) => {
       ID.unique(),
       {
         reservationId,
+        resourceId: normalize(
+          reservation.resourceId || reservation.propertyId,
+          64,
+        ),
         propertyOwnerId: reservation.propertyOwnerId,
         voucherCode,
         voucherUrl,

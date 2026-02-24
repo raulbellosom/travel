@@ -66,7 +66,8 @@ const ReservationCard = ({
 
   const status = reservation.status || "";
   const canConfirm = canWrite && canConfirmReservation(status);
-  const canMarkPaid = canWrite && canMarkPaidReservation(status);
+  const canMarkPaid =
+    canWrite && canMarkPaidReservation(status, reservation.paymentStatus);
   const canCancel = canWrite && canCancelReservation(status);
 
   // Determine if swipe panels should be available

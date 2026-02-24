@@ -61,6 +61,9 @@ const ReservationNewPage = lazy(
 const ReservationDetailPage = lazy(
   () => import("../features/reservations/pages/ReservationDetailPage"),
 );
+const ReservationEditPage = lazy(
+  () => import("../features/reservations/pages/ReservationEditPage"),
+);
 const AppCalendar = lazy(() => import("../pages/AppCalendar"));
 const AppPayments = lazy(() => import("../pages/AppPayments"));
 const AppReviews = lazy(() => import("../pages/AppReviews"));
@@ -410,6 +413,14 @@ const AppRoutes = () => {
                         element={
                           <ScopeRoute scope="reservations.read">
                             <ReservationDetailPage />
+                          </ScopeRoute>
+                        }
+                      />
+                      <Route
+                        path="reservations/:id/edit"
+                        element={
+                          <ScopeRoute scope="reservations.write">
+                            <ReservationEditPage />
                           </ScopeRoute>
                         }
                       />

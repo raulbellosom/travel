@@ -76,7 +76,7 @@ const ReservationActionsMenu = ({
         },
         onEdit: (id) => {
           close();
-          navigate(`${basePath}/${id}?edit=true`);
+          navigate(`${basePath}/${id}/edit`);
         },
         onConfirm: (id) => {
           close();

@@ -208,8 +208,8 @@ export function getReservationActions(reservation, opts = {}) {
 export const canConfirmReservation = (status) =>
   ["pending", "expired"].includes(status);
 
-export const canMarkPaidReservation = (status) =>
-  ["pending", "confirmed"].includes(status);
+export const canMarkPaidReservation = (status, paymentStatus) =>
+  ["pending", "confirmed"].includes(status) && paymentStatus !== "paid";
 
 export const canCancelReservation = (status) =>
   ["pending", "confirmed"].includes(status);

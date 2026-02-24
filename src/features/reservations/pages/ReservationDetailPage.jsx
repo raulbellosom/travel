@@ -11,7 +11,7 @@
  *   - Inline edit mode toggle
  */
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
@@ -43,8 +43,6 @@ import { resourcesService } from "../../../services/resourcesService";
 import { useAuth } from "../../../hooks/useAuth";
 import { getErrorMessage } from "../../../utils/errors";
 import { useToast } from "../../../hooks/useToast";
-import { useReservationForm } from "../hooks/useReservationForm";
-import ReservationForm from "../components/ReservationForm";
 import { ReservationStatusBadge } from "../components/ReservationStatusBadge";
 import { formatScheduleLabel, formatMoney, calcNights } from "../utils";
 import { canWriteReservations } from "../rbac";
@@ -145,7 +143,6 @@ const ReservationDetailPage = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [searchParams] = useSearchParams();
 
   const [reservation, setReservation] = useState(null);
   const [resources, setResources] = useState([]);
@@ -153,9 +150,6 @@ const ReservationDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState("");
   const [error, setError] = useState("");
-  const [editMode, setEditMode] = useState(
-    () => searchParams.get("edit") === "true",
-  );
 
   const canWrite = canWriteReservations(user);
   const locale = user?.locale === "en" ? "en-US" : "es-MX";
@@ -199,47 +193,6 @@ const ReservationDetailPage = () => {
     load();
   }, [load]);
 
-  // ── Populate edit form when reservation loads ─────────────────────────────
-  const {
-    form,
-    errors: formErrors,
-    submitting,
-    submitError,
-    onChange,
-    submitUpdate,
-  } = useReservationForm(
-    reservation
-      ? {
-          resourceId: reservation.resourceId || reservation.propertyId || "",
-          scheduleType:
-            reservation.bookingType === "time_slot"
-              ? "time_slot"
-              : "date_range",
-          checkInDate: reservation.checkInDate || "",
-          checkOutDate: reservation.checkOutDate || "",
-          startDateTime: reservation.startDateTime || "",
-          endDateTime: reservation.endDateTime || "",
-          guestName: reservation.guestName || "",
-          guestEmail: reservation.guestEmail || "",
-          guestPhone: reservation.guestPhone || "",
-          guestCount: String(reservation.guestCount ?? "1"),
-          baseAmount:
-            reservation.baseAmount != null
-              ? String(reservation.baseAmount)
-              : "",
-          totalAmount:
-            reservation.totalAmount != null
-              ? String(reservation.totalAmount)
-              : "",
-          currency: reservation.currency || "MXN",
-          externalRef: reservation.externalRef || "",
-          specialRequests: reservation.specialRequests || "",
-          status: reservation.status || "pending",
-          paymentStatus: reservation.paymentStatus || "pending",
-        }
-      : {},
-  );
-
   // ── Quick actions ─────────────────────────────────────────────────────────
   const quickAction = async (label, patch) => {
     setActionBusy(label);
@@ -254,14 +207,6 @@ const ReservationDetailPage = () => {
       showToast({ type: "error", message: msg });
     } finally {
       setActionBusy("");
-    }
-  };
-
-  const handleEditSubmit = async (e) => {
-    await submitUpdate(e, id);
-    if (!submitError) {
-      setEditMode(false);
-      await load();
     }
   };
 
@@ -280,7 +225,10 @@ const ReservationDetailPage = () => {
       const { functions } = await import("../../../api/appwriteClient");
       const execution = await functions.createExecution(
         fnId,
-        JSON.stringify({ reservationId: id }),
+        JSON.stringify({
+          reservationId: id,
+          resourceId: reservation?.resourceId || reservation?.propertyId || "",
+        }),
         false,
       );
 
@@ -440,331 +388,281 @@ const ReservationDetailPage = () => {
       ) : null}
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
-      {!editMode ? (
-        <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-          {/* ── Left column: info ─── */}
-          <div className="space-y-5">
-            {/* Guest info */}
-            <SectionCard title="Huésped" icon={User}>
-              <InfoRow
-                icon={User}
-                label="Nombre"
-                value={reservation.guestName}
-              />
-              <InfoRow
-                icon={Mail}
-                label="Email"
-                value={reservation.guestEmail}
-              />
-              <InfoRow
-                icon={Phone}
-                label="Teléfono"
-                value={reservation.guestPhone}
-              />
-              <InfoRow
-                icon={Users}
-                label="Huéspedes"
-                value={
-                  reservation.guestCount
-                    ? `${reservation.guestCount} ${reservation.guestCount === 1 ? "huésped" : "huéspedes"}`
-                    : null
-                }
-              />
-            </SectionCard>
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        {/* ── Left column: info ─── */}
+        <div className="space-y-5">
+          {/* Guest info */}
+          <SectionCard title="Huésped" icon={User}>
+            <InfoRow icon={User} label="Nombre" value={reservation.guestName} />
+            <InfoRow icon={Mail} label="Email" value={reservation.guestEmail} />
+            <InfoRow
+              icon={Phone}
+              label="Teléfono"
+              value={reservation.guestPhone}
+            />
+            <InfoRow
+              icon={Users}
+              label="Huéspedes"
+              value={
+                reservation.guestCount
+                  ? `${reservation.guestCount} ${reservation.guestCount === 1 ? "huésped" : "huéspedes"}`
+                  : null
+              }
+            />
+          </SectionCard>
 
-            {/* Booking details */}
-            <SectionCard title="Detalles de reserva" icon={CalendarDays}>
+          {/* Booking details */}
+          <SectionCard title="Detalles de reserva" icon={CalendarDays}>
+            <InfoRow
+              icon={CalendarDays}
+              label="Fechas"
+              value={formatScheduleLabel(reservation, locale)}
+            />
+            {nights > 0 && (
               <InfoRow
-                icon={CalendarDays}
-                label="Fechas"
-                value={formatScheduleLabel(reservation, locale)}
+                icon={Moon}
+                label="Noches"
+                value={`${nights} ${nights === 1 ? "noche" : "noches"}`}
               />
-              {nights > 0 && (
-                <InfoRow
-                  icon={Moon}
-                  label="Noches"
-                  value={`${nights} ${nights === 1 ? "noche" : "noches"}`}
-                />
-              )}
-              <InfoRow
-                icon={CreditCard}
-                label="Total"
-                value={formatMoney(
-                  reservation.totalAmount,
-                  reservation.currency || "MXN",
-                  locale,
-                )}
-                valueClass="text-lg font-bold text-slate-900 dark:text-slate-100"
-              />
-              {reservation.baseAmount != null &&
-                reservation.baseAmount !== reservation.totalAmount && (
-                  <InfoRow
-                    icon={CreditCard}
-                    label="Monto base"
-                    value={formatMoney(
-                      reservation.baseAmount,
-                      reservation.currency || "MXN",
-                      locale,
-                    )}
-                  />
-                )}
-              {reservation.externalRef && (
-                <InfoRow
-                  icon={ExternalLink}
-                  label="Ref. externa"
-                  value={reservation.externalRef}
-                  mono
-                />
-              )}
-            </SectionCard>
-
-            {/* Notes / special requests */}
-            {reservation.specialRequests && (
-              <SectionCard title="Notas y solicitudes" icon={FileText}>
-                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-                  {reservation.specialRequests}
-                </p>
-              </SectionCard>
             )}
-          </div>
+            <InfoRow
+              icon={CreditCard}
+              label="Total"
+              value={formatMoney(
+                reservation.totalAmount,
+                reservation.currency || "MXN",
+                locale,
+              )}
+              valueClass="text-lg font-bold text-slate-900 dark:text-slate-100"
+            />
+            {reservation.baseAmount != null &&
+              reservation.baseAmount !== reservation.totalAmount && (
+                <InfoRow
+                  icon={CreditCard}
+                  label="Monto base"
+                  value={formatMoney(
+                    reservation.baseAmount,
+                    reservation.currency || "MXN",
+                    locale,
+                  )}
+                />
+              )}
+            {reservation.externalRef && (
+              <InfoRow
+                icon={ExternalLink}
+                label="Ref. externa"
+                value={reservation.externalRef}
+                mono
+              />
+            )}
+          </SectionCard>
 
-          {/* ── Right column: actions + voucher + resource ─── */}
-          <div className="space-y-5">
-            {/* Quick actions */}
-            {canWrite && (
-              <SectionCard title="Acciones" icon={CheckCircle}>
-                <div className="flex flex-wrap gap-2">
-                  {canConfirmReservation(status) && (
-                    <ActionButton
-                      icon={CheckCircle}
-                      label={t("appReservationsPage.actions.markConfirmed")}
-                      variant="confirm"
-                      onClick={() =>
-                        quickAction("confirm", { status: "confirmed" })
-                      }
-                      disabled={!!actionBusy}
-                      busy={actionBusy === "confirm"}
-                    />
-                  )}
-                  {canMarkPaidReservation(status) && (
-                    <ActionButton
-                      icon={CreditCard}
-                      label="Marcar pagado"
-                      variant="complete"
-                      onClick={() =>
-                        quickAction("markPaid", {
-                          paymentStatus: "paid",
-                        })
-                      }
-                      disabled={!!actionBusy}
-                      busy={actionBusy === "markPaid"}
-                    />
-                  )}
-                  {canCompleteReservation(status) && (
-                    <ActionButton
-                      icon={CircleCheckBig}
-                      label="Completar"
-                      variant="complete"
-                      onClick={() =>
-                        quickAction("complete", { status: "completed" })
-                      }
-                      disabled={!!actionBusy}
-                      busy={actionBusy === "complete"}
-                    />
-                  )}
-                  {canCancelReservation(status) && (
-                    <ActionButton
-                      icon={X}
-                      label={t("appReservationsPage.actions.cancel")}
-                      variant="danger"
-                      onClick={() =>
-                        quickAction("cancel", { status: "cancelled" })
-                      }
-                      disabled={!!actionBusy}
-                      busy={actionBusy === "cancel"}
-                    />
-                  )}
+          {/* Notes / special requests */}
+          {reservation.specialRequests && (
+            <SectionCard title="Notas y solicitudes" icon={FileText}>
+              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                {reservation.specialRequests}
+              </p>
+            </SectionCard>
+          )}
+        </div>
+
+        {/* ── Right column: actions + voucher + resource ─── */}
+        <div className="space-y-5">
+          {/* Quick actions */}
+          {canWrite && (
+            <SectionCard title="Acciones" icon={CheckCircle}>
+              <div className="flex flex-wrap gap-2">
+                {canConfirmReservation(status) && (
                   <ActionButton
-                    icon={Edit2}
-                    label="Editar"
-                    variant="default"
-                    onClick={() => setEditMode(true)}
+                    icon={CheckCircle}
+                    label={t("appReservationsPage.actions.markConfirmed")}
+                    variant="confirm"
+                    onClick={() =>
+                      quickAction("confirm", { status: "confirmed" })
+                    }
+                    disabled={!!actionBusy}
+                    busy={actionBusy === "confirm"}
                   />
-                </div>
-              </SectionCard>
-            )}
+                )}
+                {canMarkPaidReservation(status, reservation.paymentStatus) && (
+                  <ActionButton
+                    icon={CreditCard}
+                    label="Marcar pagado"
+                    variant="complete"
+                    onClick={() =>
+                      quickAction("markPaid", {
+                        paymentStatus: "paid",
+                      })
+                    }
+                    disabled={!!actionBusy}
+                    busy={actionBusy === "markPaid"}
+                  />
+                )}
+                {canCompleteReservation(status) && (
+                  <ActionButton
+                    icon={CircleCheckBig}
+                    label="Completar"
+                    variant="complete"
+                    onClick={() =>
+                      quickAction("complete", { status: "completed" })
+                    }
+                    disabled={!!actionBusy}
+                    busy={actionBusy === "complete"}
+                  />
+                )}
+                {canCancelReservation(status) && (
+                  <ActionButton
+                    icon={X}
+                    label={t("appReservationsPage.actions.cancel")}
+                    variant="danger"
+                    onClick={() =>
+                      quickAction("cancel", { status: "cancelled" })
+                    }
+                    disabled={!!actionBusy}
+                    busy={actionBusy === "cancel"}
+                  />
+                )}
+                <Link
+                  to={`/app/reservations/${id}/edit`}
+                  className="flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition border-slate-300 text-slate-700 [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:[@media(hover:hover)]:hover:bg-slate-800"
+                >
+                  <Edit2 size={13} /> Editar
+                </Link>
+              </div>
+            </SectionCard>
+          )}
 
-            {/* Voucher section */}
-            <SectionCard title="Voucher" icon={Ticket}>
-              {voucher ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
-                      <QrCode
-                        size={24}
-                        className="text-emerald-600 dark:text-emerald-400"
-                      />
-                    </div>
-                    <div>
-                      <p className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
-                        {voucher.voucherCode}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {voucher.status === "active"
-                          ? "Activo"
-                          : voucher.status}
-                      </p>
-                    </div>
+          {/* Voucher section */}
+          <SectionCard title="Voucher" icon={Ticket}>
+            {voucher ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                    <QrCode
+                      size={24}
+                      className="text-emerald-600 dark:text-emerald-400"
+                    />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <a
-                      href={`/voucher/${voucher.voucherCode}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition
-                        [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:[@media(hover:hover)]:hover:bg-slate-800"
-                    >
-                      <ExternalLink size={13} /> Ver voucher
-                    </a>
-                    <button
-                      type="button"
-                      onClick={handleShareVoucher}
-                      className="flex min-h-11 items-center gap-1.5 rounded-lg border border-cyan-300 px-3 py-2 text-xs font-semibold text-cyan-700 transition
-                        [@media(hover:hover)]:hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:[@media(hover:hover)]:hover:bg-cyan-950/30"
-                    >
-                      <Share2 size={13} /> Compartir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard?.writeText(
-                          `${window.location.origin}/voucher/${voucher.voucherCode}`,
-                        );
-                        showToast({
-                          type: "success",
-                          message: "Link copiado.",
-                        });
-                      }}
-                      className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition
-                        [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:[@media(hover:hover)]:hover:bg-slate-800"
-                    >
-                      <Link2 size={13} /> Copiar link
-                    </button>
-                    {canWrite && (
-                      <button
-                        type="button"
-                        disabled={actionBusy === "voucher"}
-                        onClick={handleGenerateVoucher}
-                        className="flex min-h-11 items-center gap-1.5 rounded-lg border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 transition
-                          [@media(hover:hover)]:hover:bg-amber-50 disabled:opacity-50 dark:border-amber-700 dark:text-amber-300"
-                      >
-                        {actionBusy === "voucher" && (
-                          <Loader2 size={13} className="animate-spin" />
-                        )}
-                        <Ticket size={13} /> Regenerar
-                      </button>
-                    )}
+                  <div>
+                    <p className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {voucher.voucherCode}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {voucher.status === "active" ? "Activo" : voucher.status}
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    No se ha generado un voucher para esta reserva.
-                  </p>
-                  {reservation.paymentStatus !== "paid" && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                      La reserva debe estar pagada para generar un voucher.
-                    </p>
-                  )}
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={`/voucher/${voucher.voucherCode}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition
+                        [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:[@media(hover:hover)]:hover:bg-slate-800"
+                  >
+                    <ExternalLink size={13} /> Ver voucher
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleShareVoucher}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-cyan-300 px-3 py-2 text-xs font-semibold text-cyan-700 transition
+                        [@media(hover:hover)]:hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:[@media(hover:hover)]:hover:bg-cyan-950/30"
+                  >
+                    <Share2 size={13} /> Compartir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(
+                        `${window.location.origin}/voucher/${voucher.voucherCode}`,
+                      );
+                      showToast({
+                        type: "success",
+                        message: "Link copiado.",
+                      });
+                    }}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition
+                        [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:[@media(hover:hover)]:hover:bg-slate-800"
+                  >
+                    <Link2 size={13} /> Copiar link
+                  </button>
                   {canWrite && (
                     <button
                       type="button"
-                      disabled={
-                        actionBusy === "voucher" ||
-                        reservation.paymentStatus !== "paid"
-                      }
+                      disabled={actionBusy === "voucher"}
                       onClick={handleGenerateVoucher}
-                      className="flex min-h-11 items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition
-                        [@media(hover:hover)]:hover:bg-cyan-500 active:scale-[0.98] disabled:opacity-50"
+                      className="flex min-h-11 items-center gap-1.5 rounded-lg border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 transition
+                          [@media(hover:hover)]:hover:bg-amber-50 disabled:opacity-50 dark:border-amber-700 dark:text-amber-300"
                     >
                       {actionBusy === "voucher" && (
                         <Loader2 size={13} className="animate-spin" />
                       )}
-                      <Ticket size={13} /> Generar voucher
+                      <Ticket size={13} /> Regenerar
                     </button>
                   )}
                 </div>
-              )}
-            </SectionCard>
-
-            {/* Resource card */}
-            <SectionCard title="Recurso" icon={ExternalLink}>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                  <CalendarDays size={18} className="text-slate-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    {resourceTitle}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No se ha generado un voucher para esta reserva.
+                </p>
+                {reservation.paymentStatus !== "paid" && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    La reserva debe estar pagada para generar un voucher.
                   </p>
-                  {resource && (
-                    <p className="truncate text-xs text-slate-400">
-                      {resource.$id}
-                    </p>
-                  )}
-                </div>
-                {resource && (
-                  <Link
-                    to={`/app/resources/${resource.$id}`}
-                    className="flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition
-                      [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:[@media(hover:hover)]:hover:bg-slate-800"
+                )}
+                {canWrite && (
+                  <button
+                    type="button"
+                    disabled={
+                      actionBusy === "voucher" ||
+                      reservation.paymentStatus !== "paid"
+                    }
+                    onClick={handleGenerateVoucher}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition
+                        [@media(hover:hover)]:hover:bg-cyan-500 active:scale-[0.98] disabled:opacity-50"
                   >
-                    <ExternalLink size={11} /> Ir
-                  </Link>
+                    {actionBusy === "voucher" && (
+                      <Loader2 size={13} className="animate-spin" />
+                    )}
+                    <Ticket size={13} /> Generar voucher
+                  </button>
                 )}
               </div>
-            </SectionCard>
-          </div>
-        </div>
-      ) : (
-        /* ── Edit mode ─────────────────────────────────────────────────── */
-        <div>
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Editar reserva
-            </h2>
-            <button
-              type="button"
-              onClick={() => setEditMode(false)}
-              aria-label="Cancelar edición"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition
-                [@media(hover:hover)]:hover:bg-slate-100 dark:[@media(hover:hover)]:hover:bg-slate-800"
-            >
-              <X size={18} />
-            </button>
-          </div>
+            )}
+          </SectionCard>
 
-          {submitError ? (
-            <p
-              role="alert"
-              className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
-            >
-              {submitError}
-            </p>
-          ) : null}
-
-          <ReservationForm
-            form={form}
-            errors={formErrors}
-            resources={resources}
-            loading={false}
-            submitting={submitting}
-            mode="edit"
-            onChange={onChange}
-            onSubmit={handleEditSubmit}
-          />
+          {/* Resource card */}
+          <SectionCard title="Recurso" icon={ExternalLink}>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+                <CalendarDays size={18} className="text-slate-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {resourceTitle}
+                </p>
+                {resource && (
+                  <p className="truncate text-xs text-slate-400">
+                    {resource.$id}
+                  </p>
+                )}
+              </div>
+              {resource && (
+                <Link
+                  to={`/app/resources/${resource.$id}`}
+                  className="flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition
+                      [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:[@media(hover:hover)]:hover:bg-slate-800"
+                >
+                  <ExternalLink size={11} /> Ir
+                </Link>
+              )}
+            </div>
+          </SectionCard>
         </div>
-      )}
+      </div>
     </section>
   );
 };
