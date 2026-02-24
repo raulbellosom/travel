@@ -5,10 +5,12 @@ import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
+import { useInstanceModules } from "../../hooks/useInstanceModules";
 import { hasRoleAtLeast, hasScope } from "../../utils/roles";
 import { globalSearchService } from "../../services/globalSearchService";
 import { buildGlobalSearchResults } from "../../features/global-search/searchSuggestions";
 import SearchResultsList from "./global-search/SearchResultsList";
+import { isScopeAllowedByModules } from "../../utils/moduleAccess";
 
 const EMPTY_DATASET = Object.freeze({
   properties: [],
@@ -38,6 +40,7 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const MotionSection = motion.section;
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isEnabled } = useInstanceModules();
   const navigate = useNavigate();
   const desktopContainerRef = useRef(null);
   const mobileInputRef = useRef(null);
@@ -49,13 +52,15 @@ const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => 
   const [loading, setLoading] = useState(false);
   const [dataset, setDataset] = useState(EMPTY_DATASET);
 
-  const canReadProperties = hasScope(user, "resources.read");
-  const canWriteProperties = hasScope(user, "resources.write");
-  const canReadLeads = hasScope(user, "leads.read");
-  const canReadReservations = hasScope(user, "reservations.read");
-  const canReadPayments = hasScope(user, "payments.read");
-  const canReadReviews = hasScope(user, "reviews.moderate");
-  const canManageTeam = hasScope(user, "staff.manage");
+  const canAccessScope = (scope) =>
+    hasScope(user, scope) && isScopeAllowedByModules(scope, isEnabled);
+  const canReadProperties = canAccessScope("resources.read");
+  const canWriteProperties = canAccessScope("resources.write");
+  const canReadLeads = canAccessScope("leads.read");
+  const canReadReservations = canAccessScope("reservations.read");
+  const canReadPayments = canAccessScope("payments.read");
+  const canReadReviews = canAccessScope("reviews.moderate");
+  const canManageTeam = canAccessScope("staff.manage");
   const canReadClients = hasRoleAtLeast(user?.role, "owner");
   const canReadProfile = Boolean(user?.$id);
   const hasOpenOverlay = isDesktopOpen || isMobileOpen;

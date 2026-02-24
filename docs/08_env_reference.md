@@ -73,6 +73,8 @@ APPWRITE_FUNCTION_USER_CREATE_PROFILE_ID=user-create-profile
 APPWRITE_FUNCTION_SEND_LEAD_NOTIFICATION_ID=send-lead-notification
 APPWRITE_FUNCTION_PROPERTY_VIEW_COUNTER_ID=property-view-counter
 APPWRITE_FUNCTION_CREATE_RESERVATION_ID=create-reservation-public
+APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID=create-reservation-manual
+APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID=get-resource-availability
 APPWRITE_FUNCTION_RESERVATION_CREATED_NOTIFICATION_ID=reservation-created-notification
 APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID=create-payment-session
 APPWRITE_FUNCTION_EXPIRE_PENDING_RESERVATIONS_ID=expire-pending-reservations
@@ -243,8 +245,9 @@ Buenas practicas:
 - Agregadas variables de chat (`conversations`, `messages`, `send-chat-notification`, `PLATFORM_OWNER_EMAIL`).
 - Agregada function `deep-search-query`.
 - Agregada variable de coleccion de favoritos: `APPWRITE_COLLECTION_FAVORITES_ID`.
+- Agregadas functions de reserva manual y disponibilidad: `APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID`, `APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID`.
 
 ---
 
-Ultima actualizacion: 2026-02-22
-Version: 2.4.0
+Ultima actualizacion: 2026-02-24
+Version: 2.4.1

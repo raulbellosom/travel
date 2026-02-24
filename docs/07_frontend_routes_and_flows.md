@@ -107,6 +107,16 @@ Estas rutas no deben mostrarse a owner/staff/client.
 - requiere modulo `module.booking.hourly`
 - si cobra online: `module.payments.online`
 
+## 6.5 Calendario publico en detalle
+
+- Para `bookingType = date_range` en `PropertyDetail`, el calendario embebido del aside usa vista de **1 mes**.
+- Se expone accion secundaria para abrir modal de calendario extendido con **2 meses**.
+- En modal:
+  - desktop: 2 meses en paralelo.
+  - mobile: 2 meses apilados en vertical.
+- El calendario publico del aside solo se habilita para usuario autenticado con rol `client`.
+- Visitantes anonimos y roles internos (`root`, `owner`, `staff_*`) no deben ver este bloque.
+
 ---
 
 ## 7. Helper unico de comportamiento
@@ -164,5 +174,5 @@ Nota: backend vuelve a validar siempre.
 
 ---
 
-Ultima actualizacion: 2026-02-22
-Version: 3.4.0
+Ultima actualizacion: 2026-02-24
+Version: 3.4.1

@@ -30,6 +30,8 @@ Trazabilidad de variables de entorno para arquitectura v3.
 | `APPWRITE_COLLECTION_USERS_ID`                   | `src/env.js`, `functions/staff-user-management/src/index.js`                                                                    | usuarios y roles                              |
 | `APPWRITE_FUNCTION_CREATE_LEAD_ID`               | `src/env.js`, `src/services/leadsService.js`                                                                                    | ejecucion function lead                       |
 | `APPWRITE_FUNCTION_CREATE_RESERVATION_ID`        | `src/env.js`, `src/services/reservationsService.js`                                                                             | ejecucion function reservation                |
+| `APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID` | `src/env.js`, `src/services/reservationsService.js`, `functions/create-reservation-manual/src/index.js`                        | reserva manual (sin checkout online)          |
+| `APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID` | `src/env.js`, `src/services/reservationsService.js`, `src/pages/PropertyDetail.jsx`, `functions/get-resource-availability/src/index.js` | disponibilidad para calendario y agenda       |
 | `APPWRITE_FUNCTION_CREATE_PAYMENT_SESSION_ID`    | `src/env.js`, `src/services/reservationsService.js`                                                                             | checkout                                      |
 | `APPWRITE_FUNCTION_EXPIRE_PENDING_RESERVATIONS_ID` | `src/env.js`                                                                                                                    | scheduler de expiracion de holds              |
 | `APPWRITE_FUNCTION_STRIPE_CREATE_CONNECTED_ACCOUNT_ID` | `src/env.js`                                                                                                                | onboarding connect                            |
@@ -56,9 +58,10 @@ Trazabilidad de variables de entorno para arquitectura v3.
 - `APPWRITE_COLLECTION_RESOURCE_IMAGES_ID`, `APPWRITE_COLLECTION_RATE_PLANS_ID` y `APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID` deben estar definidos para arquitectura completa.
 - `APPWRITE_COLLECTION_FAVORITES_ID` debe definirse si se habilita lista de favoritos en cliente.
 - `APPWRITE_COLLECTION_PASSWORD_RESETS_ID` debe definirse para el flujo de reset de contrasena. Solo accedido desde la funcion server-side `send-password-reset`.
+- `APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID` y `APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID` deben definirse para flujos de reserva manual y calendario de disponibilidad.
 - `.env.example` y `functions/*/.env.example` deben mantenerse sincronizados con esta matriz.
 
 ---
 
-Ultima actualizacion: 2026-02-22
-Version: 2.2.0
+Ultima actualizacion: 2026-02-24
+Version: 2.2.1

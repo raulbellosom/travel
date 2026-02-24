@@ -993,11 +993,14 @@
       "actions": "Acciones"
     },
     "actions": {
-      "sendEmail": "Enviar email"
+      "sendEmail": "Enviar email",
+      "convertToReservation": "Crear reserva"
     },
     "errors": {
       "load": "No se pudieron cargar los leads.",
-      "update": "No se pudo actualizar el lead."
+      "update": "No se pudo actualizar el lead.",
+      "convert": "No se pudo convertir el lead en reserva manual.",
+      "convertMissingSchedule": "Este lead no tiene fecha u horario seleccionado."
     }
   },
   "profilePage": {
@@ -1448,6 +1451,10 @@
       "maxStayNights": "Máximo de noches",
       "checkInTime": "Hora de check-in",
       "checkOutTime": "Hora de check-out",
+      "bookingType": "Tipo de reserva",
+      "manualContactScheduleType": "Agenda sugerida para contacto manual",
+      "slotDurationMinutes": "Duracion por horario",
+      "slotBufferMinutes": "Buffer entre horarios",
       "floors": "Pisos",
       "yearBuilt": "Año de construcción",
       "vehicleModelYear": "Ano del modelo",
@@ -1481,7 +1488,9 @@
     "helper": {
       "description": "Minimo 20 caracteres. Explica valor diferencial, ubicacion y beneficios.",
       "pricingModel": "Selecciona como se cobra el precio segun el tipo de recurso y modo comercial.",
-      "categoryCommercialDifference": "Usa Comercial para inmuebles en renta/venta tradicional. Para espacios por hora usa tipo de recurso Salon y categoria Local comercial."
+      "categoryCommercialDifference": "Usa Comercial para inmuebles en renta/venta tradicional. Para espacios por hora usa tipo de recurso Salon y categoria Local comercial.",
+      "bookingTypeManual": "El cliente contacta al agente. No se activa checkout en linea.",
+      "bookingTypeDirect": "El cliente selecciona disponibilidad y genera una reserva en la plataforma."
     },
     "actions": {
       "saving": "Guardando...",
@@ -1652,6 +1661,11 @@
         "perPerson": "Por persona",
         "perEvent": "Por evento",
         "perM2": "Por m2"
+      },
+      "manualContactScheduleType": {
+        "none": "Solo contacto libre",
+        "date_range": "Seleccion de rango de fechas",
+        "time_slot": "Seleccion de horario"
       },
       "status": {
         "draft": "Borrador",
@@ -2194,9 +2208,40 @@
       "markCompleted": "Marcar completada",
       "cancel": "Cancelar"
     },
+    "manual": {
+      "title": "Reserva manual",
+      "subtitle": "Registra reservas fuera de checkout en linea, incluyendo referencia de pago externo.",
+      "fields": {
+        "resource": "Recurso",
+        "scheduleType": "Tipo de agenda",
+        "currency": "Moneda",
+        "checkInDate": "Fecha de entrada",
+        "checkOutDate": "Fecha de salida",
+        "startDateTime": "Inicio",
+        "endDateTime": "Fin",
+        "guestName": "Nombre del huesped",
+        "guestEmail": "Email del huesped",
+        "guestPhone": "Telefono del huesped",
+        "guestCount": "Huespedes",
+        "baseAmount": "Monto base",
+        "totalAmount": "Monto total",
+        "status": "Estado",
+        "paymentStatus": "Estado de pago",
+        "externalRef": "Referencia externa",
+        "specialRequests": "Notas internas / solicitudes"
+      },
+      "actions": {
+        "create": "Crear reserva manual",
+        "creating": "Creando..."
+      }
+    },
     "errors": {
       "load": "No se pudieron cargar las reservas.",
-      "update": "No se pudo actualizar la reserva."
+      "update": "No se pudo actualizar la reserva.",
+      "manualResourceRequired": "Selecciona un recurso para crear la reserva manual.",
+      "manualDatesRequired": "Selecciona fecha de entrada y salida.",
+      "manualSlotRequired": "Selecciona fecha y horario de inicio y fin.",
+      "manualCreate": "No se pudo crear la reserva manual."
     }
   },
   "appPaymentsPage": {
@@ -2447,9 +2492,14 @@
     "reservationsInView": "reservas en esta vista",
     "retry": "Reintentar",
     "selectDates": "Selecciona fechas",
+    "openTwoMonths": "Ver 2 meses",
     "clearDates": "Limpiar fechas",
     "minStay": "Estancia mínima: {{nights}} noches",
     "maxStay": "Estancia máxima: {{nights}} noches",
+    "modal": {
+      "title": "Calendario extendido",
+      "description": "Revisa dos meses de disponibilidad y selecciona tus fechas."
+    },
     "views": {
       "day": "Día",
       "week": "Semana",

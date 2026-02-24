@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
+  Expand,
 } from "lucide-react";
 import {
   getMonthGridDays,
@@ -20,19 +21,12 @@ import {
 } from "../utils/calendarUtils";
 import BookingSummary from "./BookingSummary";
 import { formatMoneyWithDenomination } from "../../../utils/money";
+import { Modal } from "../../../components/common";
 
 /**
- * PropertyAvailabilityCalendar – Client-facing calendar for property pages.
+ * PropertyAvailabilityCalendar - Client-facing calendar for property pages.
  * Shows pricing per night, availability, and allows date selection.
  * Optimized for vacation_rental and rent properties.
- *
- * @param {Object} props
- * @param {Object} props.property - Property document
- * @param {Object} props.pricing - { 'YYYY-MM-DD': pricePerNight }
- * @param {Date[]} props.disabledDates - Dates already booked
- * @param {Object} props.selectedRange - { startDate, endDate }
- * @param {Function} props.onRangeChange - ({ startDate, endDate }) => void
- * @param {Function} props.onReserveClick - (summary) => void
  */
 export default function PropertyAvailabilityCalendar({
   property = {},
@@ -50,20 +44,7 @@ export default function PropertyAvailabilityCalendar({
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
   const [hoverDate, setHoverDate] = useState(null);
-
-  // Responsive: 1 month on mobile, 2 on desktop
-  const containerRef = useRef(null);
-  const [numMonths, setNumMonths] = useState(
-    typeof window !== "undefined" && window.innerWidth >= 768 ? 2 : 1,
-  );
-
-  useEffect(() => {
-    const handleResize = () => {
-      setNumMonths(window.innerWidth >= 768 ? 2 : 1);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const [isExpandedViewOpen, setIsExpandedViewOpen] = useState(false);
 
   const minDate = stripTime(new Date());
   const maxDate = addDays(new Date(), 365);
@@ -87,7 +68,6 @@ export default function PropertyAvailabilityCalendar({
       } else if (d < startDate) {
         onRangeChange?.({ startDate: d, endDate: null });
       } else {
-        // Check min/max stay
         const nights = daysBetween(startDate, d);
         if (property.minStayNights && nights < property.minStayNights) return;
         if (property.maxStayNights && nights > property.maxStayNights) return;
@@ -125,6 +105,17 @@ export default function PropertyAvailabilityCalendar({
       maximumFractionDigits: 2,
     });
 
+  const fmtCompactPrice = (amount) => {
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) return "";
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: property.currency || "MXN",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   const dayHeaders = useMemo(() => {
     const base = new Date(2024, 0, 7);
     return Array.from({ length: 7 }, (_, i) => {
@@ -137,7 +128,6 @@ export default function PropertyAvailabilityCalendar({
     });
   }, [locale]);
 
-  // Price summary for selected range
   const summary = useMemo(() => {
     if (!startDate || !endDate) return null;
     const basePricing = {};
@@ -151,7 +141,7 @@ export default function PropertyAvailabilityCalendar({
     return calculateRangePrice(startDate, endDate, basePricing);
   }, [startDate, endDate, pricing, property.price]);
 
-  const MonthGrid = ({ base }) => {
+  const MonthGrid = ({ base, showMonthLabel = false }) => {
     const days = getMonthGridDays(base);
     const monthTitle = base.toLocaleDateString(locale, {
       month: "long",
@@ -159,20 +149,18 @@ export default function PropertyAvailabilityCalendar({
     });
 
     return (
-      <div className="flex-1 min-w-0">
-        {/* Month title (only shown when 2-month, individual titles) */}
-        {numMonths === 2 && (
-          <h4 className="text-center text-sm font-semibold text-gray-900 dark:text-gray-100 capitalize mb-2">
+      <div className="min-w-0">
+        {showMonthLabel && (
+          <h4 className="mb-3 text-center text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">
             {monthTitle}
           </h4>
         )}
 
-        {/* Day headers */}
-        <div className="grid grid-cols-7 mb-1">
+        <div className="mb-2 grid grid-cols-7 gap-1">
           {dayHeaders.map((h, i) => (
             <div
               key={i}
-              className="text-center text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 py-1 uppercase"
+              className="py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
             >
               <span className="hidden sm:inline">{h.short}</span>
               <span className="sm:hidden">{h.narrow}</span>
@@ -180,8 +168,7 @@ export default function PropertyAvailabilityCalendar({
           ))}
         </div>
 
-        {/* Days grid */}
-        <div className="grid grid-cols-7 gap-0.5">
+        <div className="grid grid-cols-7 gap-1">
           {days.map((d, idx) => {
             const disabled = isDisabled(d);
             const inThisMonth = isSameMonth(d, base);
@@ -189,6 +176,7 @@ export default function PropertyAvailabilityCalendar({
             const selected = sameDay(d, startDate) || sameDay(d, endDate);
             const inSel = inRange(d) || inHoverRange(d);
             const price = priceOf(d);
+            const compactPrice = fmtCompactPrice(price);
 
             return (
               <button
@@ -198,48 +186,43 @@ export default function PropertyAvailabilityCalendar({
                 onMouseEnter={() => setHoverDate(d)}
                 onMouseLeave={() => setHoverDate(null)}
                 disabled={disabled || !inThisMonth}
+                aria-label={d.toLocaleDateString(locale)}
                 className={[
-                  "relative flex flex-col items-center justify-center rounded-lg transition-all text-center",
-                  "min-h-12 sm:min-h-14 lg:min-h-16",
-                  !inThisMonth ? "opacity-0 pointer-events-none" : "",
-                  disabled && inThisMonth
-                    ? "opacity-30 cursor-not-allowed line-through"
-                    : inThisMonth
-                      ? "cursor-pointer"
-                      : "",
+                  "group relative flex min-h-14 w-full flex-col items-center justify-center rounded-xl border text-center transition-all duration-150",
+                  !inThisMonth ? "invisible pointer-events-none" : "",
                   selected
-                    ? "bg-blue-600 text-white shadow-md"
+                    ? "border-cyan-600 bg-cyan-600 text-white shadow-[0_8px_20px_-12px_rgba(8,145,178,0.95)]"
                     : inSel
-                      ? "bg-blue-100 dark:bg-blue-900/30"
-                      : inThisMonth
-                        ? "hover:bg-gray-100 dark:hover:bg-gray-800"
-                        : "",
+                      ? "border-cyan-200 bg-cyan-50/90 text-cyan-800 dark:border-cyan-800/60 dark:bg-cyan-950/40 dark:text-cyan-100"
+                      : disabled
+                        ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-75 line-through dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-500"
+                        : "border-slate-200 bg-white text-slate-800 hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-cyan-600 dark:hover:bg-cyan-950/30",
                 ].join(" ")}
               >
                 <span
                   className={[
-                    "text-sm font-medium",
+                    "text-sm font-semibold",
                     selected
                       ? "text-white"
                       : today
-                        ? "text-blue-600 dark:text-blue-400 font-bold"
-                        : "text-gray-900 dark:text-gray-100",
+                        ? "text-cyan-600 dark:text-cyan-400"
+                        : "text-slate-900 dark:text-slate-100",
                   ].join(" ")}
                 >
                   {d.getDate()}
                 </span>
 
-                {/* Price per night */}
-                {price && inThisMonth && !disabled && (
+                {compactPrice && inThisMonth && !disabled && (
                   <span
+                    title={fmtPrice(price)}
                     className={[
-                      "text-[9px] sm:text-[10px] leading-tight mt-0.5",
+                      "mt-0.5 max-w-[90%] truncate text-[10px] font-medium leading-tight",
                       selected
-                        ? "text-blue-100"
-                        : "text-gray-500 dark:text-gray-400",
+                        ? "text-cyan-100"
+                        : "text-slate-500 dark:text-slate-400",
                     ].join(" ")}
                   >
-                    {fmtPrice(price)}
+                    {compactPrice}
                   </span>
                 )}
               </button>
@@ -250,84 +233,132 @@ export default function PropertyAvailabilityCalendar({
     );
   };
 
+  const modalRangeLabel = `${month.toLocaleDateString(locale, {
+    month: "long",
+    year: "numeric",
+  })} - ${addMonths(month, 1).toLocaleDateString(locale, {
+    month: "long",
+    year: "numeric",
+  })}`;
+
   return (
-    <div ref={containerRef} className="space-y-4">
-      {/* Calendar */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+    <div className="space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-linear-to-b from-white to-slate-50/70 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
+        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-3 dark:border-slate-700">
           <button
             type="button"
             onClick={() => setMonth(addMonths(month, -1))}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors min-h-11 min-w-11 flex items-center justify-center"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             aria-label={t("calendar.aria.previous")}
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
 
-          <div className="text-center">
-            {numMonths === 1 ? (
-              <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100 capitalize">
-                {month.toLocaleDateString(locale, {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </h3>
-            ) : (
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4 text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t("calendar.selectDates")}
-                </span>
-              </div>
-            )}
+          <div className="flex min-w-0 items-center gap-2 text-center">
+            <CalendarIcon className="h-4 w-4 text-slate-400" />
+            <h3 className="truncate text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">
+              {month.toLocaleDateString(locale, {
+                month: "long",
+                year: "numeric",
+              })}
+            </h3>
           </div>
 
           <button
             type="button"
             onClick={() => setMonth(addMonths(month, 1))}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors min-h-11 min-w-11 flex items-center justify-center"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             aria-label={t("calendar.aria.next")}
           >
-            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Month grids */}
-        <div
-          className={["p-3 sm:p-4", numMonths === 2 ? "flex gap-6" : ""].join(
-            " ",
-          )}
-        >
+        <div className="p-3 sm:p-4">
           <MonthGrid base={month} />
-          {numMonths === 2 && <MonthGrid base={addMonths(month, 1)} />}
         </div>
 
-        {/* Stay info */}
         {property.minStayNights && (
-          <div className="px-4 pb-3 text-xs text-gray-500 dark:text-gray-400">
-            {t("calendar.minStay", { nights: property.minStayNights })} ·{" "}
+          <div className="px-4 pb-2 text-xs text-slate-500 dark:text-slate-400">
+            {t("calendar.minStay", { nights: property.minStayNights })} {"\u00b7"}{" "}
             {t("calendar.maxStay", { nights: property.maxStayNights || 365 })}
           </div>
         )}
 
-        {/* Clear */}
-        {(startDate || endDate) && (
-          <div className="px-4 pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 pt-1">
+          <button
+            type="button"
+            onClick={() => setIsExpandedViewOpen(true)}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-600 dark:hover:text-cyan-300"
+          >
+            <Expand className="h-3.5 w-3.5" />
+            {t("calendar.openTwoMonths", {
+              defaultValue: "Ver dos meses",
+            })}
+          </button>
+
+          {(startDate || endDate) && (
             <button
               type="button"
               onClick={() =>
                 onRangeChange?.({ startDate: null, endDate: null })
               }
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors"
+              className="text-xs font-semibold text-slate-500 transition hover:text-red-500 dark:text-slate-400"
             >
               {t("calendar.clearDates")}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Booking summary */}
+      <Modal
+        isOpen={isExpandedViewOpen}
+        onClose={() => setIsExpandedViewOpen(false)}
+        title={t("calendar.modal.title", { defaultValue: "Selecciona fechas" })}
+        description={t("calendar.modal.description", {
+          defaultValue:
+            "Vista extendida para revisar dos meses de disponibilidad.",
+        })}
+        size="full"
+        className="max-w-5xl"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
+            <button
+              type="button"
+              onClick={() => setMonth(addMonths(month, -1))}
+              className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+              aria-label={t("calendar.aria.previous")}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <p className="truncate px-2 text-center text-sm font-semibold capitalize text-slate-700 dark:text-slate-200">
+              {modalRangeLabel}
+            </p>
+            <button
+              type="button"
+              onClick={() => setMonth(addMonths(month, 1))}
+              className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+              aria-label={t("calendar.aria.next")}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <MonthGrid base={month} showMonthLabel />
+            <MonthGrid base={addMonths(month, 1)} showMonthLabel />
+          </div>
+
+          {property.minStayNights && (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t("calendar.minStay", { nights: property.minStayNights })} {"\u00b7"}{" "}
+              {t("calendar.maxStay", { nights: property.maxStayNights || 365 })}
+            </p>
+          )}
+        </div>
+      </Modal>
+
       {summary && (
         <MotionDiv
           initial={{ opacity: 0, y: 10 }}

@@ -339,7 +339,7 @@ export const ChatProvider = ({ children }) => {
      but don't create new ones from the public property page. */
 
   const startConversation = useCallback(
-    async ({ resourceId, resourceTitle, initialMessage }) => {
+    async ({ resourceId, resourceTitle, initialMessage, meta = {} }) => {
       if (!user?.$id) return null;
 
       // Guard: only verified clients can initiate
@@ -350,6 +350,9 @@ export const ChatProvider = ({ children }) => {
         throw new Error("Email must be verified to start a chat.");
       }
 
+      const normalizedMeta =
+        meta && typeof meta === "object" && !Array.isArray(meta) ? meta : {};
+
       const leadResult = await leadsService.createLead({
         resourceId,
         message:
@@ -358,6 +361,7 @@ export const ChatProvider = ({ children }) => {
         meta: {
           source: "property_chat_button",
           resourceTitle: resourceTitle || "",
+          ...normalizedMeta,
         },
       });
       const conversationId = String(

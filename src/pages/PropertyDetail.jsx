@@ -55,6 +55,7 @@ import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
 import { amenitiesService } from "../services/amenitiesService";
 import { propertiesService } from "../services/propertiesService";
+import { reservationsService } from "../services/reservationsService";
 import { profileService } from "../services/profileService";
 import { executeJsonFunction } from "../utils/functions";
 import { getErrorMessage } from "../utils/errors";
@@ -71,6 +72,9 @@ import { useInstanceModules } from "../hooks/useInstanceModules";
 import { buildPathFromLocation } from "../utils/authRedirect";
 import { formatMoneyParts } from "../utils/money";
 import { favoritesService } from "../services/favoritesService";
+import { PropertyAvailabilityCalendar } from "../features/calendar";
+import { getFileViewUrl } from "../utils/imageOptimization"; // HD fallback for viewer modal
+import { getBookingTypeLabel } from "../utils/resourceLabels";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -89,6 +93,32 @@ const isRent = (op) => op === "rent";
 const isVacation = (op) => op === "vacation_rental";
 const isHourly = (op) => op === "rent_hourly";
 const _MOTION = motion;
+const formatDateForQuery = (dateValue) => {
+  if (!dateValue) return "";
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const parseClockTime = (value, fallbackMinutes) => {
+  const raw = String(value || "").trim();
+  const match = raw.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (!match) return fallbackMinutes;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return hours * 60 + minutes;
+};
+
+const normalizeDateKey = (value) => {
+  const normalized = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
+};
+
+const slotOverlap = (left, right) =>
+  left.startMs < right.endMs && left.endMs > right.startMs;
 
 /* ================================================================ */
 
@@ -119,6 +149,19 @@ const PropertyDetail = () => {
     isOpen: false,
     initialIndex: 0,
   });
+  const [selectedDateRange, setSelectedDateRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  const [selectedSlotDate, setSelectedSlotDate] = useState("");
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  const [availabilityData, setAvailabilityData] = useState({
+    blockedDateKeys: [],
+    occupiedSlotsByDate: {},
+  });
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
+  const [chatScheduleMeta, setChatScheduleMeta] = useState(null);
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const resourceBehavior = useMemo(
@@ -128,6 +171,11 @@ const PropertyDetail = () => {
       }),
     [property, modulesApi.isEnabled],
   );
+  const scheduleType = resourceBehavior.effectiveScheduleType;
+  const isManualContactBooking = resourceBehavior.bookingType === "manual_contact";
+  const isDateRangeSchedule = scheduleType === "date_range";
+  const isTimeSlotSchedule = scheduleType === "time_slot";
+  const canUseClientCalendar = Boolean(user?.$id) && user?.role === "client";
 
   usePageSeo({
     title: property?.title
@@ -246,6 +294,105 @@ const PropertyDetail = () => {
     };
     return labelMap[pm] || labelMap.total;
   }, [property, resourceBehavior.pricingModel, t]);
+  const bookingTypeLabel = useMemo(
+    () => getBookingTypeLabel(resourceBehavior.bookingType, t),
+    [resourceBehavior.bookingType, t],
+  );
+  const blockedDateSet = useMemo(
+    () =>
+      new Set(
+        (availabilityData.blockedDateKeys || [])
+          .map((key) => normalizeDateKey(key))
+          .filter(Boolean),
+      ),
+    [availabilityData.blockedDateKeys],
+  );
+  const disabledCalendarDates = useMemo(
+    () =>
+      Array.from(blockedDateSet)
+        .map((key) => new Date(`${key}T00:00:00`))
+        .filter((date) => !Number.isNaN(date.getTime())),
+    [blockedDateSet],
+  );
+  const availableTimeSlots = useMemo(() => {
+    if (!isTimeSlotSchedule) return [];
+    const dateKey = normalizeDateKey(selectedSlotDate);
+    if (!dateKey || blockedDateSet.has(dateKey)) return [];
+
+    const [year, month, day] = dateKey.split("-").map(Number);
+    if (!year || !month || !day) return [];
+
+    const slotDurationMinutes = Math.max(
+      15,
+      Number(property?.slotDurationMinutes || 60),
+    );
+    const slotBufferMinutes = Math.max(
+      0,
+      Number(property?.slotBufferMinutes || 0),
+    );
+    const rangeStartMinutes = parseClockTime(property?.checkInTime, 9 * 60);
+    const configuredEndMinutes = parseClockTime(property?.checkOutTime, 20 * 60);
+    const rangeEndMinutes =
+      configuredEndMinutes > rangeStartMinutes
+        ? configuredEndMinutes
+        : Math.min(24 * 60, rangeStartMinutes + slotDurationMinutes * 8);
+    const stepMinutes = Math.max(15, slotDurationMinutes + slotBufferMinutes);
+    const occupiedRanges = (
+      availabilityData.occupiedSlotsByDate?.[dateKey] || []
+    )
+      .map((slot) => {
+        const startMs = new Date(slot.startDateTime).getTime();
+        const endMs = new Date(slot.endDateTime).getTime();
+        if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
+        return { startMs, endMs };
+      })
+      .filter(Boolean);
+
+    const slots = [];
+    for (
+      let cursorMinutes = rangeStartMinutes;
+      cursorMinutes + slotDurationMinutes <= rangeEndMinutes;
+      cursorMinutes += stepMinutes
+    ) {
+      const startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+      startDate.setMinutes(cursorMinutes);
+      const endDate = new Date(
+        startDate.getTime() + slotDurationMinutes * 60 * 1000,
+      );
+      const slotWindow = {
+        startMs: startDate.getTime() - slotBufferMinutes * 60 * 1000,
+        endMs: endDate.getTime() + slotBufferMinutes * 60 * 1000,
+      };
+      const isOccupied = occupiedRanges.some((occupied) =>
+        slotOverlap(slotWindow, occupied),
+      );
+
+      slots.push({
+        startDateTime: startDate.toISOString(),
+        endDateTime: endDate.toISOString(),
+        label: `${startDate.toLocaleTimeString(locale, {
+          hour: "2-digit",
+          minute: "2-digit",
+        })} - ${endDate.toLocaleTimeString(locale, {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        isAvailable: !isOccupied,
+      });
+    }
+
+    return slots;
+  }, [
+    availabilityData.occupiedSlotsByDate,
+    blockedDateSet,
+    isTimeSlotSchedule,
+    locale,
+    property?.checkInTime,
+    property?.checkOutTime,
+    property?.slotBufferMinutes,
+    property?.slotDurationMinutes,
+    selectedSlotDate,
+  ]);
 
   const ownerName = useMemo(() => {
     const name = `${owner?.firstName || ""} ${owner?.lastName || ""}`.trim();
@@ -269,6 +416,17 @@ const PropertyDetail = () => {
     () => (images.length > 0 ? images.map((item) => item.fileId || null) : []),
     [images],
   );
+
+  // Full-resolution URLs for the image viewer modal.
+  // Uses /view (original file, no compression) so the modal shows maximum quality.
+  const viewerUrls = useMemo(() => {
+    if (galleryFileIds.some(Boolean)) {
+      return galleryFileIds
+        .map((fid) => (fid ? getFileViewUrl(fid) : null))
+        .filter(Boolean);
+    }
+    return gallery; // fallback: use gallery URLs (already-fetched external URLs)
+  }, [galleryFileIds, gallery]);
 
   /* ─── Mobile hero auto-slide ─────────────────────────── */
   useEffect(() => {
@@ -306,15 +464,29 @@ const PropertyDetail = () => {
   }, [opType, property, t]);
 
   const isCtaBlocked = useMemo(() => {
+    if (isManualContactBooking) return false;
     return (
       !resourceBehavior.canOperateMode ||
       (resourceBehavior.requiresPayments && !resourceBehavior.canUsePayments)
     );
   }, [
+    isManualContactBooking,
     resourceBehavior.canOperateMode,
     resourceBehavior.canUsePayments,
     resourceBehavior.requiresPayments,
   ]);
+  const canRenderScheduleAside = useMemo(
+    () =>
+      canUseClientCalendar &&
+      resourceBehavior.requiresCalendar &&
+      (resourceBehavior.canOperateMode || isManualContactBooking),
+    [
+      canUseClientCalendar,
+      isManualContactBooking,
+      resourceBehavior.canOperateMode,
+      resourceBehavior.requiresCalendar,
+    ],
+  );
 
   const authReturnPath = useMemo(
     () => buildPathFromLocation(location),
@@ -348,6 +520,71 @@ const PropertyDetail = () => {
     );
   }, [navigate, resourceBehavior.resourceType]);
 
+  const handleCalendarReserve = useCallback(
+    (summary = {}) => {
+      if (!property?.slug) return;
+
+      const startDate = summary.startDate || selectedDateRange.startDate;
+      const endDate = summary.endDate || selectedDateRange.endDate;
+
+      if (isManualContactBooking) {
+        if (!isChatAuth || !user?.$id) {
+          navigate(registerToChatPath, { state: { from: location } });
+          return;
+        }
+        const isClient = user.role === "client";
+        const isVerified = Boolean(user.emailVerified);
+        if (!isClient || !isVerified || user.$id === property.ownerUserId) {
+          return;
+        }
+        if (!startDate || !endDate) return;
+
+        const checkInDate = formatDateForQuery(startDate);
+        const checkOutDate = formatDateForQuery(endDate);
+        const rangeLabel = `${new Date(startDate).toLocaleDateString(
+          locale,
+        )} - ${new Date(endDate).toLocaleDateString(locale)}`;
+        setChatScheduleMeta({
+          scheduleType: "date_range",
+          checkInDate,
+          checkOutDate,
+        });
+        setChatInitialMessage(
+          t("client:propertyDetail.calendar.manualDateRangeMessage", {
+            defaultValue:
+              'Hola, me interesa "{{title}}" para las fechas {{dates}}. ¿Podemos confirmar disponibilidad y condiciones?',
+            title: property.title,
+            dates: rangeLabel,
+          }),
+        );
+        setIsChatModalOpen(true);
+        return;
+      }
+
+      const params = new URLSearchParams();
+      const checkIn = formatDateForQuery(startDate);
+      const checkOut = formatDateForQuery(endDate);
+      if (checkIn) params.set("checkIn", checkIn);
+      if (checkOut) params.set("checkOut", checkOut);
+
+      const query = params.toString();
+      navigate(`/reservar/${property.slug}${query ? `?${query}` : ""}`);
+    },
+    [
+      isChatAuth,
+      isManualContactBooking,
+      locale,
+      location,
+      navigate,
+      property,
+      registerToChatPath,
+      selectedDateRange.endDate,
+      selectedDateRange.startDate,
+      t,
+      user,
+    ],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -371,6 +608,101 @@ const PropertyDetail = () => {
       cancelled = true;
     };
   }, [property?.$id, user?.$id]);
+
+  useEffect(() => {
+    setSelectedDateRange({ startDate: null, endDate: null });
+    setSelectedSlotDate("");
+    setSelectedTimeSlot(null);
+    setAvailabilityData({ blockedDateKeys: [], occupiedSlotsByDate: {} });
+    setAvailabilityError("");
+    setChatScheduleMeta(null);
+  }, [property?.$id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!property?.$id || !resourceBehavior.requiresCalendar) {
+      setAvailabilityLoading(false);
+      setAvailabilityError("");
+      setAvailabilityData({ blockedDateKeys: [], occupiedSlotsByDate: {} });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setAvailabilityLoading(true);
+    setAvailabilityError("");
+
+    reservationsService
+      .getResourceAvailability(property.$id, { days: 365 })
+      .then((result) => {
+        if (cancelled) return;
+        const data = result?.body?.data || {};
+        setAvailabilityData({
+          blockedDateKeys: Array.isArray(data.blockedDateKeys)
+            ? data.blockedDateKeys
+            : [],
+          occupiedSlotsByDate:
+            data.occupiedSlotsByDate &&
+            typeof data.occupiedSlotsByDate === "object"
+              ? data.occupiedSlotsByDate
+              : {},
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setAvailabilityError(
+          getErrorMessage(
+            err,
+            t("client:propertyDetail.calendar.availabilityError", {
+              defaultValue: "No se pudo cargar la disponibilidad.",
+            }),
+          ),
+        );
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setAvailabilityLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [property?.$id, resourceBehavior.requiresCalendar, t]);
+
+  useEffect(() => {
+    if (!isTimeSlotSchedule) return;
+    const current = normalizeDateKey(selectedSlotDate);
+    if (current && !blockedDateSet.has(current)) return;
+
+    let nextDate = formatDateForQuery(new Date());
+    if (blockedDateSet.has(nextDate)) {
+      for (let offset = 1; offset <= 90; offset += 1) {
+        const candidate = formatDateForQuery(
+          new Date(Date.now() + offset * 24 * 60 * 60 * 1000),
+        );
+        if (!blockedDateSet.has(candidate)) {
+          nextDate = candidate;
+          break;
+        }
+      }
+    }
+
+    setSelectedSlotDate(nextDate);
+  }, [blockedDateSet, isTimeSlotSchedule, selectedSlotDate]);
+
+  useEffect(() => {
+    if (!selectedTimeSlot) return;
+    const stillAvailable = availableTimeSlots.some(
+      (slot) =>
+        slot.isAvailable &&
+        slot.startDateTime === selectedTimeSlot.startDateTime &&
+        slot.endDateTime === selectedTimeSlot.endDateTime,
+    );
+    if (!stillAvailable) {
+      setSelectedTimeSlot(null);
+    }
+  }, [availableTimeSlots, selectedTimeSlot]);
 
   /* ─── Handlers ───────────────────────────────────────── */
 
@@ -490,8 +822,69 @@ const PropertyDetail = () => {
         defaultValue: `Hola, me interesa la propiedad "${property.title}". Quiero más información.`,
       }),
     );
+    setChatScheduleMeta(null);
     setIsChatModalOpen(true);
   }, [property, isChatAuth, chatLoading, user, t]);
+
+  const handleManualSlotContact = useCallback(() => {
+    if (!property || !selectedTimeSlot) return;
+
+    if (!isChatAuth || !user?.$id) {
+      navigate(registerToChatPath, { state: { from: location } });
+      return;
+    }
+
+    const isClient = user.role === "client";
+    const isVerified = Boolean(user.emailVerified);
+    if (!isClient || !isVerified || user.$id === property.ownerUserId) return;
+
+    const startDate = new Date(selectedTimeSlot.startDateTime);
+    const endDate = new Date(selectedTimeSlot.endDateTime);
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      endDate <= startDate
+    ) {
+      return;
+    }
+
+    const dateLabel = startDate.toLocaleDateString(locale);
+    const timeLabel = `${startDate.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} - ${endDate.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+
+    setChatScheduleMeta({
+      scheduleType: "time_slot",
+      startDateTime: startDate.toISOString(),
+      endDateTime: endDate.toISOString(),
+      slotDurationMinutes: Number(property.slotDurationMinutes || 60),
+      slotBufferMinutes: Number(property.slotBufferMinutes || 0),
+    });
+    setChatInitialMessage(
+      t("client:propertyDetail.calendar.manualTimeSlotMessage", {
+        defaultValue:
+          'Hola, me interesa "{{title}}" el {{date}} en el horario {{time}}. ¿Podemos confirmar disponibilidad?',
+        title: property.title,
+        date: dateLabel,
+        time: timeLabel,
+      }),
+    );
+    setIsChatModalOpen(true);
+  }, [
+    isChatAuth,
+    location,
+    locale,
+    navigate,
+    property,
+    registerToChatPath,
+    selectedTimeSlot,
+    t,
+    user,
+  ]);
 
   const handleConfirmChat = useCallback(async () => {
     if (!property || !isChatAuth || chatLoading) return;
@@ -505,8 +898,18 @@ const PropertyDetail = () => {
           ? `${owner.firstName} ${owner.lastName || ""}`.trim()
           : owner?.email || "",
         initialMessage: chatInitialMessage,
+        meta: {
+          bookingType: resourceBehavior.bookingType,
+          commercialMode: resourceBehavior.commercialMode,
+          ...(resourceBehavior.effectiveScheduleType &&
+          resourceBehavior.effectiveScheduleType !== "none"
+            ? { scheduleType: resourceBehavior.effectiveScheduleType }
+            : {}),
+          ...(chatScheduleMeta ? { requestSchedule: chatScheduleMeta } : {}),
+        },
       });
       setChatOpened(true);
+      setChatScheduleMeta(null);
       setIsChatModalOpen(false);
     } catch (err) {
       console.error("Failed to start conversation:", err);
@@ -529,6 +932,10 @@ const PropertyDetail = () => {
     startConversation,
     owner,
     chatInitialMessage,
+    chatScheduleMeta,
+    resourceBehavior.bookingType,
+    resourceBehavior.commercialMode,
+    resourceBehavior.effectiveScheduleType,
     showToast,
     t,
   ]);
@@ -1133,6 +1540,7 @@ const PropertyDetail = () => {
                 property={property}
                 opType={opType}
                 bookingType={resourceBehavior.bookingType}
+                bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
                 canChat={
@@ -1649,6 +2057,7 @@ const PropertyDetail = () => {
                 property={property}
                 opType={opType}
                 bookingType={resourceBehavior.bookingType}
+                bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
                 canChat={
@@ -1662,8 +2071,7 @@ const PropertyDetail = () => {
             </div>
 
             {/* ── Calendar placeholder ───────────────── */}
-            {resourceBehavior.requiresCalendar &&
-              resourceBehavior.canOperateMode && (
+            {canRenderScheduleAside && (
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                   <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
                     <Calendar
@@ -1672,15 +2080,118 @@ const PropertyDetail = () => {
                     />
                     {t("client:propertyDetail.calendar.title")}
                   </h2>
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
-                    <Calendar
-                      size={32}
-                      className="mb-2 text-slate-300 dark:text-slate-600"
-                    />
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
-                      {t("client:propertyDetail.calendar.placeholder")}
+                  {availabilityError ? (
+                    <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+                      {availabilityError}
                     </p>
-                  </div>
+                  ) : null}
+                  {availabilityLoading ? (
+                    <div className="flex min-h-32 items-center justify-center">
+                      <Spinner size="sm" />
+                    </div>
+                  ) : isDateRangeSchedule ? (
+                    <PropertyAvailabilityCalendar
+                      property={property}
+                      pricing={{}}
+                      disabledDates={disabledCalendarDates}
+                      selectedRange={selectedDateRange}
+                      onRangeChange={setSelectedDateRange}
+                      onReserveClick={handleCalendarReserve}
+                    />
+                  ) : isTimeSlotSchedule && isManualContactBooking ? (
+                    <div className="space-y-3">
+                      <label className="grid gap-1 text-sm">
+                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                          {t("client:propertyDetail.calendar.selectDate", {
+                            defaultValue: "Selecciona una fecha",
+                          })}
+                        </span>
+                        <input
+                          type="date"
+                          min={formatDateForQuery(new Date())}
+                          value={selectedSlotDate}
+                          onChange={(event) =>
+                            setSelectedSlotDate(
+                              normalizeDateKey(event.target.value),
+                            )
+                          }
+                          className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                        />
+                      </label>
+
+                      {blockedDateSet.has(selectedSlotDate) ? (
+                        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                          {t("client:propertyDetail.calendar.dayUnavailable", {
+                            defaultValue:
+                              "La fecha seleccionada no esta disponible.",
+                          })}
+                        </p>
+                      ) : availableTimeSlots.length === 0 ? (
+                        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                          {t("client:propertyDetail.calendar.noSlots", {
+                            defaultValue:
+                              "No hay horarios disponibles para la fecha seleccionada.",
+                          })}
+                        </p>
+                      ) : (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {availableTimeSlots.map((slot) => {
+                            const isSelected =
+                              selectedTimeSlot?.startDateTime ===
+                                slot.startDateTime &&
+                              selectedTimeSlot?.endDateTime === slot.endDateTime;
+                            return (
+                              <button
+                                key={slot.startDateTime}
+                                type="button"
+                                disabled={!slot.isAvailable}
+                                onClick={() => setSelectedTimeSlot(slot)}
+                                className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                                  !slot.isAvailable
+                                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                                    : isSelected
+                                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
+                                      : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
+                                }`}
+                              >
+                                {slot.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {selectedTimeSlot ? (
+                        <button
+                          type="button"
+                          onClick={handleManualSlotContact}
+                          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
+                        >
+                          {t("client:propertyDetail.calendar.contactForSlot", {
+                            defaultValue: "Solicitar este horario",
+                          })}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
+                      <Calendar
+                        size={32}
+                        className="mb-2 text-slate-300 dark:text-slate-600"
+                      />
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {t("client:propertyDetail.calendar.placeholder")}
+                      </p>
+                      <Link
+                        to={`/reservar/${property.slug}`}
+                        className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
+                      >
+                        {t("client:propertyDetail.cta.hourly.button", {
+                          defaultValue: "Reservar horario",
+                        })}
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1854,7 +2365,7 @@ const PropertyDetail = () => {
       <ImageViewerModal
         isOpen={imageViewer.isOpen}
         onClose={closeImageViewer}
-        images={gallery}
+        images={viewerUrls}
         initialIndex={imageViewer.initialIndex}
         alt={property.title}
         showDownload
@@ -1863,7 +2374,11 @@ const PropertyDetail = () => {
       {/* ── Start Chat Modal ────────────────────────────── */}
       <Modal
         isOpen={isChatModalOpen}
-        onClose={() => !chatLoading && setIsChatModalOpen(false)}
+        onClose={() => {
+          if (chatLoading) return;
+          setIsChatModalOpen(false);
+          setChatScheduleMeta(null);
+        }}
         title={t("chat.modal.title", { defaultValue: "Nuevo Mensaje" })}
         description={t("chat.modal.description", {
           defaultValue:
@@ -1874,7 +2389,10 @@ const PropertyDetail = () => {
           <ModalFooter>
             <Button
               variant="ghost"
-              onClick={() => setIsChatModalOpen(false)}
+              onClick={() => {
+                setIsChatModalOpen(false);
+                setChatScheduleMeta(null);
+              }}
               disabled={chatLoading}
             >
               {t("common.actions.cancel", { defaultValue: "Cancelar" })}
@@ -1967,6 +2485,7 @@ function PriceCard({
   property,
   opType,
   bookingType,
+  bookingTypeLabel,
   isCtaBlocked,
   onContactAgent,
   canChat,
@@ -2052,6 +2571,12 @@ function PriceCard({
           {ctaHint}
         </p>
       )}
+      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        {t("client:propertyDetail.bookingType", {
+          defaultValue: "Tipo de reserva",
+        })}
+        : {bookingTypeLabel}
+      </p>
 
       {/* CTA Button */}
       {!isCtaBlocked &&

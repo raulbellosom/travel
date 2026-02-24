@@ -63,7 +63,7 @@ export default function CalendarEventCard({
           <div className="flex items-center gap-1.5 mt-1">
             <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
             <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {reservation.propertyId}
+              {reservation.resourceId || reservation.propertyId}
             </span>
           </div>
           <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500 dark:text-gray-400">

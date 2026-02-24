@@ -33,7 +33,12 @@ import { authService } from "../services/authService";
 import { profileService } from "../services/profileService";
 import { staffService, STAFF_ROLES } from "../services/staffService";
 import { useToast } from "../hooks/useToast";
+import { useInstanceModules } from "../hooks/useInstanceModules";
 import { getErrorMessage } from "../utils/errors";
+import {
+  filterScopesByEnabledModules,
+  isScopeAllowedByModules,
+} from "../utils/moduleAccess";
 import {
   getPasswordChecks,
   getPasswordStrengthScore,
@@ -119,6 +124,7 @@ const isTeamListableUser = (item) => {
 const Team = () => {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const { isEnabled } = useInstanceModules();
   const [searchParams] = useSearchParams();
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -214,6 +220,19 @@ const Team = () => {
       { value: "disabled", label: t("teamPage.status.disabled") },
     ],
     [t],
+  );
+
+  const availableScopeOptions = useMemo(
+    () =>
+      SCOPE_OPTIONS.filter((scope) =>
+        isScopeAllowedByModules(scope, isEnabled),
+      ),
+    [isEnabled],
+  );
+
+  const sanitizeScopesForInstance = useCallback(
+    (scopes) => filterScopesByEnabledModules(scopes, isEnabled),
+    [isEnabled],
   );
 
   const loadStaff = useCallback(async () => {
@@ -417,6 +436,7 @@ const Team = () => {
 
   const toggleScope = (scope) => {
     setForm((prev) => {
+      if (!availableScopeOptions.includes(scope)) return prev;
       const exists = prev.scopes.includes(scope);
       return {
         ...prev,
@@ -487,6 +507,8 @@ const Team = () => {
       return;
     }
 
+    const effectiveScopes = sanitizeScopesForInstance(form.scopes);
+
     setLoadingCreate(true);
     let resolvedAvatarFileId = form.avatarFileId || "";
     let uploadedAvatarWasNew = false;
@@ -503,7 +525,7 @@ const Team = () => {
           lastName: normalizedLastName,
           email: normalizedEmail,
           role: form.role,
-          scopes: form.scopes,
+          scopes: effectiveScopes,
           avatarFileId: resolvedAvatarFileId,
         });
 
@@ -531,7 +553,7 @@ const Team = () => {
         email: normalizedEmail,
         password: form.password,
         role: form.role,
-        scopes: form.scopes,
+        scopes: effectiveScopes,
         avatarFileId: resolvedAvatarFileId,
       });
 
@@ -651,6 +673,7 @@ const Team = () => {
   const onToggleEditorScope = (scope) => {
     setPermissionsEditor((prev) => {
       if (!prev) return prev;
+      if (!availableScopeOptions.includes(scope)) return prev;
       const hasScope = prev.scopes.includes(scope);
       return {
         ...prev,
@@ -669,10 +692,11 @@ const Team = () => {
     setSuccess("");
 
     try {
+      const effectiveScopes = sanitizeScopesForInstance(permissionsEditor.scopes);
       await staffService.updateStaff({
         userId: permissionsEditor.userId,
         role: permissionsEditor.role,
-        scopes: permissionsEditor.scopes,
+        scopes: effectiveScopes,
       });
       setSuccess(t("teamPage.messages.updated"));
       setPermissionsEditor(null);
@@ -1263,7 +1287,7 @@ const Team = () => {
                 {t("teamPage.fields.scopes")}
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {SCOPE_OPTIONS.map((scope) => (
+                {availableScopeOptions.map((scope) => (
                   <label
                     key={`modal-${scope}`}
                     className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900"
@@ -1617,7 +1641,7 @@ const Team = () => {
             </p>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {SCOPE_OPTIONS.map((scope) => (
+              {availableScopeOptions.map((scope) => (
                 <label
                   key={scope}
                   className={`inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900 ${loadingCreate ? "cursor-not-allowed opacity-60" : ""}`}

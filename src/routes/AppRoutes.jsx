@@ -29,6 +29,7 @@ import env from "../env";
 import LoadingScreen from "../components/loaders/LoadingScreen";
 import ScrollToTop from "../components/routing/ScrollToTop";
 import { useAuth } from "../hooks/useAuth";
+import { useInstanceModules } from "../hooks/useInstanceModules";
 import { useTranslation } from "react-i18next";
 import { ChatProvider } from "../contexts/ChatContext";
 
@@ -97,9 +98,16 @@ const LegacyPublicSlugRedirect = ({ base }) => {
 
 const MarketingEntryRoute = () => {
   const { t } = useTranslation();
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
+  const { settings, loading: settingsLoading } = useInstanceModules();
+  const role = String(user?.role || "")
+    .trim()
+    .toLowerCase();
+  const isRootUser = role === "root";
+  const isInstanceDisabledForCurrentUser =
+    settings.enabled === false && !isRootUser;
 
-  if (loading) {
+  if (loading || settingsLoading) {
     return (
       <LoadingScreen
         transparent={false}
@@ -109,6 +117,10 @@ const MarketingEntryRoute = () => {
   }
 
   // Marketing site enabled → show CRM landing (has its own layout/navbar)
+  if (isInstanceDisabledForCurrentUser) {
+    return <ServiceUnavailable />;
+  }
+
   if (env.features.marketingSite) {
     return <Home />;
   }

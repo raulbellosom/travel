@@ -6,6 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Select } from "../components/common";
 import { reservationsService } from "../services/reservationsService";
+import { resourcesService } from "../services/resourcesService";
 import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import { formatMoneyWithDenomination } from "../utils/money";
@@ -18,6 +19,25 @@ const RESERVATION_STATUSES = [
   "expired",
 ];
 const PAYMENT_STATUSES = ["unpaid", "pending", "paid", "failed", "refunded"];
+const MANUAL_FORM_INITIAL_STATE = Object.freeze({
+  resourceId: "",
+  scheduleType: "date_range",
+  checkInDate: "",
+  checkOutDate: "",
+  startDateTime: "",
+  endDateTime: "",
+  guestName: "",
+  guestEmail: "",
+  guestPhone: "",
+  guestCount: "1",
+  baseAmount: "",
+  totalAmount: "",
+  currency: "MXN",
+  externalRef: "",
+  specialRequests: "",
+  status: "pending",
+  paymentStatus: "pending",
+});
 
 const AppReservations = () => {
   const { t, i18n } = useTranslation();
@@ -27,10 +47,15 @@ const AppReservations = () => {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
   const [reservations, setReservations] = useState([]);
+  const [resources, setResources] = useState([]);
   const [filters, setFilters] = useState({
     status: "",
     paymentStatus: "",
   });
+  const [manualForm, setManualForm] = useState(() => ({
+    ...MANUAL_FORM_INITIAL_STATE,
+  }));
+  const [manualBusy, setManualBusy] = useState(false);
   const [queryFilter, setQueryFilter] = useState(() =>
     String(searchParams.get("search") || "").trim(),
   );
@@ -47,17 +72,18 @@ const AppReservations = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await reservationsService.listForOwner(
-        user.$id,
-        filters,
-      );
-      setReservations(response.documents || []);
+      const [reservationsResponse, resourcesResponse] = await Promise.all([
+        reservationsService.listForOwner(user.$id, filters),
+        resourcesService.listMine(user.$id),
+      ]);
+      setReservations(reservationsResponse.documents || []);
+      setResources(resourcesResponse.documents || []);
     } catch (err) {
       setError(getErrorMessage(err, i18n.t("appReservationsPage.errors.load")));
     } finally {
       setLoading(false);
     }
-  }, [filters, user?.$id]);
+  }, [filters, user?.$id, i18n]);
 
   useEffect(() => {
     load();
@@ -72,7 +98,7 @@ const AppReservations = () => {
     return reservations.filter((item) => {
       const text = [
         item.$id,
-        item.propertyId,
+        item.resourceId || item.propertyId,
         item.guestName,
         item.guestEmail,
         item.guestPhone,
@@ -130,6 +156,61 @@ const AppReservations = () => {
     ],
     [t],
   );
+  const resourceMap = useMemo(() => {
+    const map = {};
+    for (const resource of resources) {
+      map[resource.$id] = resource;
+    }
+    return map;
+  }, [resources]);
+  const resourceOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: t("appReservationsPage.manual.fields.resource", {
+          defaultValue: "Selecciona un recurso",
+        }),
+      },
+      ...resources.map((resource) => ({
+        value: resource.$id,
+        label: resource.title || resource.$id,
+      })),
+    ],
+    [resources, t],
+  );
+  const scheduleTypeOptions = useMemo(
+    () => [
+      {
+        value: "date_range",
+        label: t("client:common.enums.bookingType.date_range", {
+          defaultValue: "Rango de fechas",
+        }),
+      },
+      {
+        value: "time_slot",
+        label: t("client:common.enums.bookingType.time_slot", {
+          defaultValue: "Horario",
+        }),
+      },
+    ],
+    [t],
+  );
+  const statusOptions = useMemo(
+    () =>
+      RESERVATION_STATUSES.map((status) => ({
+        value: status,
+        label: t(`reservationStatus.${status}`),
+      })),
+    [t],
+  );
+  const paymentOptions = useMemo(
+    () =>
+      PAYMENT_STATUSES.map((status) => ({
+        value: status,
+        label: t(`paymentStatus.${status}`),
+      })),
+    [t],
+  );
 
   const updateReservation = async (reservationId, patch) => {
     setBusyId(reservationId);
@@ -141,6 +222,98 @@ const AppReservations = () => {
       setError(getErrorMessage(err, t("appReservationsPage.errors.update")));
     } finally {
       setBusyId("");
+    }
+  };
+
+  const updateManualField = (field, value) => {
+    setManualForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateManualReservation = async (event) => {
+    event.preventDefault();
+    if (!manualForm.resourceId) {
+      setError(
+        t("appReservationsPage.errors.manualResourceRequired", {
+          defaultValue: "Selecciona un recurso para crear la reserva manual.",
+        }),
+      );
+      return;
+    }
+    if (
+      manualForm.scheduleType === "date_range" &&
+      (!manualForm.checkInDate || !manualForm.checkOutDate)
+    ) {
+      setError(
+        t("appReservationsPage.errors.manualDatesRequired", {
+          defaultValue: "Selecciona fecha de entrada y salida.",
+        }),
+      );
+      return;
+    }
+    if (
+      manualForm.scheduleType === "time_slot" &&
+      (!manualForm.startDateTime || !manualForm.endDateTime)
+    ) {
+      setError(
+        t("appReservationsPage.errors.manualSlotRequired", {
+          defaultValue: "Selecciona fecha y horario de inicio/fin.",
+        }),
+      );
+      return;
+    }
+
+    const payload = {
+      resourceId: manualForm.resourceId,
+      scheduleType: manualForm.scheduleType,
+      status: manualForm.status,
+      paymentStatus: manualForm.paymentStatus,
+      currency: manualForm.currency || "MXN",
+      closeLead: false,
+      guestName: String(manualForm.guestName || "").trim() || undefined,
+      guestEmail:
+        String(manualForm.guestEmail || "").trim().toLowerCase() || undefined,
+      guestPhone: String(manualForm.guestPhone || "").trim() || undefined,
+      guestCount: Number(manualForm.guestCount || 1),
+      externalRef: String(manualForm.externalRef || "").trim() || undefined,
+      specialRequests:
+        String(manualForm.specialRequests || "").trim() || undefined,
+    };
+
+    if (manualForm.scheduleType === "date_range") {
+      payload.checkInDate = manualForm.checkInDate;
+      payload.checkOutDate = manualForm.checkOutDate;
+    } else {
+      payload.startDateTime = manualForm.startDateTime;
+      payload.endDateTime = manualForm.endDateTime;
+    }
+
+    if (manualForm.baseAmount !== "") {
+      payload.baseAmount = Number(manualForm.baseAmount);
+    }
+    if (manualForm.totalAmount !== "") {
+      payload.totalAmount = Number(manualForm.totalAmount);
+    }
+
+    setManualBusy(true);
+    setError("");
+    try {
+      await reservationsService.createManualReservation(payload);
+      setManualForm((prev) => ({
+        ...MANUAL_FORM_INITIAL_STATE,
+        resourceId: prev.resourceId,
+      }));
+      await load();
+    } catch (err) {
+      setError(
+        getErrorMessage(
+          err,
+          t("appReservationsPage.errors.manualCreate", {
+            defaultValue: "No se pudo crear la reserva manual.",
+          }),
+        ),
+      );
+    } finally {
+      setManualBusy(false);
     }
   };
 
@@ -189,6 +362,235 @@ const AppReservations = () => {
           </p>
         </article>
       </div>
+
+      <form
+        onSubmit={handleCreateManualReservation}
+        className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
+      >
+        <div>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            {t("appReservationsPage.manual.title", {
+              defaultValue: "Crear reserva manual",
+            })}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t("appReservationsPage.manual.subtitle", {
+              defaultValue:
+                "Registra reservas sin pago en plataforma o conciliadas externamente.",
+            })}
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <label className="grid gap-1 text-sm md:col-span-2">
+            <span>{t("appReservationsPage.manual.fields.resource")}</span>
+            <Select
+              value={manualForm.resourceId}
+              onChange={(value) => updateManualField("resourceId", value)}
+              options={resourceOptions}
+              size="md"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.scheduleType")}</span>
+            <Select
+              value={manualForm.scheduleType}
+              onChange={(value) => updateManualField("scheduleType", value)}
+              options={scheduleTypeOptions}
+              size="md"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.currency")}</span>
+            <input
+              value={manualForm.currency}
+              onChange={(event) =>
+                updateManualField(
+                  "currency",
+                  String(event.target.value || "").toUpperCase().slice(0, 3),
+                )
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+
+          {manualForm.scheduleType === "date_range" ? (
+            <>
+              <label className="grid gap-1 text-sm">
+                <span>{t("appReservationsPage.manual.fields.checkInDate")}</span>
+                <input
+                  type="date"
+                  value={manualForm.checkInDate}
+                  onChange={(event) =>
+                    updateManualField("checkInDate", event.target.value)
+                  }
+                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span>{t("appReservationsPage.manual.fields.checkOutDate")}</span>
+                <input
+                  type="date"
+                  value={manualForm.checkOutDate}
+                  onChange={(event) =>
+                    updateManualField("checkOutDate", event.target.value)
+                  }
+                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+                />
+              </label>
+            </>
+          ) : (
+            <>
+              <label className="grid gap-1 text-sm">
+                <span>{t("appReservationsPage.manual.fields.startDateTime")}</span>
+                <input
+                  type="datetime-local"
+                  value={manualForm.startDateTime}
+                  onChange={(event) =>
+                    updateManualField("startDateTime", event.target.value)
+                  }
+                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span>{t("appReservationsPage.manual.fields.endDateTime")}</span>
+                <input
+                  type="datetime-local"
+                  value={manualForm.endDateTime}
+                  onChange={(event) =>
+                    updateManualField("endDateTime", event.target.value)
+                  }
+                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+                />
+              </label>
+            </>
+          )}
+
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.guestName")}</span>
+            <input
+              value={manualForm.guestName}
+              onChange={(event) =>
+                updateManualField("guestName", event.target.value)
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.guestEmail")}</span>
+            <input
+              type="email"
+              value={manualForm.guestEmail}
+              onChange={(event) =>
+                updateManualField("guestEmail", event.target.value)
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.guestPhone")}</span>
+            <input
+              value={manualForm.guestPhone}
+              onChange={(event) =>
+                updateManualField("guestPhone", event.target.value)
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.guestCount")}</span>
+            <input
+              type="number"
+              min={1}
+              value={manualForm.guestCount}
+              onChange={(event) =>
+                updateManualField("guestCount", event.target.value)
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.baseAmount")}</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={manualForm.baseAmount}
+              onChange={(event) =>
+                updateManualField("baseAmount", event.target.value)
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.totalAmount")}</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={manualForm.totalAmount}
+              onChange={(event) =>
+                updateManualField("totalAmount", event.target.value)
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.status")}</span>
+            <Select
+              value={manualForm.status}
+              onChange={(value) => updateManualField("status", value)}
+              options={statusOptions}
+              size="md"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{t("appReservationsPage.manual.fields.paymentStatus")}</span>
+            <Select
+              value={manualForm.paymentStatus}
+              onChange={(value) => updateManualField("paymentStatus", value)}
+              options={paymentOptions}
+              size="md"
+            />
+          </label>
+          <label className="grid gap-1 text-sm md:col-span-2">
+            <span>{t("appReservationsPage.manual.fields.externalRef")}</span>
+            <input
+              value={manualForm.externalRef}
+              onChange={(event) =>
+                updateManualField("externalRef", event.target.value)
+              }
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+          <label className="grid gap-1 text-sm md:col-span-2 xl:col-span-4">
+            <span>{t("appReservationsPage.manual.fields.specialRequests")}</span>
+            <textarea
+              rows={2}
+              value={manualForm.specialRequests}
+              onChange={(event) =>
+                updateManualField("specialRequests", event.target.value)
+              }
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
+            />
+          </label>
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={manualBusy}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {manualBusy
+              ? t("appReservationsPage.manual.actions.creating", {
+                  defaultValue: "Creando...",
+                })
+              : t("appReservationsPage.manual.actions.create", {
+                  defaultValue: "Crear reserva manual",
+                })}
+          </button>
+        </div>
+      </form>
 
       <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-3 dark:border-slate-700 dark:bg-slate-900">
         <label className="grid gap-1 text-sm">
@@ -259,6 +661,37 @@ const AppReservations = () => {
         <div className="grid gap-4">
           {filteredReservations.map((reservation) => {
             const isFocused = Boolean(focusId) && reservation.$id === focusId;
+            const reservationResourceId =
+              reservation.resourceId || reservation.propertyId;
+            const reservationResourceTitle =
+              resourceMap[reservationResourceId]?.title || reservationResourceId;
+            const isTimeSlotReservation =
+              reservation.bookingType === "time_slot" ||
+              reservation.bookingType === "fixed_event";
+            const scheduleStartValue =
+              reservation.startDateTime || reservation.checkInDate;
+            const scheduleEndValue =
+              reservation.endDateTime || reservation.checkOutDate;
+            const scheduleStartDate = scheduleStartValue
+              ? new Date(scheduleStartValue)
+              : null;
+            const scheduleEndDate = scheduleEndValue
+              ? new Date(scheduleEndValue)
+              : null;
+            const hasValidSchedule =
+              scheduleStartDate &&
+              scheduleEndDate &&
+              !Number.isNaN(scheduleStartDate.getTime()) &&
+              !Number.isNaN(scheduleEndDate.getTime());
+            const scheduleLabel = hasValidSchedule
+              ? isTimeSlotReservation
+                ? `${scheduleStartDate.toLocaleString(locale)} - ${scheduleEndDate.toLocaleString(
+                    locale,
+                  )}`
+                : `${scheduleStartDate.toLocaleDateString(locale)} - ${scheduleEndDate.toLocaleDateString(
+                    locale,
+                  )}`
+              : "-";
 
             return (
               <article
@@ -276,7 +709,7 @@ const AppReservations = () => {
                       #{reservation.$id}
                     </p>
                     <p className="text-sm text-slate-700 dark:text-slate-200">
-                      {reservation.propertyId}
+                      {reservationResourceTitle}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
@@ -299,13 +732,7 @@ const AppReservations = () => {
                   </p>
                   <p className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <CalendarDays size={14} />
-                    {new Date(reservation.checkInDate).toLocaleDateString(
-                      locale,
-                    )}{" "}
-                    -{" "}
-                    {new Date(reservation.checkOutDate).toLocaleDateString(
-                      locale,
-                    )}
+                    {scheduleLabel}
                   </p>
                   <p className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <CreditCard size={14} />

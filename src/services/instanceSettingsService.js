@@ -85,6 +85,18 @@ const ensureCollectionConfigured = () => {
   return collectionId;
 };
 
+const normalizeRole = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
+
+const assertRootActor = (actorRole) => {
+  if (normalizeRole(actorRole) === "root") return;
+  const error = new Error("Solo root puede modificar instance_settings.");
+  error.code = "FORBIDDEN";
+  throw error;
+};
+
 const createActivityLog = async (payload = {}) => {
   const collectionId = env.appwrite.collections.activityLogs;
   if (!collectionId) return;
@@ -129,7 +141,8 @@ export const instanceSettingsService = {
     return normalizeSettingsDocument(doc);
   },
 
-  async ensureMain({ actorUserId = "", actorRole = "root" } = {}) {
+  async ensureMain({ actorUserId = "", actorRole = "" } = {}) {
+    assertRootActor(actorRole);
     ensureAppwriteConfigured();
     const collectionId = ensureCollectionConfigured();
     const current = await this.getMain();
@@ -170,8 +183,9 @@ export const instanceSettingsService = {
 
   async saveMain(
     { planKey, enabledModules, limits, enabled } = {},
-    { actorUserId = "", actorRole = "root" } = {},
+    { actorUserId = "", actorRole = "" } = {},
   ) {
+    assertRootActor(actorRole);
     ensureAppwriteConfigured();
     const collectionId = ensureCollectionConfigured();
     const current = await this.ensureMain({ actorUserId, actorRole });
@@ -229,4 +243,3 @@ export const instanceSettingsService = {
     return normalizeSettingsDocument(saved);
   },
 };
-

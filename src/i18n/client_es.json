@@ -561,7 +561,14 @@
     },
     "calendar": {
       "title": "Calendario de Disponibilidad",
-      "placeholder": "Selecciona fechas"
+      "placeholder": "Selecciona fechas",
+      "availabilityError": "No se pudo cargar la disponibilidad.",
+      "manualDateRangeMessage": "Hola, me interesa \"{{title}}\" para las fechas {{dates}}. ¿Podemos confirmar disponibilidad y condiciones?",
+      "manualTimeSlotMessage": "Hola, me interesa \"{{title}}\" el {{date}} en el horario {{time}}. ¿Podemos confirmar disponibilidad?",
+      "selectDate": "Selecciona una fecha",
+      "dayUnavailable": "La fecha seleccionada no esta disponible.",
+      "noSlots": "No hay horarios disponibles para la fecha seleccionada.",
+      "contactForSlot": "Solicitar este horario"
     },
     "owner": {
       "title": "Anfitrión / Agente",

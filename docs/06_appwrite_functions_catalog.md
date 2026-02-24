@@ -192,6 +192,18 @@ Errores estandar:
 - Consulta capabilities/requirements en Stripe y sincroniza `stripeOnboardingStatus`.
 - Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
 
+## 4.26 `create-reservation-manual`
+
+- HTTP POST autenticado para operacion interna.
+- Crea reservas manuales sin checkout online (`paymentProvider=manual`).
+- Soporta conversion de lead a reserva (`leadId`) con preservacion de datos comerciales.
+
+## 4.27 `get-resource-availability`
+
+- HTTP POST para consulta de disponibilidad por `resourceId`.
+- Devuelve `blockedDateKeys` y `occupiedSlotsByDate` para calendario de detalle y agenda asistida.
+- Considera reservas activas y solapamientos de horario.
+
 ---
 
 ## 5. Execute permissions (resumen)
@@ -200,6 +212,8 @@ Errores estandar:
 | ---------------------------- | ------------------- |
 | `create-lead`                | `users`             |
 | `create-reservation-public`  | `users`             |
+| `create-reservation-manual`  | `users`             |
+| `get-resource-availability`  | `users`             |
 | `expire-pending-reservations`| `[]` (scheduler)    |
 | `create-payment-session`     | `users`             |
 | `create-review-public`       | `users`             |
@@ -225,6 +239,8 @@ Nuevas/actualizadas:
 - `APPWRITE_COLLECTION_RATE_PLANS_ID` (si aplica)
 - `APPWRITE_COLLECTION_PASSWORD_RESETS_ID` (send-password-reset)
 - `APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID` (frontend)
+- `APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID` (frontend/internal tools)
+- `APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID` (frontend calendario)
 - `PASSWORD_RESET_TTL_MINUTES` / `PASSWORD_RESET_COOLDOWN_SECONDS`
 
 Nota:
@@ -255,5 +271,5 @@ Nota:
 
 ---
 
-Ultima actualizacion: 2026-02-22
-Version: 3.1.0
+Ultima actualizacion: 2026-02-24
+Version: 3.1.1

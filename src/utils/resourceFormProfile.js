@@ -200,6 +200,49 @@ export const RESOURCE_FORM_FIELD_DEFINITIONS = Object.freeze({
     labelKey: "propertyForm.fields.checkOutTime",
     defaultValue: "11:00",
   }),
+  slotDurationMinutes: createField({
+    key: "slotDurationMinutes",
+    source: "root",
+    inputType: "number",
+    labelKey: "propertyForm.fields.slotDurationMinutes",
+    defaultValue: "60",
+    min: 15,
+    max: 1440,
+    step: 15,
+    unitKey: "propertyForm.units.minutes",
+  }),
+  slotBufferMinutes: createField({
+    key: "slotBufferMinutes",
+    source: "root",
+    inputType: "number",
+    labelKey: "propertyForm.fields.slotBufferMinutes",
+    defaultValue: "0",
+    min: 0,
+    max: 240,
+    step: 5,
+    unitKey: "propertyForm.units.minutes",
+  }),
+  manualContactScheduleType: createField({
+    key: "manualContactScheduleType",
+    source: "attributes",
+    inputType: "select",
+    labelKey: "propertyForm.fields.manualContactScheduleType",
+    defaultValue: "none",
+    options: Object.freeze([
+      Object.freeze({
+        value: "none",
+        labelKey: "propertyForm.options.manualContactScheduleType.none",
+      }),
+      Object.freeze({
+        value: "date_range",
+        labelKey: "propertyForm.options.manualContactScheduleType.date_range",
+      }),
+      Object.freeze({
+        value: "time_slot",
+        labelKey: "propertyForm.options.manualContactScheduleType.time_slot",
+      }),
+    ]),
+  }),
   vehicleSeats: createField({
     key: "vehicleSeats",
     source: "attributes",
@@ -719,6 +762,12 @@ const resolveCommercialConditionFieldKeys = (
   return byMode[commercialMode] || [];
 };
 
+const COMMON_COMMERCIAL_CONDITION_KEYS = Object.freeze([
+  "manualContactScheduleType",
+  "slotDurationMinutes",
+  "slotBufferMinutes",
+]);
+
 const mapFieldKeys = (keys) =>
   toUniqueKeys(keys)
     .map((key) => RESOURCE_FORM_FIELD_DEFINITIONS[key])
@@ -772,11 +821,14 @@ export const getResourceFormProfile = ({
     resolveFeatureFieldKeys(normalizedType, normalizedCategory),
   );
   const commercialConditionKeys = toUniqueKeys(
-    resolveCommercialConditionFieldKeys(
-      normalizedType,
-      normalizedCategory,
-      normalizedCommercial,
-    ),
+    [
+      ...resolveCommercialConditionFieldKeys(
+        normalizedType,
+        normalizedCategory,
+        normalizedCommercial,
+      ),
+      ...COMMON_COMMERCIAL_CONDITION_KEYS,
+    ],
   );
 
   const features = mapFieldKeys(featureKeys);

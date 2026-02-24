@@ -334,6 +334,18 @@ const normalizeResourceInput = (
   const checkOutTime = String(source.checkOutTime || "").trim();
   if (checkOutTime) assign("checkOutTime", checkOutTime);
 
+  const slotDurationMinutes = toNumber(source.slotDurationMinutes, 60);
+  assign(
+    "slotDurationMinutes",
+    Math.max(15, Math.min(1440, Math.trunc(slotDurationMinutes))),
+  );
+
+  const slotBufferMinutes = toNumber(source.slotBufferMinutes, 0);
+  assign(
+    "slotBufferMinutes",
+    Math.max(0, Math.min(240, Math.trunc(slotBufferMinutes))),
+  );
+
   const videoUrl = String(source.videoUrl || "").trim();
   const virtualTourUrl = String(source.virtualTourUrl || "").trim();
   if (videoUrl) assign("videoUrl", videoUrl);

@@ -81,6 +81,12 @@ const env = {
       sendLeadNotification: get("APPWRITE_FUNCTION_SEND_LEAD_NOTIFICATION_ID"),
       propertyViewCounter: get("APPWRITE_FUNCTION_PROPERTY_VIEW_COUNTER_ID"),
       createReservation: get("APPWRITE_FUNCTION_CREATE_RESERVATION_ID"),
+      createManualReservation: get(
+        "APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID",
+      ),
+      getResourceAvailability: get(
+        "APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID",
+      ),
       reservationCreatedNotification: get(
         "APPWRITE_FUNCTION_RESERVATION_CREATED_NOTIFICATION_ID",
       ),

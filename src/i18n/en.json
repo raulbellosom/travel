@@ -993,11 +993,14 @@
       "actions": "Actions"
     },
     "actions": {
-      "sendEmail": "Send email"
+      "sendEmail": "Send email",
+      "convertToReservation": "Create reservation"
     },
     "errors": {
       "load": "Could not load leads.",
-      "update": "Could not update lead."
+      "update": "Could not update lead.",
+      "convert": "Could not convert lead into a manual reservation.",
+      "convertMissingSchedule": "This lead does not include a selected date or time slot."
     }
   },
   "profilePage": {
@@ -1448,6 +1451,10 @@
       "maxStayNights": "Maximum nights",
       "checkInTime": "Check-in time",
       "checkOutTime": "Check-out time",
+      "bookingType": "Booking type",
+      "manualContactScheduleType": "Manual-contact scheduling mode",
+      "slotDurationMinutes": "Slot duration",
+      "slotBufferMinutes": "Slot buffer",
       "floors": "Floors",
       "yearBuilt": "Year built",
       "vehicleModelYear": "Model year",
@@ -1481,7 +1488,9 @@
     "helper": {
       "description": "At least 20 characters. Explain value, location, and key highlights.",
       "pricingModel": "Choose how pricing is charged for the selected resource type and commercial mode.",
-      "categoryCommercialDifference": "Use Commercial for classic real-estate sale/rent listings. For bookable spaces by hour, use resource type Venue and category Commercial unit."
+      "categoryCommercialDifference": "Use Commercial for classic real-estate sale/rent listings. For bookable spaces by hour, use resource type Venue and category Commercial unit.",
+      "bookingTypeManual": "Client contacts the agent directly. Online checkout is disabled.",
+      "bookingTypeDirect": "Client selects availability and creates the reservation inside the platform."
     },
     "actions": {
       "saving": "Saving...",
@@ -1652,6 +1661,11 @@
         "perPerson": "Per person",
         "perEvent": "Per event",
         "perM2": "Per m2"
+      },
+      "manualContactScheduleType": {
+        "none": "Free-form contact only",
+        "date_range": "Date-range selection",
+        "time_slot": "Time-slot selection"
       },
       "status": {
         "draft": "Draft",
@@ -2194,9 +2208,40 @@
       "markCompleted": "Mark completed",
       "cancel": "Cancel"
     },
+    "manual": {
+      "title": "Manual reservation",
+      "subtitle": "Register bookings outside online checkout, including external payment references.",
+      "fields": {
+        "resource": "Resource",
+        "scheduleType": "Schedule type",
+        "currency": "Currency",
+        "checkInDate": "Check-in date",
+        "checkOutDate": "Check-out date",
+        "startDateTime": "Start",
+        "endDateTime": "End",
+        "guestName": "Guest name",
+        "guestEmail": "Guest email",
+        "guestPhone": "Guest phone",
+        "guestCount": "Guests",
+        "baseAmount": "Base amount",
+        "totalAmount": "Total amount",
+        "status": "Status",
+        "paymentStatus": "Payment status",
+        "externalRef": "External reference",
+        "specialRequests": "Internal notes / requests"
+      },
+      "actions": {
+        "create": "Create manual reservation",
+        "creating": "Creating..."
+      }
+    },
     "errors": {
       "load": "Could not load reservations.",
-      "update": "Could not update reservation."
+      "update": "Could not update reservation.",
+      "manualResourceRequired": "Select a resource before creating a manual reservation.",
+      "manualDatesRequired": "Select check-in and check-out dates.",
+      "manualSlotRequired": "Select start and end date-time values.",
+      "manualCreate": "Could not create manual reservation."
     }
   },
   "appPaymentsPage": {
@@ -2447,9 +2492,14 @@
     "reservationsInView": "reservations in view",
     "retry": "Retry",
     "selectDates": "Select dates",
+    "openTwoMonths": "View 2 months",
     "clearDates": "Clear dates",
     "minStay": "Minimum stay: {{nights}} nights",
     "maxStay": "Maximum stay: {{nights}} nights",
+    "modal": {
+      "title": "Extended calendar",
+      "description": "Review two months of availability and choose your dates."
+    },
     "views": {
       "day": "Day",
       "week": "Week",

@@ -474,7 +474,11 @@ const MyProperties = () => {
 
     try {
       const imageDocs = await propertiesService.listImages(id);
-      const urls = imageDocs.map((img) => img.url).filter(Boolean);
+      // Use original /view URLs for the modal so images are full-resolution, not
+      // the card-preset (600px/q50) thumbnails stored in img.url.
+      const urls = imageDocs
+        .map((img) => (img.fileId ? getFileViewUrl(img.fileId) : img.url))
+        .filter(Boolean);
       const images = urls.length > 0 ? urls : fallback ? [fallback] : [];
       if (images.length === 0) return;
 

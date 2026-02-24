@@ -10,12 +10,17 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useInstanceModules } from "../../hooks/useInstanceModules";
 import { hasScope } from "../../utils/roles";
 import { INTERNAL_ROUTES } from "../../utils/internalRoutes";
+import { isScopeAllowedByModules } from "../../utils/moduleAccess";
 
 const DashboardBottomTabs = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isEnabled } = useInstanceModules();
+  const canAccessScope = (scope) =>
+    hasScope(user, scope) && isScopeAllowedByModules(scope, isEnabled);
 
   const candidates = [
     {
@@ -24,7 +29,7 @@ const DashboardBottomTabs = () => {
       icon: Home,
       label: t("sidebar.overview"),
     },
-    ...(hasScope(user, "resources.read")
+    ...(canAccessScope("resources.read")
       ? [
           {
             key: "properties",
@@ -34,7 +39,7 @@ const DashboardBottomTabs = () => {
           },
         ]
       : []),
-    ...(hasScope(user, "leads.read")
+    ...(canAccessScope("leads.read")
       ? [
           {
             key: "leads",
@@ -44,7 +49,7 @@ const DashboardBottomTabs = () => {
           },
         ]
       : []),
-    ...(hasScope(user, "messaging.read")
+    ...(canAccessScope("messaging.read")
       ? [
           {
             key: "conversations",
@@ -54,7 +59,7 @@ const DashboardBottomTabs = () => {
           },
         ]
       : []),
-    ...(hasScope(user, "reservations.read")
+    ...(canAccessScope("reservations.read")
       ? [
           {
             key: "reservations",
@@ -64,7 +69,7 @@ const DashboardBottomTabs = () => {
           },
         ]
       : []),
-    ...(hasScope(user, "payments.read")
+    ...(canAccessScope("payments.read")
       ? [
           {
             key: "payments",
@@ -74,7 +79,7 @@ const DashboardBottomTabs = () => {
           },
         ]
       : []),
-    ...(hasScope(user, "staff.manage")
+    ...(canAccessScope("staff.manage")
       ? [
           {
             key: "team",

@@ -56,6 +56,10 @@ const RESOURCE_TYPES = new Set([
   "experience",
   "venue",
 ]);
+const SUPPORTED_MANUAL_CONTACT_SCHEDULE_TYPES = new Set([
+  "date_range",
+  "time_slot",
+]);
 
 const normalizeText = (value) => String(value || "").trim();
 
@@ -75,6 +79,13 @@ export const normalizeCommercialMode = (value) => {
 
   return "sale";
 };
+
+const ALLOWED_BOOKING_TYPES_BY_COMMERCIAL_MODE = Object.freeze({
+  sale: Object.freeze(["manual_contact"]),
+  rent_long_term: Object.freeze(["manual_contact"]),
+  rent_short_term: Object.freeze(["date_range", "manual_contact"]),
+  rent_hourly: Object.freeze(["time_slot", "fixed_event", "manual_contact"]),
+});
 
 const ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE = Object.freeze({
   property: Object.freeze({
@@ -246,16 +257,37 @@ export const getAllowedPricingModels = (
   return fallbackFromProperty.length > 0 ? [...fallbackFromProperty] : ["fixed_total"];
 };
 
-export const normalizeBookingType = (value, fallbackCommercialMode = "sale") => {
+export const getAllowedBookingTypes = (
+  _resourceType = "property",
+  commercialMode = "sale",
+  _category = "",
+) => {
+  void _resourceType;
+  void _category;
+  const normalizedMode = normalizeCommercialMode(commercialMode);
+  const allowed = ALLOWED_BOOKING_TYPES_BY_COMMERCIAL_MODE[normalizedMode];
+  return Array.isArray(allowed) && allowed.length > 0
+    ? [...allowed]
+    : ["manual_contact"];
+};
+
+export const normalizeBookingType = (
+  value,
+  fallbackCommercialMode = "sale",
+  fallbackResourceType = "property",
+  fallbackCategory = "",
+) => {
+  const allowedBookingTypes = getAllowedBookingTypes(
+    fallbackResourceType,
+    fallbackCommercialMode,
+    fallbackCategory,
+  );
   const normalized = normalizeLower(value);
-  if (["manual_contact", "date_range", "time_slot", "fixed_event"].includes(normalized)) {
+  if (allowedBookingTypes.includes(normalized)) {
     return normalized;
   }
 
-  const mode = normalizeCommercialMode(fallbackCommercialMode);
-  if (mode === "rent_short_term") return "date_range";
-  if (mode === "rent_hourly") return "time_slot";
-  return "manual_contact";
+  return allowedBookingTypes[0] || "manual_contact";
 };
 
 export const normalizePricingModel = (
@@ -313,6 +345,43 @@ export const normalizeAttributes = (attributes) => {
   }
 };
 
+export const parseResourceAttributes = (attributes) => {
+  if (!attributes) return {};
+
+  if (typeof attributes === "string") {
+    const trimmed = attributes.trim();
+    if (!trimmed) return {};
+    try {
+      const parsed = JSON.parse(trimmed);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? parsed
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  if (typeof attributes === "object" && !Array.isArray(attributes)) {
+    return attributes;
+  }
+
+  return {};
+};
+
+export const normalizeManualContactScheduleType = (value) => {
+  const normalized = normalizeLower(value);
+  return SUPPORTED_MANUAL_CONTACT_SCHEDULE_TYPES.has(normalized)
+    ? normalized
+    : "none";
+};
+
+export const getManualContactScheduleType = (resourceDoc = {}) => {
+  const attributes = parseResourceAttributes(resourceDoc.attributes);
+  return normalizeManualContactScheduleType(
+    attributes.manualContactScheduleType || attributes.manual_contact_schedule_type,
+  );
+};
+
 export const normalizeResourceDocument = (doc = {}) => {
   const resourceType = normalizeResourceType(doc.resourceType || "property");
   const commercialMode = normalizeCommercialMode(
@@ -327,6 +396,10 @@ export const normalizeResourceDocument = (doc = {}) => {
   );
   const category = normalizeText(doc.category || doc.propertyType || "house");
   const attributes = normalizeAttributes(doc.attributes);
+  const manualContactScheduleType = getManualContactScheduleType({
+    ...doc,
+    attributes,
+  });
   const operationType = toLegacyOperationType(commercialMode);
   const pricePerUnit = toLegacyPricePerUnit(pricingModel);
   const title = normalizeText(doc.title || doc.resourceTitle || doc.propertyTitle);
@@ -346,6 +419,7 @@ export const normalizeResourceDocument = (doc = {}) => {
     pricePerUnit,
     bookingType,
     attributes,
+    manualContactScheduleType,
   };
 };
 
@@ -362,9 +436,19 @@ const priceLabelByModel = Object.freeze({
 
 export const getResourceBehavior = (resourceDraftOrDoc = {}, modulesApi = {}) => {
   const normalized = normalizeResourceDocument(resourceDraftOrDoc);
-  const requiresCalendar = ["date_range", "time_slot", "fixed_event"].includes(
-    normalized.bookingType,
-  );
+  const effectiveScheduleType =
+    normalized.bookingType === "manual_contact"
+      ? normalized.manualContactScheduleType
+      : normalized.bookingType === "date_range"
+        ? "date_range"
+        : normalized.bookingType === "time_slot" ||
+            normalized.bookingType === "fixed_event"
+          ? "time_slot"
+          : "none";
+  const requiresCalendar =
+    ["date_range", "time_slot", "fixed_event"].includes(normalized.bookingType) ||
+    effectiveScheduleType === "date_range" ||
+    effectiveScheduleType === "time_slot";
   const requiresPayments =
     normalized.commercialMode === "rent_short_term" ||
     normalized.commercialMode === "rent_hourly";
@@ -389,6 +473,7 @@ export const getResourceBehavior = (resourceDraftOrDoc = {}, modulesApi = {}) =>
 
   return {
     ...normalized,
+    effectiveScheduleType,
     requiresCalendar,
     requiresPayments,
     requiredModule,

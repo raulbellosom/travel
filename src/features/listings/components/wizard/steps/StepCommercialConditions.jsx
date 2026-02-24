@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Select } from "../../../../../components/common";
 import { getResourceFieldLabel } from "../../../../../utils/resourceFormProfile";
+import { getAllowedBookingTypes } from "../../../../../utils/resourceModel";
+import { getBookingTypeLabel } from "../../../../../utils/resourceLabels";
 
 const HINTS_BY_COMMERCIAL_MODE = Object.freeze({
   rent_long_term: {
@@ -60,6 +62,8 @@ const normalizeNumberOnBlur = (field, rawValue) => {
 const StepCommercialConditions = ({ formHook }) => {
   const { t } = useTranslation();
   const {
+    form,
+    setField,
     resourceFormProfile,
     getResourceFieldValue,
     setResourceFieldValue,
@@ -68,15 +72,43 @@ const StepCommercialConditions = ({ formHook }) => {
   } = formHook;
 
   const fields = resourceFormProfile.commercialConditions;
+  const manualContactScheduleType = useMemo(() => {
+    const raw = String(getResourceFieldValue("manualContactScheduleType") || "none")
+      .trim()
+      .toLowerCase();
+    if (["none", "date_range", "time_slot"].includes(raw)) return raw;
+    return "none";
+  }, [getResourceFieldValue]);
+  const visibleFields = useMemo(
+    () =>
+      fields.filter((field) => {
+        if (field.key === "manualContactScheduleType") {
+          return form.bookingType === "manual_contact";
+        }
+
+        if (field.key === "slotDurationMinutes" || field.key === "slotBufferMinutes") {
+          if (form.bookingType === "time_slot" || form.bookingType === "fixed_event") {
+            return true;
+          }
+          if (form.bookingType === "manual_contact") {
+            return manualContactScheduleType === "time_slot";
+          }
+          return false;
+        }
+
+        return true;
+      }),
+    [fields, form.bookingType, manualContactScheduleType],
+  );
   const [draftNumericValues, setDraftNumericValues] = useState({});
   const numericFieldKeys = useMemo(
     () =>
       new Set(
-        fields
+        visibleFields
           .filter((field) => field.inputType === "number")
           .map((field) => field.key),
       ),
-    [fields],
+    [visibleFields],
   );
 
   useEffect(() => {
@@ -98,133 +130,177 @@ const StepCommercialConditions = ({ formHook }) => {
     () => HINTS_BY_COMMERCIAL_MODE[resourceFormProfile.commercialMode] || null,
     [resourceFormProfile.commercialMode],
   );
-
-  if (fields.length === 0) {
-    return (
-      <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-        {t("propertyForm.wizard.noSpecificCommercialConditions", {
-          defaultValue:
-            "Este tipo de recurso no requiere condiciones comerciales adicionales.",
-        })}
-      </p>
-    );
-  }
+  const bookingTypeOptions = useMemo(
+    () =>
+      getAllowedBookingTypes(
+        form.resourceType,
+        form.commercialMode,
+        form.category || form.propertyType,
+      ).map((value) => ({
+        value,
+        label: getBookingTypeLabel(value, t),
+      })),
+    [
+      form.category,
+      form.commercialMode,
+      form.propertyType,
+      form.resourceType,
+      t,
+    ],
+  );
+  const hasDynamicFields = visibleFields.length > 0;
 
   return (
     <div className="space-y-5">
+      <label className="grid gap-1 text-sm">
+        <span className="font-medium text-slate-700 dark:text-slate-200">
+          {t("propertyForm.fields.bookingType", {
+            defaultValue: "Tipo de reserva",
+          })}
+        </span>
+        <Select
+          value={form.bookingType}
+          options={bookingTypeOptions}
+          size="md"
+          disabled={bookingTypeOptions.length <= 1}
+          onChange={(value) => setField("bookingType", value)}
+        />
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {form.bookingType === "manual_contact"
+            ? t("propertyForm.helper.bookingTypeManual", {
+                defaultValue:
+                  "El cliente contacta al agente. No se activa checkout online.",
+              })
+            : t("propertyForm.helper.bookingTypeDirect", {
+                defaultValue:
+                  "El cliente puede seleccionar disponibilidad y reservar desde la plataforma.",
+              })}
+        </p>
+        {renderFieldError("bookingType")}
+      </label>
+
       {hintConfig ? (
         <p className="text-sm text-slate-600 dark:text-slate-300">
           {t(hintConfig.key, { defaultValue: hintConfig.defaultValue })}
         </p>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {fields.map((field) => {
-          const value = getResourceFieldValue(field.key);
-          const fieldLabel = getResourceFieldLabel(field, t, {
-            commercialMode: resourceFormProfile.commercialMode,
-          });
+      {!hasDynamicFields ? (
+        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          {t("propertyForm.wizard.noSpecificCommercialConditions", {
+            defaultValue:
+              "Este tipo de recurso no requiere condiciones comerciales adicionales.",
+          })}
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {visibleFields.map((field) => {
+            const value = getResourceFieldValue(field.key);
+            const fieldLabel = getResourceFieldLabel(field, t, {
+              commercialMode: resourceFormProfile.commercialMode,
+            });
 
-          if (field.inputType === "boolean") {
-            return (
-              <div key={field.key} className="sm:col-span-2">
-                <label className="inline-flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 dark:border-slate-600"
-                    checked={Boolean(value)}
-                    onChange={(event) =>
-                      setResourceFieldValue(field.key, event.target.checked)
+            if (field.inputType === "boolean") {
+              return (
+                <div key={field.key} className="sm:col-span-2">
+                  <label className="inline-flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 dark:border-slate-600"
+                      checked={Boolean(value)}
+                      onChange={(event) =>
+                        setResourceFieldValue(field.key, event.target.checked)
+                      }
+                    />
+                    <span className="font-medium">{fieldLabel}</span>
+                  </label>
+                  {renderFieldError(field.key)}
+                </div>
+              );
+            }
+
+            if (field.inputType === "select") {
+              const options = (field.options || []).map((option) => ({
+                value: option.value,
+                label: t(option.labelKey, {
+                  defaultValue: option.defaultLabel || option.value,
+                }),
+              }));
+
+              return (
+                <label key={field.key} className="grid gap-1 text-sm">
+                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                    {fieldLabel}
+                  </span>
+                  <Select
+                    value={value}
+                    options={options}
+                    size="md"
+                    onChange={(nextValue) =>
+                      setResourceFieldValue(field.key, nextValue)
                     }
                   />
-                  <span className="font-medium">{fieldLabel}</span>
+                  {renderFieldError(field.key)}
                 </label>
-                {renderFieldError(field.key)}
-              </div>
-            );
-          }
+              );
+            }
 
-          if (field.inputType === "select") {
-            const options = (field.options || []).map((option) => ({
-              value: option.value,
-              label: t(option.labelKey, {
-                defaultValue: option.defaultLabel || option.value,
-              }),
-            }));
+            const inputType = field.inputType === "time" ? "time" : "number";
+            const displayValue =
+              field.inputType === "number" && hasOwn(draftNumericValues, field.key)
+                ? draftNumericValues[field.key]
+                : value;
 
             return (
               <label key={field.key} className="grid gap-1 text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-200">
                   {fieldLabel}
                 </span>
-                <Select
-                  value={value}
-                  options={options}
-                  size="md"
-                  onChange={(nextValue) =>
-                    setResourceFieldValue(field.key, nextValue)
-                  }
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type={inputType}
+                    min={field.inputType === "number" ? field.min : undefined}
+                    max={field.inputType === "number" ? field.max : undefined}
+                    step={field.inputType === "number" ? field.step || 1 : undefined}
+                    value={displayValue}
+                    className={getFieldClassName(field.key)}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      if (field.inputType === "number") {
+                        setDraftNumericValues((prev) => ({
+                          ...prev,
+                          [field.key]: nextValue,
+                        }));
+                      }
+                      setResourceFieldValue(field.key, nextValue);
+                    }}
+                    onBlur={() => {
+                      if (field.inputType !== "number") return;
+                      const rawValue = hasOwn(draftNumericValues, field.key)
+                        ? draftNumericValues[field.key]
+                        : value;
+                      const normalized = normalizeNumberOnBlur(field, rawValue);
+                      setResourceFieldValue(field.key, normalized);
+                      setDraftNumericValues((prev) => {
+                        if (!hasOwn(prev, field.key)) return prev;
+                        const next = { ...prev };
+                        delete next[field.key];
+                        return next;
+                      });
+                    }}
+                  />
+                  {field.inputType === "number" && field.unitKey ? (
+                    <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                      {t(field.unitKey, { defaultValue: "" })}
+                    </span>
+                  ) : null}
+                </div>
                 {renderFieldError(field.key)}
               </label>
             );
-          }
-
-          const inputType = field.inputType === "time" ? "time" : "number";
-          const displayValue =
-            field.inputType === "number" && hasOwn(draftNumericValues, field.key)
-              ? draftNumericValues[field.key]
-              : value;
-
-          return (
-            <label key={field.key} className="grid gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {fieldLabel}
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  type={inputType}
-                  min={field.inputType === "number" ? field.min : undefined}
-                  max={field.inputType === "number" ? field.max : undefined}
-                  step={field.inputType === "number" ? field.step || 1 : undefined}
-                  value={displayValue}
-                  className={getFieldClassName(field.key)}
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-                    if (field.inputType === "number") {
-                      setDraftNumericValues((prev) => ({
-                        ...prev,
-                        [field.key]: nextValue,
-                      }));
-                    }
-                    setResourceFieldValue(field.key, nextValue);
-                  }}
-                  onBlur={() => {
-                    if (field.inputType !== "number") return;
-                    const rawValue = hasOwn(draftNumericValues, field.key)
-                      ? draftNumericValues[field.key]
-                      : value;
-                    const normalized = normalizeNumberOnBlur(field, rawValue);
-                    setResourceFieldValue(field.key, normalized);
-                    setDraftNumericValues((prev) => {
-                      if (!hasOwn(prev, field.key)) return prev;
-                      const next = { ...prev };
-                      delete next[field.key];
-                      return next;
-                    });
-                  }}
-                />
-                {field.inputType === "number" && field.unitKey ? (
-                  <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
-                    {t(field.unitKey, { defaultValue: "" })}
-                  </span>
-                ) : null}
-              </div>
-              {renderFieldError(field.key)}
-            </label>
-          );
-        })}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 };

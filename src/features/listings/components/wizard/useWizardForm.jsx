@@ -101,6 +101,8 @@ const ROOT_FIELD_PAYLOAD_DEFAULTS = Object.freeze({
   maxStayNights: 365,
   checkInTime: "15:00",
   checkOutTime: "11:00",
+  slotDurationMinutes: 60,
+  slotBufferMinutes: 0,
 });
 
 const ROOT_RESOURCE_FIELD_DEFINITIONS = Object.freeze(
@@ -159,7 +161,12 @@ const buildCommercialState = (
     normalizedResourceType,
     normalizedCategory,
   );
-  const bookingType = normalizeBookingType(draft.bookingType, commercialMode);
+  const bookingType = normalizeBookingType(
+    draft.bookingType,
+    commercialMode,
+    normalizedResourceType,
+    normalizedCategory,
+  );
   return {
     category: normalizedCategory,
     commercialMode,
@@ -244,6 +251,8 @@ export const buildFormState = (initialValues = {}) => {
     maxStayNights: toInputString(merged.maxStayNights, "365"),
     checkInTime: String(merged.checkInTime || "15:00"),
     checkOutTime: String(merged.checkOutTime || "11:00"),
+    slotDurationMinutes: toInputString(merged.slotDurationMinutes, "60"),
+    slotBufferMinutes: toInputString(merged.slotBufferMinutes, "0"),
     videoUrl: String(merged.videoUrl || ""),
     virtualTourUrl: String(merged.virtualTourUrl || ""),
     city: String(merged.city || ""),
@@ -439,12 +448,28 @@ export const useWizardForm = ({
         }
 
         if (field === "bookingType") {
+          const nextBookingType = normalizeBookingType(
+            value,
+            prev.commercialMode || "sale",
+            prev.resourceType,
+            prev.category || prev.propertyType,
+          );
+
+          if (nextBookingType !== "manual_contact") {
+            const nextAttributes = parseResourceAttributes(prev.attributes);
+            if (nextAttributes.manualContactScheduleType !== "none") {
+              nextAttributes.manualContactScheduleType = "none";
+            }
+            return {
+              ...prev,
+              bookingType: nextBookingType,
+              attributes: normalizeAttributes(nextAttributes),
+            };
+          }
+
           return {
             ...prev,
-            bookingType: normalizeBookingType(
-              value,
-              prev.commercialMode || "sale",
-            ),
+            bookingType: nextBookingType,
           };
         }
 
@@ -636,6 +661,21 @@ export const useWizardForm = ({
     resourceFormProfile.attributeFieldKeys,
     resourceFormProfile.rootFieldKeys,
   ]);
+
+  useEffect(() => {
+    if (form.bookingType === "manual_contact") return;
+    const attributes = parseResourceAttributes(form.attributes);
+    if ((attributes.manualContactScheduleType || "none") === "none") return;
+
+    const nextAttributes = {
+      ...attributes,
+      manualContactScheduleType: "none",
+    };
+    const normalized = normalizeAttributes(nextAttributes);
+    setForm((prev) =>
+      prev.attributes === normalized ? prev : { ...prev, attributes: normalized },
+    );
+  }, [form.attributes, form.bookingType]);
 
   /* â”€â”€ slug auto-generate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -1352,7 +1392,12 @@ export const useWizardForm = ({
       resourceType,
       category,
     );
-    const bookingType = normalizeBookingType(form.bookingType, commercialMode);
+    const bookingType = normalizeBookingType(
+      form.bookingType,
+      commercialMode,
+      resourceType,
+      category,
+    );
     const profile = getResourceFormProfile({
       resourceType,
       category,
@@ -1426,6 +1471,12 @@ export const useWizardForm = ({
     const checkOutTime = isRootFieldActive("checkOutTime")
       ? String(form.checkOutTime || ROOT_FIELD_PAYLOAD_DEFAULTS.checkOutTime)
       : ROOT_FIELD_PAYLOAD_DEFAULTS.checkOutTime;
+    const slotDurationMinutes = isRootFieldActive("slotDurationMinutes")
+      ? clampToRange(parseNumber(form.slotDurationMinutes, 60), 15, 1440)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.slotDurationMinutes;
+    const slotBufferMinutes = isRootFieldActive("slotBufferMinutes")
+      ? clampToRange(parseNumber(form.slotBufferMinutes, 0), 0, 240)
+      : ROOT_FIELD_PAYLOAD_DEFAULTS.slotBufferMinutes;
 
     return {
       slug: normalizeSlug(form.slug),
@@ -1460,6 +1511,8 @@ export const useWizardForm = ({
       maxStayNights,
       checkInTime,
       checkOutTime,
+      slotDurationMinutes,
+      slotBufferMinutes,
       videoUrl: String(form.videoUrl || "").trim(),
       virtualTourUrl: String(form.virtualTourUrl || "").trim(),
       country: validCountry?.value || "MX",

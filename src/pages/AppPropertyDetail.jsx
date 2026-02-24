@@ -56,6 +56,7 @@ import {
   getInternalEditPropertyRoute,
   getPublicPropertyRoute,
 } from "../utils/internalRoutes";
+import { getOptimizedImage, getFileViewUrl } from "../utils/imageOptimization";
 import { formatMoneyWithDenomination } from "../utils/money";
 
 const MapDisplay = lazy(
@@ -324,7 +325,27 @@ const AppPropertyDetail = () => {
     }
   };
 
-  const carouselImages = useMemo(() => images.map((img) => img.url), [images]);
+  // Admin carousel: use detail-hd preset (1400px/q80) —
+  // much sharper than the card preset (600px/q50) stored in img.url.
+  const carouselImages = useMemo(
+    () =>
+      images.map(
+        (img) =>
+          (img.fileId && getOptimizedImage(img.fileId, "detail-hd")) ||
+          img.url ||
+          "",
+      ),
+    [images],
+  );
+
+  // Viewer modal: use original /view URL for maximum quality.
+  const viewerUrls = useMemo(
+    () =>
+      images.map(
+        (img) => (img.fileId && getFileViewUrl(img.fileId)) || img.url || "",
+      ),
+    [images],
+  );
 
   const openViewer = (idx) => {
     setImageViewerIndex(idx);
@@ -1082,7 +1103,7 @@ const AppPropertyDetail = () => {
       <ImageViewerModal
         isOpen={isImageViewerOpen}
         onClose={() => setIsImageViewerOpen(false)}
-        images={images.map((img) => img.url)}
+        images={viewerUrls}
         initialIndex={imageViewerIndex}
         alt={property?.title || "Property image"}
         showDownload={true}

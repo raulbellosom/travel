@@ -561,7 +561,14 @@
     },
     "calendar": {
       "title": "Availability Calendar",
-      "placeholder": "Select dates"
+      "placeholder": "Select dates",
+      "availabilityError": "Could not load availability.",
+      "manualDateRangeMessage": "Hi, I am interested in \"{{title}}\" for {{dates}}. Can we confirm availability and conditions?",
+      "manualTimeSlotMessage": "Hi, I am interested in \"{{title}}\" on {{date}} during {{time}}. Can we confirm availability?",
+      "selectDate": "Select a date",
+      "dayUnavailable": "The selected date is not available.",
+      "noSlots": "No available time slots for the selected date.",
+      "contactForSlot": "Request this slot"
     },
     "owner": {
       "title": "Host / Agent",

@@ -1,5 +1,5 @@
 import LoadingState from "../components/common/molecules/LoadingState";
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, Inbox, Search, Sparkles, Users } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -8,12 +8,75 @@ import { Select, TablePagination } from "../components/common";
 import { leadsService } from "../services/leadsService";
 import { propertiesService } from "../services/propertiesService";
 import { profileService } from "../services/profileService";
+import { reservationsService } from "../services/reservationsService";
 import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
 import { canViewGlobalLeads, canViewGlobalResources } from "../utils/roles";
 
 const LEAD_STATUSES = ["new", "contacted", "closed_won", "closed_lost"];
+
+const safeParseJson = (value) => {
+  try {
+    const parsed = JSON.parse(String(value || "{}"));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+};
+
+const getLeadResourceId = (lead) =>
+  String(lead?.resourceId || lead?.propertyId || "").trim();
+
+const getLeadSchedulePayload = (lead) => {
+  const meta = safeParseJson(lead?.metaJson);
+  const schedule =
+    (meta.requestSchedule && typeof meta.requestSchedule === "object"
+      ? meta.requestSchedule
+      : null) ||
+    (meta.schedule && typeof meta.schedule === "object" ? meta.schedule : null) ||
+    {};
+
+  const scheduleType = String(
+    schedule.scheduleType || schedule.type || meta.scheduleType || "",
+  )
+    .trim()
+    .toLowerCase();
+
+  if (scheduleType === "date_range") {
+    const checkInDate = String(
+      schedule.checkInDate || meta.checkInDate || "",
+    ).trim();
+    const checkOutDate = String(
+      schedule.checkOutDate || meta.checkOutDate || "",
+    ).trim();
+    if (!checkInDate || !checkOutDate) return null;
+    return {
+      scheduleType: "date_range",
+      checkInDate,
+      checkOutDate,
+    };
+  }
+
+  if (scheduleType === "time_slot") {
+    const startDateTime = String(
+      schedule.startDateTime || meta.startDateTime || "",
+    ).trim();
+    const endDateTime = String(
+      schedule.endDateTime || meta.endDateTime || "",
+    ).trim();
+    if (!startDateTime || !endDateTime) return null;
+    return {
+      scheduleType: "time_slot",
+      startDateTime,
+      endDateTime,
+    };
+  }
+
+  return null;
+};
 
 const Leads = () => {
   const { t, i18n } = useTranslation();
@@ -111,8 +174,12 @@ const Leads = () => {
       const phoneNum = u.phone
         ? `${u.phoneCountryCode || ""} ${u.phone}`.trim()
         : "";
+      const leadResourceId = getLeadResourceId(item);
+      const hasReservableSchedule = Boolean(getLeadSchedulePayload(item));
       return {
         ...item,
+        leadResourceId,
+        hasReservableSchedule,
         mappedName: fullName,
         mappedEmail: u.email || "",
         mappedPhone: phoneNum,
@@ -131,8 +198,8 @@ const Leads = () => {
         item.mappedPhone,
         item.lastMessage,
         item.status,
-        propertyMap[item.propertyId]?.title,
-        item.propertyId,
+        propertyMap[item.leadResourceId]?.title,
+        item.leadResourceId,
       ]
         .map((value) => String(value || "").toLowerCase())
         .join(" ");
@@ -247,6 +314,50 @@ const Leads = () => {
     }
   };
 
+  const onConvertToReservation = async (lead) => {
+    const schedulePayload = getLeadSchedulePayload(lead);
+    if (!schedulePayload) {
+      setError(
+        t("leadsPage.errors.convertMissingSchedule", {
+          defaultValue:
+            "Este lead no tiene fecha/horario seleccionado. Primero solicita una agenda desde la vista del recurso.",
+        }),
+      );
+      return;
+    }
+
+    const guestName = String(lead.mappedName || "").trim();
+    const guestEmail = String(lead.mappedEmail || "").trim().toLowerCase();
+    const normalizedPhone = String(lead.mappedPhone || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 20);
+
+    setBusyId(lead.$id);
+    try {
+      await reservationsService.convertLeadToManualReservation(lead.$id, {
+        ...schedulePayload,
+        closeLead: true,
+        guestName: guestName || undefined,
+        guestEmail: guestEmail || undefined,
+        guestPhone: normalizedPhone || undefined,
+        specialRequests: String(lead.lastMessage || "").trim() || undefined,
+      });
+      await loadData();
+    } catch (err) {
+      setError(
+        getErrorMessage(
+          err,
+          t("leadsPage.errors.convert", {
+            defaultValue: "No se pudo convertir el lead en reserva manual.",
+          }),
+        ),
+      );
+    } finally {
+      setBusyId("");
+    }
+  };
+
   return (
     <section className="space-y-5">
       <header className="space-y-1">
@@ -355,8 +466,8 @@ const Leads = () => {
                       </td>
                       <td className="px-5 py-4">
                         <p className="font-medium text-slate-700 dark:text-slate-300">
-                          {propertyMap[lead.propertyId]?.title ||
-                            lead.propertyId}
+                          {propertyMap[lead.leadResourceId]?.title ||
+                            lead.leadResourceId}
                         </p>
                         {lead.lastMessage && (
                           <p
@@ -378,12 +489,24 @@ const Leads = () => {
                         />
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <a
-                          href={`mailto:${lead.mappedEmail}`}
-                          className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50  dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-700 transition-colors"
-                        >
-                          {t("leadsPage.actions.sendEmail")}
-                        </a>
+                        <div className="inline-flex items-center gap-2">
+                          <a
+                            href={`mailto:${lead.mappedEmail}`}
+                            className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-700"
+                          >
+                            {t("leadsPage.actions.sendEmail")}
+                          </a>
+                          <button
+                            type="button"
+                            disabled={busyId === lead.$id || !lead.hasReservableSchedule}
+                            onClick={() => onConvertToReservation(lead)}
+                            className="inline-flex min-h-9 items-center justify-center rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {t("leadsPage.actions.convertToReservation", {
+                              defaultValue: "Crear reserva",
+                            })}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

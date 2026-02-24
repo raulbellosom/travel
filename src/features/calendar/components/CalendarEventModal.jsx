@@ -142,7 +142,7 @@ export default function CalendarEventModal({ reservation, open, onClose }) {
               <InfoRow
                 icon={MapPin}
                 label={t("calendar.eventDetail.property")}
-                value={reservation.propertyId}
+                value={reservation.resourceId || reservation.propertyId}
               />
 
               <div className="border-t border-gray-100 dark:border-gray-800 my-2" />

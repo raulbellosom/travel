@@ -16,11 +16,13 @@ import { getErrorMessage } from "../utils/errors";
 import { INTERNAL_ROUTES } from "../utils/internalRoutes";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
+import { useInstanceModules } from "../hooks/useInstanceModules";
 import {
   hasScope,
   canViewGlobalLeads,
   canViewGlobalResources,
 } from "../utils/roles";
+import { isScopeAllowedByModules } from "../utils/moduleAccess";
 import {
   AreaChart,
   Area,
@@ -37,8 +39,13 @@ import {
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const canReadProperties = hasScope(user, "resources.read");
-  const canReadLeads = hasScope(user, "leads.read");
+  const { isEnabled } = useInstanceModules();
+  const canReadProperties =
+    hasScope(user, "resources.read") &&
+    isScopeAllowedByModules("resources.read", isEnabled);
+  const canReadLeads =
+    hasScope(user, "leads.read") &&
+    isScopeAllowedByModules("leads.read", isEnabled);
   const [properties, setProperties] = useState([]);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -27,6 +27,13 @@ const formatCurrency = (value, currency, locale) =>
     maximumFractionDigits: 2,
   });
 
+const parseDateQueryValue = (value) => {
+  const normalized = String(value || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return null;
+  const parsed = new Date(`${normalized}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const ReserveProperty = () => {
   const { t, i18n } = useTranslation();
   const { slug } = useParams();
@@ -44,8 +51,17 @@ const ReserveProperty = () => {
     isOpen: false,
     initialIndex: 0,
   });
+  const initialDateRange = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const startDate = parseDateQueryValue(params.get("checkIn"));
+    const endDate = parseDateQueryValue(params.get("checkOut"));
+    if (!startDate || !endDate || endDate <= startDate) {
+      return { startDate: null, endDate: null };
+    }
+    return { startDate, endDate };
+  }, [location.search]);
   const [form, setForm] = useState({
-    dateRange: { startDate: null, endDate: null },
+    dateRange: initialDateRange,
     guestCount: 1,
     guestName: "",
     specialRequests: "",
@@ -100,6 +116,13 @@ const ReserveProperty = () => {
       mounted = false;
     };
   }, [slug, t]);
+
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      dateRange: initialDateRange,
+    }));
+  }, [initialDateRange]);
 
   const galleryUrls = useMemo(() => {
     const urls = (images || []).map((item) => item.url).filter(Boolean);

@@ -2,14 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { instanceSettingsService } from "../services/instanceSettingsService";
 import { useAuth } from "./useAuth";
 
-const INTERNAL_ROLES_ALLOWED_INSTANCE_SETTINGS = new Set([
-  "root",
-  "owner",
-  "staff_manager",
-  "staff_editor",
-  "staff_support",
-]);
-
 export const useInstanceModules = () => {
   const { user, loading: authLoading } = useAuth();
   const [settings, setSettings] = useState(() =>
@@ -21,19 +13,9 @@ export const useInstanceModules = () => {
   const role = String(user?.role || "")
     .trim()
     .toLowerCase();
-  const canReadRemoteSettings =
-    Boolean(user?.$id) &&
-    INTERNAL_ROLES_ALLOWED_INSTANCE_SETTINGS.has(role);
+  const isRootUser = role === "root";
 
   const refresh = useCallback(async () => {
-    if (!canReadRemoteSettings) {
-      const defaults = instanceSettingsService.getDefaults();
-      setSettings(defaults);
-      setError("");
-      setLoading(false);
-      return defaults;
-    }
-
     setLoading(true);
     setError("");
     try {
@@ -48,7 +30,7 @@ export const useInstanceModules = () => {
     } finally {
       setLoading(false);
     }
-  }, [canReadRemoteSettings]);
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -57,6 +39,8 @@ export const useInstanceModules = () => {
 
   const isEnabled = useCallback(
     (moduleKey) => {
+      if (isRootUser) return true;
+      if (settings.enabled === false) return false;
       const key = String(moduleKey || "").trim();
       if (!key) return true;
       const enabledModules = Array.isArray(settings.enabledModules)
@@ -64,7 +48,7 @@ export const useInstanceModules = () => {
         : [];
       return enabledModules.includes(key);
     },
-    [settings.enabledModules],
+    [isRootUser, settings.enabled, settings.enabledModules],
   );
 
   const getLimit = useCallback(
@@ -94,6 +78,15 @@ export const useInstanceModules = () => {
 
   const saveSettings = useCallback(
     async (nextData, actor) => {
+      if (!isRootUser) {
+        const accessError = new Error(
+          "Solo root puede modificar instance_settings.",
+        );
+        accessError.code = "FORBIDDEN";
+        setError(accessError.message);
+        throw accessError;
+      }
+
       setSaving(true);
       setError("");
       try {
@@ -107,7 +100,7 @@ export const useInstanceModules = () => {
         setSaving(false);
       }
     },
-    [],
+    [isRootUser],
   );
 
   const modules = useMemo(
@@ -129,5 +122,6 @@ export const useInstanceModules = () => {
     refresh,
     saveSettings,
     moduleCatalog: instanceSettingsService.getModuleCatalog(),
+    isRootUser,
   };
 };

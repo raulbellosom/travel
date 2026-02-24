@@ -29,8 +29,7 @@ export default function useCalendarReservations({
       if (filters.status) serviceFilters.status = filters.status;
       if (filters.paymentStatus)
         serviceFilters.paymentStatus = filters.paymentStatus;
-      if (filters.propertyId)
-        serviceFilters.propertyOwnerId = filters.propertyId;
+      if (filters.propertyId) serviceFilters.resourceId = filters.propertyId;
 
       const res = await reservationsService.listForOwner(
         userId,

@@ -27,6 +27,7 @@ import {
   toUiFieldValue,
 } from "../../../../../utils/resourceFormProfile";
 import { formatMoneyWithDenomination } from "../../../../../utils/money";
+import { getBookingTypeLabel } from "../../../../../utils/resourceLabels";
 
 const resolveLabel = (options, value, t) => {
   const found = options.find((option) => option.value === value);
@@ -126,6 +127,7 @@ const StepSummary = ({ formHook, onEditStep }) => {
   const resourceTypeLabel = t(`propertyForm.options.resourceType.${resourceType}`, {
     defaultValue: resourceType,
   });
+  const bookingTypeLabel = getBookingTypeLabel(form.bookingType, t);
   const categoryLabel = t(getCategoryTranslationKey(categoryValue), {
     defaultValue: categoryValue,
   });
@@ -208,6 +210,12 @@ const StepSummary = ({ formHook, onEditStep }) => {
         <SummaryRow
           label={t("propertyForm.fields.category", { defaultValue: "Categoria" })}
           value={categoryLabel}
+        />
+        <SummaryRow
+          label={t("propertyForm.fields.bookingType", {
+            defaultValue: "Tipo de reserva",
+          })}
+          value={bookingTypeLabel}
         />
         <SummaryRow
           label={t("propertyForm.fields.title", "Titulo")}

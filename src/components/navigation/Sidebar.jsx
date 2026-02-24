@@ -20,9 +20,11 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useInstanceModules } from "../../hooks/useInstanceModules";
 import BrandLogo from "../common/BrandLogo";
 import { INTERNAL_ROUTES } from "../../utils/internalRoutes";
 import { hasScope } from "../../utils/roles";
+import { isScopeAllowedByModules } from "../../utils/moduleAccess";
 
 const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const MotionAside = motion.aside;
@@ -30,6 +32,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const MotionSpan = motion.span;
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { isEnabled } = useInstanceModules();
   const location = useLocation();
   const sidebarRef = useRef(null);
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -70,6 +73,8 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   }, [isOpen, isDesktopViewport]);
 
   const isDesktopCollapsed = Boolean(isCollapsed);
+  const canAccessScope = (scope) =>
+    hasScope(user, scope) && isScopeAllowedByModules(scope, isEnabled);
 
   const navigation = [
     {
@@ -77,7 +82,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
       href: INTERNAL_ROUTES.dashboard,
       icon: Home,
     },
-    ...(hasScope(user, "resources.read")
+    ...(canAccessScope("resources.read")
       ? [
           {
             name: t("sidebar.listings"),
@@ -86,10 +91,10 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
           },
         ]
       : []),
-    ...(hasScope(user, "leads.read")
+    ...(canAccessScope("leads.read")
       ? [{ name: t("sidebar.leads"), href: INTERNAL_ROUTES.leads, icon: Inbox }]
       : []),
-    ...(hasScope(user, "messaging.read")
+    ...(canAccessScope("messaging.read")
       ? [
           {
             name: t("sidebar.conversations"),
@@ -98,7 +103,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
           },
         ]
       : []),
-    ...(hasScope(user, "reservations.read")
+    ...(canAccessScope("reservations.read")
       ? [
           {
             name: t("sidebar.reservations"),
@@ -112,7 +117,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
           },
         ]
       : []),
-    ...(hasScope(user, "payments.read")
+    ...(canAccessScope("payments.read")
       ? [
           {
             name: t("sidebar.payments"),
@@ -121,7 +126,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
           },
         ]
       : []),
-    ...(hasScope(user, "reviews.moderate")
+    ...(canAccessScope("reviews.moderate")
       ? [
           {
             name: t("sidebar.reviews"),
@@ -139,7 +144,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
           },
         ]
       : []),
-    ...(hasScope(user, "staff.manage")
+    ...(canAccessScope("staff.manage")
       ? [{ name: t("sidebar.team"), href: INTERNAL_ROUTES.team, icon: Users }]
       : []),
     ...(user?.role === "root"

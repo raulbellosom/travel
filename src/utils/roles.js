@@ -111,14 +111,14 @@ export const hasScope = (user, requiredScope) => {
 
 export const canViewGlobalLeads = (user) => {
   const role = String(user?.role || "").toLowerCase();
-  if (role === "admin" || role === "root" || role === "owner") return true;
+  if (role === "root" || role === "owner") return true;
   // If user has wildcard scope or specific global leads scope
   return hasScope(user, "*") || hasScope(user, "leads.read.global");
 };
 
 export const canViewGlobalResources = (user) => {
   const role = String(user?.role || "").toLowerCase();
-  if (role === "admin" || role === "root" || role === "owner") return true;
+  if (role === "root" || role === "owner") return true;
   // If user has wildcard scope or specific global resources scope
   return hasScope(user, "*") || hasScope(user, "resources.read.global");
 };

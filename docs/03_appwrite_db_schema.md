@@ -275,6 +275,7 @@ Notas de aplicabilidad por modo comercial:
 - `minimumContractDuration` se captura en `attributes.minimumContractDuration` para `rent_long_term`.
 - Para `rent_short_term`, la periodicidad se define con `pricingModel` (ejemplo: `per_day`/`per_night`) y reglas en `rate_plans`.
 - Para `rent_hourly`, la periodicidad se define con `pricingModel` (ejemplo: `per_hour`/`per_event`) y `bookingType` (`time_slot`/`fixed_event`).
+- `bookingType=manual_contact` no dispara checkout online, pero puede habilitar agenda asistida en UI con `attributes.manualContactScheduleType` (`none`,`date_range`,`time_slot`).
 - Los `pricingModel` visibles en UI se validan por combinacion `resourceType + commercialMode` para evitar opciones ilogicas.
 
 ### Contrato operativo de `attributes` (wizard dinamico)
@@ -289,6 +290,7 @@ Convencion UI v1:
 - `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
 - comerciales (renta larga): `minimumContractDuration`.
 - booking generico no-inmobiliario: `bookingMinUnits`, `bookingMaxUnits`, `availabilityStartTime`, `availabilityEndTime`.
+- booking manual asistido: `manualContactScheduleType` (`none`,`date_range`,`time_slot`).
 
 Reglas:
 
@@ -400,6 +402,12 @@ Purpose: metadata de imagen por recurso.
 
 Purpose: pricing y politicas de booking por recurso.
 
+Estado operativo (MVP 2026-02):
+
+- `rate_plans` se conserva como capa de reglas avanzadas/futuras (temporadas, fees y politicas por plan).
+- El flujo activo de publicacion y reserva usa `resources.price`, `resources.pricingModel`, `resources.bookingType` y `resources.attributes`.
+- El calendario/disponibilidad y la creacion de reservas manuales no dependen actualmente de `rate_plans`.
+
 ### Attributes
 
 | Attribute            | Type    | Size  | Required | Default    | Constraint                                                                             |
@@ -504,6 +512,13 @@ Purpose: pipeline CRM de intenciones de usuarios autenticados por recurso.
 
 - Creacion autenticada via Function `create-lead`.
 - Lectura/escritura interna por owner/staff con scope de leads.
+
+Contrato recomendado para `metaJson` (chat/contacto manual asistido):
+
+- `requestSchedule.scheduleType`: `date_range` o `time_slot`.
+- `requestSchedule.checkInDate` + `requestSchedule.checkOutDate` para `date_range`.
+- `requestSchedule.startDateTime` + `requestSchedule.endDateTime` para `time_slot`.
+- Este payload permite convertir lead -> reserva manual sin recapturar fechas.
 
 ---
 
@@ -629,6 +644,14 @@ Purpose: reservaciones por recurso.
 - Creacion autenticada via Function (`client` verificado).
 - Lectura/escritura interna por owner/staff con scope.
 - Cliente lee solo su reserva (`guestUserId`).
+
+Flujos manuales vigentes:
+
+- Staff/owner puede crear reserva manual desde panel de reservas (sin Stripe) con `paymentProvider=manual`.
+- Un lead con agenda (`metaJson.requestSchedule`) puede convertirse en reserva manual.
+- En conversiones manuales, `bookingType` puede quedar como `manual_contact`; la agenda efectiva se infiere por campos de fecha:
+  - `date_range`: `checkInDate`/`checkOutDate`.
+  - `time_slot`: `startDateTime`/`endDateTime` (ademas de `checkInDate`/`checkOutDate` denormalizados).
 
 ---
 
