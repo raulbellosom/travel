@@ -6,9 +6,11 @@ import { useAuth } from "../hooks/useAuth";
 import { Select, TablePagination } from "../components/common";
 import { leadsService } from "../services/leadsService";
 import { propertiesService } from "../services/propertiesService";
+import { profileService } from "../services/profileService";
 import { getErrorMessage } from "../utils/errors";
 import EmptyStatePanel from "../components/common/organisms/EmptyStatePanel";
 import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
+import { canViewGlobalLeads, canViewGlobalResources } from "../utils/roles";
 
 const LEAD_STATUSES = ["new", "contacted", "closed_won", "closed_lost"];
 
@@ -18,6 +20,7 @@ const Leads = () => {
   const [searchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [propertyMap, setPropertyMap] = useState({});
+  const [userMap, setUserMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -41,22 +44,50 @@ const Leads = () => {
     setLoading(true);
     setError("");
     try {
+      const isGlobalLeads = canViewGlobalLeads(user);
+      const isGlobalResources = canViewGlobalResources(user);
+
       const [leadsResponse, propertiesResponse] = await Promise.all([
-        leadsService.listMine(user.$id, { status: statusFilter || undefined }),
-        propertiesService.listMine(user.$id),
+        leadsService.listMine(user.$id, {
+          status: statusFilter || undefined,
+          ...(!isGlobalLeads && { propertyOwnerId: user.$id }),
+        }),
+        propertiesService.listMine(user.$id, {
+          ...(!isGlobalResources && { ownerUserId: user.$id }),
+        }),
       ]);
-      setItems(leadsResponse.documents || []);
+      const leadsExtracted = leadsResponse.documents || [];
+      setItems(leadsExtracted);
+
       const map = {};
       for (const item of propertiesResponse.documents || []) {
         map[item.$id] = item;
       }
       setPropertyMap(map);
+
+      // Fetch user details for each lead
+      const uniqueUserIds = [
+        ...new Set(leadsExtracted.map((l) => l.userId).filter(Boolean)),
+      ];
+      const usersData = await Promise.all(
+        uniqueUserIds.map((id) =>
+          profileService.getProfile(id).catch(() => null),
+        ),
+      );
+
+      const uMap = {};
+      usersData.forEach((u) => {
+        if (u && u.$id) {
+          uMap[u.$id] = u;
+        }
+      });
+      setUserMap(uMap);
     } catch (err) {
       setError(getErrorMessage(err, i18n.t("leadsPage.errors.load")));
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, user?.$id]);
+  }, [statusFilter, user?.$id, i18n]);
 
   useEffect(() => {
     loadData();
@@ -69,16 +100,35 @@ const Leads = () => {
   const normalizedFilter = String(queryFilter || "")
     .trim()
     .toLowerCase();
-  const filteredLeads = useMemo(() => {
-    if (!normalizedFilter) return items;
 
-    return items.filter((item) => {
+  const mappedLeads = useMemo(() => {
+    return items.map((item) => {
+      const u = userMap[item.userId] || {};
+      const fullName =
+        `${u.firstName || ""} ${u.lastName || ""}`.trim() ||
+        t("leadsPage.unknownUser", { defaultValue: "Usuario Desconocido" });
+      const phoneNum = u.phone
+        ? `${u.phoneCountryCode || ""} ${u.phone}`.trim()
+        : "";
+      return {
+        ...item,
+        mappedName: fullName,
+        mappedEmail: u.email || "",
+        mappedPhone: phoneNum,
+      };
+    });
+  }, [items, userMap, t]);
+
+  const filteredLeads = useMemo(() => {
+    if (!normalizedFilter) return mappedLeads;
+
+    return mappedLeads.filter((item) => {
       const text = [
         item.$id,
-        item.name,
-        item.email,
-        item.phone,
-        item.message,
+        item.mappedName,
+        item.mappedEmail,
+        item.mappedPhone,
+        item.lastMessage,
         item.status,
         propertyMap[item.propertyId]?.title,
         item.propertyId,
@@ -87,7 +137,7 @@ const Leads = () => {
         .join(" ");
       return text.includes(normalizedFilter);
     });
-  }, [items, normalizedFilter, propertyMap]);
+  }, [mappedLeads, normalizedFilter, propertyMap]);
 
   const effectivePageSize = useMemo(() => {
     if (pageSize === "all") return Math.max(1, filteredLeads.length);
@@ -258,29 +308,29 @@ const Leads = () => {
       ) : null}
 
       {!loading && filteredLeads.length > 0 ? (
-        <div className="min-w-0 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900 overflow-hidden">
           <div className="w-full max-w-full overflow-x-auto">
             <table className="w-full min-w-[820px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+              <thead className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
                 <tr>
-                  <th className="min-w-[160px] px-4 py-3">
+                  <th className="min-w-[160px] px-5 py-4">
                     {t("leadsPage.table.date")}
                   </th>
-                  <th className="min-w-[200px] px-4 py-3">
+                  <th className="min-w-[200px] px-5 py-4">
                     {t("leadsPage.table.contact")}
                   </th>
-                  <th className="min-w-[180px] px-4 py-3">
+                  <th className="min-w-[200px] px-5 py-4">
                     {t("leadsPage.table.property")}
                   </th>
-                  <th className="min-w-[140px] px-4 py-3">
+                  <th className="min-w-[160px] px-5 py-4">
                     {t("leadsPage.table.status")}
                   </th>
-                  <th className="min-w-[100px] px-4 py-3">
+                  <th className="min-w-[120px] px-5 py-4 font-semibold text-right">
                     {t("leadsPage.table.actions")}
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {paginatedLeads.map((lead) => {
                   const isFocused = Boolean(focusId) && lead.$id === focusId;
 
@@ -288,41 +338,52 @@ const Leads = () => {
                     <tr
                       key={lead.$id}
                       id={`lead-${lead.$id}`}
-                      className={`border-t border-slate-200 dark:border-slate-700 ${
+                      className={`group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40 ${
                         isFocused ? "bg-cyan-50/70 dark:bg-cyan-900/20" : ""
                       }`}
                     >
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-500 dark:text-slate-400">
                         {new Date(lead.$createdAt).toLocaleString(locale)}
                       </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900 dark:text-slate-100">
-                          {lead.name}
+                      <td className="px-5 py-4">
+                        <p className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                          {lead.mappedName}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-300">
-                          {lead.email}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {lead.mappedEmail}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-300">
-                          {lead.phone || t("leadsPage.noPhone")}
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {lead.mappedPhone || t("leadsPage.noPhone")}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                        {propertyMap[lead.propertyId]?.title || lead.propertyId}
+                      <td className="px-5 py-4">
+                        <p className="font-medium text-slate-700 dark:text-slate-300">
+                          {propertyMap[lead.propertyId]?.title ||
+                            lead.propertyId}
+                        </p>
+                        {lead.lastMessage && (
+                          <p
+                            className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px] mt-1"
+                            title={lead.lastMessage}
+                          >
+                            &quot;{lead.lastMessage}&quot;
+                          </p>
+                        )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <Select
                           value={lead.status}
                           onChange={(value) => onChangeStatus(lead.$id, value)}
                           disabled={busyId === lead.$id}
                           options={rowStatusOptions}
                           size="sm"
-                          className="text-xs"
+                          className="text-xs max-w-[140px]"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4 text-right">
                         <a
-                          href={`mailto:${lead.email}`}
-                          className="text-xs font-medium text-sky-700 hover:underline dark:text-sky-400"
+                          href={`mailto:${lead.mappedEmail}`}
+                          className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50  dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-700 transition-colors"
                         >
                           {t("leadsPage.actions.sendEmail")}
                         </a>
@@ -333,17 +394,19 @@ const Leads = () => {
               </tbody>
             </table>
           </div>
-          <TablePagination
-            page={page}
-            totalPages={totalPages}
-            totalItems={filteredLeads.length}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={(value) => {
-              setPageSize(value);
-              setPage(1);
-            }}
-          />
+          <div className="bg-slate-50/50 dark:bg-slate-800/30 px-2 py-1">
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              totalItems={filteredLeads.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(value) => {
+                setPageSize(value);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
       ) : null}
     </section>

@@ -60,7 +60,7 @@ import { getErrorMessage } from "../utils/errors";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { useChat } from "../contexts/ChatContext";
-import { Spinner } from "../components/common";
+import { Spinner, Modal, ModalFooter, Button } from "../components/common";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import ProgressiveImage from "../components/common/atoms/ProgressiveImage";
@@ -110,6 +110,8 @@ const PropertyDetail = () => {
   const [error, setError] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [chatOpened, setChatOpened] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [chatInitialMessage, setChatInitialMessage] = useState("");
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageViewer, setImageViewer] = useState({
@@ -475,13 +477,23 @@ const PropertyDetail = () => {
   }, [owner?.avatarFileId]);
 
   /** Open chat with property agent — animated transition */
-  const handleOpenChat = useCallback(async () => {
+  const handleOpenChat = useCallback(() => {
     if (!property || !isChatAuth || chatLoading) return;
     const isClient = user?.role === "client";
     const isVerified = Boolean(user?.emailVerified);
     if (!isClient || !isVerified) return;
     if (user?.$id === property.ownerUserId) return;
 
+    setChatInitialMessage(
+      t("client:propertyDetail.agent.defaultInitialMessage", {
+        defaultValue: `Hola, me interesa la propiedad "${property.title}". Quiero más información.`,
+      }),
+    );
+    setIsChatModalOpen(true);
+  }, [property, isChatAuth, chatLoading, user, t]);
+
+  const handleConfirmChat = useCallback(async () => {
+    if (!property || !isChatAuth || chatLoading) return;
     setChatLoading(true);
     try {
       await startConversation({
@@ -491,14 +503,34 @@ const PropertyDetail = () => {
         ownerName: owner?.firstName
           ? `${owner.firstName} ${owner.lastName || ""}`.trim()
           : owner?.email || "",
+        initialMessage: chatInitialMessage,
       });
       setChatOpened(true);
+      setIsChatModalOpen(false);
     } catch (err) {
       console.error("Failed to start conversation:", err);
+      showToast({
+        type: "error",
+        message: getErrorMessage(
+          err,
+          t("chat.errors.startFailed", {
+            defaultValue: "No se pudo iniciar la conversación.",
+          }),
+        ),
+      });
     } finally {
       setChatLoading(false);
     }
-  }, [property, owner, user, isChatAuth, startConversation, chatLoading]);
+  }, [
+    property,
+    isChatAuth,
+    chatLoading,
+    startConversation,
+    owner,
+    chatInitialMessage,
+    showToast,
+    t,
+  ]);
 
   /* ─── Loading / Error states ─────────────────────────── */
 
@@ -1826,6 +1858,50 @@ const PropertyDetail = () => {
         alt={property.title}
         showDownload
       />
+
+      {/* ── Start Chat Modal ────────────────────────────── */}
+      <Modal
+        isOpen={isChatModalOpen}
+        onClose={() => !chatLoading && setIsChatModalOpen(false)}
+        title={t("chat.modal.title", { defaultValue: "Nuevo Mensaje" })}
+        description={t("chat.modal.description", {
+          defaultValue:
+            "Escribe un mensaje para iniciar la conversación con el agente.",
+        })}
+        size="md"
+        footer={
+          <ModalFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setIsChatModalOpen(false)}
+              disabled={chatLoading}
+            >
+              {t("common.actions.cancel", { defaultValue: "Cancelar" })}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleConfirmChat}
+              disabled={chatLoading || !chatInitialMessage.trim()}
+              isLoading={chatLoading}
+            >
+              {t("chat.modal.send", { defaultValue: "Enviar Mensaje" })}
+            </Button>
+          </ModalFooter>
+        }
+      >
+        <div className="py-2">
+          <textarea
+            className="w-full resize-y rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-400"
+            rows={4}
+            placeholder={t("chat.modal.placeholder", {
+              defaultValue: "Escribe tu mensaje aquí...",
+            })}
+            value={chatInitialMessage}
+            onChange={(e) => setChatInitialMessage(e.target.value)}
+            disabled={chatLoading}
+          />
+        </div>
+      </Modal>
     </div>
   );
 };
