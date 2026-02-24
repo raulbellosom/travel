@@ -84,7 +84,7 @@
       },
       "feature4": {
         "title": "Pagos Integrados",
-        "desc": "Acepta pagos con Stripe y MercadoPago. Genera vouchers automáticos y lleva control financiero al día."
+        "desc": "Acepta pagos con Stripe y MercadoPago. Genera recibos automáticos y lleva control financiero al día."
       },
       "feature5": {
         "title": "Analíticas en Tiempo Real",
@@ -102,7 +102,7 @@
       "description": "Con Inmobo centralizas toda la información de tu negocio inmobiliario. Ya no necesitas saltar entre 10 herramientas diferentes — todo está integrado y sincronizado en tiempo real.",
       "list1": "Datos seguros en la nube con Appwrite",
       "list2": "Sitio público para captar clientes 24/7",
-      "list3": "Automatiza cobros, notificaciones y vouchers"
+      "list3": "Automatiza cobros, notificaciones y recibos"
     },
     "mockup": {
       "properties": "Propiedades",
@@ -1141,7 +1141,7 @@
       "totalArea": "Area total",
       "type": "Tipo"
     },
-    "reserveHint": "Reserva en linea con confirmacion y voucher digital.",
+    "reserveHint": "Reserva en linea con confirmacion y recibo digital.",
     "reserveCta": "Reservar ahora"
   },
   "appPropertyDetailPage": {
@@ -1216,6 +1216,10 @@
     "subtitle": "Consulta el estado de tus reservaciones y pagos.",
     "loading": "Cargando reservas...",
     "empty": "Aun no tienes reservas registradas.",
+    "emptyDesc": "Cuando realices una reserva, aparecera aqui.",
+    "searchPlaceholder": "Buscar por propiedad, nombre...",
+    "noResults": "No hay reservas que coincidan con tu filtro.",
+    "footerHint": "Mostrando {{count}} reserva(s)",
     "stats": {
       "total": "Total",
       "pending": "Pendientes",
@@ -1225,7 +1229,18 @@
     "labels": {
       "property": "Propiedad",
       "guests": "huespedes",
-      "created": "Creada"
+      "created": "Creada",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "nights": "Noches",
+      "total": "Total"
+    },
+    "actions": {
+      "viewVoucher": "Ver recibo",
+      "voucherPending": "Recibo pendiente",
+      "details": "Detalles",
+      "explore": "Explorar propiedades",
+      "clearFilters": "Limpiar filtros"
     },
     "errors": {
       "load": "No se pudieron cargar tus reservas."
@@ -2177,23 +2192,71 @@
     }
   },
   "voucherPage": {
-    "title": "Voucher de reserva",
+    "routeBase": "recibo",
+    "title": "Recibo de reserva",
     "subtitle": "Consulta la informacion oficial de tu reserva confirmada.",
-    "loading": "Buscando voucher...",
+    "loading": "Buscando recibo...",
+    "breadcrumb": {
+      "home": "Inicio",
+      "myReservations": "Mis reservas",
+      "voucher": "Recibo"
+    },
     "labels": {
-      "code": "Codigo de voucher",
+      "code": "Codigo de recibo",
       "property": "Propiedad",
       "guest": "Huesped",
       "dates": "Fechas",
       "total": "Total",
-      "status": "Estado"
+      "status": "Estado",
+      "nights": "Noches",
+      "notes": "Notas",
+      "qrSection": "Codigos QR",
+      "qrCodeTab": "Codigo",
+      "qrDataTab": "Datos completos",
+      "qrCode": "QR del codigo de recibo",
+      "qrData": "QR con datos completos",
+      "qrCodeDesc": "Escanea para leer el codigo del recibo",
+      "qrDataDesc": "Escanea para ver todos los datos de la reserva"
+    },
+    "ticket": {
+      "headerLabel": "Recibo de reserva"
     },
     "actions": {
-      "backHome": "Volver al inicio"
+      "backHome": "Regresar",
+      "copyCode": "Copiar codigo",
+      "copyLink": "Copiar enlace",
+      "share": "Compartir",
+      "exportPdf": "PDF",
+      "exportImage": "Imagen",
+      "toggleQr": "Mostrar/ocultar codigos QR"
+    },
+    "toast": {
+      "copied": "{{item}} copiado",
+      "copyFailed": "Error al copiar",
+      "exportPdf": "PDF descargado",
+      "exportImage": "Imagen descargada",
+      "exportFailed": "Error al exportar"
+    },
+    "share": {
+      "title": "Recibo de reserva",
+      "text": "Recibo"
+    },
+    "wallet": {
+      "title": "Wallet digital",
+      "apple": "Agregar a Apple Wallet",
+      "google": "Guardar en Google Wallet",
+      "comingSoon": "Proximamente",
+      "pwaHint": "Puedes agregar esta app a tu pantalla de inicio para acceder rapidamente a tus recibos."
+    },
+    "history": {
+      "title": "Mis recibos",
+      "reload": "Actualizar",
+      "empty": "Aun no tienes recibos"
     },
     "errors": {
-      "load": "No se pudo consultar el voucher.",
-      "notFound": "Voucher no encontrado o no disponible."
+      "load": "No se pudo consultar el recibo.",
+      "notFound": "Recibo no encontrado o no disponible.",
+      "notFoundDesc": "El codigo del recibo puede ser incorrecto o ya no esta disponible."
     }
   },
   "appReservationsPage": {

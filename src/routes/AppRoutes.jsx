@@ -75,6 +75,9 @@ const MyConversations = lazy(() => import("../pages/MyConversations"));
 const MyFavorites = lazy(() => import("../pages/MyFavorites"));
 const ReserveProperty = lazy(() => import("../pages/ReserveProperty"));
 const VoucherLookup = lazy(() => import("../pages/VoucherLookup"));
+const VoucherPage = lazy(
+  () => import("../features/vouchers/pages/VoucherPage"),
+);
 const PrivacyNotice = lazy(() => import("../pages/PrivacyNotice"));
 const TermsConditions = lazy(() => import("../pages/TermsConditions"));
 const UIDocsPage = lazy(() => import("../pages/UIDocsPage"));
@@ -198,7 +201,8 @@ const AppRoutes = () => {
                         path="reserve/:slug"
                         element={<ReserveProperty />}
                       />
-                      <Route path="voucher/:code" element={<VoucherLookup />} />
+                      <Route path="voucher/:code" element={<VoucherPage />} />
+                      <Route path="recibo/:code" element={<VoucherPage />} />
                       <Route
                         path="perfil"
                         element={

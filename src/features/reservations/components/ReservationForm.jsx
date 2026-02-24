@@ -163,7 +163,7 @@ const SummaryPanel = ({ form, resources, t }) => {
         </p>
         <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
           Las reservas manuales no envían notificaciones automáticas al huésped.
-          Puedes compartir el voucher después de crear la reserva.
+          Puedes compartir el recibo después de crear la reserva.
         </p>
       </div>
     </div>

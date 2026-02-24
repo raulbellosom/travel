@@ -1216,6 +1216,10 @@
     "subtitle": "Check the status of your reservations and payments.",
     "loading": "Loading reservations...",
     "empty": "You do not have reservations yet.",
+    "emptyDesc": "When you make a reservation, it will appear here.",
+    "searchPlaceholder": "Search by property, name...",
+    "noResults": "No reservations match your filter.",
+    "footerHint": "Showing {{count}} reservation(s)",
     "stats": {
       "total": "Total",
       "pending": "Pending",
@@ -1225,7 +1229,18 @@
     "labels": {
       "property": "Property",
       "guests": "guests",
-      "created": "Created"
+      "created": "Created",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "nights": "Nights",
+      "total": "Total"
+    },
+    "actions": {
+      "viewVoucher": "View voucher",
+      "voucherPending": "Voucher pending",
+      "details": "Details",
+      "explore": "Explore properties",
+      "clearFilters": "Clear filters"
     },
     "errors": {
       "load": "Could not load your reservations."
@@ -2177,23 +2192,71 @@
     }
   },
   "voucherPage": {
+    "routeBase": "voucher",
     "title": "Reservation voucher",
     "subtitle": "Review official details of your confirmed reservation.",
     "loading": "Looking up voucher...",
+    "breadcrumb": {
+      "home": "Home",
+      "myReservations": "My reservations",
+      "voucher": "Voucher"
+    },
     "labels": {
       "code": "Voucher code",
       "property": "Property",
       "guest": "Guest",
       "dates": "Dates",
       "total": "Total",
-      "status": "Status"
+      "status": "Status",
+      "nights": "Nights",
+      "notes": "Notes",
+      "qrSection": "QR Codes",
+      "qrCodeTab": "Code",
+      "qrDataTab": "Full data",
+      "qrCode": "QR voucher code",
+      "qrData": "QR with full data",
+      "qrCodeDesc": "Scan to read the voucher code",
+      "qrDataDesc": "Scan for full reservation details"
+    },
+    "ticket": {
+      "headerLabel": "Reservation Voucher"
     },
     "actions": {
-      "backHome": "Back to home"
+      "backHome": "Go back",
+      "copyCode": "Copy code",
+      "copyLink": "Copy link",
+      "share": "Share",
+      "exportPdf": "PDF",
+      "exportImage": "Image",
+      "toggleQr": "Toggle QR codes"
+    },
+    "toast": {
+      "copied": "{{item}} copied",
+      "copyFailed": "Copy failed",
+      "exportPdf": "PDF downloaded",
+      "exportImage": "Image downloaded",
+      "exportFailed": "Export failed"
+    },
+    "share": {
+      "title": "Reservation Voucher",
+      "text": "Voucher"
+    },
+    "wallet": {
+      "title": "Digital Wallet",
+      "apple": "Add to Apple Wallet",
+      "google": "Save to Google Wallet",
+      "comingSoon": "Coming soon",
+      "pwaHint": "You can add this app to your home screen for quick access to your vouchers."
+    },
+    "history": {
+      "title": "My Vouchers",
+      "reload": "Refresh",
+      "empty": "No vouchers yet"
     },
     "errors": {
       "load": "Could not fetch voucher.",
-      "notFound": "Voucher not found or unavailable."
+      "notFound": "Voucher not found or unavailable.",
+      "notFoundDesc": "The voucher code may be incorrect or the voucher is no longer available."
     }
   },
   "appReservationsPage": {

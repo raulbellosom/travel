@@ -218,7 +218,7 @@ const ReservationDetailPage = () => {
       if (!fnId) {
         showToast({
           type: "error",
-          message: "Función de voucher no configurada.",
+          message: "Función de recibo no configurada.",
         });
         return;
       }
@@ -234,7 +234,7 @@ const ReservationDetailPage = () => {
 
       // Appwrite returns 201 for the execution, but the function may fail
       if (execution.responseStatusCode && execution.responseStatusCode >= 400) {
-        let errorMsg = "Error al generar voucher.";
+        let errorMsg = "Error al generar recibo.";
         try {
           const body = JSON.parse(execution.responseBody);
           errorMsg = body.message || errorMsg;
@@ -247,13 +247,13 @@ const ReservationDetailPage = () => {
 
       showToast({
         type: "success",
-        message: "Voucher generado correctamente.",
+        message: "Recibo generado correctamente.",
       });
       await load();
     } catch (err) {
       showToast({
         type: "error",
-        message: getErrorMessage(err, "Error al generar voucher."),
+        message: getErrorMessage(err, "Error al generar recibo."),
       });
     } finally {
       setActionBusy("");
@@ -261,10 +261,11 @@ const ReservationDetailPage = () => {
   };
 
   const handleShareVoucher = async () => {
-    const voucherUrl = `${window.location.origin}/voucher/${voucher?.voucherCode || ""}`;
+    const base = t("voucherPage.routeBase", { defaultValue: "voucher" });
+    const voucherUrl = `${window.location.origin}/${base}/${voucher?.voucherCode || ""}`;
     const shareData = {
-      title: `Voucher - ${reservation?.guestName || "Reserva"}`,
-      text: `Tu voucher de reserva: ${voucher?.voucherCode || ""}`,
+      title: `${t("voucherPage.share.title", { defaultValue: "Reservation Voucher" })} - ${reservation?.guestName || "Reserva"}`,
+      text: `${t("voucherPage.share.text", { defaultValue: "Voucher" })}: ${voucher?.voucherCode || ""}`,
       url: voucherUrl,
     };
 
@@ -289,7 +290,7 @@ const ReservationDetailPage = () => {
       } catch {
         showToast({
           type: "error",
-          message: "No se pudo compartir el voucher.",
+          message: "No se pudo compartir el recibo.",
         });
       }
     }
@@ -534,7 +535,7 @@ const ReservationDetailPage = () => {
           )}
 
           {/* Voucher section */}
-          <SectionCard title="Voucher" icon={Ticket}>
+          <SectionCard title="Recibo" icon={Ticket}>
             {voucher ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -555,13 +556,16 @@ const ReservationDetailPage = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <a
-                    href={`/voucher/${voucher.voucherCode}`}
+                    href={`/${t("voucherPage.routeBase", { defaultValue: "voucher" })}/${voucher.voucherCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition
                         [@media(hover:hover)]:hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:[@media(hover:hover)]:hover:bg-slate-800"
                   >
-                    <ExternalLink size={13} /> Ver voucher
+                    <ExternalLink size={13} />{" "}
+                    {t("myReservationsPage.actions.viewVoucher", {
+                      defaultValue: "View voucher",
+                    })}
                   </a>
                   <button
                     type="button"
@@ -574,8 +578,11 @@ const ReservationDetailPage = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      const base = t("voucherPage.routeBase", {
+                        defaultValue: "voucher",
+                      });
                       navigator.clipboard?.writeText(
-                        `${window.location.origin}/voucher/${voucher.voucherCode}`,
+                        `${window.location.origin}/${base}/${voucher.voucherCode}`,
                       );
                       showToast({
                         type: "success",
@@ -606,11 +613,11 @@ const ReservationDetailPage = () => {
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No se ha generado un voucher para esta reserva.
+                  No se ha generado un recibo para esta reserva.
                 </p>
                 {reservation.paymentStatus !== "paid" && (
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    La reserva debe estar pagada para generar un voucher.
+                    La reserva debe estar pagada para generar un recibo.
                   </p>
                 )}
                 {canWrite && (
@@ -627,7 +634,7 @@ const ReservationDetailPage = () => {
                     {actionBusy === "voucher" && (
                       <Loader2 size={13} className="animate-spin" />
                     )}
-                    <Ticket size={13} /> Generar voucher
+                    <Ticket size={13} /> Generar recibo
                   </button>
                 )}
               </div>

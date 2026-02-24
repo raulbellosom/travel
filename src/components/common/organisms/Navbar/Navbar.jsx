@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BookOpen,
   FileText,
+  Heart,
   Home,
   KeyRound,
   LayoutDashboard,
@@ -104,22 +105,33 @@ const Navbar = () => {
         ]
       : []),
     {
-      to: "/perfil",
+      to: isInternalUser ? INTERNAL_ROUTES.profile : "/perfil",
       icon: UserCircle2,
       label: t("client:navbar.userMenu.profile"),
     },
+    ...(!isInternalUser
+      ? [
+          {
+            to: "/mis-reservas",
+            icon: BookOpen,
+            label: t("client:navbar.userMenu.reservations"),
+          },
+          {
+            to: "/mis-resenas",
+            icon: Star,
+            label: t("client:navbar.userMenu.reviews"),
+          },
+          {
+            to: "/mis-favoritos",
+            icon: Heart,
+            label: t("navbar.userMenu.favorites", {
+              defaultValue: "Mis Favoritos",
+            }),
+          },
+        ]
+      : []),
     {
-      to: "/mis-reservas",
-      icon: BookOpen,
-      label: t("client:navbar.userMenu.reservations"),
-    },
-    {
-      to: "/mis-resenas",
-      icon: Star,
-      label: t("client:navbar.userMenu.reviews"),
-    },
-    {
-      to: "/recuperar-password",
+      to: isInternalUser ? INTERNAL_ROUTES.profile : "/recuperar-password",
       icon: KeyRound,
       label: t("client:navbar.userMenu.password"),
     },

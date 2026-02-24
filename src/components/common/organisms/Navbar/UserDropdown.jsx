@@ -79,6 +79,7 @@ const UserDropdown = ({ user, onLogout }) => {
     ...(isInternalUser
       ? [
           {
+            key: "dashboard",
             to: INTERNAL_ROUTES.dashboard,
             icon: LayoutDashboard,
             label: t("nav.dashboard"),
@@ -88,32 +89,41 @@ const UserDropdown = ({ user, onLogout }) => {
     ...(canAccessProfile
       ? [
           {
-            to: "/profile",
+            key: "profile",
+            to: isInternalUser ? INTERNAL_ROUTES.profile : "/profile",
             icon: UserCircle2,
             label: t("navbar.userMenu.profile"),
           },
         ]
       : []),
-    {
-      to: "/my-reservations",
-      icon: BookOpen,
-      label: t("navbar.userMenu.reservations"),
-    },
-    {
-      to: "/my-reviews",
-      icon: Star,
-      label: t("navbar.userMenu.reviews"),
-    },
-    {
-      to: "/my-favorites",
-      icon: Heart,
-      label: t("navbar.userMenu.favorites", {
-        defaultValue: "Mis Favoritos",
-      }),
-    },
+    ...(!isInternalUser
+      ? [
+          {
+            key: "reservations",
+            to: "/my-reservations",
+            icon: BookOpen,
+            label: t("navbar.userMenu.reservations"),
+          },
+          {
+            key: "reviews",
+            to: "/my-reviews",
+            icon: Star,
+            label: t("navbar.userMenu.reviews"),
+          },
+          {
+            key: "favorites",
+            to: "/my-favorites",
+            icon: Heart,
+            label: t("navbar.userMenu.favorites", {
+              defaultValue: "Mis Favoritos",
+            }),
+          },
+        ]
+      : []),
     ...(canAccessConversations
       ? [
           {
+            key: "conversations",
             to: getConversationsRoute(user),
             icon: MessageCircle,
             label: t("navbar.userMenu.conversations"),
@@ -121,7 +131,8 @@ const UserDropdown = ({ user, onLogout }) => {
         ]
       : []),
     {
-      to: "/recuperar-password",
+      key: "password",
+      to: isInternalUser ? INTERNAL_ROUTES.profile : "/recuperar-password",
       icon: KeyRound,
       label: t("navbar.userMenu.password"),
     },
@@ -191,7 +202,7 @@ const UserDropdown = ({ user, onLogout }) => {
               const Icon = item.icon;
               return (
                 <Link
-                  key={item.to}
+                  key={item.key || item.to}
                   to={item.to}
                   className="inline-flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-cyan-300"
                 >
