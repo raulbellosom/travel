@@ -175,7 +175,7 @@ export default async ({ req, res, log, error }) => {
           reservation.resourceId || reservation.propertyId,
           64,
         ),
-        propertyOwnerId: reservation.propertyOwnerId,
+        resourceOwnerUserId: normalize(reservation.resourceOwnerUserId, 64),
         voucherCode,
         voucherUrl,
         qrPayload: safeJson({
@@ -193,7 +193,7 @@ export default async ({ req, res, log, error }) => {
       config,
       log,
       data: {
-        actorUserId: reservation.propertyOwnerId,
+        actorUserId: reservation.resourceOwnerUserId,
         actorRole: "owner",
         action: "voucher.issue",
         entityType: "reservation_vouchers",
