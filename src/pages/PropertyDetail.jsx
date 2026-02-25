@@ -50,6 +50,20 @@ import {
   Tag,
   Heart,
   Share2,
+  Fuel,
+  Settings2,
+  DoorOpen,
+  Briefcase,
+  Music,
+  Volume2,
+  Lightbulb,
+  Sparkles,
+  ChefHat,
+  HandPlatter,
+  Shirt,
+  Hammer,
+  Timer,
+  Shield,
 } from "lucide-react";
 import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
@@ -67,7 +81,10 @@ import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import ProgressiveImage from "../components/common/atoms/ProgressiveImage";
 import { usePageSeo } from "../hooks/usePageSeo";
-import { getResourceBehavior } from "../utils/resourceModel";
+import {
+  getResourceBehavior,
+  parseResourceAttributes,
+} from "../utils/resourceModel";
 import { useInstanceModules } from "../hooks/useInstanceModules";
 import { buildPathFromLocation } from "../utils/authRedirect";
 import { formatMoneyParts } from "../utils/money";
@@ -172,6 +189,13 @@ const PropertyDetail = () => {
       }),
     [property, modulesApi.isEnabled],
   );
+
+  // Parse attributes JSON once – used for vehicle/service/experience/venue stats
+  const attrs = useMemo(
+    () => parseResourceAttributes(property?.attributes),
+    [property?.attributes],
+  );
+
   const scheduleType = resourceBehavior.effectiveScheduleType;
   const isManualContactBooking =
     resourceBehavior.bookingType === "manual_contact";
@@ -1629,36 +1653,70 @@ const PropertyDetail = () => {
                       { defaultValue: resourceBehavior.category },
                     )}
                   />
-                  {property.maxGuests > 0 && (
+                  {Number(attrs.vehicleModelYear) > 0 && (
                     <StatCard
-                      icon={Users}
+                      icon={CalendarDays}
+                      label={t("client:resource.modelYear", {
+                        defaultValue: "Año",
+                      })}
+                      value={attrs.vehicleModelYear}
+                    />
+                  )}
+                  {Number(attrs.vehicleSeats) > 0 && (
+                    <StatCard
+                      icon={Armchair}
                       label={t("client:resource.passengers", {
                         defaultValue: "Pasajeros",
                       })}
-                      value={property.maxGuests}
+                      value={attrs.vehicleSeats}
                     />
                   )}
-                  {property.totalArea > 0 && (
+                  {Number(attrs.vehicleDoors) > 0 && (
                     <StatCard
-                      icon={Ruler}
-                      label={t("client:propertyDetail.stats.totalArea")}
-                      value={`${property.totalArea} m²`}
+                      icon={DoorOpen}
+                      label={t("client:resource.doors", {
+                        defaultValue: "Puertas",
+                      })}
+                      value={attrs.vehicleDoors}
                     />
                   )}
-                  <StatCard
-                    icon={LayoutGrid}
-                    label={t("client:resource.mode", {
-                      defaultValue: "Modalidad",
-                    })}
-                    value={t(
-                      `client:common.enums.operation.${resourceBehavior.commercialMode}`,
-                      { defaultValue: resourceBehavior.commercialMode },
-                    )}
-                  />
+                  {attrs.vehicleTransmission && (
+                    <StatCard
+                      icon={Settings2}
+                      label={t("client:resource.transmission", {
+                        defaultValue: "Transmisión",
+                      })}
+                      value={t(
+                        `client:common.enums.vehicleTransmission.${attrs.vehicleTransmission}`,
+                        { defaultValue: attrs.vehicleTransmission },
+                      )}
+                    />
+                  )}
+                  {attrs.vehicleFuelType && (
+                    <StatCard
+                      icon={Fuel}
+                      label={t("client:resource.fuelType", {
+                        defaultValue: "Combustible",
+                      })}
+                      value={t(
+                        `client:common.enums.vehicleFuelType.${attrs.vehicleFuelType}`,
+                        { defaultValue: attrs.vehicleFuelType },
+                      )}
+                    />
+                  )}
+                  {Number(attrs.vehicleLuggageCapacity) > 0 && (
+                    <StatCard
+                      icon={Briefcase}
+                      label={t("client:resource.luggageCapacity", {
+                        defaultValue: "Equipaje",
+                      })}
+                      value={`${attrs.vehicleLuggageCapacity} ${t("client:resource.pieces", { defaultValue: "pzas" })}`}
+                    />
+                  )}
                 </>
               )}
 
-              {/* ── Service stats ── */}
+              {/* ── Service stats (per-category) ── */}
               {resourceBehavior.resourceType === "service" && (
                 <>
                   <StatCard
@@ -1669,17 +1727,307 @@ const PropertyDetail = () => {
                       { defaultValue: resourceBehavior.category },
                     )}
                   />
-                  <StatCard
-                    icon={Clock}
-                    label={t("client:resource.duration", {
-                      defaultValue: "Duración",
-                    })}
-                    value={
-                      property.minStayNights
-                        ? `${property.minStayNights}h`
-                        : "—"
-                    }
-                  />
+                  {/* DJ */}
+                  {resourceBehavior.category === "dj" && (
+                    <>
+                      {attrs.djMusicGenre && (
+                        <StatCard
+                          icon={Music}
+                          label={t("client:resource.musicGenre", {
+                            defaultValue: "Género musical",
+                          })}
+                          value={t(
+                            `client:common.enums.djMusicGenre.${attrs.djMusicGenre}`,
+                            { defaultValue: attrs.djMusicGenre },
+                          )}
+                        />
+                      )}
+                      {attrs.djIncludesSound && (
+                        <StatCard
+                          icon={Volume2}
+                          label={t("client:resource.includesSound", {
+                            defaultValue: "Equipo de sonido",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.djIncludesLighting && (
+                        <StatCard
+                          icon={Lightbulb}
+                          label={t("client:resource.includesLighting", {
+                            defaultValue: "Iluminación",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {Number(attrs.djMaxEventCapacity) > 0 && (
+                        <StatCard
+                          icon={Users}
+                          label={t("client:resource.eventCapacity", {
+                            defaultValue: "Capacidad del evento",
+                          })}
+                          value={`${attrs.djMaxEventCapacity} ${t("client:resource.peopleSuffix", { defaultValue: "personas" })}`}
+                        />
+                      )}
+                      {attrs.djTravelsToVenue && (
+                        <StatCard
+                          icon={MapPin}
+                          label={t("client:resource.travelsToVenue", {
+                            defaultValue: "Va al lugar",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                    </>
+                  )}
+                  {/* Cleaning */}
+                  {resourceBehavior.category === "cleaning" && (
+                    <>
+                      {attrs.cleaningType && (
+                        <StatCard
+                          icon={Sparkles}
+                          label={t("client:resource.cleaningType", {
+                            defaultValue: "Tipo de limpieza",
+                          })}
+                          value={t(
+                            `client:common.enums.cleaningType.${attrs.cleaningType}`,
+                            { defaultValue: attrs.cleaningType },
+                          )}
+                        />
+                      )}
+                      {Number(attrs.cleaningMaxArea) > 0 && (
+                        <StatCard
+                          icon={Ruler}
+                          label={t("client:resource.maxArea", {
+                            defaultValue: "Área máx.",
+                          })}
+                          value={`${attrs.cleaningMaxArea} m²`}
+                        />
+                      )}
+                      {Number(attrs.cleaningStaffCount) > 0 && (
+                        <StatCard
+                          icon={Users}
+                          label={t("client:resource.staff", {
+                            defaultValue: "Personal",
+                          })}
+                          value={`${attrs.cleaningStaffCount} ${t("client:resource.peopleSuffix", { defaultValue: "personas" })}`}
+                        />
+                      )}
+                      {attrs.cleaningIncludesSupplies && (
+                        <StatCard
+                          icon={Sparkles}
+                          label={t("client:resource.includesSupplies", {
+                            defaultValue: "Incluye productos",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                    </>
+                  )}
+                  {/* Chef */}
+                  {resourceBehavior.category === "chef" && (
+                    <>
+                      {attrs.chefCuisineType && (
+                        <StatCard
+                          icon={ChefHat}
+                          label={t("client:resource.cuisine", {
+                            defaultValue: "Especialidad",
+                          })}
+                          value={t(
+                            `client:common.enums.chefCuisineType.${attrs.chefCuisineType}`,
+                            { defaultValue: attrs.chefCuisineType },
+                          )}
+                        />
+                      )}
+                      {Number(attrs.chefMaxDiners) > 0 && (
+                        <StatCard
+                          icon={Users}
+                          label={t("client:resource.maxDiners", {
+                            defaultValue: "Comensales máx.",
+                          })}
+                          value={attrs.chefMaxDiners}
+                        />
+                      )}
+                      {attrs.chefIncludesIngredients && (
+                        <StatCard
+                          icon={UtensilsCrossed}
+                          label={t("client:resource.includesIngredients", {
+                            defaultValue: "Incluye ingredientes",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.chefIncludesTableware && (
+                        <StatCard
+                          icon={HandPlatter}
+                          label={t("client:resource.includesTableware", {
+                            defaultValue: "Incluye vajilla",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.chefTravelsToLocation && (
+                        <StatCard
+                          icon={MapPin}
+                          label={t("client:resource.travelsToLocation", {
+                            defaultValue: "A domicilio",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                    </>
+                  )}
+                  {/* Photography */}
+                  {resourceBehavior.category === "photography" && (
+                    <>
+                      {attrs.photoSpecialty && (
+                        <StatCard
+                          icon={Camera}
+                          label={t("client:resource.photoSpecialty", {
+                            defaultValue: "Especialidad",
+                          })}
+                          value={t(
+                            `client:common.enums.photoSpecialty.${attrs.photoSpecialty}`,
+                            { defaultValue: attrs.photoSpecialty },
+                          )}
+                        />
+                      )}
+                      {Number(attrs.photoEditedCount) > 0 && (
+                        <StatCard
+                          icon={Camera}
+                          label={t("client:resource.editedPhotos", {
+                            defaultValue: "Fotos editadas",
+                          })}
+                          value={`~${attrs.photoEditedCount}`}
+                        />
+                      )}
+                      {attrs.photoIncludesVideo && (
+                        <StatCard
+                          icon={Camera}
+                          label={t("client:resource.includesVideo", {
+                            defaultValue: "Incluye video",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.photoTravelsToLocation && (
+                        <StatCard
+                          icon={MapPin}
+                          label={t("client:resource.travelsToLocation", {
+                            defaultValue: "A domicilio",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                    </>
+                  )}
+                  {/* Catering */}
+                  {resourceBehavior.category === "catering" && (
+                    <>
+                      {attrs.cateringServiceType && (
+                        <StatCard
+                          icon={UtensilsCrossed}
+                          label={t("client:resource.serviceType", {
+                            defaultValue: "Tipo de servicio",
+                          })}
+                          value={t(
+                            `client:common.enums.cateringServiceType.${attrs.cateringServiceType}`,
+                            { defaultValue: attrs.cateringServiceType },
+                          )}
+                        />
+                      )}
+                      {Number(attrs.cateringMinGuests) > 0 &&
+                        Number(attrs.cateringMaxGuests) > 0 && (
+                          <StatCard
+                            icon={Users}
+                            label={t("client:resource.guestRange", {
+                              defaultValue: "Comensales",
+                            })}
+                            value={`${attrs.cateringMinGuests}–${attrs.cateringMaxGuests}`}
+                          />
+                        )}
+                      {attrs.cateringIncludesWaiters && (
+                        <StatCard
+                          icon={Users}
+                          label={t("client:resource.includesWaiters", {
+                            defaultValue: "Incluye meseros",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.cateringIncludesSetup && (
+                        <StatCard
+                          icon={Hammer}
+                          label={t("client:resource.includesSetup", {
+                            defaultValue: "Montaje incluido",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.cateringIncludesTableware && (
+                        <StatCard
+                          icon={HandPlatter}
+                          label={t("client:resource.includesTableware", {
+                            defaultValue: "Incluye vajilla",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                    </>
+                  )}
+                  {/* Maintenance */}
+                  {resourceBehavior.category === "maintenance" && (
+                    <>
+                      {attrs.maintenanceSpecialty && (
+                        <StatCard
+                          icon={Wrench}
+                          label={t("client:resource.specialty", {
+                            defaultValue: "Especialidad",
+                          })}
+                          value={t(
+                            `client:common.enums.maintenanceSpecialty.${attrs.maintenanceSpecialty}`,
+                            { defaultValue: attrs.maintenanceSpecialty },
+                          )}
+                        />
+                      )}
+                      {attrs.maintenanceIncludesMaterials && (
+                        <StatCard
+                          icon={Hammer}
+                          label={t("client:resource.includesMaterials", {
+                            defaultValue: "Incluye materiales",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.maintenanceEmergencyService && (
+                        <StatCard
+                          icon={Clock}
+                          label={t("client:resource.emergency24h", {
+                            defaultValue: "Emergencia 24h",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.maintenanceWarranty && (
+                        <StatCard
+                          icon={Shield}
+                          label={t("client:resource.warranty", {
+                            defaultValue: "Garantía",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {Number(attrs.maintenanceResponseTimeHours) > 0 && (
+                        <StatCard
+                          icon={Timer}
+                          label={t("client:resource.responseTime", {
+                            defaultValue: "Tiempo de respuesta",
+                          })}
+                          value={`${attrs.maintenanceResponseTimeHours}h`}
+                        />
+                      )}
+                    </>
+                  )}
                   <StatCard
                     icon={MapPin}
                     label={t("client:resource.location", {
@@ -1701,26 +2049,63 @@ const PropertyDetail = () => {
                       { defaultValue: resourceBehavior.category },
                     )}
                   />
-                  {property.maxGuests > 0 && (
+                  {Number(attrs.experienceDurationMinutes) > 0 && (
                     <StatCard
-                      icon={Users}
-                      label={t("client:resource.maxGuests", {
-                        defaultValue: "Máx. personas",
+                      icon={Clock}
+                      label={t("client:resource.duration", {
+                        defaultValue: "Duración",
                       })}
-                      value={property.maxGuests}
+                      value={
+                        Number(attrs.experienceDurationMinutes) >= 60
+                          ? `${Math.round(Number(attrs.experienceDurationMinutes) / 60)}h`
+                          : `${attrs.experienceDurationMinutes} min`
+                      }
                     />
                   )}
-                  <StatCard
-                    icon={Clock}
-                    label={t("client:resource.duration", {
-                      defaultValue: "Duración",
-                    })}
-                    value={
-                      property.minStayNights
-                        ? `${property.minStayNights}h`
-                        : "—"
-                    }
-                  />
+                  {(Number(attrs.experienceMinParticipants) > 0 ||
+                    Number(attrs.experienceMaxParticipants) > 0) && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:resource.participants", {
+                        defaultValue: "Participantes",
+                      })}
+                      value={
+                        Number(attrs.experienceMaxParticipants) > 0
+                          ? `${attrs.experienceMinParticipants || 1}–${attrs.experienceMaxParticipants}`
+                          : `${attrs.experienceMinParticipants || 1}+`
+                      }
+                    />
+                  )}
+                  {attrs.experienceDifficulty && (
+                    <StatCard
+                      icon={Dumbbell}
+                      label={t("client:resource.difficulty", {
+                        defaultValue: "Dificultad",
+                      })}
+                      value={t(
+                        `client:common.enums.experienceDifficulty.${attrs.experienceDifficulty}`,
+                        { defaultValue: attrs.experienceDifficulty },
+                      )}
+                    />
+                  )}
+                  {attrs.experienceIncludesEquipment && (
+                    <StatCard
+                      icon={Settings2}
+                      label={t("client:resource.includesEquipment", {
+                        defaultValue: "Incluye equipo",
+                      })}
+                      value={t("common.yes", "Sí")}
+                    />
+                  )}
+                  {Number(attrs.experienceMinAge) > 0 && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:resource.minAge", {
+                        defaultValue: "Edad mínima",
+                      })}
+                      value={`${attrs.experienceMinAge}+`}
+                    />
+                  )}
                   <StatCard
                     icon={MapPin}
                     label={t("client:resource.location", {
@@ -1742,13 +2127,22 @@ const PropertyDetail = () => {
                       { defaultValue: resourceBehavior.category },
                     )}
                   />
-                  {property.maxGuests > 0 && (
+                  {Number(attrs.venueCapacitySeated) > 0 && (
+                    <StatCard
+                      icon={Armchair}
+                      label={t("client:resource.capacitySeated", {
+                        defaultValue: "Sentados",
+                      })}
+                      value={attrs.venueCapacitySeated}
+                    />
+                  )}
+                  {Number(attrs.venueCapacityStanding) > 0 && (
                     <StatCard
                       icon={Users}
-                      label={t("client:resource.capacity", {
-                        defaultValue: "Capacidad",
+                      label={t("client:resource.capacityStanding", {
+                        defaultValue: "De pie",
                       })}
-                      value={property.maxGuests}
+                      value={attrs.venueCapacityStanding}
                     />
                   )}
                   {property.totalArea > 0 && (
@@ -1756,6 +2150,15 @@ const PropertyDetail = () => {
                       icon={Ruler}
                       label={t("client:propertyDetail.stats.totalArea")}
                       value={`${property.totalArea} m²`}
+                    />
+                  )}
+                  {attrs.venueHasStage && (
+                    <StatCard
+                      icon={Building2}
+                      label={t("client:resource.hasStage", {
+                        defaultValue: "Escenario",
+                      })}
+                      value={t("common.yes", "Sí")}
                     />
                   )}
                   <StatCard

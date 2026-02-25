@@ -12,6 +12,7 @@ import {
   Building2,
 } from "lucide-react";
 import { formatMoneyWithDenomination } from "../../../utils/money";
+import { parseResourceAttributes } from "../../../utils/resourceModel";
 import GuestSelector from "./GuestSelector";
 
 /* ── Helper maps ──────────────────────────────────────── */
@@ -144,13 +145,35 @@ export default function BookingSummary({
   const estimatedTax = 0;
   const grandTotal = summary.total + estimatedFees + estimatedTax;
 
-  // Capacity
-  const maxCapacity =
-    resource.maxGuests ||
-    resource.maxPassengers ||
-    resource.maxPersons ||
-    resource.capacity ||
-    0;
+  // Capacity – resolve from parsed attributes per resource type
+  const attrs = parseResourceAttributes(resource.attributes);
+  let maxCapacity = 0;
+  switch (resourceType) {
+    case "vehicle":
+      maxCapacity = Number(attrs.vehicleSeats) || resource.maxGuests || 0;
+      break;
+    case "experience":
+      maxCapacity =
+        Number(attrs.experienceMaxParticipants) || resource.maxGuests || 0;
+      break;
+    case "venue":
+      maxCapacity =
+        Number(attrs.venueCapacitySeated) ||
+        Number(attrs.venueCapacityStanding) ||
+        resource.maxGuests ||
+        0;
+      break;
+    case "service":
+      maxCapacity =
+        Number(attrs.djMaxEventCapacity) ||
+        Number(attrs.chefMaxDiners) ||
+        Number(attrs.cateringMaxGuests) ||
+        resource.maxGuests ||
+        0;
+      break;
+    default:
+      maxCapacity = resource.maxGuests || resource.capacity || 0;
+  }
   const showGuestSelector =
     maxCapacity > 0 && typeof onGuestCountChange === "function";
   const showStaticCapacity = maxCapacity > 0 && !showGuestSelector;

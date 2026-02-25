@@ -310,6 +310,65 @@
         "date_range": "Rango de fechas",
         "time_slot": "Turno horario",
         "fixed_event": "Evento fijo"
+      },
+      "vehicleTransmission": {
+        "automatic": "Automática",
+        "manual": "Manual",
+        "semiAutomatic": "Semiautomática"
+      },
+      "vehicleFuelType": {
+        "gasoline": "Gasolina",
+        "diesel": "Diésel",
+        "electric": "Eléctrico",
+        "hybrid": "Híbrido"
+      },
+      "experienceDifficulty": {
+        "easy": "Fácil",
+        "intermediate": "Intermedio",
+        "challenging": "Desafiante",
+        "expert": "Experto"
+      },
+      "djMusicGenre": {
+        "electronic": "Electrónica",
+        "reggaeton": "Reggaetón",
+        "popVariety": "Pop / Variado",
+        "rock": "Rock",
+        "latin": "Latin",
+        "other": "Otro"
+      },
+      "cleaningType": {
+        "residential": "Residencial",
+        "commercial": "Comercial",
+        "postConstruction": "Post-obra",
+        "deep": "Limpieza profunda"
+      },
+      "chefCuisineType": {
+        "mexican": "Mexicana",
+        "italian": "Italiana",
+        "japanese": "Japonesa",
+        "fusion": "Fusión",
+        "international": "Internacional",
+        "other": "Otra"
+      },
+      "photoSpecialty": {
+        "weddings": "Bodas",
+        "portraits": "Retratos",
+        "product": "Producto",
+        "events": "Eventos",
+        "realEstate": "Inmobiliaria"
+      },
+      "cateringServiceType": {
+        "buffet": "Buffet",
+        "plated": "Servicio a mesa",
+        "cocktail": "Cóctel",
+        "lunchBox": "Lunch box"
+      },
+      "maintenanceSpecialty": {
+        "plumbing": "Plomería",
+        "electrical": "Electricidad",
+        "painting": "Pintura",
+        "carpentry": "Carpintería",
+        "general": "General"
       }
     }
   },
@@ -325,7 +384,47 @@
     "duration": "Duración",
     "location": "Lugar",
     "maxGuests": "Máx.",
-    "capacity": "Capacidad"
+    "capacity": "Capacidad",
+    "modelYear": "Año",
+    "doors": "Puertas",
+    "transmission": "Transmisión",
+    "fuelType": "Combustible",
+    "luggageCapacity": "Equipaje",
+    "pieces": "pzas",
+    "musicGenre": "Género musical",
+    "includesSound": "Equipo de sonido",
+    "includesLighting": "Iluminación",
+    "eventCapacity": "Capacidad del evento",
+    "peopleSuffix": "personas",
+    "travelsToVenue": "Va al lugar",
+    "cleaningType": "Tipo de limpieza",
+    "maxArea": "Área máx.",
+    "staff": "Personal",
+    "includesSupplies": "Incluye productos",
+    "cuisine": "Especialidad",
+    "maxDiners": "Comensales máx.",
+    "includesIngredients": "Incluye ingredientes",
+    "includesTableware": "Incluye vajilla",
+    "travelsToLocation": "A domicilio",
+    "photoSpecialty": "Especialidad",
+    "editedPhotos": "Fotos editadas",
+    "includesVideo": "Incluye video",
+    "serviceType": "Tipo de servicio",
+    "guestRange": "Comensales",
+    "includesWaiters": "Incluye meseros",
+    "includesSetup": "Montaje incluido",
+    "specialty": "Especialidad",
+    "includesMaterials": "Incluye materiales",
+    "emergency24h": "Emergencia 24h",
+    "warranty": "Garantía",
+    "responseTime": "Tiempo de respuesta",
+    "participants": "Participantes",
+    "difficulty": "Dificultad",
+    "includesEquipment": "Incluye equipo",
+    "minAge": "Edad mínima",
+    "capacitySeated": "Sentados",
+    "capacityStanding": "De pie",
+    "hasStage": "Escenario"
   },
   "pricing": {
     "perNight": "por noche",

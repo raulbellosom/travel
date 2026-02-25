@@ -310,6 +310,65 @@
         "date_range": "Date range",
         "time_slot": "Time slot",
         "fixed_event": "Fixed event"
+      },
+      "vehicleTransmission": {
+        "automatic": "Automatic",
+        "manual": "Manual",
+        "semiAutomatic": "Semi-automatic"
+      },
+      "vehicleFuelType": {
+        "gasoline": "Gasoline",
+        "diesel": "Diesel",
+        "electric": "Electric",
+        "hybrid": "Hybrid"
+      },
+      "experienceDifficulty": {
+        "easy": "Easy",
+        "intermediate": "Intermediate",
+        "challenging": "Challenging",
+        "expert": "Expert"
+      },
+      "djMusicGenre": {
+        "electronic": "Electronic",
+        "reggaeton": "Reggaeton",
+        "popVariety": "Pop / Variety",
+        "rock": "Rock",
+        "latin": "Latin",
+        "other": "Other"
+      },
+      "cleaningType": {
+        "residential": "Residential",
+        "commercial": "Commercial",
+        "postConstruction": "Post-construction",
+        "deep": "Deep cleaning"
+      },
+      "chefCuisineType": {
+        "mexican": "Mexican",
+        "italian": "Italian",
+        "japanese": "Japanese",
+        "fusion": "Fusion",
+        "international": "International",
+        "other": "Other"
+      },
+      "photoSpecialty": {
+        "weddings": "Weddings",
+        "portraits": "Portraits",
+        "product": "Product",
+        "events": "Events",
+        "realEstate": "Real estate"
+      },
+      "cateringServiceType": {
+        "buffet": "Buffet",
+        "plated": "Plated service",
+        "cocktail": "Cocktail",
+        "lunchBox": "Lunch box"
+      },
+      "maintenanceSpecialty": {
+        "plumbing": "Plumbing",
+        "electrical": "Electrical",
+        "painting": "Painting",
+        "carpentry": "Carpentry",
+        "general": "General"
       }
     }
   },
@@ -325,7 +384,47 @@
     "duration": "Duration",
     "location": "Location",
     "maxGuests": "Max.",
-    "capacity": "Capacity"
+    "capacity": "Capacity",
+    "modelYear": "Year",
+    "doors": "Doors",
+    "transmission": "Transmission",
+    "fuelType": "Fuel",
+    "luggageCapacity": "Luggage",
+    "pieces": "pcs",
+    "musicGenre": "Music genre",
+    "includesSound": "Sound system",
+    "includesLighting": "Lighting",
+    "eventCapacity": "Event capacity",
+    "peopleSuffix": "people",
+    "travelsToVenue": "Travels to venue",
+    "cleaningType": "Cleaning type",
+    "maxArea": "Max area",
+    "staff": "Staff",
+    "includesSupplies": "Includes supplies",
+    "cuisine": "Cuisine",
+    "maxDiners": "Max diners",
+    "includesIngredients": "Includes ingredients",
+    "includesTableware": "Includes tableware",
+    "travelsToLocation": "On-site service",
+    "photoSpecialty": "Specialty",
+    "editedPhotos": "Edited photos",
+    "includesVideo": "Includes video",
+    "serviceType": "Service type",
+    "guestRange": "Guests",
+    "includesWaiters": "Includes waiters",
+    "includesSetup": "Setup included",
+    "specialty": "Specialty",
+    "includesMaterials": "Includes materials",
+    "emergency24h": "24h emergency",
+    "warranty": "Warranty",
+    "responseTime": "Response time",
+    "participants": "Participants",
+    "difficulty": "Difficulty",
+    "includesEquipment": "Includes equipment",
+    "minAge": "Min age",
+    "capacitySeated": "Seated",
+    "capacityStanding": "Standing",
+    "hasStage": "Stage"
   },
   "pricing": {
     "perNight": "per night",
