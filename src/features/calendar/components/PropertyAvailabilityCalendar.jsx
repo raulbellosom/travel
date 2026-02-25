@@ -24,9 +24,12 @@ import { formatMoneyWithDenomination } from "../../../utils/money";
 import { Modal } from "../../../components/common";
 
 /**
- * PropertyAvailabilityCalendar - Client-facing calendar for property pages.
- * Shows pricing per night, availability, and allows date selection.
- * Optimized for vacation_rental and rent properties.
+ * PropertyAvailabilityCalendar - Client-facing calendar for resource pages.
+ * Shows pricing per unit, availability, and allows date selection.
+ * Supports all resource types: property, vehicle, experience, venue, service.
+ *
+ * Desktop: Shows two months side-by-side inline, second month appears on hover.
+ * Mobile: Shows one month with "Ver 2 meses" button to open expanded modal.
  */
 export default function PropertyAvailabilityCalendar({
   property = {},
@@ -35,6 +38,10 @@ export default function PropertyAvailabilityCalendar({
   selectedRange = { startDate: null, endDate: null },
   onRangeChange,
   onReserveClick,
+  resourceType,
+  priceLabel,
+  guestCount,
+  onGuestCountChange,
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
@@ -45,6 +52,8 @@ export default function PropertyAvailabilityCalendar({
   );
   const [hoverDate, setHoverDate] = useState(null);
   const [isExpandedViewOpen, setIsExpandedViewOpen] = useState(false);
+  const [isDesktopSecondMonthVisible, setIsDesktopSecondMonthVisible] =
+    useState(false);
 
   const minDate = stripTime(new Date());
   const maxDate = addDays(new Date(), 365);
@@ -241,9 +250,29 @@ export default function PropertyAvailabilityCalendar({
     year: "numeric",
   })}`;
 
+  // Resolve unit label for stay constraints
+  const unitLabelSingular =
+    priceLabel === "day"
+      ? t("calendar.booking.day")
+      : priceLabel === "hour"
+        ? t("calendar.booking.hour")
+        : t("calendar.booking.night");
+  const unitLabelPlural =
+    priceLabel === "day"
+      ? t("calendar.booking.days")
+      : priceLabel === "hour"
+        ? t("calendar.booking.hours")
+        : t("calendar.booking.nights");
+
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-linear-to-b from-white to-slate-50/70 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
+      {/* ── Inline calendar card ─────────────────────────── */}
+      <div
+        className="overflow-hidden rounded-2xl border border-slate-200 bg-linear-to-b from-white to-slate-50/70 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-950"
+        onMouseEnter={() => setIsDesktopSecondMonthVisible(true)}
+        onMouseLeave={() => setIsDesktopSecondMonthVisible(false)}
+      >
+        {/* Navigation header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-3 py-3 dark:border-slate-700">
           <button
             type="button"
@@ -257,10 +286,21 @@ export default function PropertyAvailabilityCalendar({
           <div className="flex min-w-0 items-center gap-2 text-center">
             <CalendarIcon className="h-4 w-4 text-slate-400" />
             <h3 className="truncate text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">
-              {month.toLocaleDateString(locale, {
-                month: "long",
-                year: "numeric",
-              })}
+              {/* Show range label when second month is visible on desktop */}
+              <span className="hidden lg:inline">
+                {isDesktopSecondMonthVisible
+                  ? modalRangeLabel
+                  : month.toLocaleDateString(locale, {
+                      month: "long",
+                      year: "numeric",
+                    })}
+              </span>
+              <span className="lg:hidden">
+                {month.toLocaleDateString(locale, {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
             </h3>
           </div>
 
@@ -274,27 +314,59 @@ export default function PropertyAvailabilityCalendar({
           </button>
         </div>
 
+        {/* Calendar grids */}
         <div className="p-3 sm:p-4">
-          <MonthGrid base={month} />
+          {/* Mobile: single month */}
+          <div className="lg:hidden">
+            <MonthGrid base={month} />
+          </div>
+
+          {/* Desktop: first month always visible, second slides in on hover */}
+          <div className="hidden lg:block">
+            <div
+              className="grid grid-cols-1 gap-6 transition-all duration-300"
+              style={{
+                gridTemplateColumns: isDesktopSecondMonthVisible
+                  ? "1fr 1fr"
+                  : "1fr",
+              }}
+            >
+              <MonthGrid
+                base={month}
+                showMonthLabel={isDesktopSecondMonthVisible}
+              />
+              {isDesktopSecondMonthVisible && (
+                <MotionDiv
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                >
+                  <MonthGrid base={addMonths(month, 1)} showMonthLabel />
+                </MotionDiv>
+              )}
+            </div>
+          </div>
         </div>
 
+        {/* Stay constraints */}
         {property.minStayNights && (
           <div className="px-4 pb-2 text-xs text-slate-500 dark:text-slate-400">
-            {t("calendar.minStay", { nights: property.minStayNights })} {"\u00b7"}{" "}
-            {t("calendar.maxStay", { nights: property.maxStayNights || 365 })}
+            {priceLabel && priceLabel !== "night"
+              ? `${t("calendar.minStayGeneric", { count: property.minStayNights, unit: property.minStayNights === 1 ? unitLabelSingular : unitLabelPlural })} \u00b7 ${t("calendar.maxStayGeneric", { count: property.maxStayNights || 365, unit: unitLabelPlural })}`
+              : `${t("calendar.minStay", { nights: property.minStayNights })} \u00b7 ${t("calendar.maxStay", { nights: property.maxStayNights || 365 })}`}
           </div>
         )}
 
+        {/* Action buttons */}
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 pt-1">
+          {/* On mobile, show expand button. On desktop, it's less needed but still available */}
           <button
             type="button"
             onClick={() => setIsExpandedViewOpen(true)}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-600 dark:hover:text-cyan-300"
+            className="lg:hidden inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-600 dark:hover:text-cyan-300"
           >
             <Expand className="h-3.5 w-3.5" />
-            {t("calendar.openTwoMonths", {
-              defaultValue: "Ver dos meses",
-            })}
+            {t("calendar.openTwoMonths", { defaultValue: "Ver 2 meses" })}
           </button>
 
           {(startDate || endDate) && (
@@ -311,54 +383,129 @@ export default function PropertyAvailabilityCalendar({
         </div>
       </div>
 
+      {/* ── Extended calendar modal (improved design) ─── */}
       <Modal
         isOpen={isExpandedViewOpen}
         onClose={() => setIsExpandedViewOpen(false)}
-        title={t("calendar.modal.title", { defaultValue: "Selecciona fechas" })}
+        title={t("calendar.modal.title", {
+          defaultValue: "Calendario extendido",
+        })}
         description={t("calendar.modal.description", {
           defaultValue:
-            "Vista extendida para revisar dos meses de disponibilidad.",
+            "Revisa dos meses de disponibilidad y selecciona tus fechas.",
         })}
         size="full"
         className="max-w-5xl"
       >
-        <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
+        <div className="space-y-5">
+          {/* Navigation bar */}
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-linear-to-r from-slate-50 to-white px-4 py-3 shadow-sm dark:border-slate-700 dark:from-slate-800/80 dark:to-slate-800/40">
             <button
               type="button"
               onClick={() => setMonth(addMonths(month, -1))}
-              className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 hover:shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-300"
               aria-label={t("calendar.aria.previous")}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <p className="truncate px-2 text-center text-sm font-semibold capitalize text-slate-700 dark:text-slate-200">
-              {modalRangeLabel}
-            </p>
+
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4 text-cyan-500" />
+              <p className="truncate text-center text-sm font-bold capitalize text-slate-800 dark:text-slate-100">
+                {modalRangeLabel}
+              </p>
+            </div>
+
             <button
               type="button"
               onClick={() => setMonth(addMonths(month, 1))}
-              className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 hover:shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-300"
               aria-label={t("calendar.aria.next")}
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <MonthGrid base={month} showMonthLabel />
-            <MonthGrid base={addMonths(month, 1)} showMonthLabel />
+          {/* Dual month grids */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/30">
+              <MonthGrid base={month} showMonthLabel />
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/30">
+              <MonthGrid base={addMonths(month, 1)} showMonthLabel />
+            </div>
           </div>
 
-          {property.minStayNights && (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t("calendar.minStay", { nights: property.minStayNights })} {"\u00b7"}{" "}
-              {t("calendar.maxStay", { nights: property.maxStayNights || 365 })}
-            </p>
+          {/* Stay constraints + legend */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/40">
+            {property.minStayNights && (
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                {priceLabel && priceLabel !== "night"
+                  ? `${t("calendar.minStayGeneric", { count: property.minStayNights, unit: property.minStayNights === 1 ? unitLabelSingular : unitLabelPlural })} · ${t("calendar.maxStayGeneric", { count: property.maxStayNights || 365, unit: unitLabelPlural })}`
+                  : `${t("calendar.minStay", { nights: property.minStayNights })} · ${t("calendar.maxStay", { nights: property.maxStayNights || 365 })}`}
+              </p>
+            )}
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-md border border-cyan-600 bg-cyan-600" />
+                {t("calendar.selectDates", { defaultValue: "Seleccionado" })}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-md border border-cyan-200 bg-cyan-50" />
+                {t("calendar.booking.inRange", { defaultValue: "Rango" })}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-md border border-slate-200 bg-slate-50 opacity-75 line-through" />
+                {t("calendar.booking.unavailable", {
+                  defaultValue: "No disponible",
+                })}
+              </span>
+            </div>
+          </div>
+
+          {/* Selected range summary inside modal */}
+          {startDate && endDate && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-200 bg-cyan-50/60 px-4 py-3 dark:border-cyan-800/40 dark:bg-cyan-950/20">
+              <div className="flex items-center gap-3 text-sm text-cyan-800 dark:text-cyan-200">
+                <CalendarIcon className="h-4 w-4" />
+                <span className="font-semibold">
+                  {startDate.toLocaleDateString(locale, {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
+                <ChevronRight className="h-3 w-3 opacity-50" />
+                <span className="font-semibold">
+                  {endDate.toLocaleDateString(locale, {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
+                <span className="text-xs opacity-70">
+                  ({daysBetween(startDate, endDate)}{" "}
+                  {daysBetween(startDate, endDate) === 1
+                    ? unitLabelSingular
+                    : unitLabelPlural}
+                  )
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onRangeChange?.({ startDate: null, endDate: null });
+                }}
+                className="text-xs font-semibold text-cyan-700 transition hover:text-red-500 dark:text-cyan-300 dark:hover:text-red-400"
+              >
+                {t("calendar.clearDates")}
+              </button>
+            </div>
           )}
         </div>
       </Modal>
 
+      {/* ── Booking summary ──────────────────────────────── */}
       {summary && (
         <MotionDiv
           initial={{ opacity: 0, y: 10 }}
@@ -367,10 +514,14 @@ export default function PropertyAvailabilityCalendar({
         >
           <BookingSummary
             property={property}
+            resourceType={resourceType || property.resourceType}
+            priceLabel={priceLabel}
             startDate={startDate}
             endDate={endDate}
             summary={summary}
             onReserveClick={onReserveClick}
+            guestCount={guestCount}
+            onGuestCountChange={onGuestCountChange}
           />
         </MotionDiv>
       )}

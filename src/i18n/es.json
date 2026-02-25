@@ -1514,6 +1514,37 @@
       "serviceAtClientLocation": "Servicio a domicilio",
       "serviceIncludesMaterials": "Incluye materiales",
       "serviceResponseTimeHours": "Tiempo de respuesta",
+      "serviceIncludesEquipment": "Incluye equipo (audio, iluminacion, etc.)",
+      "serviceMaxEventCapacity": "Capacidad maxima del evento",
+      "djMusicGenre": "Genero musical",
+      "djIncludesSound": "Incluye equipo de sonido",
+      "djIncludesLighting": "Incluye iluminacion",
+      "djMaxEventCapacity": "Capacidad maxima del evento",
+      "djTravelsToVenue": "Se traslada al lugar del evento",
+      "cleaningType": "Tipo de limpieza",
+      "cleaningMaxArea": "Area maxima de cobertura",
+      "cleaningStaffCount": "Personal incluido",
+      "cleaningIncludesSupplies": "Incluye productos de limpieza",
+      "chefCuisineType": "Especialidad culinaria",
+      "chefMaxDiners": "Comensales maximos",
+      "chefIncludesIngredients": "Incluye ingredientes",
+      "chefIncludesTableware": "Incluye vajilla y menaje",
+      "chefTravelsToLocation": "Se traslada a domicilio",
+      "photoSpecialty": "Especialidad fotografica",
+      "photoEditedCount": "Fotos editadas entregadas (aprox.)",
+      "photoIncludesVideo": "Incluye video",
+      "photoTravelsToLocation": "Se traslada al lugar",
+      "cateringServiceType": "Tipo de servicio",
+      "cateringMinGuests": "Comensales minimos",
+      "cateringMaxGuests": "Comensales maximos",
+      "cateringIncludesWaiters": "Incluye meseros",
+      "cateringIncludesSetup": "Incluye montaje y desmontaje",
+      "cateringIncludesTableware": "Incluye vajilla y menaje",
+      "maintenanceSpecialty": "Especialidad",
+      "maintenanceIncludesMaterials": "Incluye materiales",
+      "maintenanceEmergencyService": "Servicio de emergencia 24h",
+      "maintenanceWarranty": "Garantia del trabajo",
+      "maintenanceResponseTimeHours": "Tiempo de respuesta",
       "experienceDurationMinutes": "Duracion de la experiencia",
       "experienceMinParticipants": "Participantes minimos",
       "experienceMaxParticipants": "Participantes maximos",
@@ -1755,6 +1786,48 @@
         "rentLongTerm": "Renta larga",
         "rentShortTerm": "Renta corta",
         "rentHourly": "Renta por hora"
+      },
+      "djMusicGenre": {
+        "electronic": "Electronica",
+        "reggaeton": "Reggaeton",
+        "popVariety": "Pop / Variado",
+        "rock": "Rock",
+        "latin": "Latin",
+        "other": "Otro"
+      },
+      "cleaningType": {
+        "residential": "Residencial",
+        "commercial": "Comercial",
+        "postConstruction": "Post-obra",
+        "deep": "Limpieza profunda"
+      },
+      "chefCuisineType": {
+        "mexican": "Mexicana",
+        "italian": "Italiana",
+        "japanese": "Japonesa",
+        "fusion": "Fusion",
+        "international": "Internacional",
+        "other": "Otra"
+      },
+      "photoSpecialty": {
+        "weddings": "Bodas",
+        "portraits": "Retratos",
+        "product": "Producto",
+        "events": "Eventos",
+        "realEstate": "Inmobiliaria"
+      },
+      "cateringServiceType": {
+        "buffet": "Buffet",
+        "plated": "Servicio a mesa",
+        "cocktail": "Coctel",
+        "lunchBox": "Lunch box"
+      },
+      "maintenanceSpecialty": {
+        "plumbing": "Plomeria",
+        "electrical": "Electricidad",
+        "painting": "Pintura",
+        "carpentry": "Carpinteria",
+        "general": "General"
       }
     },
     "units": {
@@ -1766,7 +1839,8 @@
       "hours": "hrs",
       "people": "personas",
       "years": "anos",
-      "months": "meses"
+      "months": "meses",
+      "photos": "fotos"
     },
     "amenitiesLoading": "Cargando amenidades...",
     "amenitiesPlaceholder": "Buscar amenidad...",
@@ -2598,6 +2672,8 @@
     "clearDates": "Limpiar fechas",
     "minStay": "Estancia mínima: {{nights}} noches",
     "maxStay": "Estancia máxima: {{nights}} noches",
+    "minStayGeneric": "Mínimo: {{count}} {{unit}}",
+    "maxStayGeneric": "Máximo: {{count}} {{unit}}",
     "modal": {
       "title": "Calendario extendido",
       "description": "Revisa dos meses de disponibilidad y selecciona tus fechas."
@@ -2658,12 +2734,34 @@
       "summary": "Resumen de reserva",
       "night": "noche",
       "nights": "noches",
+      "day": "día",
+      "days": "días",
+      "hour": "hora",
+      "hours": "horas",
+      "person": "persona",
+      "persons": "personas",
+      "event": "evento",
+      "events": "eventos",
+      "unit": "unidad",
+      "units": "unidades",
       "maxGuests": "Hasta {{count}} huéspedes",
+      "maxPassengers": "Hasta {{count}} pasajeros",
+      "maxPersons": "Hasta {{count}} personas",
+      "capacity": "Capacidad: {{count}} personas",
+      "guests": "Huéspedes",
+      "passengers": "Pasajeros",
+      "persons": "Personas",
+      "attendees": "Asistentes",
+      "guestsSelectorLabel": "{{label}}",
       "fees": "Cargos por servicio",
       "taxes": "Impuestos",
       "total": "Total",
       "reserve": "Reservar ahora",
-      "noChargeYet": "No se realizará ningún cargo todavía"
+      "noChargeYet": "No se realizará ningún cargo todavía",
+      "startDate": "Inicio",
+      "endDate": "Fin",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out"
     }
   },
   "conversationsPage": {

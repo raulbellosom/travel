@@ -153,6 +153,7 @@ const PropertyDetail = () => {
     startDate: null,
     endDate: null,
   });
+  const [selectedGuestCount, setSelectedGuestCount] = useState(1);
   const [selectedSlotDate, setSelectedSlotDate] = useState("");
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [availabilityData, setAvailabilityData] = useState({
@@ -2099,6 +2100,10 @@ const PropertyDetail = () => {
                     selectedRange={selectedDateRange}
                     onRangeChange={setSelectedDateRange}
                     onReserveClick={handleCalendarReserve}
+                    resourceType={resourceBehavior.resourceType}
+                    priceLabel={resourceBehavior.priceLabel}
+                    guestCount={selectedGuestCount}
+                    onGuestCountChange={setSelectedGuestCount}
                   />
                 ) : isTimeSlotSchedule && isManualContactBooking ? (
                   <div className="space-y-3">

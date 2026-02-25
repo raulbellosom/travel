@@ -5,6 +5,7 @@
 export { default as AdminCalendar } from "./components/AdminCalendar";
 export { default as PropertyAvailabilityCalendar } from "./components/PropertyAvailabilityCalendar";
 export { default as BookingSummary } from "./components/BookingSummary";
+export { default as GuestSelector } from "./components/GuestSelector";
 export { default as CalendarToolbar } from "./components/CalendarToolbar";
 export { default as CalendarFilters } from "./components/CalendarFilters";
 export { default as CalendarMonthView } from "./components/CalendarMonthView";

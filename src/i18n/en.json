@@ -1514,6 +1514,37 @@
       "serviceAtClientLocation": "Service at client location",
       "serviceIncludesMaterials": "Includes materials",
       "serviceResponseTimeHours": "Response time",
+      "serviceIncludesEquipment": "Includes equipment (audio, lighting, etc.)",
+      "serviceMaxEventCapacity": "Maximum event capacity",
+      "djMusicGenre": "Music genre",
+      "djIncludesSound": "Includes sound system",
+      "djIncludesLighting": "Includes lighting",
+      "djMaxEventCapacity": "Maximum event capacity",
+      "djTravelsToVenue": "Travels to event venue",
+      "cleaningType": "Cleaning type",
+      "cleaningMaxArea": "Maximum coverage area",
+      "cleaningStaffCount": "Included staff",
+      "cleaningIncludesSupplies": "Includes cleaning supplies",
+      "chefCuisineType": "Cuisine specialty",
+      "chefMaxDiners": "Maximum diners",
+      "chefIncludesIngredients": "Includes ingredients",
+      "chefIncludesTableware": "Includes tableware",
+      "chefTravelsToLocation": "Travels to client location",
+      "photoSpecialty": "Photography specialty",
+      "photoEditedCount": "Edited photos delivered (approx.)",
+      "photoIncludesVideo": "Includes video",
+      "photoTravelsToLocation": "Travels to location",
+      "cateringServiceType": "Service type",
+      "cateringMinGuests": "Minimum guests",
+      "cateringMaxGuests": "Maximum guests",
+      "cateringIncludesWaiters": "Includes waiters",
+      "cateringIncludesSetup": "Includes setup and teardown",
+      "cateringIncludesTableware": "Includes tableware",
+      "maintenanceSpecialty": "Specialty",
+      "maintenanceIncludesMaterials": "Includes materials",
+      "maintenanceEmergencyService": "24h emergency service",
+      "maintenanceWarranty": "Work warranty",
+      "maintenanceResponseTimeHours": "Response time",
       "experienceDurationMinutes": "Experience duration",
       "experienceMinParticipants": "Minimum participants",
       "experienceMaxParticipants": "Maximum participants",
@@ -1755,6 +1786,48 @@
         "rentLongTerm": "Long-term rent",
         "rentShortTerm": "Short-term rent",
         "rentHourly": "Hourly rent"
+      },
+      "djMusicGenre": {
+        "electronic": "Electronic",
+        "reggaeton": "Reggaeton",
+        "popVariety": "Pop / Variety",
+        "rock": "Rock",
+        "latin": "Latin",
+        "other": "Other"
+      },
+      "cleaningType": {
+        "residential": "Residential",
+        "commercial": "Commercial",
+        "postConstruction": "Post-construction",
+        "deep": "Deep cleaning"
+      },
+      "chefCuisineType": {
+        "mexican": "Mexican",
+        "italian": "Italian",
+        "japanese": "Japanese",
+        "fusion": "Fusion",
+        "international": "International",
+        "other": "Other"
+      },
+      "photoSpecialty": {
+        "weddings": "Weddings",
+        "portraits": "Portraits",
+        "product": "Product",
+        "events": "Events",
+        "realEstate": "Real estate"
+      },
+      "cateringServiceType": {
+        "buffet": "Buffet",
+        "plated": "Plated service",
+        "cocktail": "Cocktail",
+        "lunchBox": "Lunch box"
+      },
+      "maintenanceSpecialty": {
+        "plumbing": "Plumbing",
+        "electrical": "Electrical",
+        "painting": "Painting",
+        "carpentry": "Carpentry",
+        "general": "General"
       }
     },
     "units": {
@@ -1766,7 +1839,8 @@
       "hours": "hrs",
       "people": "people",
       "years": "years",
-      "months": "months"
+      "months": "months",
+      "photos": "photos"
     },
     "amenitiesLoading": "Loading amenities...",
     "amenitiesPlaceholder": "Search amenity...",
@@ -2598,6 +2672,8 @@
     "clearDates": "Clear dates",
     "minStay": "Minimum stay: {{nights}} nights",
     "maxStay": "Maximum stay: {{nights}} nights",
+    "minStayGeneric": "Minimum: {{count}} {{unit}}",
+    "maxStayGeneric": "Maximum: {{count}} {{unit}}",
     "modal": {
       "title": "Extended calendar",
       "description": "Review two months of availability and choose your dates."
@@ -2658,12 +2734,34 @@
       "summary": "Booking summary",
       "night": "night",
       "nights": "nights",
+      "day": "day",
+      "days": "days",
+      "hour": "hour",
+      "hours": "hours",
+      "person": "person",
+      "persons": "persons",
+      "event": "event",
+      "events": "events",
+      "unit": "unit",
+      "units": "units",
       "maxGuests": "Up to {{count}} guests",
+      "maxPassengers": "Up to {{count}} passengers",
+      "maxPersons": "Up to {{count}} persons",
+      "capacity": "Capacity: {{count}} persons",
+      "guests": "Guests",
+      "passengers": "Passengers",
+      "persons": "Persons",
+      "attendees": "Attendees",
+      "guestsSelectorLabel": "{{label}}",
       "fees": "Service fees",
       "taxes": "Taxes",
       "total": "Total",
       "reserve": "Reserve now",
-      "noChargeYet": "You won't be charged yet"
+      "noChargeYet": "You won't be charged yet",
+      "startDate": "Start",
+      "endDate": "End",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out"
     }
   },
   "conversationsPage": {

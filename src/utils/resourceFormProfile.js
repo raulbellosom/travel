@@ -1,4 +1,7 @@
-﻿import { normalizeCommercialMode, normalizeResourceType } from "./resourceModel";
+﻿import {
+  normalizeCommercialMode,
+  normalizeResourceType,
+} from "./resourceModel";
 import { sanitizeCategory, sanitizeCommercialMode } from "./resourceTaxonomy";
 
 const createField = (config) => Object.freeze(config);
@@ -28,7 +31,8 @@ const toNumberIfPossible = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const hasValue = (value) => value !== "" && value !== null && value !== undefined;
+const hasValue = (value) =>
+  value !== "" && value !== null && value !== undefined;
 
 export const RESOURCE_FORM_FIELD_DEFINITIONS = Object.freeze({
   bedrooms: createField({
@@ -322,47 +326,373 @@ export const RESOURCE_FORM_FIELD_DEFINITIONS = Object.freeze({
     step: 1,
     unitKey: "propertyForm.units.pieces",
   }),
-  serviceDurationMinutes: createField({
-    key: "serviceDurationMinutes",
+  /* ── DJ ─────────────────────────────────────────────────── */
+  djMusicGenre: createField({
+    key: "djMusicGenre",
     source: "attributes",
-    inputType: "number",
-    labelKey: "propertyForm.fields.serviceDurationMinutes",
+    inputType: "select",
+    labelKey: "propertyForm.fields.djMusicGenre",
     defaultValue: "",
-    min: 15,
-    max: 1440,
-    step: 15,
-    unitKey: "propertyForm.units.minutes",
+    options: Object.freeze([
+      Object.freeze({
+        value: "electronic",
+        labelKey: "propertyForm.options.djMusicGenre.electronic",
+      }),
+      Object.freeze({
+        value: "reggaeton",
+        labelKey: "propertyForm.options.djMusicGenre.reggaeton",
+      }),
+      Object.freeze({
+        value: "pop_variety",
+        labelKey: "propertyForm.options.djMusicGenre.popVariety",
+      }),
+      Object.freeze({
+        value: "rock",
+        labelKey: "propertyForm.options.djMusicGenre.rock",
+      }),
+      Object.freeze({
+        value: "latin",
+        labelKey: "propertyForm.options.djMusicGenre.latin",
+      }),
+      Object.freeze({
+        value: "other",
+        labelKey: "propertyForm.options.djMusicGenre.other",
+      }),
+    ]),
   }),
-  serviceStaffCount: createField({
-    key: "serviceStaffCount",
+  djIncludesSound: createField({
+    key: "djIncludesSound",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.djIncludesSound",
+    defaultValue: false,
+  }),
+  djIncludesLighting: createField({
+    key: "djIncludesLighting",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.djIncludesLighting",
+    defaultValue: false,
+  }),
+  djMaxEventCapacity: createField({
+    key: "djMaxEventCapacity",
     source: "attributes",
     inputType: "number",
-    labelKey: "propertyForm.fields.serviceStaffCount",
+    labelKey: "propertyForm.fields.djMaxEventCapacity",
+    defaultValue: "",
+    min: 10,
+    max: 5000,
+    step: 10,
+    unitKey: "propertyForm.units.people",
+  }),
+  djTravelsToVenue: createField({
+    key: "djTravelsToVenue",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.djTravelsToVenue",
+    defaultValue: true,
+  }),
+  /* ── Limpieza ───────────────────────────────────────────── */
+  cleaningType: createField({
+    key: "cleaningType",
+    source: "attributes",
+    inputType: "select",
+    labelKey: "propertyForm.fields.cleaningType",
+    defaultValue: "",
+    options: Object.freeze([
+      Object.freeze({
+        value: "residential",
+        labelKey: "propertyForm.options.cleaningType.residential",
+      }),
+      Object.freeze({
+        value: "commercial",
+        labelKey: "propertyForm.options.cleaningType.commercial",
+      }),
+      Object.freeze({
+        value: "post_construction",
+        labelKey: "propertyForm.options.cleaningType.postConstruction",
+      }),
+      Object.freeze({
+        value: "deep",
+        labelKey: "propertyForm.options.cleaningType.deep",
+      }),
+    ]),
+  }),
+  cleaningMaxArea: createField({
+    key: "cleaningMaxArea",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.cleaningMaxArea",
+    defaultValue: "",
+    min: 10,
+    max: 10000,
+    step: 10,
+    unitKey: "propertyForm.units.squareMeters",
+  }),
+  cleaningStaffCount: createField({
+    key: "cleaningStaffCount",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.cleaningStaffCount",
     defaultValue: "",
     min: 1,
-    max: 100,
+    max: 50,
     step: 1,
     unitKey: "propertyForm.units.people",
   }),
-  serviceAtClientLocation: createField({
-    key: "serviceAtClientLocation",
+  cleaningIncludesSupplies: createField({
+    key: "cleaningIncludesSupplies",
     source: "attributes",
     inputType: "boolean",
-    labelKey: "propertyForm.fields.serviceAtClientLocation",
+    labelKey: "propertyForm.fields.cleaningIncludesSupplies",
     defaultValue: false,
   }),
-  serviceIncludesMaterials: createField({
-    key: "serviceIncludesMaterials",
+  /* ── Chef privado ───────────────────────────────────────── */
+  chefCuisineType: createField({
+    key: "chefCuisineType",
     source: "attributes",
-    inputType: "boolean",
-    labelKey: "propertyForm.fields.serviceIncludesMaterials",
-    defaultValue: false,
+    inputType: "select",
+    labelKey: "propertyForm.fields.chefCuisineType",
+    defaultValue: "",
+    options: Object.freeze([
+      Object.freeze({
+        value: "mexican",
+        labelKey: "propertyForm.options.chefCuisineType.mexican",
+      }),
+      Object.freeze({
+        value: "italian",
+        labelKey: "propertyForm.options.chefCuisineType.italian",
+      }),
+      Object.freeze({
+        value: "japanese",
+        labelKey: "propertyForm.options.chefCuisineType.japanese",
+      }),
+      Object.freeze({
+        value: "fusion",
+        labelKey: "propertyForm.options.chefCuisineType.fusion",
+      }),
+      Object.freeze({
+        value: "international",
+        labelKey: "propertyForm.options.chefCuisineType.international",
+      }),
+      Object.freeze({
+        value: "other",
+        labelKey: "propertyForm.options.chefCuisineType.other",
+      }),
+    ]),
   }),
-  serviceResponseTimeHours: createField({
-    key: "serviceResponseTimeHours",
+  chefMaxDiners: createField({
+    key: "chefMaxDiners",
     source: "attributes",
     inputType: "number",
-    labelKey: "propertyForm.fields.serviceResponseTimeHours",
+    labelKey: "propertyForm.fields.chefMaxDiners",
+    defaultValue: "",
+    min: 1,
+    max: 200,
+    step: 1,
+    unitKey: "propertyForm.units.people",
+  }),
+  chefIncludesIngredients: createField({
+    key: "chefIncludesIngredients",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.chefIncludesIngredients",
+    defaultValue: false,
+  }),
+  chefIncludesTableware: createField({
+    key: "chefIncludesTableware",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.chefIncludesTableware",
+    defaultValue: false,
+  }),
+  chefTravelsToLocation: createField({
+    key: "chefTravelsToLocation",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.chefTravelsToLocation",
+    defaultValue: true,
+  }),
+  /* ── Fotografía ─────────────────────────────────────────── */
+  photoSpecialty: createField({
+    key: "photoSpecialty",
+    source: "attributes",
+    inputType: "select",
+    labelKey: "propertyForm.fields.photoSpecialty",
+    defaultValue: "",
+    options: Object.freeze([
+      Object.freeze({
+        value: "weddings",
+        labelKey: "propertyForm.options.photoSpecialty.weddings",
+      }),
+      Object.freeze({
+        value: "portraits",
+        labelKey: "propertyForm.options.photoSpecialty.portraits",
+      }),
+      Object.freeze({
+        value: "product",
+        labelKey: "propertyForm.options.photoSpecialty.product",
+      }),
+      Object.freeze({
+        value: "events",
+        labelKey: "propertyForm.options.photoSpecialty.events",
+      }),
+      Object.freeze({
+        value: "real_estate",
+        labelKey: "propertyForm.options.photoSpecialty.realEstate",
+      }),
+    ]),
+  }),
+  photoEditedCount: createField({
+    key: "photoEditedCount",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.photoEditedCount",
+    defaultValue: "",
+    min: 1,
+    max: 2000,
+    step: 1,
+    unitKey: "propertyForm.units.photos",
+  }),
+  photoIncludesVideo: createField({
+    key: "photoIncludesVideo",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.photoIncludesVideo",
+    defaultValue: false,
+  }),
+  photoTravelsToLocation: createField({
+    key: "photoTravelsToLocation",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.photoTravelsToLocation",
+    defaultValue: true,
+  }),
+  /* ── Catering ───────────────────────────────────────────── */
+  cateringServiceType: createField({
+    key: "cateringServiceType",
+    source: "attributes",
+    inputType: "select",
+    labelKey: "propertyForm.fields.cateringServiceType",
+    defaultValue: "",
+    options: Object.freeze([
+      Object.freeze({
+        value: "buffet",
+        labelKey: "propertyForm.options.cateringServiceType.buffet",
+      }),
+      Object.freeze({
+        value: "plated",
+        labelKey: "propertyForm.options.cateringServiceType.plated",
+      }),
+      Object.freeze({
+        value: "cocktail",
+        labelKey: "propertyForm.options.cateringServiceType.cocktail",
+      }),
+      Object.freeze({
+        value: "lunch_box",
+        labelKey: "propertyForm.options.cateringServiceType.lunchBox",
+      }),
+    ]),
+  }),
+  cateringMinGuests: createField({
+    key: "cateringMinGuests",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.cateringMinGuests",
+    defaultValue: "",
+    min: 1,
+    max: 2000,
+    step: 1,
+    unitKey: "propertyForm.units.people",
+  }),
+  cateringMaxGuests: createField({
+    key: "cateringMaxGuests",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.cateringMaxGuests",
+    defaultValue: "",
+    min: 1,
+    max: 2000,
+    step: 1,
+    unitKey: "propertyForm.units.people",
+  }),
+  cateringIncludesWaiters: createField({
+    key: "cateringIncludesWaiters",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.cateringIncludesWaiters",
+    defaultValue: false,
+  }),
+  cateringIncludesSetup: createField({
+    key: "cateringIncludesSetup",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.cateringIncludesSetup",
+    defaultValue: false,
+  }),
+  cateringIncludesTableware: createField({
+    key: "cateringIncludesTableware",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.cateringIncludesTableware",
+    defaultValue: false,
+  }),
+  /* ── Mantenimiento ──────────────────────────────────────── */
+  maintenanceSpecialty: createField({
+    key: "maintenanceSpecialty",
+    source: "attributes",
+    inputType: "select",
+    labelKey: "propertyForm.fields.maintenanceSpecialty",
+    defaultValue: "",
+    options: Object.freeze([
+      Object.freeze({
+        value: "plumbing",
+        labelKey: "propertyForm.options.maintenanceSpecialty.plumbing",
+      }),
+      Object.freeze({
+        value: "electrical",
+        labelKey: "propertyForm.options.maintenanceSpecialty.electrical",
+      }),
+      Object.freeze({
+        value: "painting",
+        labelKey: "propertyForm.options.maintenanceSpecialty.painting",
+      }),
+      Object.freeze({
+        value: "carpentry",
+        labelKey: "propertyForm.options.maintenanceSpecialty.carpentry",
+      }),
+      Object.freeze({
+        value: "general",
+        labelKey: "propertyForm.options.maintenanceSpecialty.general",
+      }),
+    ]),
+  }),
+  maintenanceIncludesMaterials: createField({
+    key: "maintenanceIncludesMaterials",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.maintenanceIncludesMaterials",
+    defaultValue: false,
+  }),
+  maintenanceEmergencyService: createField({
+    key: "maintenanceEmergencyService",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.maintenanceEmergencyService",
+    defaultValue: false,
+  }),
+  maintenanceWarranty: createField({
+    key: "maintenanceWarranty",
+    source: "attributes",
+    inputType: "boolean",
+    labelKey: "propertyForm.fields.maintenanceWarranty",
+    defaultValue: false,
+  }),
+  maintenanceResponseTimeHours: createField({
+    key: "maintenanceResponseTimeHours",
+    source: "attributes",
+    inputType: "number",
+    labelKey: "propertyForm.fields.maintenanceResponseTimeHours",
     defaultValue: "",
     min: 0,
     max: 168,
@@ -577,6 +907,50 @@ const PROPERTY_FEATURE_FIELDS_BY_CATEGORY = Object.freeze({
   ]),
 });
 
+const SERVICE_FEATURE_FIELDS_BY_CATEGORY = Object.freeze({
+  dj: Object.freeze([
+    "djMusicGenre",
+    "djIncludesSound",
+    "djIncludesLighting",
+    "djMaxEventCapacity",
+    "djTravelsToVenue",
+  ]),
+  cleaning: Object.freeze([
+    "cleaningType",
+    "cleaningMaxArea",
+    "cleaningStaffCount",
+    "cleaningIncludesSupplies",
+  ]),
+  chef: Object.freeze([
+    "chefCuisineType",
+    "chefMaxDiners",
+    "chefIncludesIngredients",
+    "chefIncludesTableware",
+    "chefTravelsToLocation",
+  ]),
+  photography: Object.freeze([
+    "photoSpecialty",
+    "photoEditedCount",
+    "photoIncludesVideo",
+    "photoTravelsToLocation",
+  ]),
+  catering: Object.freeze([
+    "cateringServiceType",
+    "cateringMinGuests",
+    "cateringMaxGuests",
+    "cateringIncludesWaiters",
+    "cateringIncludesSetup",
+    "cateringIncludesTableware",
+  ]),
+  maintenance: Object.freeze([
+    "maintenanceSpecialty",
+    "maintenanceIncludesMaterials",
+    "maintenanceEmergencyService",
+    "maintenanceWarranty",
+    "maintenanceResponseTimeHours",
+  ]),
+});
+
 const FEATURES_BY_RESOURCE_TYPE = Object.freeze({
   vehicle: Object.freeze([
     "vehicleModelYear",
@@ -586,13 +960,7 @@ const FEATURES_BY_RESOURCE_TYPE = Object.freeze({
     "vehicleFuelType",
     "vehicleLuggageCapacity",
   ]),
-  service: Object.freeze([
-    "serviceDurationMinutes",
-    "serviceStaffCount",
-    "serviceAtClientLocation",
-    "serviceIncludesMaterials",
-    "serviceResponseTimeHours",
-  ]),
+  service: Object.freeze([]),
   experience: Object.freeze([
     "experienceDurationMinutes",
     "experienceMinParticipants",
@@ -615,7 +983,11 @@ const COMMERCIAL_CONDITION_FIELDS_BY_TYPE_CATEGORY_AND_MODE = Object.freeze({
   property: Object.freeze({
     house: Object.freeze({
       sale: Object.freeze(["furnished"]),
-      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_long_term: Object.freeze([
+        "furnished",
+        "petsAllowed",
+        "minimumContractDuration",
+      ]),
       rent_short_term: Object.freeze([
         "maxGuests",
         "minStayNights",
@@ -626,7 +998,11 @@ const COMMERCIAL_CONDITION_FIELDS_BY_TYPE_CATEGORY_AND_MODE = Object.freeze({
     }),
     apartment: Object.freeze({
       sale: Object.freeze(["furnished"]),
-      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_long_term: Object.freeze([
+        "furnished",
+        "petsAllowed",
+        "minimumContractDuration",
+      ]),
       rent_short_term: Object.freeze([
         "maxGuests",
         "minStayNights",
@@ -637,17 +1013,29 @@ const COMMERCIAL_CONDITION_FIELDS_BY_TYPE_CATEGORY_AND_MODE = Object.freeze({
     }),
     commercial: Object.freeze({
       sale: Object.freeze(["furnished"]),
-      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_long_term: Object.freeze([
+        "furnished",
+        "petsAllowed",
+        "minimumContractDuration",
+      ]),
       rent_short_term: Object.freeze([]),
     }),
     office: Object.freeze({
       sale: Object.freeze(["furnished"]),
-      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_long_term: Object.freeze([
+        "furnished",
+        "petsAllowed",
+        "minimumContractDuration",
+      ]),
       rent_short_term: Object.freeze([]),
     }),
     warehouse: Object.freeze({
       sale: Object.freeze(["furnished"]),
-      rent_long_term: Object.freeze(["furnished", "petsAllowed", "minimumContractDuration"]),
+      rent_long_term: Object.freeze([
+        "furnished",
+        "petsAllowed",
+        "minimumContractDuration",
+      ]),
       rent_short_term: Object.freeze([]),
     }),
     land: Object.freeze({
@@ -657,85 +1045,283 @@ const COMMERCIAL_CONDITION_FIELDS_BY_TYPE_CATEGORY_AND_MODE = Object.freeze({
     }),
   }),
   vehicle: Object.freeze({
-    car: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
-    suv: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
-    pickup: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
-    van: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
-    motorcycle: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
-    boat: Object.freeze({ rent_long_term: Object.freeze([]), rent_short_term: Object.freeze([]) }),
+    car: Object.freeze({
+      rent_long_term: Object.freeze([]),
+      rent_short_term: Object.freeze([]),
+    }),
+    suv: Object.freeze({
+      rent_long_term: Object.freeze([]),
+      rent_short_term: Object.freeze([]),
+    }),
+    pickup: Object.freeze({
+      rent_long_term: Object.freeze([]),
+      rent_short_term: Object.freeze([]),
+    }),
+    van: Object.freeze({
+      rent_long_term: Object.freeze([]),
+      rent_short_term: Object.freeze([]),
+    }),
+    motorcycle: Object.freeze({
+      rent_long_term: Object.freeze([]),
+      rent_short_term: Object.freeze([]),
+    }),
+    boat: Object.freeze({
+      rent_long_term: Object.freeze([]),
+      rent_short_term: Object.freeze([]),
+    }),
   }),
   service: Object.freeze({
     cleaning: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     dj: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     chef: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     photography: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     catering: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     maintenance: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
   }),
   experience: Object.freeze({
     tour: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     class: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     workshop: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     adventure: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     wellness: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     gastronomy: Object.freeze({
-      rent_short_term: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
   }),
   venue: Object.freeze({
     event_hall: Object.freeze({
-      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     commercial_local: Object.freeze({
-      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     studio: Object.freeze({
-      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     coworking: Object.freeze({
-      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
     meeting_room: Object.freeze({
-      rent_short_term: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
-      rent_hourly: Object.freeze(["maxGuests", "bookingMinUnits", "bookingMaxUnits", "availabilityStartTime", "availabilityEndTime"]),
+      rent_short_term: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
+      rent_hourly: Object.freeze([
+        "maxGuests",
+        "bookingMinUnits",
+        "bookingMaxUnits",
+        "availabilityStartTime",
+        "availabilityEndTime",
+      ]),
     }),
   }),
 });
@@ -745,6 +1331,13 @@ const resolveFeatureFieldKeys = (resourceType, category) => {
     return (
       PROPERTY_FEATURE_FIELDS_BY_CATEGORY[category] ||
       PROPERTY_FEATURE_FIELDS_BY_CATEGORY.house
+    );
+  }
+
+  if (resourceType === "service") {
+    return (
+      SERVICE_FEATURE_FIELDS_BY_CATEGORY[category] ||
+      FEATURES_BY_RESOURCE_TYPE.service
     );
   }
 
@@ -758,7 +1351,8 @@ const resolveCommercialConditionFieldKeys = (
 ) => {
   const byCategory =
     COMMERCIAL_CONDITION_FIELDS_BY_TYPE_CATEGORY_AND_MODE[resourceType] || {};
-  const byMode = byCategory[category] || byCategory[Object.keys(byCategory)[0]] || {};
+  const byMode =
+    byCategory[category] || byCategory[Object.keys(byCategory)[0]] || {};
   return byMode[commercialMode] || [];
 };
 
@@ -820,16 +1414,14 @@ export const getResourceFormProfile = ({
   const featureKeys = toUniqueKeys(
     resolveFeatureFieldKeys(normalizedType, normalizedCategory),
   );
-  const commercialConditionKeys = toUniqueKeys(
-    [
-      ...resolveCommercialConditionFieldKeys(
-        normalizedType,
-        normalizedCategory,
-        normalizedCommercial,
-      ),
-      ...COMMON_COMMERCIAL_CONDITION_KEYS,
-    ],
-  );
+  const commercialConditionKeys = toUniqueKeys([
+    ...resolveCommercialConditionFieldKeys(
+      normalizedType,
+      normalizedCategory,
+      normalizedCommercial,
+    ),
+    ...COMMON_COMMERCIAL_CONDITION_KEYS,
+  ]);
 
   const features = mapFieldKeys(featureKeys);
   const commercialConditions = mapFieldKeys(commercialConditionKeys);
@@ -878,7 +1470,9 @@ export const getResourceFieldLabel = (field, t, context = {}) => {
 export const getResourceFieldOptionLabel = (field, value, t) => {
   const option = getOptionForValue(field, value);
   if (!option) return String(value || "");
-  return t(option.labelKey, { defaultValue: option.defaultLabel || option.value });
+  return t(option.labelKey, {
+    defaultValue: option.defaultLabel || option.value,
+  });
 };
 
 export const toUiFieldValue = (field, value) => {
