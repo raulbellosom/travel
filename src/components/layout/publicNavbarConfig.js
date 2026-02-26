@@ -206,12 +206,6 @@ export const buildPublicNavLinks = (t) => [
         to: "/buscar?resourceType=service&category=cleaning",
       },
       {
-        icon: Music,
-        label: catLabel(t, "dj", "DJ"),
-        desc: t("client:nav.dropdown.serviceDjDesc", "DJs for parties and events"),
-        to: "/buscar?resourceType=service&category=dj",
-      },
-      {
         icon: ChefHat,
         label: catLabel(t, "chef", "Chef"),
         desc: t("client:nav.dropdown.serviceChefDesc", "Private chefs"),
@@ -234,6 +228,42 @@ export const buildPublicNavLinks = (t) => [
         label: catLabel(t, "maintenance", "Maintenance"),
         desc: t("client:nav.dropdown.serviceMaintenanceDesc", "General maintenance and repairs"),
         to: "/buscar?resourceType=service&category=maintenance",
+      },
+    ],
+  },
+  {
+    name: t("client:nav.music", "Music"),
+    path: "/buscar?resourceType=music",
+    items: [
+      {
+        icon: Music,
+        label: catLabel(t, "dj", "DJ"),
+        desc: t("client:nav.dropdown.musicDjDesc", "DJs for private events"),
+        to: "/buscar?resourceType=music&category=dj",
+      },
+      {
+        icon: PartyPopper,
+        label: catLabel(t, "banda", "Banda"),
+        desc: t("client:nav.dropdown.musicBandaDesc", "Live banda for celebrations"),
+        to: "/buscar?resourceType=music&category=banda",
+      },
+      {
+        icon: Users,
+        label: catLabel(t, "mariachi", "Mariachi"),
+        desc: t("client:nav.dropdown.musicMariachiDesc", "Traditional mariachi groups"),
+        to: "/buscar?resourceType=music&category=mariachi",
+      },
+      {
+        icon: Sparkles,
+        label: catLabel(t, "corridos_tumbados", "Corridos tumbados"),
+        desc: t("client:nav.dropdown.musicCorridosDesc", "Modern regional Mexican acts"),
+        to: "/buscar?resourceType=music&category=corridos_tumbados",
+      },
+      {
+        icon: CalendarHeart,
+        label: catLabel(t, "versatil", "Versatil"),
+        desc: t("client:nav.dropdown.musicVersatilDesc", "Versatile sets for all audiences"),
+        to: "/buscar?resourceType=music&category=versatil",
       },
     ],
   },

@@ -96,13 +96,14 @@ Introduce el concepto `resource` como entidad principal.
 -   `resourceType` (enum):
     -   `property`
     -   `service`
+    -   `music`
     -   `vehicle` (futuro)
     -   `experience` (futuro)
     -   `venue` (opcional: si prefieres, puede ser `property` con
         `category=event_hall`)
 -   `category` (enum o string controlado)\
     Ejemplos: `house`, `apartment`, `land`, `event_hall`,
-    `commercial_local`, `office`, `warehouse`, `cleaning`, `dj`.
+    `commercial_local`, `office`, `warehouse`, `cleaning`, `chef`, `dj`, `banda`, `mariachi`, `corridos_tumbados`.
 -   `commercialMode` (enum):
     -   `sale`
     -   `rent_long_term`

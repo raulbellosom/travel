@@ -17,6 +17,7 @@ import {
   Bike,
   Ship,
   Wrench,
+  Music,
   Camera,
   UtensilsCrossed,
   Compass,
@@ -188,6 +189,8 @@ const PropertyCard = ({
         if (cat === "photography") return Camera;
         if (cat === "chef" || cat === "catering") return UtensilsCrossed;
         return Wrench;
+      case "music":
+        return Music;
       case "experience":
         if (cat === "tour") return Compass;
         if (cat === "adventure") return TreePine;
@@ -281,6 +284,8 @@ const PropertyCard = ({
   const isProperty = resourceType === "property";
   const isVehicle = resourceType === "vehicle";
   const isService = resourceType === "service";
+  const isMusic = resourceType === "music";
+  const isServiceLike = isService || isMusic;
   const isExperience = resourceType === "experience";
   const isVenue = resourceType === "venue";
 
@@ -540,11 +545,11 @@ const PropertyCard = ({
               </>
             )}
 
-            {isService && (
+            {isServiceLike && (
               <>
                 <div className="flex flex-col items-center justify-center gap-1 text-center">
                   <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                    <Wrench size={16} />
+                    {isMusic ? <Music size={16} /> : <Wrench size={16} />}
                     <span className="text-xs font-medium uppercase">
                       {t("client:resource.type", "Tipo")}
                     </span>

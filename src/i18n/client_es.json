@@ -149,7 +149,7 @@
     "servicesSection": {
       "badge": "SERVICIOS",
       "title": "Servicios Profesionales",
-      "subtitle": "Limpieza, chef, DJ, fotografía, catering y más a tu alcance."
+      "subtitle": "Limpieza, chef, fotografía, catering y más a tu alcance."
     },
     "experiencesSection": {
       "badge": "EXPERIENCIAS",
@@ -215,6 +215,11 @@
         "title": "Explorar recursos en mapa | Inmobo",
         "description": "Explora recursos cercanos por ubicacion, tipo y precio en un mapa interactivo."
       }
+    },
+    "musicSection": {
+      "badge": "MÚSICA",
+      "title": "Música en Vivo y DJ",
+      "subtitle": "Banda, mariachi, corridos tumbados, versátil y DJ para tus eventos."
     }
   },
   "common": {
@@ -255,10 +260,11 @@
         "service": "Servicio",
         "vehicle": "Vehículo",
         "experience": "Experiencia",
-        "venue": "Salón"
+        "venue": "Salón",
+        "music": "Música"
       },
       "category": {
-        "house": "Casa",
+        "house": "House",
         "apartment": "Departamento",
         "land": "Terreno",
         "commercial": "Comercial",
@@ -286,7 +292,42 @@
         "commercial_local": "Local comercial",
         "studio": "Estudio",
         "coworking": "Coworking",
-        "meeting_room": "Sala de juntas"
+        "meeting_room": "Sala de juntas",
+        "banda": "Banda",
+        "norteno": "Norteño",
+        "sierreno": "Sierreño",
+        "mariachi": "Mariachi",
+        "corridos": "Corridos",
+        "corridos_tumbados": "Corridos tumbados",
+        "corrido_mexicano": "Corrido mexicano",
+        "regional_mexicano": "Regional mexicano",
+        "duranguense": "Duranguense",
+        "grupera": "Grupera",
+        "cumbia": "Cumbia",
+        "cumbia_sonidera": "Cumbia sonidera",
+        "cumbia_rebajada": "Cumbia rebajada",
+        "salsa": "Salsa",
+        "bachata": "Bachata",
+        "merengue": "Merengue",
+        "pop": "Pop",
+        "rock": "Rock",
+        "rock_urbano": "Rock urbano",
+        "hip_hop": "Hip hop",
+        "rap": "Rap",
+        "reggaeton": "Reggaetón",
+        "urbano_latino": "Urbano latino",
+        "electronica": "Electrónica",
+        "techno": "Techno",
+        "trance": "Trance",
+        "jazz": "Jazz",
+        "blues": "Blues",
+        "boleros": "Boleros",
+        "trova": "Trova",
+        "instrumental": "Instrumental",
+        "versatil": "Versátil",
+        "son_jarocho": "Son jarocho",
+        "huapango": "Huapango",
+        "sonora": "Sonora"
       },
       "pricingModel": {
         "total": "Precio total",
@@ -424,7 +465,8 @@
     "minAge": "Edad mínima",
     "capacitySeated": "Sentados",
     "capacityStanding": "De pie",
-    "hasStage": "Escenario"
+    "hasStage": "Escenario",
+    "bandMembers": "Integrantes"
   },
   "pricing": {
     "perNight": "por noche",
@@ -490,7 +532,6 @@
       "vehicleMotorcycleDesc": "Motocicletas y scooters",
       "vehicleBoatDesc": "Lanchas y yates",
       "serviceCleaningDesc": "Servicios de limpieza profesional",
-      "serviceDjDesc": "DJs para fiestas y eventos",
       "serviceChefDesc": "Chefs privados",
       "servicePhotographyDesc": "Fotografos profesionales",
       "serviceCateringDesc": "Servicio de alimentos y banquetes",
@@ -509,7 +550,7 @@
       "vehicles": "Vehículos",
       "vehiclesDesc": "Autos, SUVs, motos y más en renta o venta",
       "services": "Servicios",
-      "servicesDesc": "Limpieza, chef, DJ, fotografía y más",
+      "servicesDesc": "Limpieza, chef, fotografía y más",
       "experiences": "Experiencias",
       "experiencesDesc": "Tours, talleres, aventuras y bienestar",
       "venues": "Salones",
@@ -521,9 +562,15 @@
       "mapExploreHomes": "Casas cercanas",
       "mapExploreHomesDesc": "Propiedades y estancias alrededor de tu ubicacion",
       "mapExploreVehicles": "Vehiculos cercanos",
-      "mapExploreVehiclesDesc": "Autos y movilidad disponibles en tu zona"
+      "mapExploreVehiclesDesc": "Autos y movilidad disponibles en tu zona",
+      "musicDjDesc": "DJs para fiestas y eventos",
+      "musicBandaDesc": "Bandas en vivo para celebraciones",
+      "musicMariachiDesc": "Mariachis tradicionales para eventos",
+      "musicCorridosDesc": "Shows de corridos tumbados y regional",
+      "musicVersatilDesc": "Repertorio versátil para todo tipo de evento"
     },
-    "mapExplore": "Explorar mapa"
+    "mapExplore": "Explorar mapa",
+    "music": "Música"
   },
   "theme": {
     "light": "Claro",

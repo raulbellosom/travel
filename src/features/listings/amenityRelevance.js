@@ -89,6 +89,30 @@ export const RESOURCE_AMENITY_RELEVANCE = Object.freeze({
       "meeting",
     ]),
   }),
+  music: Object.freeze({
+    categories: Object.freeze(["services", "tech", "general", "security"]),
+    keywords: Object.freeze([
+      "sound",
+      "audio",
+      "lighting",
+      "stage",
+      "equipment",
+      "dj",
+      "live",
+      "music",
+      "band",
+      "mariachi",
+      "regional",
+      "event",
+      "wedding",
+      "party",
+      "show",
+      "performance",
+      "professional",
+      "portfolio",
+      "security",
+    ]),
+  }),
   experience: Object.freeze({
     categories: Object.freeze(["services", "outdoor", "general", "tech"]),
     keywords: Object.freeze([
@@ -191,11 +215,18 @@ export const CATEGORY_AMENITY_KEYWORDS = Object.freeze({
 
   // Service categories
   cleaning: Object.freeze(["materials", "eco-friendly", "flexible", "professional"]),
-  dj: Object.freeze(["professional", "equipment", "portfolio"]),
   chef: Object.freeze(["certified", "materials", "location"]),
   photography: Object.freeze(["professional", "equipment", "portfolio"]),
   catering: Object.freeze(["materials", "certified", "bilingual"]),
   maintenance: Object.freeze(["guarantee", "materials", "available"]),
+
+  // Music categories
+  dj: Object.freeze(["professional", "equipment", "portfolio", "sound", "lighting"]),
+  banda: Object.freeze(["live", "regional", "event", "music"]),
+  mariachi: Object.freeze(["live", "traditional", "event", "music"]),
+  corridos_tumbados: Object.freeze(["regional", "live", "show"]),
+  versatil: Object.freeze(["party", "event", "music", "show"]),
+  regional_mexicano: Object.freeze(["regional", "live", "event"]),
 
   // Experience categories
   tour: Object.freeze(["guide", "transport", "food", "photo", "local"]),

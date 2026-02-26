@@ -57,6 +57,18 @@ const IMG = {
   cleaning:
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=400&fit=crop&auto=format&q=75",
   dj: "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=400&h=400&fit=crop&auto=format&q=75",
+  banda:
+    "https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400&h=400&fit=crop&auto=format&q=75",
+  mariachi:
+    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&auto=format&q=75",
+  corridos_tumbados:
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=400&fit=crop&auto=format&q=75",
+  versatil:
+    "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop&auto=format&q=75",
+  cumbia:
+    "https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?w=400&h=400&fit=crop&auto=format&q=75",
+  regional_mexicano:
+    "https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=400&h=400&fit=crop&auto=format&q=75",
   chef: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&h=400&fit=crop&auto=format&q=75",
   photography:
     "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400&h=400&fit=crop&auto=format&q=75",
@@ -199,13 +211,6 @@ const useCategoryRows = (t) => [
         link: "/buscar?resourceType=service&category=cleaning",
       },
       {
-        id: "dj",
-        label: t("client:common.enums.category.dj", "DJ"),
-        icon: Music,
-        image: IMG.dj,
-        link: "/buscar?resourceType=service&category=dj",
-      },
-      {
         id: "chef",
         label: t("client:common.enums.category.chef", "Chef"),
         icon: ChefHat,
@@ -232,6 +237,54 @@ const useCategoryRows = (t) => [
         icon: Wrench,
         image: IMG.maintenance,
         link: "/buscar?resourceType=service&category=maintenance",
+      },
+    ],
+  },
+  {
+    resourceType: "music",
+    label: t("client:common.enums.resourceType.music", "Musica"),
+    items: [
+      {
+        id: "dj",
+        label: t("client:common.enums.category.dj", "DJ"),
+        icon: Music,
+        image: IMG.dj,
+        link: "/buscar?resourceType=music&category=dj",
+      },
+      {
+        id: "banda",
+        label: t("client:common.enums.category.banda", "Banda"),
+        icon: Music,
+        image: IMG.banda,
+        link: "/buscar?resourceType=music&category=banda",
+      },
+      {
+        id: "mariachi",
+        label: t("client:common.enums.category.mariachi", "Mariachi"),
+        icon: Music,
+        image: IMG.mariachi,
+        link: "/buscar?resourceType=music&category=mariachi",
+      },
+      {
+        id: "corridos_tumbados",
+        label: t("client:common.enums.category.corridos_tumbados", "Corridos tumbados"),
+        icon: Music,
+        image: IMG.corridos_tumbados,
+        link: "/buscar?resourceType=music&category=corridos_tumbados",
+      },
+      {
+        id: "versatil",
+        label: t("client:common.enums.category.versatil", "Versatil"),
+        icon: Music,
+        image: IMG.versatil,
+        link: "/buscar?resourceType=music&category=versatil",
+      },
+      {
+        id: "regional_mexicano",
+        label: t("client:common.enums.category.regional_mexicano", "Regional mexicano"),
+        icon: Music,
+        image: IMG.regional_mexicano,
+        link: "/buscar?resourceType=music&category=regional_mexicano",
       },
     ],
   },

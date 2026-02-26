@@ -24,6 +24,8 @@ export const getResourceDetails = (item, t) => {
       return getVehicleDetails(item, t, ns);
     case "service":
       return getServiceDetails(item, t, ns);
+    case "music":
+      return getMusicDetails(item, t, ns);
     case "experience":
       return getExperienceDetails(item, t, ns);
     case "venue":
@@ -135,20 +137,6 @@ function getServiceDetails(item, t, ns) {
 
   // Per-category key details
   switch (category) {
-    case "dj":
-      if (attrs.djMusicGenre)
-        details.push({
-          icon: "Music",
-          label: t(`${ns}.musicGenre`, { defaultValue: "Género" }),
-          value: capitalizeFirst(attrs.djMusicGenre),
-        });
-      if (Number(attrs.djMaxEventCapacity) > 0)
-        details.push({
-          icon: "Users",
-          label: t(`${ns}.eventCapacity`, { defaultValue: "Capacidad" }),
-          value: attrs.djMaxEventCapacity,
-        });
-      break;
     case "cleaning":
       if (attrs.cleaningType)
         details.push({
@@ -228,6 +216,49 @@ function getServiceDetails(item, t, ns) {
       icon: "Timer",
       label: t(`${ns}.slotDuration`),
       value: `${item.slotDurationMinutes} min`,
+    });
+  }
+
+  return details.slice(0, 3);
+}
+
+function getMusicDetails(item, t, ns) {
+  const details = [];
+  const attrs = parseAttributes(item.attributes);
+  const category = String(item.category || "").toLowerCase();
+
+  if (category) {
+    details.push({
+      icon: "Music",
+      label: t(`${ns}.musicCategory`, { defaultValue: "Género" }),
+      value: capitalizeFirst(category).replaceAll("_", " "),
+    });
+  }
+
+  if (attrs.musicGenres) {
+    const genres = Array.isArray(attrs.musicGenres)
+      ? attrs.musicGenres.join(", ")
+      : String(attrs.musicGenres);
+    details.push({
+      icon: "Music",
+      label: t(`${ns}.musicGenres`, { defaultValue: "Estilos" }),
+      value: genres,
+    });
+  }
+
+  if (Number(attrs.musicMaxAudience) > 0) {
+    details.push({
+      icon: "Users",
+      label: t(`${ns}.eventCapacity`, { defaultValue: "Capacidad" }),
+      value: attrs.musicMaxAudience,
+    });
+  }
+
+  if (Number(attrs.musicSetDurationMinutes) > 0) {
+    details.push({
+      icon: "Clock",
+      label: t(`${ns}.duration`, { defaultValue: "Duración" }),
+      value: `${attrs.musicSetDurationMinutes} min`,
     });
   }
 

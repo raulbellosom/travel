@@ -52,6 +52,7 @@ const COMMERCIAL_MODE_VALUES = new Set([
 const RESOURCE_TYPES = new Set([
   "property",
   "service",
+  "music",
   "vehicle",
   "experience",
   "venue",
@@ -86,6 +87,57 @@ const ALLOWED_BOOKING_TYPES_BY_COMMERCIAL_MODE = Object.freeze({
   rent_short_term: Object.freeze(["date_range", "manual_contact"]),
   rent_hourly: Object.freeze(["time_slot", "fixed_event", "manual_contact"]),
 });
+
+const MUSIC_CATEGORIES = Object.freeze([
+  "dj",
+  "banda",
+  "norteno",
+  "sierreno",
+  "mariachi",
+  "corridos",
+  "corridos_tumbados",
+  "corrido_mexicano",
+  "regional_mexicano",
+  "duranguense",
+  "grupera",
+  "cumbia",
+  "cumbia_sonidera",
+  "cumbia_rebajada",
+  "salsa",
+  "bachata",
+  "merengue",
+  "pop",
+  "rock",
+  "rock_urbano",
+  "hip_hop",
+  "rap",
+  "reggaeton",
+  "urbano_latino",
+  "electronica",
+  "house",
+  "techno",
+  "trance",
+  "jazz",
+  "blues",
+  "boleros",
+  "trova",
+  "instrumental",
+  "versatil",
+  "son_jarocho",
+  "huapango",
+  "sonora",
+]);
+
+const MUSIC_PRICING_BY_MODE = Object.freeze({
+  rent_short_term: Object.freeze(["per_day", "per_event", "fixed_total"]),
+  rent_hourly: Object.freeze(["per_hour", "per_event", "fixed_total"]),
+});
+
+const MUSIC_PRICING_BY_CATEGORY = Object.freeze(
+  Object.fromEntries(
+    MUSIC_CATEGORIES.map((category) => [category, MUSIC_PRICING_BY_MODE]),
+  ),
+);
 
 const ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE = Object.freeze({
   property: Object.freeze({
@@ -157,10 +209,6 @@ const ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE = Object.freeze({
       rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
       rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
     }),
-    dj: Object.freeze({
-      rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
-    }),
     chef: Object.freeze({
       rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
       rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
@@ -178,6 +226,7 @@ const ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE = Object.freeze({
       rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
     }),
   }),
+  music: MUSIC_PRICING_BY_CATEGORY,
   experience: Object.freeze({
     tour: Object.freeze({
       rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "fixed_total"]),

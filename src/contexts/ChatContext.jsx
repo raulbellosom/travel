@@ -51,6 +51,9 @@ export const ChatProvider = ({ children }) => {
   const [isRestoringConversation, setIsRestoringConversation] = useState(() =>
     Boolean(localStorage.getItem("activeConversationId")),
   );
+  const [isBubbleVisible, setIsBubbleVisible] = useState(
+    () => localStorage.getItem("chatBubbleVisible") !== "false",
+  );
 
   // Refs for real-time subscriptions
   const unsubConversationsRef = useRef(null);
@@ -536,7 +539,13 @@ export const ChatProvider = ({ children }) => {
 
       return message;
     },
-    [canWriteMessaging, activeConversation, activeConversationId, user, chatRole],
+    [
+      canWriteMessaging,
+      activeConversation,
+      activeConversationId,
+      user,
+      chatRole,
+    ],
   );
 
   /* ── Toggle chat ─────────────────────────────────────── */
@@ -550,6 +559,19 @@ export const ChatProvider = ({ children }) => {
     setIsChatOpen(false);
     setActiveConversationId(null);
     setMessages([]);
+  }, []);
+
+  const toggleBubbleVisibility = useCallback(() => {
+    setIsBubbleVisible((prev) => {
+      const next = !prev;
+      localStorage.setItem("chatBubbleVisible", String(next));
+      if (!next) {
+        setIsChatOpen(false);
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+      return next;
+    });
   }, []);
 
   const goBackToList = useCallback(() => {
@@ -802,6 +824,8 @@ export const ChatProvider = ({ children }) => {
       toggleChat,
       closeChat,
       goBackToList,
+      isBubbleVisible,
+      toggleBubbleVisibility,
     }),
     [
       conversations,
@@ -830,6 +854,8 @@ export const ChatProvider = ({ children }) => {
       toggleChat,
       closeChat,
       goBackToList,
+      isBubbleVisible,
+      toggleBubbleVisibility,
     ],
   );
 

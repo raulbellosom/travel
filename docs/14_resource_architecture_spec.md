@@ -27,8 +27,9 @@ Campos troncales:
 
 - `property`
 - `service`
-- `vehicle` (futuro)
-- `experience` (futuro)
+- `music`
+- `vehicle`
+- `experience`
 - `venue`
 
 ### commercialMode
@@ -61,7 +62,8 @@ Campos troncales:
 | resourceType | categories permitidas |
 | --- | --- |
 | `property` | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse` |
-| `service` | `cleaning`,`dj`,`chef`,`photography`,`catering`,`maintenance` |
+| `service` | `cleaning`,`chef`,`photography`,`catering`,`maintenance` |
+| `music` | `dj`,`banda`,`norteno`,`sierreno`,`mariachi`,`corridos`,`corridos_tumbados`,`corrido_mexicano`,`regional_mexicano`,`duranguense`,`grupera`,`cumbia`,`cumbia_sonidera`,`cumbia_rebajada`,`salsa`,`bachata`,`merengue`,`pop`,`rock`,`rock_urbano`,`hip_hop`,`rap`,`reggaeton`,`urbano_latino`,`electronica`,`house`,`techno`,`trance`,`jazz`,`blues`,`boleros`,`trova`,`instrumental`,`versatil`,`son_jarocho`,`huapango`,`sonora` |
 | `vehicle` | `car`,`suv`,`pickup`,`van`,`motorcycle`,`boat` |
 | `experience` | `tour`,`class`,`workshop`,`adventure`,`wellness`,`gastronomy` |
 | `venue` | `event_hall`,`commercial_local`,`studio`,`coworking`,`meeting_room` |
@@ -72,6 +74,7 @@ Campos troncales:
 | --- | --- |
 | `property` | `sale`,`rent_long_term`,`rent_short_term` |
 | `service` | `rent_short_term`,`rent_hourly` |
+| `music` | `rent_short_term`,`rent_hourly` |
 | `vehicle` | `sale`,`rent_long_term`,`rent_short_term` |
 | `experience` | `rent_short_term`,`rent_hourly` |
 | `venue` | `rent_short_term`,`rent_hourly` |
@@ -83,11 +86,13 @@ Campos troncales:
 | `property` | `sale` | `fixed_total`,`per_m2` |
 | `property` | `rent_long_term` | `per_month`,`fixed_total`,`per_m2` |
 | `property` | `rent_short_term` | `per_night`,`per_day`,`fixed_total` (house/apartment) y `per_day`,`fixed_total` (land/commercial/office/warehouse) |
+| `service` | `rent_short_term` | `per_day`,`per_person`,`per_event`,`fixed_total` |
+| `service` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`fixed_total` |
+| `music` | `rent_short_term` | `per_day`,`per_event`,`fixed_total` |
+| `music` | `rent_hourly` | `per_hour`,`per_event`,`fixed_total` |
 | `vehicle` | `sale` | `fixed_total` |
 | `vehicle` | `rent_long_term` | `per_month`,`fixed_total` |
 | `vehicle` | `rent_short_term` | `per_day` |
-| `service` | `rent_short_term` | `per_day`,`per_person`,`per_event`,`fixed_total` |
-| `service` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`fixed_total` |
 | `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`fixed_total` |
 | `experience` | `rent_hourly` | `per_hour`,`per_person`,`per_event`,`fixed_total` |
 | `venue` | `rent_short_term` | `per_day`,`per_event`,`fixed_total` |
@@ -122,6 +127,7 @@ Catalogo inicial de atributos dinamicos (`attributes`) en UI:
 
 - `vehicle`: `vehicleModelYear`, `vehicleSeats`, `vehicleDoors`, `vehicleTransmission`, `vehicleFuelType`, `vehicleLuggageCapacity`.
 - `service`: `serviceDurationMinutes`, `serviceStaffCount`, `serviceAtClientLocation`, `serviceIncludesMaterials`, `serviceResponseTimeHours`.
+- `music`: `musicGenres`, `musicIncludesSound`, `musicIncludesLighting`, `musicMaxAudience`, `musicBandMembers`, `musicTravelsToVenue`, `musicSetDurationMinutes`, `musicRepertoireNotes`.
 - `experience`: `experienceDurationMinutes`, `experienceMinParticipants`, `experienceMaxParticipants`, `experienceDifficulty`, `experienceIncludesEquipment`, `experienceMinAge`.
 - `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
 - booking generico (no-property): `bookingMinUnits`, `bookingMaxUnits`, `availabilityStartTime`, `availabilityEndTime`.
@@ -214,5 +220,5 @@ Durante migracion:
 
 ---
 
-Ultima actualizacion: 2026-02-21
-Version: 1.4.0
+Ultima actualizacion: 2026-02-26
+Version: 1.5.0

@@ -1,5 +1,62 @@
 import { normalizeCommercialMode, normalizeResourceType } from "./resourceModel.js";
 
+const MUSIC_CATEGORIES = Object.freeze([
+  "dj",
+  "banda",
+  "norteno",
+  "sierreno",
+  "mariachi",
+  "corridos",
+  "corridos_tumbados",
+  "corrido_mexicano",
+  "regional_mexicano",
+  "duranguense",
+  "grupera",
+  "cumbia",
+  "cumbia_sonidera",
+  "cumbia_rebajada",
+  "salsa",
+  "bachata",
+  "merengue",
+  "pop",
+  "rock",
+  "rock_urbano",
+  "hip_hop",
+  "rap",
+  "reggaeton",
+  "urbano_latino",
+  "electronica",
+  "house",
+  "techno",
+  "trance",
+  "jazz",
+  "blues",
+  "boleros",
+  "trova",
+  "instrumental",
+  "versatil",
+  "son_jarocho",
+  "huapango",
+  "sonora",
+]);
+
+const BOOKABLE_COMMERCIAL_MODES = Object.freeze(["rent_short_term", "rent_hourly"]);
+
+const BOOKABLE_MODES_BY_CATEGORY = Object.freeze(
+  Object.fromEntries(
+    MUSIC_CATEGORIES.map((category) => [category, BOOKABLE_COMMERCIAL_MODES]),
+  ),
+);
+
+const MUSIC_CATEGORY_I18N_KEYS = Object.freeze(
+  Object.fromEntries(
+    MUSIC_CATEGORIES.map((category) => [
+      category,
+      `propertyForm.options.category.${category}`,
+    ]),
+  ),
+);
+
 export const CATEGORY_BY_RESOURCE_TYPE = Object.freeze({
   property: Object.freeze([
     "house",
@@ -11,12 +68,12 @@ export const CATEGORY_BY_RESOURCE_TYPE = Object.freeze({
   ]),
   service: Object.freeze([
     "cleaning",
-    "dj",
     "chef",
     "photography",
     "catering",
     "maintenance",
   ]),
+  music: MUSIC_CATEGORIES,
   vehicle: Object.freeze([
     "car",
     "suv",
@@ -45,6 +102,7 @@ export const CATEGORY_BY_RESOURCE_TYPE = Object.freeze({
 export const COMMERCIAL_MODE_BY_RESOURCE_TYPE = Object.freeze({
   property: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
   service: Object.freeze(["rent_short_term", "rent_hourly"]),
+  music: BOOKABLE_COMMERCIAL_MODES,
   vehicle: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
   experience: Object.freeze(["rent_short_term", "rent_hourly"]),
   venue: Object.freeze(["rent_short_term", "rent_hourly"]),
@@ -61,12 +119,12 @@ const COMMERCIAL_MODE_BY_RESOURCE_AND_CATEGORY = Object.freeze({
   }),
   service: Object.freeze({
     cleaning: Object.freeze(["rent_short_term", "rent_hourly"]),
-    dj: Object.freeze(["rent_short_term", "rent_hourly"]),
     chef: Object.freeze(["rent_short_term", "rent_hourly"]),
     photography: Object.freeze(["rent_short_term", "rent_hourly"]),
     catering: Object.freeze(["rent_short_term", "rent_hourly"]),
     maintenance: Object.freeze(["rent_short_term", "rent_hourly"]),
   }),
+  music: BOOKABLE_MODES_BY_CATEGORY,
   vehicle: Object.freeze({
     car: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
     suv: Object.freeze(["sale", "rent_long_term", "rent_short_term"]),
@@ -100,11 +158,11 @@ export const CATEGORY_I18N_KEY_BY_SLUG = Object.freeze({
   office: "propertyForm.options.category.office",
   warehouse: "propertyForm.options.category.warehouse",
   cleaning: "propertyForm.options.category.cleaning",
-  dj: "propertyForm.options.category.dj",
   chef: "propertyForm.options.category.chef",
   photography: "propertyForm.options.category.photography",
   catering: "propertyForm.options.category.catering",
   maintenance: "propertyForm.options.category.maintenance",
+  ...MUSIC_CATEGORY_I18N_KEYS,
   car: "propertyForm.options.category.car",
   suv: "propertyForm.options.category.suv",
   pickup: "propertyForm.options.category.pickup",

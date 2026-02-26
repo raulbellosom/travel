@@ -13,6 +13,7 @@ import ChatWindow from "./ChatWindow";
 /**
  * Floating chat bubble + chat window overlay.
  * Visible on all pages when user is authenticated, EXCEPT on conversation pages.
+ * Can be dismissed (hidden) via hover X; re-enabled from user menu.
  */
 const ChatBubble = () => {
   const Motion = motion;
@@ -20,9 +21,17 @@ const ChatBubble = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { isEnabled, loading: modulesLoading } = useInstanceModules();
-  const { isChatOpen, toggleChat, closeChat, totalUnread, isAuthenticated } =
-    useChat();
+  const {
+    isChatOpen,
+    toggleChat,
+    closeChat,
+    totalUnread,
+    isAuthenticated,
+    isBubbleVisible,
+    toggleBubbleVisibility,
+  } = useChat();
   const [hasFocus, setHasFocus] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const role = String(user?.role || "")
     .trim()
     .toLowerCase();
@@ -90,7 +99,8 @@ const ChatBubble = () => {
     modulesLoading ||
     !isAuthenticated ||
     isOnConversationsPage ||
-    !canAccessMessaging
+    !canAccessMessaging ||
+    !isBubbleVisible
   ) {
     return null;
   }
@@ -122,52 +132,80 @@ const ChatBubble = () => {
       </AnimatePresence>
 
       {/* ── Floating Action Button ───────────────────── */}
-      <button
-        onClick={toggleChat}
-        aria-label={isChatOpen ? t("chat.bubble.close") : t("chat.bubble.open")}
-        className={cn(
-          "fixed bottom-20 right-5 z-9999 lg:bottom-5",
-          "flex h-14 w-14 items-center justify-center",
-          "rounded-full shadow-lg transition-all duration-200",
-          "hover:scale-105 active:scale-95",
-          isChatOpen
-            ? "bg-slate-700 text-white dark:bg-slate-600"
-            : "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
-          // Hide on mobile when chat is open (user uses header X button)
-          isChatOpen && "hidden lg:flex",
-        )}
+      <div
+        className="fixed bottom-20 right-5 z-9999 lg:bottom-5"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <AnimatePresence mode="wait">
-          {isChatOpen ? (
-            <Motion.span
-              key="close"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
+        {/* Dismiss button – desktop only, on hover */}
+        <AnimatePresence>
+          {isHovered && !isChatOpen && (
+            <Motion.button
+              key="dismiss"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.12 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleBubbleVisibility();
+              }}
+              aria-label={t("chat.bubble.dismiss")}
+              className="absolute -right-1 -top-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-white shadow-md transition hover:bg-red-500 lg:flex"
             >
-              <X size={22} />
-            </Motion.span>
-          ) : (
-            <Motion.span
-              key="open"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <MessageCircle size={22} />
-            </Motion.span>
+              <X size={12} />
+            </Motion.button>
           )}
         </AnimatePresence>
 
-        {/* Unread badge */}
-        {!isChatOpen && totalUnread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
-            {totalUnread > 99 ? "99+" : totalUnread}
-          </span>
-        )}
-      </button>
+        <button
+          onClick={toggleChat}
+          aria-label={
+            isChatOpen ? t("chat.bubble.close") : t("chat.bubble.open")
+          }
+          className={cn(
+            "flex h-14 w-14 items-center justify-center",
+            "rounded-full shadow-lg transition-all duration-200",
+            "hover:scale-105 active:scale-95",
+            isChatOpen
+              ? "bg-slate-700 text-white dark:bg-slate-600"
+              : "bg-cyan-600 text-white hover:bg-cyan-700 dark:bg-cyan-500 dark:hover:bg-cyan-600",
+            // Hide on mobile when chat is open (user uses header X button)
+            isChatOpen && "hidden lg:flex",
+          )}
+        >
+          <AnimatePresence mode="wait">
+            {isChatOpen ? (
+              <Motion.span
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <X size={22} />
+              </Motion.span>
+            ) : (
+              <Motion.span
+                key="open"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <MessageCircle size={22} />
+              </Motion.span>
+            )}
+          </AnimatePresence>
+
+          {/* Unread badge */}
+          {!isChatOpen && totalUnread > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+              {totalUnread > 99 ? "99+" : totalUnread}
+            </span>
+          )}
+        </button>
+      </div>
     </>
   );
 };

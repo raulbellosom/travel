@@ -26,14 +26,15 @@ const RESOURCE_TYPES = [
   "property",
   "vehicle",
   "service",
+  "music",
   "experience",
   "venue",
 ];
 
 // Words cycled by the typewriter, keyed by language prefix
 const TYPEWRITER_WORDS = {
-  es: ["hogar", "viaje", "servicio", "experiencia", "evento"],
-  en: ["home", "trip", "service", "experience", "event"],
+  es: ["hogar", "viaje", "servicio", "musica", "experiencia", "evento"],
+  en: ["home", "trip", "service", "music", "experience", "event"],
 };
 
 /* ── Typewriter styles (injected once) ── */

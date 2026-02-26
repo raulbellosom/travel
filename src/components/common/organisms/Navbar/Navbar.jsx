@@ -8,6 +8,8 @@ import {
   KeyRound,
   LayoutDashboard,
   Menu,
+  MessageCircle,
+  MessageCircleOff,
   Monitor,
   Moon,
   Search,
@@ -24,8 +26,11 @@ import {
 import { useAuth } from "../../../../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { useUI } from "../../../../contexts/UIContext";
-import { isInternalRole } from "../../../../utils/roles";
+import { isInternalRole, hasScope } from "../../../../utils/roles";
+import { isScopeAllowedByModules } from "../../../../utils/moduleAccess";
 import { INTERNAL_ROUTES } from "../../../../utils/internalRoutes";
+import { useChat } from "../../../../contexts/ChatContext";
+import { useInstanceModules } from "../../../../hooks/useInstanceModules";
 import ThemeToggle from "./ThemeToggle";
 import LanguageSwitcher from "./LanguageSwitcher";
 import BrandLogo from "../../BrandLogo";
@@ -65,6 +70,13 @@ const Navbar = () => {
     .split("-")[0]
     .toUpperCase();
   const isInternalUser = isInternalRole(user?.role);
+  const { isEnabled: isModEnabled } = useInstanceModules();
+  const canAccessScope = (scope) =>
+    hasScope(user, scope) && isScopeAllowedByModules(scope, isModEnabled);
+  const canAccessConversationsMobile =
+    isModEnabled("module.messaging.realtime") &&
+    (!isInternalUser || canAccessScope("messaging.read"));
+  const { isBubbleVisible, toggleBubbleVisibility } = useChat();
   const mobileInitials = useMemo(() => {
     const value = String(user?.name || "")
       .split(" ")
@@ -240,6 +252,12 @@ const Navbar = () => {
           >
             {t("client:nav.services")}
           </Link>
+          <Link
+            to="/buscar?resourceType=music"
+            className={`${navItemClass} text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800`}
+          >
+            {t("client:nav.music")}
+          </Link>
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
@@ -371,6 +389,13 @@ const Navbar = () => {
             >
               {t("client:nav.services")}
             </Link>
+            <Link
+              to="/buscar?resourceType=music"
+              onClick={() => setMobileOpen(false)}
+              className={navItemClass}
+            >
+              {t("client:nav.music")}
+            </Link>
 
             <div className="mt-2 flex items-center gap-2">
               <LanguageSwitcher />
@@ -404,6 +429,26 @@ const Navbar = () => {
                     );
                   })}
                 </div>
+
+                {canAccessConversationsMobile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleBubbleVisibility();
+                      setMobileOpen(false);
+                    }}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    {isBubbleVisible ? (
+                      <MessageCircleOff size={16} />
+                    ) : (
+                      <MessageCircle size={16} />
+                    )}
+                    {isBubbleVisible
+                      ? t("navbar.userMenu.hideChatBubble")
+                      : t("navbar.userMenu.showChatBubble")}
+                  </button>
+                )}
 
                 <button
                   type="button"

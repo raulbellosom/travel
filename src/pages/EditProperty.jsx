@@ -1,12 +1,11 @@
-import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
+﻿import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Eye, X } from "lucide-react";
-import PropertyEditor from "../features/listings/components/editor/PropertyEditor";
+import PropertyWizard from "../features/properties/wizard/PropertyWizard";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
-import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
 import { useToast } from "../hooks/useToast";
 import {
@@ -18,40 +17,24 @@ const EditProperty = () => {
   const { t } = useTranslation();
   const { id } = useParams();
   const { user } = useAuth();
-  const [initialValues, setInitialValues] = useState(null);
-  const [amenities, setAmenities] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
+  const navigate = useNavigate();
+  const [initialResourceDoc, setInitialResourceDoc] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const { showToast } = useToast();
 
   useEffect(() => {
     if (!id) return;
+
     let mounted = true;
     setLoading(true);
     setError("");
 
-    Promise.all([
-      propertiesService.getById(id),
-      amenitiesService.listActive().catch(() => []),
-      propertiesService.listImages(id).catch(() => []),
-    ])
-      .then(([doc, amenityOptions, imageDocs]) => {
+    propertiesService
+      .getById(id)
+      .then((doc) => {
         if (!mounted) return;
-
-        // Get amenity IDs from the amenities slugs in the property document
-        const amenitySlugs = Array.isArray(doc.amenities) ? doc.amenities : [];
-        const selectedAmenityIds = amenityOptions
-          .filter((amenity) => amenitySlugs.includes(amenity.slug))
-          .map((amenity) => amenity.$id);
-
-        setAmenities(amenityOptions || []);
-        setExistingImages(Array.isArray(imageDocs) ? imageDocs : []);
-        setInitialValues({
-          ...doc,
-          amenityIds: selectedAmenityIds,
-        });
+        setInitialResourceDoc(doc || null);
       })
       .catch((err) => {
         if (!mounted) return;
@@ -74,9 +57,10 @@ const EditProperty = () => {
     };
   }, [id, showToast, t]);
 
-  const handleSubmit = async (values) => {
-    if (!id || !user?.$id) return;
-    setSaving(true);
+  const handleSave = async (patch, _meta) => {
+    void _meta;
+    if (!id || !user?.$id) return null;
+
     setError("");
     showToast({
       type: "info",
@@ -84,33 +68,27 @@ const EditProperty = () => {
       message: t("editPropertyPage.messages.saving", "Guardando cambios..."),
       durationMs: 1800,
     });
+
     try {
-      const { amenityIds = [], imageFiles = [], ...propertyData } = values;
+      const { imageFiles = [], ...resourcePatch } = patch || {};
 
-      // Convert amenity IDs to slugs
-      const amenitySlugs = await amenitiesService.convertIdsToSlugs(amenityIds);
+      const updated = await propertiesService.update(id, user.$id, resourcePatch);
 
-      // Update property with amenities array included
-      await propertiesService.update(id, user.$id, {
-        ...propertyData,
-        amenities: amenitySlugs,
-      });
-
-      // Upload new images if any
       if (Array.isArray(imageFiles) && imageFiles.length > 0) {
+        const existingImages = await propertiesService.listImages(id).catch(() => []);
         const nextSortOrder =
           existingImages.reduce(
-            (maxOrder, image) =>
-              Math.max(maxOrder, Number(image?.sortOrder || 0)),
+            (maxOrder, image) => Math.max(maxOrder, Number(image?.sortOrder || 0)),
             -1,
           ) + 1;
+
         await propertiesService.uploadPropertyImages(id, imageFiles, {
-          title: propertyData.title || initialValues?.title || "",
+          title: resourcePatch.title || initialResourceDoc?.title || "",
           startingSortOrder: nextSortOrder,
           existingFileIds: Array.from(
             new Set([
-              ...(Array.isArray(initialValues?.galleryImageIds)
-                ? initialValues.galleryImageIds
+              ...(Array.isArray(initialResourceDoc?.galleryImageIds)
+                ? initialResourceDoc.galleryImageIds
                 : []),
               ...existingImages.map((image) => image.fileId),
             ]),
@@ -118,14 +96,14 @@ const EditProperty = () => {
         });
       }
 
+      setInitialResourceDoc(updated);
       showToast({
         type: "success",
         title: t("editPropertyPage.title"),
-        message: t(
-          "editPropertyPage.messages.saved",
-          "Cambios guardados correctamente.",
-        ),
+        message: t("editPropertyPage.messages.saved", "Cambios guardados correctamente."),
       });
+
+      return updated;
     } catch (err) {
       const message = getErrorMessage(err, t("editPropertyPage.errors.save"));
       setError(message);
@@ -135,8 +113,7 @@ const EditProperty = () => {
         message,
         durationMs: 7000,
       });
-    } finally {
-      setSaving(false);
+      throw err;
     }
   };
 
@@ -144,7 +121,7 @@ const EditProperty = () => {
     return <SkeletonLoader variant="detail" className="py-4" />;
   }
 
-  if (!initialValues) {
+  if (!initialResourceDoc) {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
         {error || t("editPropertyPage.errors.notFound")}
@@ -155,16 +132,15 @@ const EditProperty = () => {
   return (
     <section className="space-y-5">
       <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             {t("editPropertyPage.title")}
           </h1>
-          {initialValues && (
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              {initialValues.title}
-            </p>
-          )}
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {initialResourceDoc.title}
+          </p>
         </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to={INTERNAL_ROUTES.myProperties}
@@ -173,7 +149,7 @@ const EditProperty = () => {
             <ArrowLeft size={16} />
             {t("appPropertyDetailPage.actions.backToList", "Volver al listado")}
           </Link>
-          {id && (
+          {id ? (
             <Link
               to={getInternalPropertyDetailRoute(id)}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-cyan-300 bg-cyan-50 px-4 py-2.5 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
@@ -181,7 +157,7 @@ const EditProperty = () => {
               <Eye size={16} />
               {t("propertyForm.editor.viewSummary", "Ver resumen")}
             </Link>
-          )}
+          ) : null}
         </div>
       </header>
 
@@ -201,14 +177,17 @@ const EditProperty = () => {
         </div>
       ) : null}
 
-      <PropertyEditor
-        propertyId={id}
-        initialValues={initialValues}
-        loading={saving}
-        amenitiesOptions={amenities}
-        amenitiesLoading={false}
-        existingImages={existingImages}
-        onSubmit={handleSubmit}
+      <PropertyWizard
+        mode="edit"
+        initialResourceDoc={initialResourceDoc}
+        onSave={handleSave}
+        onCancel={() => {
+          if (id) {
+            navigate(getInternalPropertyDetailRoute(id));
+            return;
+          }
+          navigate(INTERNAL_ROUTES.myProperties);
+        }}
       />
     </section>
   );

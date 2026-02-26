@@ -514,6 +514,8 @@
       "reservations": "My reservations",
       "reviews": "My reviews",
       "conversations": "My conversations",
+      "hideChatBubble": "Hide chat bubble",
+      "showChatBubble": "Show chat bubble",
       "password": "Change password",
       "privacy": "Privacy notice",
       "terms": "Terms and conditions"
@@ -1691,7 +1693,8 @@
         "service": "Service",
         "venue": "Venue",
         "experience": "Experience",
-        "vehicle": "Vehicle"
+        "vehicle": "Vehicle",
+        "music": "Music"
       },
       "category": {
         "house": "House",
@@ -1722,7 +1725,42 @@
         "commercialLocal": "Commercial unit",
         "studio": "Studio",
         "coworking": "Coworking",
-        "meetingRoom": "Meeting room"
+        "meetingRoom": "Meeting room",
+        "banda": "Banda",
+        "norteno": "Norteno",
+        "sierreno": "Sierreno",
+        "mariachi": "Mariachi",
+        "corridos": "Corridos",
+        "corridos_tumbados": "Corridos tumbados",
+        "corrido_mexicano": "Mexican corrido",
+        "regional_mexicano": "Regional mexicano",
+        "duranguense": "Duranguense",
+        "grupera": "Grupera",
+        "cumbia": "Cumbia",
+        "cumbia_sonidera": "Sonidera cumbia",
+        "cumbia_rebajada": "Rebajada cumbia",
+        "salsa": "Salsa",
+        "bachata": "Bachata",
+        "merengue": "Merengue",
+        "pop": "Pop",
+        "rock": "Rock",
+        "rock_urbano": "Urban rock",
+        "hip_hop": "Hip hop",
+        "rap": "Rap",
+        "reggaeton": "Reggaeton",
+        "urbano_latino": "Latin urban",
+        "electronica": "Electronic",
+        "techno": "Techno",
+        "trance": "Trance",
+        "jazz": "Jazz",
+        "blues": "Blues",
+        "boleros": "Boleros",
+        "trova": "Trova",
+        "instrumental": "Instrumental",
+        "versatil": "Versatile",
+        "son_jarocho": "Son jarocho",
+        "huapango": "Huapango",
+        "sonora": "Sonora"
       },
       "pricingModel": {
         "total": "Fixed price",
@@ -2039,7 +2077,15 @@
     "close": "Close modal"
   },
   "dateRangePicker": {
-    "dayHeaders": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+    "dayHeaders": [
+      "Su",
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa"
+    ],
     "placeholders": {
       "single": "Select date",
       "range": "Select dates"
@@ -2297,7 +2343,7 @@
     "title": "Reservation voucher",
     "subtitle": "Review official details of your confirmed reservation.",
     "loading": "Looking up voucher...",
-    "offlineBanner": "Showing cached version \u2014 you appear to be offline.",
+    "offlineBanner": "Showing cached version — you appear to be offline.",
     "breadcrumb": {
       "home": "Home",
       "myReservations": "My reservations",
@@ -2610,7 +2656,8 @@
   "chat": {
     "bubble": {
       "open": "Open chat",
-      "close": "Close chat"
+      "close": "Close chat",
+      "dismiss": "Hide chat bubble"
     },
     "actions": {
       "close": "Close",
@@ -2739,7 +2786,7 @@
       "hour": "hour",
       "hours": "hours",
       "person": "person",
-      "persons": "persons",
+      "persons": "Persons",
       "event": "event",
       "events": "events",
       "unit": "unit",
@@ -2750,7 +2797,6 @@
       "capacity": "Capacity: {{count}} persons",
       "guests": "Guests",
       "passengers": "Passengers",
-      "persons": "Persons",
       "attendees": "Attendees",
       "guestsSelectorLabel": "{{label}}",
       "fees": "Service fees",
@@ -2899,6 +2945,727 @@
     "note": {
       "title": "Backend enforcement required",
       "body": "Module toggles must be reflected in Appwrite Functions with 403 MODULE_DISABLED block."
+    }
+  },
+  "wizard": {
+    "title": "Create listing",
+    "steps": {
+      "publishWhat": {
+        "title": "What are you publishing?",
+        "description": "Choose what you want to publish so we can show the right questions."
+      },
+      "howOffer": {
+        "title": "How will you offer it?",
+        "description": "Select how people can hire or acquire it."
+      },
+      "describe": {
+        "title": "Describe your listing",
+        "description": "Add a clear title, a good description, and visuals."
+      },
+      "details": {
+        "title": "Key details",
+        "description": "Complete the important information so people understand what you offer."
+      },
+      "conditions": {
+        "title": "Booking conditions",
+        "description": "Set minimums, maximums and time windows to avoid confusion."
+      },
+      "price": {
+        "title": "Price",
+        "description": "Choose how you charge and set the amount."
+      },
+      "location": {
+        "title": "Location",
+        "description": "Tell us where it is available or where it happens."
+      },
+      "review": {
+        "title": "Final review",
+        "description": "Review everything before saving."
+      }
+    },
+    "actions": {
+      "back": "Back",
+      "next": "Continue",
+      "save": "Save",
+      "saving": "Saving...",
+      "selectPlaceholder": "Select an option"
+    },
+    "validation": {
+      "required": "This field is required.",
+      "minLength": "Write at least {{count}} characters.",
+      "number": "Enter a valid number.",
+      "min": "Must be greater than or equal to {{value}}.",
+      "max": "Must be less than or equal to {{value}}.",
+      "time": "Enter a valid time (HH:MM).",
+      "url": "Enter a valid link.",
+      "minGreaterThanMax": "The minimum cannot be greater than the maximum."
+    },
+    "errors": {
+      "missingProfile": "No configuration was found for this listing type.",
+      "unsupportedFieldType": "This field type is not supported yet: {{type}}"
+    },
+    "images": {
+      "placeholder": "You will be able to upload photos for your listing here.",
+      "placeholderHelp": "Next iteration will include preview, ordering, and a main photo."
+    },
+    "countries": {
+      "MX": "Mexico"
+    },
+    "units": {
+      "m2": "m²",
+      "months": "months",
+      "hours": "hours",
+      "minutes": "min",
+      "years": "years"
+    },
+    "pricing": {
+      "fixed_total": "Fixed price",
+      "per_m2": "Per square meter",
+      "per_month": "Per month",
+      "per_night": "Per night",
+      "per_day": "Per day",
+      "per_hour": "Per hour",
+      "per_person": "Per person",
+      "per_event": "Per event"
+    },
+    "categories": {
+      "property": {
+        "house": "House",
+        "apartment": "Apartment",
+        "land": "Land",
+        "commercial": "Commercial space",
+        "office": "Office",
+        "warehouse": "Warehouse"
+      },
+      "service": {
+        "cleaning": "Cleaning",
+        "chef": "Chef",
+        "photography": "Photography",
+        "catering": "Catering",
+        "maintenance": "Maintenance"
+      },
+      "vehicle": {
+        "car": "Car",
+        "suv": "SUV",
+        "pickup": "Pickup",
+        "van": "Van",
+        "motorcycle": "Motorcycle",
+        "boat": "Boat"
+      },
+      "experience": {
+        "tour": "Tour",
+        "class": "Class",
+        "workshop": "Workshop",
+        "adventure": "Adventure",
+        "wellness": "Wellness",
+        "gastronomy": "Gastronomy"
+      },
+      "venue": {
+        "event_hall": "Event hall",
+        "commercial_local": "Commercial local",
+        "studio": "Studio",
+        "coworking": "Coworking",
+        "meeting_room": "Meeting room"
+      },
+      "music": {
+        "dj": "DJ",
+        "banda": "Banda",
+        "norteno": "Norteno",
+        "sierreno": "Sierreno",
+        "mariachi": "Mariachi",
+        "corridos": "Corridos",
+        "corridos_tumbados": "Corridos tumbados",
+        "corrido_mexicano": "Mexican corrido",
+        "regional_mexicano": "Regional mexicano",
+        "duranguense": "Duranguense",
+        "grupera": "Grupera",
+        "cumbia": "Cumbia",
+        "cumbia_sonidera": "Sonidera cumbia",
+        "cumbia_rebajada": "Rebajada cumbia",
+        "salsa": "Salsa",
+        "bachata": "Bachata",
+        "merengue": "Merengue",
+        "pop": "Pop",
+        "rock": "Rock",
+        "rock_urbano": "Urban rock",
+        "hip_hop": "Hip hop",
+        "rap": "Rap",
+        "reggaeton": "Reggaeton",
+        "urbano_latino": "Latin urban",
+        "electronica": "Electronic",
+        "house": "House",
+        "techno": "Techno",
+        "trance": "Trance",
+        "jazz": "Jazz",
+        "blues": "Blues",
+        "boleros": "Boleros",
+        "trova": "Trova",
+        "instrumental": "Instrumental",
+        "versatil": "Versatile",
+        "son_jarocho": "Son jarocho",
+        "huapango": "Huapango",
+        "sonora": "Sonora"
+      }
+    },
+    "offerings": {
+      "property": {
+        "sell": {
+          "label": "For sale",
+          "help": "Best if you want to sell the property."
+        },
+        "rent_long_term": {
+          "label": "Monthly rent",
+          "help": "For medium/long-term rental contracts."
+        },
+        "rent_short_term": {
+          "label": "Daily/nightly rent",
+          "help": "Vacation rentals or short stays."
+        }
+      },
+      "service": {
+        "per_event_or_day": {
+          "label": "Per event / per day",
+          "help": "They hire you for a date or event."
+        },
+        "per_hour": {
+          "label": "Per hour",
+          "help": "They hire you by time blocks."
+        }
+      },
+      "vehicle": {
+        "sell": {
+          "label": "For sale",
+          "help": "Sell the vehicle."
+        },
+        "rent_long_term": {
+          "label": "Monthly rent",
+          "help": "Medium/long-term rental."
+        },
+        "rent_short_term": {
+          "label": "Daily rent",
+          "help": "Short-term rentals (per day)."
+        }
+      },
+      "experience": {
+        "per_event_or_day": {
+          "label": "Per date / per day",
+          "help": "Reserved for a date or a day."
+        },
+        "per_hour": {
+          "label": "Per hour",
+          "help": "Reserved by time blocks."
+        }
+      },
+      "venue": {
+        "rent_short_term": {
+          "label": "Per day",
+          "help": "Rent the space by day."
+        },
+        "rent_hourly": {
+          "label": "Per hour",
+          "help": "Rent the space by time blocks."
+        }
+      },
+      "music": {
+        "per_event_or_day": {
+          "label": "Per event / per day",
+          "help": "Booked for a date or event."
+        },
+        "per_hour": {
+          "label": "Per hour",
+          "help": "Booked in time slots."
+        }
+      }
+    },
+    "fields": {
+      "title": {
+        "label": "Title",
+        "help": "Example: Spacious house near the beach, DJ for a party, Boat tour."
+      },
+      "description": {
+        "label": "Description",
+        "help": "Describe what you offer, what is included, and any important details."
+      },
+      "slugPublic": {
+        "label": "Link (optional)",
+        "help": "Customize your listing link. If empty, we will generate it automatically."
+      },
+      "images": {
+        "label": "Photos",
+        "help": "Upload clear, well-lit photos."
+      },
+      "videoUrl": {
+        "label": "Video (optional)",
+        "help": "Paste a video link (YouTube, TikTok, etc.)."
+      },
+      "virtualTourUrl": {
+        "label": "Virtual tour (optional)",
+        "help": "Paste a virtual tour link (if you have one)."
+      },
+      "pricingChoice": {
+        "label": "How do you want to charge?",
+        "help": "Choose the pricing style that matches your offer."
+      },
+      "price": {
+        "label": "Amount",
+        "help": "Enter your base price."
+      },
+      "currency": {
+        "label": "Currency",
+        "help": ""
+      },
+      "priceNegotiable": {
+        "label": "Negotiable price",
+        "help": "Enable this if you are open to negotiation."
+      },
+      "location": {
+        "country": {
+          "label": "Country"
+        },
+        "state": {
+          "label": "State"
+        },
+        "city": {
+          "label": "City"
+        },
+        "streetAddress": {
+          "label": "Address (optional)"
+        },
+        "neighborhood": {
+          "label": "Neighborhood (optional)"
+        },
+        "postalCode": {
+          "label": "Postal code (optional)"
+        },
+        "latitude": {
+          "label": "Latitude (optional)"
+        },
+        "longitude": {
+          "label": "Longitude (optional)"
+        }
+      },
+      "property": {
+        "category": {
+          "label": "Property type",
+          "help": "Choose the option that best describes your property."
+        },
+        "offering": {
+          "label": "Listing type",
+          "help": "Choose whether it is for sale or for rent."
+        },
+        "bedrooms": {
+          "label": "Bedrooms"
+        },
+        "bathrooms": {
+          "label": "Bathrooms"
+        },
+        "parkingSpaces": {
+          "label": "Parking spaces"
+        },
+        "totalArea": {
+          "label": "Total area",
+          "help": "Square meters of land or total surface."
+        },
+        "builtArea": {
+          "label": "Built area"
+        },
+        "floors": {
+          "label": "Floors"
+        },
+        "yearBuilt": {
+          "label": "Year built"
+        },
+        "furnished": {
+          "label": "Furnished",
+          "help": "Tell whether it includes furniture."
+        },
+        "petsAllowed": {
+          "label": "Pets allowed",
+          "help": "Enable if pets are allowed."
+        },
+        "minimumContractDuration": {
+          "label": "Minimum contract length",
+          "help": "How many months minimum?"
+        },
+        "maxGuests": {
+          "label": "Max guests"
+        },
+        "minStayNights": {
+          "label": "Minimum nights"
+        },
+        "maxStayNights": {
+          "label": "Maximum nights"
+        },
+        "checkInTime": {
+          "label": "Check-in time"
+        },
+        "checkOutTime": {
+          "label": "Check-out time"
+        }
+      },
+      "service": {
+        "category": {
+          "label": "Service type",
+          "help": "Choose the service you offer."
+        },
+        "offering": {
+          "label": "How people hire you",
+          "help": "Choose how you are usually hired."
+        },
+        "bookingMinUnits": {
+          "hours": {
+            "label": "Minimum hours",
+            "help": "How many hours minimum can they hire you?"
+          },
+          "people": {
+            "label": "Minimum people",
+            "help": "Minimum number of people you serve."
+          },
+          "units": {
+            "label": "Minimum",
+            "help": "Set the minimum booking."
+          }
+        },
+        "bookingMaxUnits": {
+          "hours": {
+            "label": "Maximum hours",
+            "help": "Maximum number of hours."
+          },
+          "people": {
+            "label": "Maximum people",
+            "help": "Maximum number of people."
+          },
+          "units": {
+            "label": "Maximum",
+            "help": "Set the maximum booking."
+          }
+        },
+        "availabilityStartTime": {
+          "label": "Available from",
+          "help": "Earliest time you can start."
+        },
+        "availabilityEndTime": {
+          "label": "Available until",
+          "help": "Latest time you can finish."
+        },
+        "slotDurationMinutes": {
+          "label": "Block duration",
+          "help": "Example: 60 minutes per block."
+        },
+        "slotBufferMinutes": {
+          "label": "Buffer between blocks",
+          "help": "Example: 15 minutes between bookings."
+        },
+        "chefCuisineType": {
+          "label": "Cuisine type"
+        },
+        "chefMaxDiners": {
+          "label": "Max diners"
+        },
+        "chefIncludesIngredients": {
+          "label": "Includes ingredients"
+        },
+        "chefIncludesTableware": {
+          "label": "Includes tableware"
+        },
+        "chefTravelsToLocation": {
+          "label": "I travel to the location"
+        },
+        "photoSpecialty": {
+          "label": "Specialty"
+        },
+        "photoEditedCount": {
+          "label": "Edited photos (approx.)"
+        },
+        "photoIncludesVideo": {
+          "label": "Includes video"
+        },
+        "photoTravelsToLocation": {
+          "label": "I travel to the location"
+        },
+        "cateringServiceType": {
+          "label": "Catering type"
+        },
+        "cateringMinGuests": {
+          "label": "Minimum guests"
+        },
+        "cateringMaxGuests": {
+          "label": "Maximum guests"
+        },
+        "cateringIncludesWaiters": {
+          "label": "Includes waiters"
+        },
+        "cateringIncludesSetup": {
+          "label": "Includes setup"
+        },
+        "cateringIncludesTableware": {
+          "label": "Includes tableware"
+        },
+        "cleaningType": {
+          "label": "Cleaning type"
+        },
+        "cleaningMaxArea": {
+          "label": "Max area"
+        },
+        "cleaningStaffCount": {
+          "label": "Staff count"
+        },
+        "cleaningIncludesSupplies": {
+          "label": "Includes supplies"
+        },
+        "maintenanceSpecialty": {
+          "label": "Specialty"
+        },
+        "maintenanceIncludesMaterials": {
+          "label": "Includes materials"
+        },
+        "maintenanceEmergencyService": {
+          "label": "Emergency service"
+        },
+        "maintenanceWarranty": {
+          "label": "Warranty offered"
+        },
+        "maintenanceResponseTimeHours": {
+          "label": "Response time (hrs)"
+        }
+      },
+      "vehicle": {
+        "category": {
+          "label": "Vehicle type",
+          "help": "Choose the vehicle type."
+        },
+        "offering": {
+          "label": "Listing type",
+          "help": "Sale or rent."
+        },
+        "vehicleModelYear": {
+          "label": "Year"
+        },
+        "vehicleSeats": {
+          "label": "Seats"
+        },
+        "vehicleDoors": {
+          "label": "Doors"
+        },
+        "vehicleTransmission": {
+          "label": "Transmission"
+        },
+        "vehicleFuelType": {
+          "label": "Fuel type"
+        },
+        "vehicleLuggageCapacity": {
+          "label": "Luggage capacity"
+        }
+      },
+      "experience": {
+        "category": {
+          "label": "Experience type",
+          "help": "Choose the experience you offer."
+        },
+        "offering": {
+          "label": "How it is booked",
+          "help": "Choose how it is usually booked."
+        },
+        "experienceDurationMinutes": {
+          "label": "Duration",
+          "help": "Approximate, in minutes."
+        },
+        "experienceMinParticipants": {
+          "label": "Minimum participants"
+        },
+        "experienceMaxParticipants": {
+          "label": "Maximum participants"
+        },
+        "experienceDifficulty": {
+          "label": "Difficulty"
+        },
+        "experienceIncludesEquipment": {
+          "label": "Equipment included"
+        },
+        "experienceMinAge": {
+          "label": "Minimum age"
+        },
+        "bookingMinUnits": {
+          "people": {
+            "label": "Minimum people",
+            "help": "Minimum people per booking."
+          }
+        },
+        "bookingMaxUnits": {
+          "people": {
+            "label": "Maximum people",
+            "help": "Maximum people per booking."
+          }
+        },
+        "availabilityStartTime": {
+          "label": "Available from",
+          "help": "Earliest start time."
+        },
+        "availabilityEndTime": {
+          "label": "Available until",
+          "help": "Latest end time."
+        },
+        "slotDurationMinutes": {
+          "label": "Block duration",
+          "help": "Example: 60 minutes."
+        },
+        "slotBufferMinutes": {
+          "label": "Buffer between blocks",
+          "help": "Example: 15 minutes."
+        }
+      },
+      "venue": {
+        "category": {
+          "label": "Space type",
+          "help": "Choose the space type."
+        },
+        "offering": {
+          "label": "Rental type",
+          "help": "Rent by day or by hour."
+        },
+        "venueCapacitySeated": {
+          "label": "Seated capacity"
+        },
+        "venueCapacityStanding": {
+          "label": "Standing capacity"
+        },
+        "venueHasStage": {
+          "label": "Has a stage"
+        },
+        "venueOpeningTime": {
+          "label": "Opening time"
+        },
+        "venueClosingTime": {
+          "label": "Closing time"
+        },
+        "availabilityStartTime": {
+          "label": "Available from",
+          "help": "Earliest time."
+        },
+        "availabilityEndTime": {
+          "label": "Available until",
+          "help": "Latest time."
+        },
+        "bookingMinUnits": {
+          "hours": {
+            "label": "Minimum hours",
+            "help": "Minimum hours to rent."
+          }
+        },
+        "bookingMaxUnits": {
+          "hours": {
+            "label": "Maximum hours",
+            "help": "Maximum hours."
+          }
+        },
+        "slotDurationMinutes": {
+          "label": "Block duration",
+          "help": "Example: 60 minutes."
+        },
+        "slotBufferMinutes": {
+          "label": "Buffer between blocks",
+          "help": "Example: 15 minutes."
+        }
+      },
+      "music": {
+        "category": {
+          "label": "Music type",
+          "help": "Choose the primary genre or music format."
+        },
+        "offering": {
+          "label": "How you offer it",
+          "help": "Define whether you work per event/day or per hour."
+        },
+        "musicGenres": {
+          "label": "Music genres",
+          "help": "You can separate multiple genres with commas."
+        },
+        "musicBandMembers": {
+          "label": "Band members"
+        },
+        "musicSetDurationMinutes": {
+          "label": "Set duration"
+        },
+        "musicIncludesSound": {
+          "label": "Includes sound"
+        },
+        "musicIncludesLighting": {
+          "label": "Includes lighting"
+        },
+        "musicMaxAudience": {
+          "label": "Max audience"
+        },
+        "musicTravelsToVenue": {
+          "label": "Travels to venue"
+        },
+        "musicRepertoireNotes": {
+          "label": "Repertoire notes"
+        },
+        "bookingMinUnits": {
+          "hours": {
+            "label": "Minimum hours",
+            "help": "Minimum hours per booking."
+          }
+        },
+        "bookingMaxUnits": {
+          "hours": {
+            "label": "Maximum hours",
+            "help": "Maximum hours per booking."
+          }
+        },
+        "availabilityStartTime": {
+          "label": "Available from",
+          "help": "Earliest time you can start."
+        },
+        "availabilityEndTime": {
+          "label": "Available until",
+          "help": "Latest time you can finish."
+        },
+        "slotDurationMinutes": {
+          "label": "Slot duration",
+          "help": "Length of each slot in minutes."
+        },
+        "slotBufferMinutes": {
+          "label": "Slot buffer",
+          "help": "Prep time between slots."
+        }
+      }
+    },
+    "options": {
+      "furnished": {
+        "unspecified": "Not specified",
+        "unfurnished": "Unfurnished",
+        "semi_furnished": "Semi furnished",
+        "furnished": "Furnished"
+      },
+      "vehicleTransmission": {
+        "manual": "Manual",
+        "automatic": "Automatic",
+        "cvt": "CVT",
+        "unspecified": "Not specified"
+      },
+      "vehicleFuelType": {
+        "gasoline": "Gasoline",
+        "diesel": "Diesel",
+        "hybrid": "Hybrid",
+        "electric": "Electric",
+        "unspecified": "Not specified"
+      },
+      "vehicleLuggageCapacity": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "unspecified": "Not specified"
+      },
+      "experienceDifficulty": {
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard",
+        "unspecified": "Not specified"
+      }
+    },
+    "resourceTypes": {
+      "music": "Music"
     }
   }
 }

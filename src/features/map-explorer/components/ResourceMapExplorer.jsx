@@ -29,6 +29,7 @@ const RESOURCE_TYPE_OPTIONS = [
   "property",
   "vehicle",
   "service",
+  "music",
   "experience",
   "venue",
 ];
@@ -47,6 +48,7 @@ const LANDING_DEFAULT_RADIUS_KM = 5;
 const TYPE_BADGE_COLORS = {
   property: { bg: "#e0f2fe", text: "#0369a1" },
   service: { bg: "#d1fae5", text: "#065f46" },
+  music: { bg: "#fae8ff", text: "#86198f" },
   vehicle: { bg: "#fef3c7", text: "#92400e" },
   experience: { bg: "#ede9fe", text: "#5b21b6" },
   venue: { bg: "#ffe4e6", text: "#9f1239" },

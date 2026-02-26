@@ -82,12 +82,26 @@ const Home = () => {
         title={t("client:home.servicesSection.title", "Servicios Profesionales")}
         subtitle={t(
           "client:home.servicesSection.subtitle",
-          "Limpieza, chef, DJ, fotografía, catering y más a tu alcance.",
+          "Limpieza, chef, fotografia, catering y mas a tu alcance.",
         )}
         filters={{ resourceType: "service" }}
         viewAllLink="/buscar?resourceType=service"
         limit={3}
         bgClass="bg-white dark:bg-slate-900/30"
+      />
+
+      {/* Music */}
+      <PropertyGridSection
+        badge={t("client:home.musicSection.badge", "MUSICA")}
+        title={t("client:home.musicSection.title", "Musica en Vivo y DJ")}
+        subtitle={t(
+          "client:home.musicSection.subtitle",
+          "Banda, mariachi, corridos tumbados, versatil y DJ para tus eventos.",
+        )}
+        filters={{ resourceType: "music" }}
+        viewAllLink="/buscar?resourceType=music"
+        limit={3}
+        bgClass="bg-slate-50 dark:bg-slate-900/50"
       />
 
       {/* Experiences */}

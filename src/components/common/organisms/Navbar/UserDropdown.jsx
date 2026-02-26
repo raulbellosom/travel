@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageCircle,
+  MessageCircleOff,
   Heart,
   ShieldCheck,
   Star,
@@ -21,6 +22,7 @@ import {
   INTERNAL_ROUTES,
   getConversationsRoute,
 } from "../../../../utils/internalRoutes";
+import { useChat } from "../../../../contexts/ChatContext";
 
 const UserDropdown = ({ user, onLogout }) => {
   const { t } = useTranslation();
@@ -74,6 +76,8 @@ const UserDropdown = ({ user, onLogout }) => {
   const canAccessConversations =
     isEnabled("module.messaging.realtime") &&
     (!isInternalUser || canAccessScope("messaging.read"));
+
+  const { isBubbleVisible, toggleBubbleVisibility } = useChat();
 
   const userMenuItems = [
     ...(isInternalUser
@@ -212,6 +216,28 @@ const UserDropdown = ({ user, onLogout }) => {
               );
             })}
           </div>
+
+          {canAccessConversations && (
+            <div className="border-t border-slate-200 p-2 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => {
+                  toggleBubbleVisibility();
+                  setOpen(false);
+                }}
+                className="inline-flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-cyan-300"
+              >
+                {isBubbleVisible ? (
+                  <MessageCircleOff size={16} />
+                ) : (
+                  <MessageCircle size={16} />
+                )}
+                {isBubbleVisible
+                  ? t("navbar.userMenu.hideChatBubble")
+                  : t("navbar.userMenu.showChatBubble")}
+              </button>
+            </div>
+          )}
 
           <div className="border-t border-slate-200 p-2 dark:border-slate-700">
             {legalMenuItems.map((item) => {

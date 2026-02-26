@@ -39,7 +39,7 @@ Regla:
 Nota de alcance para `propertyType -> category`:
 
 - El alias legacy `propertyType` representa categorias del dominio inmobiliario (`resourceType=property`).
-- En recursos no inmobiliarios (`service`,`vehicle`,`experience`,`venue`), el campo canonico es `category` y debe validarse contra su catalogo propio por tipo.
+- En recursos no inmobiliarios (`service`,`music`,`vehicle`,`experience`,`venue`), el campo canonico es `category` y debe validarse contra su catalogo propio por tipo.
 - `yearBuilt` permanece para inmueble; en `vehicle` el dato semantico es `attributes.vehicleModelYear`.
 
 ---
@@ -60,7 +60,7 @@ Nota de alcance para `propertyType -> category`:
 
 ### resources
 
-- `resourceType`: `property`, `service`, `vehicle`, `experience`, `venue`
+- `resourceType`: `property`, `service`, `music`, `vehicle`, `experience`, `venue`
 - `commercialMode`: `sale`, `rent_long_term`, `rent_short_term`, `rent_hourly`
 - `pricingModel`: `total`, `per_month`, `per_night`, `per_day`, `per_hour`, `per_person`, `per_event`, `per_m2`
 - `bookingType`: `manual_contact`, `date_range`, `time_slot`, `fixed_event`
@@ -86,5 +86,5 @@ Nota de alcance para `propertyType -> category`:
 
 ---
 
-Ultima actualizacion: 2026-02-20
-Version: 2.3.0
+Ultima actualizacion: 2026-02-26
+Version: 2.4.0

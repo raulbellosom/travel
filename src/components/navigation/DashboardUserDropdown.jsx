@@ -1,8 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FileText, LogOut, ShieldCheck, UserCircle2 } from "lucide-react";
+import {
+  FileText,
+  LogOut,
+  MessageCircle,
+  MessageCircleOff,
+  ShieldCheck,
+  UserCircle2,
+} from "lucide-react";
 import { INTERNAL_ROUTES } from "../../utils/internalRoutes";
+import { useChat } from "../../contexts/ChatContext";
+import { useInstanceModules } from "../../hooks/useInstanceModules";
+import { hasScope, isInternalRole } from "../../utils/roles";
+import { isScopeAllowedByModules } from "../../utils/moduleAccess";
 
 const DashboardUserDropdown = ({
   user,
@@ -14,6 +25,14 @@ const DashboardUserDropdown = ({
   const location = useLocation();
   const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const { isEnabled } = useInstanceModules();
+  const isInternalUser = isInternalRole(user?.role);
+  const canAccessScope = (scope) =>
+    hasScope(user, scope) && isScopeAllowedByModules(scope, isEnabled);
+  const canAccessConversations =
+    isEnabled("module.messaging.realtime") &&
+    (!isInternalUser || canAccessScope("messaging.read"));
+  const { isBubbleVisible, toggleBubbleVisibility } = useChat();
 
   const initials = useMemo(() => {
     const value = String(user?.name || "")
@@ -124,7 +143,9 @@ const DashboardUserDropdown = ({
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {user?.name || t("navbar.userMenu.defaultUser")}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-300">{user?.email}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-300">
+              {user?.email}
+            </p>
           </div>
 
           <div className="p-2">
@@ -142,6 +163,28 @@ const DashboardUserDropdown = ({
               );
             })}
           </div>
+
+          {canAccessConversations && (
+            <div className="border-t border-slate-200 p-2 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => {
+                  toggleBubbleVisibility();
+                  setOpen(false);
+                }}
+                className="inline-flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-cyan-50 hover:text-cyan-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-cyan-300"
+              >
+                {isBubbleVisible ? (
+                  <MessageCircleOff size={16} />
+                ) : (
+                  <MessageCircle size={16} />
+                )}
+                {isBubbleVisible
+                  ? t("navbar.userMenu.hideChatBubble")
+                  : t("navbar.userMenu.showChatBubble")}
+              </button>
+            </div>
+          )}
 
           <div className="border-t border-slate-200 p-2 dark:border-slate-700">
             {legalMenuItems.map((item) => {

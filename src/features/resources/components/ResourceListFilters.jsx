@@ -6,6 +6,7 @@ import { getResourceTypeLabel } from "../../../utils/resourceLabels";
 const RESOURCE_TYPES = [
   "property",
   "service",
+  "music",
   "vehicle",
   "experience",
   "venue",

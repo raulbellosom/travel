@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { PropertyWizard } from "../features/listings/components/wizard";
+import PropertyWizard from "../features/properties/wizard/PropertyWizard";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
-import { amenitiesService } from "../services/amenitiesService";
 import { getErrorMessage } from "../utils/errors";
-import { getInternalPropertyDetailRoute } from "../utils/internalRoutes";
+import {
+  INTERNAL_ROUTES,
+  getInternalPropertyDetailRoute,
+} from "../utils/internalRoutes";
 import { useToast } from "../hooks/useToast";
 import { X } from "lucide-react";
 
@@ -14,74 +16,30 @@ const CreateProperty = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [amenitiesLoading, setAmenitiesLoading] = useState(true);
-  const [amenities, setAmenities] = useState([]);
   const [error, setError] = useState("");
   const { showToast } = useToast();
 
-  useEffect(() => {
-    let mounted = true;
-    setAmenitiesLoading(true);
+  const handleSave = async (patch, _meta) => {
+    void _meta;
+    if (!user?.$id) return null;
 
-    amenitiesService
-      .listActive()
-      .then((items) => {
-        if (!mounted) return;
-        setAmenities(items || []);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setAmenities([]);
-        showToast({
-          type: "warning",
-          title: t("createPropertyPage.title"),
-          message: t(
-            "createPropertyPage.errors.amenitiesLoad",
-            "No se pudieron cargar las amenidades. Puedes continuar sin ellas.",
-          ),
-        });
-      })
-      .finally(() => {
-        if (!mounted) return;
-        setAmenitiesLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [showToast, t]);
-
-  const handleSubmit = async (values) => {
-    if (!user?.$id) return;
-    setLoading(true);
     setError("");
     showToast({
       type: "info",
       title: t("createPropertyPage.title"),
-      message: t(
-        "createPropertyPage.messages.saving",
-        "Guardando publicacion...",
-      ),
+      message: t("createPropertyPage.messages.saving", "Guardando publicacion..."),
       durationMs: 1800,
     });
+
     try {
-      const { amenityIds = [], imageFiles = [], ...propertyData } = values;
+      const { imageFiles = [], ...resourcePatch } = patch || {};
 
-      // Convert amenity IDs to slugs
-      const amenitySlugs = await amenitiesService.convertIdsToSlugs(amenityIds);
+      const created = await propertiesService.create(user.$id, resourcePatch);
 
-      // Create property with amenities array included
-      const created = await propertiesService.create(user.$id, {
-        ...propertyData,
-        amenities: amenitySlugs,
-      });
-
-      // Upload images if any
       if (Array.isArray(imageFiles) && imageFiles.length > 0) {
         try {
           await propertiesService.uploadPropertyImages(created.$id, imageFiles, {
-            title: propertyData.title,
+            title: resourcePatch.title,
             startingSortOrder: 0,
             existingFileIds: created.galleryImageIds || [],
           });
@@ -93,7 +51,7 @@ const CreateProperty = () => {
               uploadError,
               t(
                 "createPropertyPage.errors.imagesUpload",
-                "La propiedad se creo, pero no se pudieron subir las imagenes.",
+                "La publicacion se creo, pero no se pudieron subir las imagenes.",
               ),
             ),
             durationMs: 8000,
@@ -104,12 +62,11 @@ const CreateProperty = () => {
       showToast({
         type: "success",
         title: t("createPropertyPage.title"),
-        message: t(
-          "createPropertyPage.messages.saved",
-          "Publicacion creada correctamente.",
-        ),
+        message: t("createPropertyPage.messages.saved", "Publicacion creada correctamente."),
       });
+
       navigate(getInternalPropertyDetailRoute(created.$id), { replace: true });
+      return created;
     } catch (err) {
       const message = getErrorMessage(err, t("createPropertyPage.errors.create"));
       setError(message);
@@ -119,8 +76,7 @@ const CreateProperty = () => {
         message,
         durationMs: 7000,
       });
-    } finally {
-      setLoading(false);
+      throw err;
     }
   };
 
@@ -152,10 +108,9 @@ const CreateProperty = () => {
       ) : null}
 
       <PropertyWizard
-        loading={loading}
-        amenitiesOptions={amenities}
-        amenitiesLoading={amenitiesLoading}
-        onSubmit={handleSubmit}
+        mode="create"
+        onSave={handleSave}
+        onCancel={() => navigate(INTERNAL_ROUTES.myProperties)}
       />
     </section>
   );

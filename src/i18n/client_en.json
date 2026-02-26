@@ -149,7 +149,7 @@
     "servicesSection": {
       "badge": "SERVICES",
       "title": "Professional Services",
-      "subtitle": "Cleaning, chef, DJ, photography, catering and more at your reach."
+      "subtitle": "Cleaning, chef, photography, catering and more at your fingertips."
     },
     "experiencesSection": {
       "badge": "EXPERIENCES",
@@ -215,6 +215,11 @@
         "title": "Explore resources on map | Inmobo",
         "description": "Explore nearby resources by location, type and price on an interactive map."
       }
+    },
+    "musicSection": {
+      "badge": "MUSIC",
+      "title": "Live Music and DJ",
+      "subtitle": "Banda, mariachi, corridos tumbados, versatile and DJ acts for your events."
     }
   },
   "common": {
@@ -255,7 +260,8 @@
         "service": "Service",
         "vehicle": "Vehicle",
         "experience": "Experience",
-        "venue": "Venue"
+        "venue": "Venue",
+        "music": "Music"
       },
       "category": {
         "house": "House",
@@ -286,7 +292,42 @@
         "commercial_local": "Commercial Space",
         "studio": "Studio",
         "coworking": "Coworking",
-        "meeting_room": "Meeting Room"
+        "meeting_room": "Meeting Room",
+        "banda": "Banda",
+        "norteno": "Norteno",
+        "sierreno": "Sierreno",
+        "mariachi": "Mariachi",
+        "corridos": "Corridos",
+        "corridos_tumbados": "Corridos tumbados",
+        "corrido_mexicano": "Mexican corrido",
+        "regional_mexicano": "Regional mexicano",
+        "duranguense": "Duranguense",
+        "grupera": "Grupera",
+        "cumbia": "Cumbia",
+        "cumbia_sonidera": "Sonidera cumbia",
+        "cumbia_rebajada": "Rebajada cumbia",
+        "salsa": "Salsa",
+        "bachata": "Bachata",
+        "merengue": "Merengue",
+        "pop": "Pop",
+        "rock": "Rock",
+        "rock_urbano": "Urban rock",
+        "hip_hop": "Hip hop",
+        "rap": "Rap",
+        "reggaeton": "Reggaeton",
+        "urbano_latino": "Latin urban",
+        "electronica": "Electronic",
+        "techno": "Techno",
+        "trance": "Trance",
+        "jazz": "Jazz",
+        "blues": "Blues",
+        "boleros": "Boleros",
+        "trova": "Trova",
+        "instrumental": "Instrumental",
+        "versatil": "Versatile",
+        "son_jarocho": "Son jarocho",
+        "huapango": "Huapango",
+        "sonora": "Sonora"
       },
       "pricingModel": {
         "total": "Total price",
@@ -424,7 +465,8 @@
     "minAge": "Min age",
     "capacitySeated": "Seated",
     "capacityStanding": "Standing",
-    "hasStage": "Stage"
+    "hasStage": "Stage",
+    "bandMembers": "Band members"
   },
   "pricing": {
     "perNight": "per night",
@@ -490,7 +532,6 @@
       "vehicleMotorcycleDesc": "Motorcycles and scooters",
       "vehicleBoatDesc": "Boats and yachts",
       "serviceCleaningDesc": "Professional cleaning services",
-      "serviceDjDesc": "DJs for parties and events",
       "serviceChefDesc": "Private chefs",
       "servicePhotographyDesc": "Professional photographers",
       "serviceCateringDesc": "Food and banquet service",
@@ -509,7 +550,7 @@
       "vehicles": "Vehicles",
       "vehiclesDesc": "Cars, SUVs, motorcycles and more for rent or sale",
       "services": "Services",
-      "servicesDesc": "Cleaning, chef, DJ, photography and more",
+      "servicesDesc": "Cleaning, chef, photography and more",
       "experiences": "Experiences",
       "experiencesDesc": "Tours, workshops, adventures and wellness",
       "venues": "Venues",
@@ -521,9 +562,15 @@
       "mapExploreHomes": "Homes nearby",
       "mapExploreHomesDesc": "Properties and stays around your selected location",
       "mapExploreVehicles": "Vehicles nearby",
-      "mapExploreVehiclesDesc": "Cars and mobility options available around your area"
+      "mapExploreVehiclesDesc": "Cars and mobility options available around your area",
+      "musicDjDesc": "DJs for parties and events",
+      "musicBandaDesc": "Live banda groups for celebrations",
+      "musicMariachiDesc": "Traditional mariachi groups",
+      "musicCorridosDesc": "Corridos tumbados and regional acts",
+      "musicVersatilDesc": "Versatile sets for all types of events"
     },
-    "mapExplore": "Explore map"
+    "mapExplore": "Explore map",
+    "music": "Music"
   },
   "theme": {
     "light": "Light",

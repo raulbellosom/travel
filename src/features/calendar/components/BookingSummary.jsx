@@ -53,6 +53,7 @@ const CAPACITY_ICON = {
   experience: Users,
   venue: Building2,
   service: Users,
+  music: Users,
 };
 
 /** Capacity label key per resource type */
@@ -62,6 +63,7 @@ const CAPACITY_LABEL_KEY = {
   experience: "calendar.booking.persons",
   venue: "calendar.booking.attendees",
   service: "calendar.booking.persons",
+  music: "calendar.booking.persons",
 };
 
 /** Max capacity i18n key per resource type */
@@ -71,6 +73,7 @@ const MAX_CAPACITY_KEY = {
   experience: "calendar.booking.maxPersons",
   venue: "calendar.booking.capacity",
   service: "calendar.booking.maxPersons",
+  music: "calendar.booking.maxPersons",
 };
 
 /** Date-range time label keys per resource type */
@@ -165,11 +168,13 @@ export default function BookingSummary({
       break;
     case "service":
       maxCapacity =
-        Number(attrs.djMaxEventCapacity) ||
         Number(attrs.chefMaxDiners) ||
         Number(attrs.cateringMaxGuests) ||
         resource.maxGuests ||
         0;
+      break;
+    case "music":
+      maxCapacity = Number(attrs.musicMaxAudience) || resource.maxGuests || 0;
       break;
     default:
       maxCapacity = resource.maxGuests || resource.capacity || 0;

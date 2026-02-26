@@ -1727,59 +1727,6 @@ const PropertyDetail = () => {
                       { defaultValue: resourceBehavior.category },
                     )}
                   />
-                  {/* DJ */}
-                  {resourceBehavior.category === "dj" && (
-                    <>
-                      {attrs.djMusicGenre && (
-                        <StatCard
-                          icon={Music}
-                          label={t("client:resource.musicGenre", {
-                            defaultValue: "Género musical",
-                          })}
-                          value={t(
-                            `client:common.enums.djMusicGenre.${attrs.djMusicGenre}`,
-                            { defaultValue: attrs.djMusicGenre },
-                          )}
-                        />
-                      )}
-                      {attrs.djIncludesSound && (
-                        <StatCard
-                          icon={Volume2}
-                          label={t("client:resource.includesSound", {
-                            defaultValue: "Equipo de sonido",
-                          })}
-                          value={t("common.yes", "Sí")}
-                        />
-                      )}
-                      {attrs.djIncludesLighting && (
-                        <StatCard
-                          icon={Lightbulb}
-                          label={t("client:resource.includesLighting", {
-                            defaultValue: "Iluminación",
-                          })}
-                          value={t("common.yes", "Sí")}
-                        />
-                      )}
-                      {Number(attrs.djMaxEventCapacity) > 0 && (
-                        <StatCard
-                          icon={Users}
-                          label={t("client:resource.eventCapacity", {
-                            defaultValue: "Capacidad del evento",
-                          })}
-                          value={`${attrs.djMaxEventCapacity} ${t("client:resource.peopleSuffix", { defaultValue: "personas" })}`}
-                        />
-                      )}
-                      {attrs.djTravelsToVenue && (
-                        <StatCard
-                          icon={MapPin}
-                          label={t("client:resource.travelsToVenue", {
-                            defaultValue: "Va al lugar",
-                          })}
-                          value={t("common.yes", "Sí")}
-                        />
-                      )}
-                    </>
-                  )}
                   {/* Cleaning */}
                   {resourceBehavior.category === "cleaning" && (
                     <>
@@ -2038,7 +1985,84 @@ const PropertyDetail = () => {
                 </>
               )}
 
-              {/* ── Experience stats ── */}
+              {/* Music stats */}
+              {resourceBehavior.resourceType === "music" && (
+                <>
+                  <StatCard
+                    icon={Music}
+                    label={t("client:resource.type", { defaultValue: "Tipo" })}
+                    value={t(
+                      `client:common.enums.category.${resourceBehavior.category}`,
+                      { defaultValue: resourceBehavior.category },
+                    )}
+                  />
+                  {attrs.musicGenres && (
+                    <StatCard
+                      icon={Music}
+                      label={t("client:resource.musicGenre", {
+                        defaultValue: "Generos musicales",
+                      })}
+                      value={Array.isArray(attrs.musicGenres) ? attrs.musicGenres.join(", ") : String(attrs.musicGenres)}
+                    />
+                  )}
+                  {attrs.musicIncludesSound && (
+                    <StatCard
+                      icon={Volume2}
+                      label={t("client:resource.includesSound", {
+                        defaultValue: "Incluye sonido",
+                      })}
+                      value={t("common.yes", "S�")}
+                    />
+                  )}
+                  {attrs.musicIncludesLighting && (
+                    <StatCard
+                      icon={Lightbulb}
+                      label={t("client:resource.includesLighting", {
+                        defaultValue: "Incluye iluminacion",
+                      })}
+                      value={t("common.yes", "S�")}
+                    />
+                  )}
+                  {Number(attrs.musicBandMembers) > 0 && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:resource.bandMembers", {
+                        defaultValue: "Integrantes",
+                      })}
+                      value={attrs.musicBandMembers}
+                    />
+                  )}
+                  {Number(attrs.musicMaxAudience) > 0 && (
+                    <StatCard
+                      icon={Users}
+                      label={t("client:resource.eventCapacity", {
+                        defaultValue: "Capacidad del evento",
+                      })}
+                      value={`${attrs.musicMaxAudience} ${t("client:resource.peopleSuffix", { defaultValue: "personas" })}`}
+                    />
+                  )}
+                  {Number(attrs.musicSetDurationMinutes) > 0 && (
+                    <StatCard
+                      icon={Clock}
+                      label={t("client:resource.duration", {
+                        defaultValue: "Duracion",
+                      })}
+                      value={`${attrs.musicSetDurationMinutes} min`}
+                    />
+                  )}
+                  {attrs.musicTravelsToVenue && (
+                    <StatCard
+                      icon={MapPin}
+                      label={t("client:resource.travelsToVenue", {
+                        defaultValue: "Se traslada al lugar",
+                      })}
+                      value={t("common.yes", "S�")}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* Experience stats */}
               {resourceBehavior.resourceType === "experience" && (
                 <>
                   <StatCard

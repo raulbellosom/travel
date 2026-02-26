@@ -514,6 +514,8 @@
       "reservations": "Mis reservas",
       "reviews": "Mis reseñas",
       "conversations": "Mis conversaciones",
+      "hideChatBubble": "Ocultar burbuja de chat",
+      "showChatBubble": "Mostrar burbuja de chat",
       "password": "Cambiar contrasena",
       "privacy": "Aviso de privacidad",
       "terms": "Terminos y condiciones"
@@ -1691,10 +1693,11 @@
         "service": "Servicio",
         "venue": "Salon",
         "experience": "Experiencia",
-        "vehicle": "Vehiculo"
+        "vehicle": "Vehiculo",
+        "music": "Música"
       },
       "category": {
-        "house": "Casa",
+        "house": "House",
         "apartment": "Departamento",
         "land": "Terreno",
         "commercial": "Comercial",
@@ -1722,7 +1725,42 @@
         "commercialLocal": "Local comercial",
         "studio": "Estudio",
         "coworking": "Coworking",
-        "meetingRoom": "Sala de juntas"
+        "meetingRoom": "Sala de juntas",
+        "banda": "Banda",
+        "norteno": "Norteño",
+        "sierreno": "Sierreño",
+        "mariachi": "Mariachi",
+        "corridos": "Corridos",
+        "corridos_tumbados": "Corridos tumbados",
+        "corrido_mexicano": "Corrido mexicano",
+        "regional_mexicano": "Regional mexicano",
+        "duranguense": "Duranguense",
+        "grupera": "Grupera",
+        "cumbia": "Cumbia",
+        "cumbia_sonidera": "Cumbia sonidera",
+        "cumbia_rebajada": "Cumbia rebajada",
+        "salsa": "Salsa",
+        "bachata": "Bachata",
+        "merengue": "Merengue",
+        "pop": "Pop",
+        "rock": "Rock",
+        "rock_urbano": "Rock urbano",
+        "hip_hop": "Hip hop",
+        "rap": "Rap",
+        "reggaeton": "Reggaetón",
+        "urbano_latino": "Urbano latino",
+        "electronica": "Electrónica",
+        "techno": "Techno",
+        "trance": "Trance",
+        "jazz": "Jazz",
+        "blues": "Blues",
+        "boleros": "Boleros",
+        "trova": "Trova",
+        "instrumental": "Instrumental",
+        "versatil": "Versátil",
+        "son_jarocho": "Son jarocho",
+        "huapango": "Huapango",
+        "sonora": "Sonora"
       },
       "pricingModel": {
         "total": "Precio fijo",
@@ -2039,7 +2077,15 @@
     "close": "Cerrar modal"
   },
   "dateRangePicker": {
-    "dayHeaders": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+    "dayHeaders": [
+      "Do",
+      "Lu",
+      "Ma",
+      "Mi",
+      "Ju",
+      "Vi",
+      "Sa"
+    ],
     "placeholders": {
       "single": "Selecciona fecha",
       "range": "Selecciona fechas"
@@ -2297,7 +2343,7 @@
     "title": "Recibo de reserva",
     "subtitle": "Consulta la informacion oficial de tu reserva confirmada.",
     "loading": "Buscando recibo...",
-    "offlineBanner": "Mostrando version guardada \u2014 parece que no tienes conexion.",
+    "offlineBanner": "Mostrando version guardada — parece que no tienes conexion.",
     "breadcrumb": {
       "home": "Inicio",
       "myReservations": "Mis reservas",
@@ -2610,7 +2656,8 @@
   "chat": {
     "bubble": {
       "open": "Abrir chat",
-      "close": "Cerrar chat"
+      "close": "Cerrar chat",
+      "dismiss": "Ocultar burbuja de chat"
     },
     "actions": {
       "close": "Cerrar",
@@ -2739,7 +2786,7 @@
       "hour": "hora",
       "hours": "horas",
       "person": "persona",
-      "persons": "personas",
+      "persons": "Personas",
       "event": "evento",
       "events": "eventos",
       "unit": "unidad",
@@ -2750,7 +2797,6 @@
       "capacity": "Capacidad: {{count}} personas",
       "guests": "Huéspedes",
       "passengers": "Pasajeros",
-      "persons": "Personas",
       "attendees": "Asistentes",
       "guestsSelectorLabel": "{{label}}",
       "fees": "Cargos por servicio",
@@ -2899,6 +2945,727 @@
     "note": {
       "title": "Backend enforcement requerido",
       "body": "Los toggles de este panel deben estar reflejados en Functions con bloqueo 403 MODULE_DISABLED."
+    }
+  },
+  "wizard": {
+    "title": "Crear publicación",
+    "steps": {
+      "publishWhat": {
+        "title": "¿Qué vas a publicar?",
+        "description": "Elige el tipo de publicación para mostrarte las preguntas correctas."
+      },
+      "howOffer": {
+        "title": "¿Cómo lo vas a ofrecer?",
+        "description": "Selecciona la forma en la que te pueden contratar o adquirir."
+      },
+      "describe": {
+        "title": "Describe tu publicación",
+        "description": "Agrega un título claro, una buena descripción y contenido visual."
+      },
+      "details": {
+        "title": "Detalles importantes",
+        "description": "Completa la información clave para que la gente entienda lo que ofreces."
+      },
+      "conditions": {
+        "title": "Condiciones de contratación",
+        "description": "Define mínimos, máximos y horarios para evitar malentendidos."
+      },
+      "price": {
+        "title": "Precio",
+        "description": "Define cómo cobras y el monto."
+      },
+      "location": {
+        "title": "Ubicación",
+        "description": "Indica dónde está disponible o dónde se realiza."
+      },
+      "review": {
+        "title": "Revisión final",
+        "description": "Revisa que todo se vea bien antes de guardar."
+      }
+    },
+    "actions": {
+      "back": "Volver",
+      "next": "Continuar",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "selectPlaceholder": "Selecciona una opción"
+    },
+    "validation": {
+      "required": "Este campo es obligatorio.",
+      "minLength": "Escribe al menos {{count}} caracteres.",
+      "number": "Escribe un número válido.",
+      "min": "Debe ser mayor o igual a {{value}}.",
+      "max": "Debe ser menor o igual a {{value}}.",
+      "time": "Escribe una hora válida (HH:MM).",
+      "url": "Escribe un enlace válido.",
+      "minGreaterThanMax": "El mínimo no puede ser mayor que el máximo."
+    },
+    "errors": {
+      "missingProfile": "No se encontró la configuración para este tipo de publicación.",
+      "unsupportedFieldType": "Este tipo de campo aún no está soportado: {{type}}"
+    },
+    "images": {
+      "placeholder": "Aquí podrás subir fotos de tu publicación.",
+      "placeholderHelp": "En la siguiente iteración agregaremos vista previa, orden y foto principal."
+    },
+    "countries": {
+      "MX": "México"
+    },
+    "units": {
+      "m2": "m²",
+      "months": "meses",
+      "hours": "horas",
+      "minutes": "min",
+      "years": "años"
+    },
+    "pricing": {
+      "fixed_total": "Precio fijo",
+      "per_m2": "Por metro cuadrado",
+      "per_month": "Por mes",
+      "per_night": "Por noche",
+      "per_day": "Por día",
+      "per_hour": "Por hora",
+      "per_person": "Por persona",
+      "per_event": "Por evento"
+    },
+    "categories": {
+      "property": {
+        "house": "Casa",
+        "apartment": "Departamento",
+        "land": "Terreno",
+        "commercial": "Local comercial",
+        "office": "Oficina",
+        "warehouse": "Bodega"
+      },
+      "service": {
+        "cleaning": "Limpieza",
+        "chef": "Chef",
+        "photography": "Fotografía",
+        "catering": "Catering",
+        "maintenance": "Mantenimiento"
+      },
+      "vehicle": {
+        "car": "Auto",
+        "suv": "SUV",
+        "pickup": "Pickup",
+        "van": "Van",
+        "motorcycle": "Motocicleta",
+        "boat": "Lancha/Barco"
+      },
+      "experience": {
+        "tour": "Tour",
+        "class": "Clase",
+        "workshop": "Taller",
+        "adventure": "Aventura",
+        "wellness": "Bienestar",
+        "gastronomy": "Gastronomía"
+      },
+      "venue": {
+        "event_hall": "Salón de eventos",
+        "commercial_local": "Local comercial",
+        "studio": "Estudio",
+        "coworking": "Coworking",
+        "meeting_room": "Sala de juntas"
+      },
+      "music": {
+        "dj": "DJ",
+        "banda": "Banda",
+        "norteno": "Norteño",
+        "sierreno": "Sierreño",
+        "mariachi": "Mariachi",
+        "corridos": "Corridos",
+        "corridos_tumbados": "Corridos tumbados",
+        "corrido_mexicano": "Corrido mexicano",
+        "regional_mexicano": "Regional mexicano",
+        "duranguense": "Duranguense",
+        "grupera": "Grupera",
+        "cumbia": "Cumbia",
+        "cumbia_sonidera": "Cumbia sonidera",
+        "cumbia_rebajada": "Cumbia rebajada",
+        "salsa": "Salsa",
+        "bachata": "Bachata",
+        "merengue": "Merengue",
+        "pop": "Pop",
+        "rock": "Rock",
+        "rock_urbano": "Rock urbano",
+        "hip_hop": "Hip hop",
+        "rap": "Rap",
+        "reggaeton": "Reggaetón",
+        "urbano_latino": "Urbano latino",
+        "electronica": "Electrónica",
+        "house": "House",
+        "techno": "Techno",
+        "trance": "Trance",
+        "jazz": "Jazz",
+        "blues": "Blues",
+        "boleros": "Boleros",
+        "trova": "Trova",
+        "instrumental": "Instrumental",
+        "versatil": "Versátil",
+        "son_jarocho": "Son jarocho",
+        "huapango": "Huapango",
+        "sonora": "Sonora"
+      }
+    },
+    "offerings": {
+      "property": {
+        "sell": {
+          "label": "Venta",
+          "help": "Ideal si quieres vender el inmueble."
+        },
+        "rent_long_term": {
+          "label": "Renta por meses",
+          "help": "Para contratos de renta a mediano o largo plazo."
+        },
+        "rent_short_term": {
+          "label": "Renta por días/noches",
+          "help": "Renta vacacional o por estancias cortas."
+        }
+      },
+      "service": {
+        "per_event_or_day": {
+          "label": "Por evento / por día",
+          "help": "Te contratan para una fecha o evento."
+        },
+        "per_hour": {
+          "label": "Por horas",
+          "help": "Te contratan por bloques de tiempo."
+        }
+      },
+      "vehicle": {
+        "sell": {
+          "label": "Venta",
+          "help": "Vender el vehículo."
+        },
+        "rent_long_term": {
+          "label": "Renta por meses",
+          "help": "Renta a mediano o largo plazo."
+        },
+        "rent_short_term": {
+          "label": "Renta por días",
+          "help": "Renta por periodos cortos (por día)."
+        }
+      },
+      "experience": {
+        "per_event_or_day": {
+          "label": "Por fecha / por día",
+          "help": "Se reserva para una fecha o día."
+        },
+        "per_hour": {
+          "label": "Por horas",
+          "help": "Se reserva por bloques de tiempo."
+        }
+      },
+      "venue": {
+        "rent_short_term": {
+          "label": "Renta por día",
+          "help": "Renta el espacio por día."
+        },
+        "rent_hourly": {
+          "label": "Renta por horas",
+          "help": "Renta el espacio por bloques de tiempo."
+        }
+      },
+      "music": {
+        "per_event_or_day": {
+          "label": "Por evento / por d?a",
+          "help": "Te contratan para una fecha o evento."
+        },
+        "per_hour": {
+          "label": "Por horas",
+          "help": "Te contratan por bloques de tiempo."
+        }
+      }
+    },
+    "fields": {
+      "title": {
+        "label": "Título",
+        "help": "Ejemplo: Casa amplia cerca de la playa, DJ para XV años, Tour en lancha."
+      },
+      "description": {
+        "label": "Descripción",
+        "help": "Describe lo que ofreces, qué incluye y cualquier detalle importante."
+      },
+      "slugPublic": {
+        "label": "Enlace (opcional)",
+        "help": "Personaliza el enlace de tu publicación. Si lo dejas vacío, se generará automáticamente."
+      },
+      "images": {
+        "label": "Fotos",
+        "help": "Sube fotos claras y bien iluminadas."
+      },
+      "videoUrl": {
+        "label": "Video (opcional)",
+        "help": "Pega un enlace a un video (YouTube, TikTok, etc.)."
+      },
+      "virtualTourUrl": {
+        "label": "Recorrido virtual (opcional)",
+        "help": "Pega un enlace a un tour virtual (si tienes)."
+      },
+      "pricingChoice": {
+        "label": "¿Cómo quieres cobrar?",
+        "help": "Elige la forma que mejor represente tu precio."
+      },
+      "price": {
+        "label": "Monto",
+        "help": "Escribe el precio base."
+      },
+      "currency": {
+        "label": "Moneda",
+        "help": ""
+      },
+      "priceNegotiable": {
+        "label": "Precio negociable",
+        "help": "Actívalo si estás abierto a negociar el precio."
+      },
+      "location": {
+        "country": {
+          "label": "País"
+        },
+        "state": {
+          "label": "Estado"
+        },
+        "city": {
+          "label": "Ciudad"
+        },
+        "streetAddress": {
+          "label": "Dirección (opcional)"
+        },
+        "neighborhood": {
+          "label": "Colonia (opcional)"
+        },
+        "postalCode": {
+          "label": "Código postal (opcional)"
+        },
+        "latitude": {
+          "label": "Latitud (opcional)"
+        },
+        "longitude": {
+          "label": "Longitud (opcional)"
+        }
+      },
+      "property": {
+        "category": {
+          "label": "Tipo de inmueble",
+          "help": "Elige el tipo que mejor describe tu inmueble."
+        },
+        "offering": {
+          "label": "Tipo de operación",
+          "help": "Elige si es venta o renta."
+        },
+        "bedrooms": {
+          "label": "Recámaras"
+        },
+        "bathrooms": {
+          "label": "Baños"
+        },
+        "parkingSpaces": {
+          "label": "Estacionamientos"
+        },
+        "totalArea": {
+          "label": "Superficie total",
+          "help": "Metros cuadrados del terreno o superficie total."
+        },
+        "builtArea": {
+          "label": "Superficie construida"
+        },
+        "floors": {
+          "label": "Niveles"
+        },
+        "yearBuilt": {
+          "label": "Año de construcción"
+        },
+        "furnished": {
+          "label": "Amueblado",
+          "help": "Indica si incluye muebles."
+        },
+        "petsAllowed": {
+          "label": "Se aceptan mascotas",
+          "help": "Actívalo si permites mascotas."
+        },
+        "minimumContractDuration": {
+          "label": "Duración mínima del contrato",
+          "help": "¿Cuántos meses mínimo?"
+        },
+        "maxGuests": {
+          "label": "Máximo de huéspedes"
+        },
+        "minStayNights": {
+          "label": "Noches mínimas"
+        },
+        "maxStayNights": {
+          "label": "Noches máximas"
+        },
+        "checkInTime": {
+          "label": "Hora de entrada (check-in)"
+        },
+        "checkOutTime": {
+          "label": "Hora de salida (check-out)"
+        }
+      },
+      "service": {
+        "category": {
+          "label": "Tipo de servicio",
+          "help": "Elige el servicio que ofreces."
+        },
+        "offering": {
+          "label": "Forma de contratación",
+          "help": "Elige cómo te contratan normalmente."
+        },
+        "bookingMinUnits": {
+          "hours": {
+            "label": "Horas mínimas",
+            "help": "¿Cuántas horas mínimo te pueden contratar?"
+          },
+          "people": {
+            "label": "Personas mínimas",
+            "help": "¿Para cuántas personas mínimo es tu servicio?"
+          },
+          "units": {
+            "label": "Mínimo",
+            "help": "Define el mínimo de contratación."
+          }
+        },
+        "bookingMaxUnits": {
+          "hours": {
+            "label": "Horas máximas",
+            "help": "¿Cuántas horas máximo?"
+          },
+          "people": {
+            "label": "Personas máximas",
+            "help": "¿Para cuántas personas máximo?"
+          },
+          "units": {
+            "label": "Máximo",
+            "help": "Define el máximo de contratación."
+          }
+        },
+        "availabilityStartTime": {
+          "label": "Disponible desde",
+          "help": "Hora más temprana en la que puedes iniciar."
+        },
+        "availabilityEndTime": {
+          "label": "Disponible hasta",
+          "help": "Hora más tarde en la que puedes terminar."
+        },
+        "slotDurationMinutes": {
+          "label": "Duración por bloque",
+          "help": "Ejemplo: 60 minutos por bloque."
+        },
+        "slotBufferMinutes": {
+          "label": "Tiempo entre bloques",
+          "help": "Ejemplo: 15 minutos entre reservas."
+        },
+        "chefCuisineType": {
+          "label": "Tipo de cocina"
+        },
+        "chefMaxDiners": {
+          "label": "Máximo de comensales"
+        },
+        "chefIncludesIngredients": {
+          "label": "Incluye ingredientes"
+        },
+        "chefIncludesTableware": {
+          "label": "Incluye vajilla"
+        },
+        "chefTravelsToLocation": {
+          "label": "Voy a domicilio"
+        },
+        "photoSpecialty": {
+          "label": "Especialidad"
+        },
+        "photoEditedCount": {
+          "label": "Fotos editadas (aprox.)"
+        },
+        "photoIncludesVideo": {
+          "label": "Incluye video"
+        },
+        "photoTravelsToLocation": {
+          "label": "Voy a domicilio"
+        },
+        "cateringServiceType": {
+          "label": "Tipo de catering"
+        },
+        "cateringMinGuests": {
+          "label": "Mínimo de invitados"
+        },
+        "cateringMaxGuests": {
+          "label": "Máximo de invitados"
+        },
+        "cateringIncludesWaiters": {
+          "label": "Incluye meseros"
+        },
+        "cateringIncludesSetup": {
+          "label": "Incluye montaje"
+        },
+        "cateringIncludesTableware": {
+          "label": "Incluye vajilla"
+        },
+        "cleaningType": {
+          "label": "Tipo de limpieza"
+        },
+        "cleaningMaxArea": {
+          "label": "Área máxima"
+        },
+        "cleaningStaffCount": {
+          "label": "Cantidad de personal"
+        },
+        "cleaningIncludesSupplies": {
+          "label": "Incluye insumos"
+        },
+        "maintenanceSpecialty": {
+          "label": "Especialidad"
+        },
+        "maintenanceIncludesMaterials": {
+          "label": "Incluye materiales"
+        },
+        "maintenanceEmergencyService": {
+          "label": "Servicio de emergencia"
+        },
+        "maintenanceWarranty": {
+          "label": "Ofrece garantía"
+        },
+        "maintenanceResponseTimeHours": {
+          "label": "Tiempo de respuesta (hrs)"
+        }
+      },
+      "vehicle": {
+        "category": {
+          "label": "Tipo de vehículo",
+          "help": "Elige el tipo de vehículo."
+        },
+        "offering": {
+          "label": "Forma de operación",
+          "help": "Venta o renta."
+        },
+        "vehicleModelYear": {
+          "label": "Año"
+        },
+        "vehicleSeats": {
+          "label": "Asientos"
+        },
+        "vehicleDoors": {
+          "label": "Puertas"
+        },
+        "vehicleTransmission": {
+          "label": "Transmisión"
+        },
+        "vehicleFuelType": {
+          "label": "Combustible"
+        },
+        "vehicleLuggageCapacity": {
+          "label": "Capacidad de equipaje"
+        }
+      },
+      "experience": {
+        "category": {
+          "label": "Tipo de experiencia",
+          "help": "Elige la experiencia que ofreces."
+        },
+        "offering": {
+          "label": "Forma de reserva",
+          "help": "Elige cómo se reserva normalmente."
+        },
+        "experienceDurationMinutes": {
+          "label": "Duración",
+          "help": "Aproximada, en minutos."
+        },
+        "experienceMinParticipants": {
+          "label": "Participantes mínimos"
+        },
+        "experienceMaxParticipants": {
+          "label": "Participantes máximos"
+        },
+        "experienceDifficulty": {
+          "label": "Dificultad"
+        },
+        "experienceIncludesEquipment": {
+          "label": "Incluye equipo"
+        },
+        "experienceMinAge": {
+          "label": "Edad mínima"
+        },
+        "bookingMinUnits": {
+          "people": {
+            "label": "Personas mínimas",
+            "help": "¿Cuántas personas mínimo pueden reservar?"
+          }
+        },
+        "bookingMaxUnits": {
+          "people": {
+            "label": "Personas máximas",
+            "help": "¿Cuántas personas máximo?"
+          }
+        },
+        "availabilityStartTime": {
+          "label": "Disponible desde",
+          "help": "Hora más temprana para iniciar."
+        },
+        "availabilityEndTime": {
+          "label": "Disponible hasta",
+          "help": "Hora más tarde para terminar."
+        },
+        "slotDurationMinutes": {
+          "label": "Duración por bloque",
+          "help": "Ejemplo: 60 minutos."
+        },
+        "slotBufferMinutes": {
+          "label": "Tiempo entre bloques",
+          "help": "Ejemplo: 15 minutos."
+        }
+      },
+      "venue": {
+        "category": {
+          "label": "Tipo de espacio",
+          "help": "Elige el tipo de espacio."
+        },
+        "offering": {
+          "label": "Tipo de renta",
+          "help": "Renta por día o por horas."
+        },
+        "venueCapacitySeated": {
+          "label": "Capacidad sentados"
+        },
+        "venueCapacityStanding": {
+          "label": "Capacidad de pie"
+        },
+        "venueHasStage": {
+          "label": "Tiene escenario"
+        },
+        "venueOpeningTime": {
+          "label": "Hora de apertura"
+        },
+        "venueClosingTime": {
+          "label": "Hora de cierre"
+        },
+        "availabilityStartTime": {
+          "label": "Disponible desde",
+          "help": "Hora más temprana."
+        },
+        "availabilityEndTime": {
+          "label": "Disponible hasta",
+          "help": "Hora más tarde."
+        },
+        "bookingMinUnits": {
+          "hours": {
+            "label": "Horas mínimas",
+            "help": "¿Cuántas horas mínimo se puede rentar?"
+          }
+        },
+        "bookingMaxUnits": {
+          "hours": {
+            "label": "Horas máximas",
+            "help": "¿Cuántas horas máximo?"
+          }
+        },
+        "slotDurationMinutes": {
+          "label": "Duración por bloque",
+          "help": "Ejemplo: 60 minutos."
+        },
+        "slotBufferMinutes": {
+          "label": "Tiempo entre bloques",
+          "help": "Ejemplo: 15 minutos."
+        }
+      },
+      "music": {
+        "category": {
+          "label": "Tipo de música",
+          "help": "Elige el g?nero o formato musical principal."
+        },
+        "offering": {
+          "label": "Forma de contrataci?n",
+          "help": "Define si trabajas por evento/d?a o por horas."
+        },
+        "musicGenres": {
+          "label": "G?neros musicales",
+          "help": "Puedes separar varios géneros con comas."
+        },
+        "musicBandMembers": {
+          "label": "Integrantes del grupo"
+        },
+        "musicSetDurationMinutes": {
+          "label": "Duraci?n del set"
+        },
+        "musicIncludesSound": {
+          "label": "Incluye sonido"
+        },
+        "musicIncludesLighting": {
+          "label": "Incluye iluminación"
+        },
+        "musicMaxAudience": {
+          "label": "Audiencia m?xima"
+        },
+        "musicTravelsToVenue": {
+          "label": "Se traslada al lugar"
+        },
+        "musicRepertoireNotes": {
+          "label": "Notas de repertorio"
+        },
+        "bookingMinUnits": {
+          "hours": {
+            "label": "Horas m?nimas",
+            "help": "¿Cuántas horas mínimo te pueden contratar?"
+          }
+        },
+        "bookingMaxUnits": {
+          "hours": {
+            "label": "Horas m?ximas",
+            "help": "¿Cuántas horas máximo te pueden contratar?"
+          }
+        },
+        "availabilityStartTime": {
+          "label": "Disponible desde",
+          "help": "Hora m?s temprana en la que puedes iniciar."
+        },
+        "availabilityEndTime": {
+          "label": "Disponible hasta",
+          "help": "Hora m?s tarde en la que puedes terminar."
+        },
+        "slotDurationMinutes": {
+          "label": "Duraci?n por bloque",
+          "help": "Duraci?n de cada bloque en minutos."
+        },
+        "slotBufferMinutes": {
+          "label": "Buffer entre bloques",
+          "help": "Tiempo de preparaci?n entre bloques."
+        }
+      }
+    },
+    "options": {
+      "furnished": {
+        "unspecified": "No especificado",
+        "unfurnished": "Sin amueblar",
+        "semi_furnished": "Semi amueblado",
+        "furnished": "Amueblado"
+      },
+      "vehicleTransmission": {
+        "manual": "Manual",
+        "automatic": "Automática",
+        "cvt": "CVT",
+        "unspecified": "No especificado"
+      },
+      "vehicleFuelType": {
+        "gasoline": "Gasolina",
+        "diesel": "Diésel",
+        "hybrid": "Híbrido",
+        "electric": "Eléctrico",
+        "unspecified": "No especificado"
+      },
+      "vehicleLuggageCapacity": {
+        "small": "Chica",
+        "medium": "Mediana",
+        "large": "Grande",
+        "unspecified": "No especificado"
+      },
+      "experienceDifficulty": {
+        "easy": "Fácil",
+        "medium": "Intermedia",
+        "hard": "Difícil",
+        "unspecified": "No especificado"
+      }
+    },
+    "resourceTypes": {
+      "music": "Música"
     }
   }
 }
