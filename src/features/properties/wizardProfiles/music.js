@@ -96,11 +96,31 @@ const GENERIC_BOOKING_CONDITION_KEYS = [
   "availabilityEndTime",
 ];
 
-function getAllowedPricingChoiceIds({ commercialMode }) {
-  if (commercialMode === "rent_hourly") {
-    return ["per_hour", "per_event", "fixed_total"];
+function inferPricingChoiceId({ commercialMode, pricingModel }) {
+  const defaultByMode =
+    commercialMode === "rent_hourly"
+      ? "per_hour"
+      : commercialMode === "rent_short_term"
+        ? "per_event"
+        : "fixed_total";
+
+  const allowedByMode = {
+    rent_hourly: new Set(["fixed_total", "per_hour", "per_person", "per_event"]),
+    rent_short_term: new Set(["fixed_total", "per_day", "per_person", "per_event"]),
+  };
+
+  const byExistingModel = Object.entries(PRICING_CHOICES).find(
+    ([, choice]) => choice.schemaPricingModel === pricingModel,
+  );
+  const existingChoiceId = byExistingModel?.[0];
+  if (existingChoiceId) {
+    if (!commercialMode) return existingChoiceId;
+    if (allowedByMode[commercialMode]?.has(existingChoiceId)) {
+      return existingChoiceId;
+    }
   }
-  return ["per_day", "per_event", "fixed_total"];
+
+  return defaultByMode;
 }
 
 function getNarrativeSteps({ t }) {
@@ -360,24 +380,7 @@ function getFieldsForStep({ t, context, stepId }) {
   }
 
   if (stepId === "price") {
-    const allowedChoiceIds = getAllowedPricingChoiceIds({ commercialMode });
-    const options = allowedChoiceIds
-      .map((id) => PRICING_CHOICES[id])
-      .filter(Boolean)
-      .map((choice, index) => ({
-        id: allowedChoiceIds[index],
-        label: t(choice.labelKey),
-      }));
-
     return [
-      {
-        key: "pricingChoiceId",
-        type: "select",
-        labelKey: "wizard.fields.pricingChoice.label",
-        helpKey: "wizard.fields.pricingChoice.help",
-        options,
-        required: true,
-      },
       {
         key: "price",
         type: "currencyAmount",
@@ -565,8 +568,18 @@ function toSchemaPatch({ formState, context }) {
     patch.priceNegotiable = Boolean(formState.priceNegotiable);
   }
 
-  const choice = PRICING_CHOICES[formState?.pricingChoiceId];
-  if (choice?.schemaPricingModel) patch.pricingModel = choice.schemaPricingModel;
+  const resolvedPricingChoiceId =
+    formState?.pricingChoiceId ||
+    inferPricingChoiceId({
+      commercialMode: patch.commercialMode || context?.commercialMode,
+      pricingModel: formState?.pricingModel,
+    });
+  const choice = PRICING_CHOICES[resolvedPricingChoiceId];
+  if (choice?.schemaPricingModel) {
+    patch.pricingModel = choice.schemaPricingModel;
+  } else if (formState?.pricingModel) {
+    patch.pricingModel = formState.pricingModel;
+  }
 
   const rawAttributes = { ...(formState?.attributes || {}) };
   const sanitized = sanitizeAttributes({ attributes: rawAttributes });

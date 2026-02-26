@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Minus, Plus } from "lucide-react";
 
@@ -39,7 +39,7 @@ const NumberInput = React.forwardRef(
     ref
   ) => {
     const [focused, setFocused] = useState(false);
-    const [internalValue, setInternalValue] = useState(value || "");
+    const [inputValue, setInputValue] = useState("");
 
     // Generate unique ID if not provided
     const inputId =
@@ -50,48 +50,61 @@ const NumberInput = React.forwardRef(
     // Determine state
     const hasError = Boolean(error);
     const hasSuccess = Boolean(success) && !hasError;
-    const hasValue = Boolean(internalValue || value);
+    const parseNumber = (rawValue) => {
+      if (
+        rawValue === "" ||
+        rawValue === null ||
+        rawValue === undefined ||
+        rawValue === "-" ||
+        rawValue === "." ||
+        rawValue === "-." ||
+        rawValue === "," ||
+        rawValue === "-,"
+      ) {
+        return null;
+      }
 
-    // Parse numeric value
-    const numericValue = () => {
-      const val = value !== undefined ? value : internalValue;
-      const num = parseFloat(val);
-      return isNaN(num) ? 0 : num;
+      const normalized = String(rawValue).replace(",", ".");
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : null;
     };
 
-    // Format display value
-    const formatValue = (val) => {
-      if (val === "" || val === undefined) return "";
-      const num = parseFloat(val);
-      if (isNaN(num)) return "";
-      return precision > 0 ? num.toFixed(precision) : num.toString();
+    const formatValue = (rawValue) => {
+      const parsed = parseNumber(rawValue);
+      if (parsed === null) return "";
+      return precision > 0 ? parsed.toFixed(precision) : String(parsed);
     };
+
+    useEffect(() => {
+      if (focused) return;
+      setInputValue(formatValue(value));
+    }, [value, precision, focused]);
 
     // Handle input change
     const handleChange = (e) => {
       const newValue = e.target.value;
 
       // Allow empty value or valid number patterns
-      if (newValue === "" || /^-?\d*\.?\d*$/.test(newValue)) {
-        setInternalValue(newValue);
-        onChange?.(newValue);
+      if (newValue === "" || /^-?\d*(?:[.,]\d*)?$/.test(newValue)) {
+        setInputValue(newValue);
+        onChange?.(newValue.replace(",", "."));
       }
     };
 
     // Handle stepper buttons
     const handleIncrement = () => {
-      const current = numericValue();
+      const current = parseNumber(inputValue) ?? Math.max(Number(min) || 0, 0);
       const newValue = Math.min(current + step, max);
       const formatted = formatValue(newValue);
-      setInternalValue(formatted);
+      setInputValue(formatted);
       onChange?.(formatted);
     };
 
     const handleDecrement = () => {
-      const current = numericValue();
+      const current = parseNumber(inputValue) ?? Math.max(Number(min) || 0, 0);
       const newValue = Math.max(current - step, min);
       const formatted = formatValue(newValue);
-      setInternalValue(formatted);
+      setInputValue(formatted);
       onChange?.(formatted);
     };
 
@@ -103,14 +116,19 @@ const NumberInput = React.forwardRef(
 
     const handleBlur = (e) => {
       setFocused(false);
-      // Format value on blur
-      const num = numericValue();
-      if (!isNaN(num)) {
-        const clamped = Math.max(min, Math.min(max, num));
-        const formatted = formatValue(clamped);
-        setInternalValue(formatted);
-        onChange?.(formatted);
+
+      const parsed = parseNumber(inputValue);
+      if (parsed === null) {
+        setInputValue("");
+        onChange?.("");
+        onBlur?.(e);
+        return;
       }
+
+      const clamped = Math.max(min, Math.min(max, parsed));
+      const formatted = formatValue(clamped);
+      setInputValue(formatted);
+      onChange?.(formatted);
       onBlur?.(e);
     };
 
@@ -212,7 +230,12 @@ const NumberInput = React.forwardRef(
       showStepper ? "pl-10 pr-10" : "", // Add padding for integrated buttons
     ].join(" ");
 
-    const currentValue = numericValue();
+    const currentValue = useMemo(() => {
+      const parsed = parseNumber(inputValue);
+      if (parsed !== null) return parsed;
+      return Math.max(Number(min) || 0, 0);
+    }, [inputValue, min]);
+
     const canIncrement = currentValue < max && !disabled && !readOnly;
     const canDecrement = currentValue > min && !disabled && !readOnly;
 
@@ -237,7 +260,7 @@ const NumberInput = React.forwardRef(
             name={name}
             type="text"
             inputMode="decimal"
-            value={formatValue(value !== undefined ? value : internalValue)}
+            value={inputValue}
             onChange={handleChange}
             onFocus={handleFocus}
             onBlur={handleBlur}

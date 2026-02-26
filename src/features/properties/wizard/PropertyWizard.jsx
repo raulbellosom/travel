@@ -222,13 +222,33 @@ export default function PropertyWizard({
     emitHaptic(6);
   }
 
+  function clearFieldErrors(fieldKey) {
+    const currentErrors = selectors.stepErrors(state);
+    if (!currentErrors || Object.keys(currentErrors).length === 0) return;
+
+    const nextErrors = Object.fromEntries(
+      Object.entries(currentErrors).filter(
+        ([errorKey]) => !errorKey.endsWith(`.${fieldKey}`),
+      ),
+    );
+
+    if (Object.keys(nextErrors).length !== Object.keys(currentErrors).length) {
+      dispatch(actions.setStepErrors({ errors: nextErrors }));
+    }
+  }
+
   function handleFieldChange(key, value) {
+    clearFieldErrors(key);
+
     if (key === "resourceType") {
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "category", value: "" }));
       dispatch(actions.setField({ key: "offeringId", value: "" }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
       dispatch(actions.setField({ key: "attributes", value: {} }));
+      clearFieldErrors("category");
+      clearFieldErrors("offeringId");
+      clearFieldErrors("pricingChoiceId");
       dispatch(
         actions.setContext({
           context: {
@@ -249,6 +269,8 @@ export default function PropertyWizard({
       dispatch(actions.setField({ key: "offeringId", value: "" }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
       dispatch(actions.setField({ key: "attributes", value: {} }));
+      clearFieldErrors("offeringId");
+      clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         category: value,
@@ -263,6 +285,7 @@ export default function PropertyWizard({
     if (key === "offeringId") {
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
+      clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         offeringId: value,

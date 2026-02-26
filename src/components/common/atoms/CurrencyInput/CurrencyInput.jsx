@@ -37,7 +37,7 @@ const CurrencyInput = React.forwardRef(
     ref
   ) => {
     const [focused, setFocused] = useState(false);
-    const [internalValue, setInternalValue] = useState(value || "");
+    const [internalValue, setInternalValue] = useState(value ?? "");
     const [displayValue, setDisplayValue] = useState("");
 
     // Generate unique ID if not provided
@@ -49,8 +49,6 @@ const CurrencyInput = React.forwardRef(
     // Determine state
     const hasError = Boolean(error);
     const hasSuccess = Boolean(success) && !hasError;
-    const hasValue = Boolean(internalValue || value);
-
     // Currency formatter
     const formatter = new Intl.NumberFormat(locale, {
       style: "currency",
@@ -61,32 +59,45 @@ const CurrencyInput = React.forwardRef(
 
     // Parse numeric value from formatted string
     const parseValue = (formattedValue) => {
-      if (!formattedValue) return 0;
+      if (formattedValue === "" || formattedValue === null || formattedValue === undefined) {
+        return null;
+      }
+
       // Remove currency symbols and formatting
       const cleaned = formattedValue
         .replace(/[^\d.,-]/g, "") // Keep only digits, decimal separators, and minus
         .replace(/,/g, ".") // Convert commas to dots for parsing
         .replace(/\.+/g, "."); // Remove multiple dots
 
-      const num = parseFloat(cleaned);
-      return isNaN(num) ? 0 : num;
+      if (!cleaned || cleaned === "-" || cleaned === "." || cleaned === "-.") {
+        return null;
+      }
+
+      const num = Number(cleaned);
+      return Number.isFinite(num) ? num : null;
     };
 
     // Format value for display
     const formatValue = (num) => {
-      if (num === 0 || num === "" || num === undefined) return "";
+      if (num === null || num === "" || num === undefined) return "";
       return formatter.format(num);
     };
 
     // Update display value when value changes
     useEffect(() => {
+      if (focused) return;
+
       const currentValue = value !== undefined ? value : internalValue;
-      const numValue =
-        typeof currentValue === "string"
-          ? parseValue(currentValue)
-          : currentValue;
-      setDisplayValue(formatValue(numValue));
-    }, [value, internalValue, currency, locale]);
+      const numericValue =
+        typeof currentValue === "number" ? currentValue : parseValue(currentValue);
+
+      if (numericValue === null) {
+        setDisplayValue("");
+        return;
+      }
+
+      setDisplayValue(formatValue(numericValue));
+    }, [value, internalValue, currency, locale, focused]);
 
     // Handle input change
     const handleChange = (e) => {
@@ -96,10 +107,20 @@ const CurrencyInput = React.forwardRef(
       if (inputValue === "" || /^[\d.,\s-]+$/.test(inputValue)) {
         setDisplayValue(inputValue);
 
-        // Parse and validate the numeric value
-        const numericValue = parseValue(inputValue);
-        const clampedValue = Math.max(min, Math.min(max, numericValue));
+        if (inputValue === "") {
+          setInternalValue("");
+          onChange?.("");
+          return;
+        }
 
+        const numericValue = parseValue(inputValue);
+        if (numericValue === null) {
+          setInternalValue("");
+          onChange?.("");
+          return;
+        }
+
+        const clampedValue = Math.max(min, Math.min(max, numericValue));
         setInternalValue(clampedValue);
         onChange?.(clampedValue);
       }
@@ -108,34 +129,30 @@ const CurrencyInput = React.forwardRef(
     // Handle focus/blur
     const handleFocus = (e) => {
       setFocused(true);
-      // Show raw numeric value when focused for easier editing
       const currentValue = value !== undefined ? value : internalValue;
-      if (currentValue && currentValue !== 0) {
-        setDisplayValue(currentValue.toString());
+      if (currentValue !== "" && currentValue !== null && currentValue !== undefined) {
+        setDisplayValue(String(currentValue));
       }
       onFocus?.(e);
     };
 
     const handleBlur = (e) => {
       setFocused(false);
-      // Format value on blur
-      const currentValue = value !== undefined ? value : internalValue;
-      const num =
-        typeof currentValue === "string"
-          ? parseValue(currentValue)
-          : currentValue;
 
-      if (!isNaN(num) && num !== 0) {
-        const clamped = Math.max(min, Math.min(max, num));
-        const formatted = formatValue(clamped);
-        setDisplayValue(formatted);
-        setInternalValue(clamped);
-        onChange?.(clamped);
-      } else {
+      const parsed = parseValue(displayValue);
+      if (parsed === null) {
         setDisplayValue("");
-        setInternalValue(0);
-        onChange?.(0);
+        setInternalValue("");
+        onChange?.("");
+        onBlur?.(e);
+        return;
       }
+
+      const clamped = Math.max(min, Math.min(max, parsed));
+      const formatted = formatValue(clamped);
+      setDisplayValue(formatted);
+      setInternalValue(clamped);
+      onChange?.(clamped);
       onBlur?.(e);
     };
 

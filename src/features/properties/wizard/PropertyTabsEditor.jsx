@@ -233,12 +233,31 @@ export default function PropertyTabsEditor({
     dispatch(actions.setStepIndex({ stepIndex }));
   }
 
+  function clearFieldErrors(fieldKey) {
+    const currentErrors = selectors.stepErrors(state);
+    if (!currentErrors || Object.keys(currentErrors).length === 0) return;
+
+    const nextErrors = Object.fromEntries(
+      Object.entries(currentErrors).filter(
+        ([errorKey]) => !errorKey.endsWith(`.${fieldKey}`),
+      ),
+    );
+
+    if (Object.keys(nextErrors).length !== Object.keys(currentErrors).length) {
+      dispatch(actions.setStepErrors({ errors: nextErrors }));
+    }
+  }
+
   function handleFieldChange(key, value) {
+    clearFieldErrors(key);
+
     if (key === "category") {
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "offeringId", value: "" }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
       dispatch(actions.setField({ key: "attributes", value: {} }));
+      clearFieldErrors("offeringId");
+      clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         category: value,
@@ -253,6 +272,7 @@ export default function PropertyTabsEditor({
     if (key === "offeringId") {
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
+      clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         offeringId: value,

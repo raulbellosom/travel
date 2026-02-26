@@ -5,6 +5,7 @@
 - 2026-02-26: se agrega `resourceType=music` y se mueve `dj` fuera de `service`.
 - 2026-02-26: `service` elimina categoria `dj`; `music` agrega categorias Mexico-first.
 - 2026-02-26: matrices de `commercialMode` y `pricingModel` alineadas a taxonomia canonica activa.
+- 2026-02-26: en `service/experience/music/venue` el `pricingModel` se deriva automaticamente del offering (no se vuelve a preguntar selector de cobro en `price`).
 
 Documento generado automaticamente desde la configuracion real del wizard.
 
@@ -216,6 +217,7 @@ Combinaciones totales: 142
 - `category` se filtra por `resourceType`.
 - `commercialMode` se filtra por `resourceType + category`.
 - `pricingModel` se filtra por `resourceType + category + commercialMode`.
+- En `service`, `experience`, `music` y `venue` el `pricingModel` se deriva automaticamente desde el offering seleccionado.
 - Si cambia el contexto, se sanitizan y resetean `commercialMode`, `pricingModel`, `bookingType` y campos dinamicos fuera de perfil.
 - Validacion por paso: solo campos activos. Guardado final: perfil activo completo.
 - `music` concentra ofertas musicales bookeables por fecha u hora; `dj` ya no pertenece a `service`.
