@@ -798,6 +798,13 @@
     "title": "Editar recurso",
     "loading": "Cargando recurso...",
     "submit": "Guardar cambios",
+    "messages": {
+      "saving": "Guardando cambios...",
+      "saved": "Cambios guardados correctamente.",
+      "unsaved": "Hay cambios pendientes por guardar.",
+      "noChanges": "Sin cambios pendientes.",
+      "savedState": "Todo guardado"
+    },
     "errors": {
       "load": "No se pudo cargar el recurso.",
       "save": "No se pudo guardar el recurso.",
@@ -3168,7 +3175,7 @@
       },
       "music": {
         "per_event_or_day": {
-          "label": "Por evento / por d?a",
+          "label": "Por evento / por día",
           "help": "Te contratan para una fecha o evento."
         },
         "per_hour": {
@@ -3570,21 +3577,21 @@
       "music": {
         "category": {
           "label": "Tipo de música",
-          "help": "Elige el g?nero o formato musical principal."
+          "help": "Elige el género o formato musical principal."
         },
         "offering": {
-          "label": "Forma de contrataci?n",
-          "help": "Define si trabajas por evento/d?a o por horas."
+          "label": "Forma de contratación",
+          "help": "Define si trabajas por evento/día o por horas."
         },
         "musicGenres": {
-          "label": "G?neros musicales",
+          "label": "Géneros musicales",
           "help": "Puedes separar varios géneros con comas."
         },
         "musicBandMembers": {
           "label": "Integrantes del grupo"
         },
         "musicSetDurationMinutes": {
-          "label": "Duraci?n del set"
+          "label": "Duración del set"
         },
         "musicIncludesSound": {
           "label": "Incluye sonido"
@@ -3593,7 +3600,7 @@
           "label": "Incluye iluminación"
         },
         "musicMaxAudience": {
-          "label": "Audiencia m?xima"
+          "label": "Audiencia máxima"
         },
         "musicTravelsToVenue": {
           "label": "Se traslada al lugar"
@@ -3603,31 +3610,31 @@
         },
         "bookingMinUnits": {
           "hours": {
-            "label": "Horas m?nimas",
+            "label": "Horas mínimas",
             "help": "¿Cuántas horas mínimo te pueden contratar?"
           }
         },
         "bookingMaxUnits": {
           "hours": {
-            "label": "Horas m?ximas",
+            "label": "Horas máximas",
             "help": "¿Cuántas horas máximo te pueden contratar?"
           }
         },
         "availabilityStartTime": {
           "label": "Disponible desde",
-          "help": "Hora m?s temprana en la que puedes iniciar."
+          "help": "Hora más temprana en la que puedes iniciar."
         },
         "availabilityEndTime": {
           "label": "Disponible hasta",
-          "help": "Hora m?s tarde en la que puedes terminar."
+          "help": "Hora más tarde en la que puedes terminar."
         },
         "slotDurationMinutes": {
-          "label": "Duraci?n por bloque",
-          "help": "Duraci?n de cada bloque en minutos."
+          "label": "Duración por bloque",
+          "help": "Duración de cada bloque en minutos."
         },
         "slotBufferMinutes": {
           "label": "Buffer entre bloques",
-          "help": "Tiempo de preparaci?n entre bloques."
+          "help": "Tiempo de preparación entre bloques."
         }
       }
     },

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Eye, X } from "lucide-react";
-import PropertyWizard from "../features/properties/wizard/PropertyWizard";
+import PropertyTabsEditor from "../features/properties/wizard/PropertyTabsEditor";
 import { useAuth } from "../hooks/useAuth";
 import { propertiesService } from "../services/propertiesService";
 import { getErrorMessage } from "../utils/errors";
@@ -177,8 +177,7 @@ const EditProperty = () => {
         </div>
       ) : null}
 
-      <PropertyWizard
-        mode="edit"
+      <PropertyTabsEditor
         initialResourceDoc={initialResourceDoc}
         onSave={handleSave}
         onCancel={() => {

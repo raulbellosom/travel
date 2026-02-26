@@ -16,7 +16,7 @@ Combinaciones totales: 142
 ## 0. Rutas reales del wizard (frontend)
 
 - URL creacion: `/app/properties/new` -> `CreateProperty` -> `PropertyWizard`
-- URL edicion: `/app/properties/:id/edit` -> `EditProperty` (mismo motor dinamico)
+- URL edicion: `/app/properties/:id/edit` -> `EditProperty` -> `PropertyTabsEditor` (edicion por pestañas, guardado directo)
 - No hay URL por `resourceType`; la variacion es runtime dentro del wizard.
 
 ---

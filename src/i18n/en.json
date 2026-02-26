@@ -798,6 +798,13 @@
     "title": "Edit resource",
     "loading": "Loading resource...",
     "submit": "Save changes",
+    "messages": {
+      "saving": "Saving changes...",
+      "saved": "Changes saved successfully.",
+      "unsaved": "There are unsaved changes.",
+      "noChanges": "No pending changes.",
+      "savedState": "Everything saved"
+    },
     "errors": {
       "load": "Could not load the resource.",
       "save": "Could not save the resource.",
