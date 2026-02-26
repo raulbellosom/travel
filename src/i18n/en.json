@@ -2310,7 +2310,14 @@
     "labels": {
       "operation": "Operation",
       "maxGuests": "Max guests",
-      "nightlyRate": "Nightly rate"
+      "nightlyRate": "Nightly rate",
+      "dailyRate": "Daily rate",
+      "hourlyRate": "Hourly rate",
+      "eventRate": "Event rate",
+      "personRate": "Per person rate",
+      "monthlyRate": "Monthly rate",
+      "baseRate": "Base rate",
+      "capacity": "Max capacity"
     },
     "form": {
       "title": "Complete your reservation",
@@ -2330,10 +2337,13 @@
     "actions": {
       "processing": "Processing...",
       "payAndConfirm": "Pay and confirm",
+      "sendRequest": "Send request",
       "backToHome": "Back to home"
     },
     "messages": {
-      "redirecting": "Redirecting to payment provider..."
+      "redirecting": "Redirecting to payment provider...",
+      "leadSent": "Request sent. The host will contact you soon to confirm details.",
+      "defaultLeadMessage": "Hi, I am interested in this resource. I would like a quote and availability."
     },
     "errors": {
       "notFound": "Property not found.",
@@ -2341,6 +2351,7 @@
       "create": "Could not create reservation.",
       "invalidDates": "Select a valid date range.",
       "invalidGuests": "Guests must be greater than zero.",
+      "exceedsCapacity": "Requested quantity exceeds maximum allowed capacity.",
       "verifyEmail": "Verify your email before booking.",
       "missingReservation": "Reservation id was not generated.",
       "missingCheckout": "Checkout URL was not generated."

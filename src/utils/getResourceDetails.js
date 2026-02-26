@@ -15,7 +15,6 @@
 export const getResourceDetails = (item, t) => {
   const resourceType = String(item.resourceType || "property").toLowerCase();
   const ns = "myResourcesPage.details";
-  const details = [];
 
   switch (resourceType) {
     case "property":
@@ -232,17 +231,6 @@ function getMusicDetails(item, t, ns) {
       icon: "Music",
       label: t(`${ns}.musicCategory`, { defaultValue: "Género" }),
       value: capitalizeFirst(category).replaceAll("_", " "),
-    });
-  }
-
-  if (attrs.musicGenres) {
-    const genres = Array.isArray(attrs.musicGenres)
-      ? attrs.musicGenres.join(", ")
-      : String(attrs.musicGenres);
-    details.push({
-      icon: "Music",
-      label: t(`${ns}.musicGenres`, { defaultValue: "Estilos" }),
-      value: genres,
     });
   }
 

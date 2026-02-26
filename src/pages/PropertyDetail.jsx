@@ -1996,15 +1996,6 @@ const PropertyDetail = () => {
                       { defaultValue: resourceBehavior.category },
                     )}
                   />
-                  {attrs.musicGenres && (
-                    <StatCard
-                      icon={Music}
-                      label={t("client:resource.musicGenre", {
-                        defaultValue: "Generos musicales",
-                      })}
-                      value={Array.isArray(attrs.musicGenres) ? attrs.musicGenres.join(", ") : String(attrs.musicGenres)}
-                    />
-                  )}
                   {attrs.musicIncludesSound && (
                     <StatCard
                       icon={Volume2}

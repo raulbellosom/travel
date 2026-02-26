@@ -9,10 +9,11 @@ import DateRangePicker from "../components/common/molecules/DateRangePicker";
 import { Select } from "../components/common";
 import { propertiesService } from "../services/propertiesService";
 import { reservationsService } from "../services/reservationsService";
+import { leadsService } from "../services/leadsService";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
-import { getResourceBehavior } from "../utils/resourceModel";
+import { getResourceBehavior, parseResourceAttributes } from "../utils/resourceModel";
 import { useInstanceModules } from "../hooks/useInstanceModules";
 import { formatMoneyWithDenomination } from "../utils/money";
 
@@ -75,6 +76,82 @@ const ReserveProperty = () => {
         isEnabled: modulesApi.isEnabled,
       }),
     [property, modulesApi.isEnabled],
+  );
+  const attrs = useMemo(
+    () => parseResourceAttributes(property?.attributes),
+    [property?.attributes],
+  );
+  const maxCapacity = useMemo(() => {
+    switch (behavior.resourceType) {
+      case "vehicle":
+        return Number(attrs.vehicleSeats) || Number(property?.maxGuests) || 0;
+      case "experience":
+        return (
+          Number(attrs.experienceMaxParticipants) ||
+          Number(property?.maxGuests) ||
+          0
+        );
+      case "venue":
+        return (
+          Number(attrs.venueCapacitySeated) ||
+          Number(attrs.venueCapacityStanding) ||
+          Number(property?.maxGuests) ||
+          Number(property?.capacity) ||
+          0
+        );
+      case "service":
+        return (
+          Number(attrs.chefMaxDiners) ||
+          Number(attrs.cateringMaxGuests) ||
+          Number(property?.maxGuests) ||
+          0
+        );
+      case "music":
+        return Number(attrs.musicMaxAudience) || 0;
+      default:
+        return Number(property?.maxGuests) || Number(property?.capacity) || 0;
+    }
+  }, [attrs, behavior.resourceType, property?.capacity, property?.maxGuests]);
+  const capacityLabel = useMemo(() => {
+    const keyByType = {
+      property: "calendar.booking.guests",
+      vehicle: "calendar.booking.passengers",
+      experience: "calendar.booking.persons",
+      venue: "calendar.booking.attendees",
+      service: "calendar.booking.persons",
+      music: "calendar.booking.persons",
+    };
+    const i18nKey = keyByType[behavior.resourceType] || "calendar.booking.guests";
+    return t(i18nKey);
+  }, [behavior.resourceType, t]);
+  const rateLabel = useMemo(() => {
+    const keyByPriceLabel = {
+      night: "reservePropertyPage.labels.nightlyRate",
+      day: "reservePropertyPage.labels.dailyRate",
+      hour: "reservePropertyPage.labels.hourlyRate",
+      event: "reservePropertyPage.labels.eventRate",
+      person: "reservePropertyPage.labels.personRate",
+      month: "reservePropertyPage.labels.monthlyRate",
+      total: "reservePropertyPage.labels.baseRate",
+    };
+    return t(keyByPriceLabel[behavior.priceLabel] || "reservePropertyPage.labels.baseRate");
+  }, [behavior.priceLabel, t]);
+  const requiresSchedule = useMemo(
+    () =>
+      behavior.effectiveScheduleType === "date_range" ||
+      behavior.effectiveScheduleType === "time_slot",
+    [behavior.effectiveScheduleType],
+  );
+  const createLeadOnly = useMemo(
+    () =>
+      behavior.bookingType === "manual_contact" ||
+      !behavior.requiresPayments ||
+      !behavior.canUsePayments,
+    [
+      behavior.bookingType,
+      behavior.canUsePayments,
+      behavior.requiresPayments,
+    ],
   );
   usePageSeo({
     title: property?.title
@@ -153,15 +230,24 @@ const ReserveProperty = () => {
     return Math.ceil(diff / (24 * 60 * 60 * 1000));
   }, [form.dateRange.endDate, form.dateRange.startDate]);
 
+  const unitCount = useMemo(() => {
+    if (behavior.priceLabel === "night" || behavior.priceLabel === "day") {
+      return nights;
+    }
+    return 1;
+  }, [behavior.priceLabel, nights]);
+
   const totals = useMemo(() => {
-    const nightlyRate = Number(property?.price || 0);
-    const baseAmount = nights * nightlyRate;
+    const unitRate = Number(property?.price || 0);
+    const effectiveCount = unitCount > 0 ? unitCount : 0;
+    const baseAmount = effectiveCount * unitRate;
     return {
-      nightlyRate,
+      unitRate,
+      unitCount: effectiveCount,
       baseAmount,
       totalAmount: baseAmount,
     };
-  }, [nights, property?.price]);
+  }, [property?.price, unitCount]);
 
   const providerOptions = useMemo(
     () => [
@@ -191,16 +277,6 @@ const ReserveProperty = () => {
       return;
     }
 
-    if (behavior.requiresPayments && !behavior.canUsePayments) {
-      setError(
-        t("reservePropertyPage.errors.paymentsDisabled", {
-          defaultValue:
-            "Los pagos en linea no estan habilitados para esta instancia.",
-        }),
-      );
-      return;
-    }
-
     if (!user) {
       navigate("/login", { replace: true, state: { from: location } });
       return;
@@ -211,7 +287,10 @@ const ReserveProperty = () => {
       return;
     }
 
-    if (!form.dateRange.startDate || !form.dateRange.endDate || nights < 1) {
+    if (
+      requiresSchedule &&
+      (!form.dateRange.startDate || !form.dateRange.endDate || nights < 1)
+    ) {
       setError(t("reservePropertyPage.errors.invalidDates"));
       return;
     }
@@ -220,9 +299,56 @@ const ReserveProperty = () => {
       setError(t("reservePropertyPage.errors.invalidGuests"));
       return;
     }
+    if (maxCapacity > 0 && Number(form.guestCount) > maxCapacity) {
+      setError(
+        t("reservePropertyPage.errors.exceedsCapacity", {
+          defaultValue: "La cantidad supera la capacidad maxima permitida.",
+        }),
+      );
+      return;
+    }
 
     setSubmitting(true);
     try {
+      if (createLeadOnly) {
+        const startIso = form.dateRange.startDate
+          ? new Date(form.dateRange.startDate).toISOString()
+          : null;
+        const endIso = form.dateRange.endDate
+          ? new Date(form.dateRange.endDate).toISOString()
+          : null;
+        const leadMessage = t("reservePropertyPage.messages.defaultLeadMessage", {
+          defaultValue:
+            "Hola, me interesa este recurso. Quiero cotizar y revisar disponibilidad.",
+        });
+
+        await leadsService.createLead({
+          resourceId: property.$id,
+          message: leadMessage,
+          meta: {
+            source: "reserve_page",
+            resourceTitle: property.title || "",
+            resourceType: behavior.resourceType,
+            category: behavior.category,
+            bookingType: behavior.bookingType,
+            commercialMode: behavior.commercialMode,
+            guestCount: Number(form.guestCount) || 1,
+            preferredStartDate: startIso,
+            preferredEndDate: endIso,
+            guestName: form.guestName || "",
+            specialRequests: form.specialRequests || "",
+          },
+        });
+
+        setSuccess(
+          t("reservePropertyPage.messages.leadSent", {
+            defaultValue:
+              "Solicitud enviada. Te contactaran pronto para confirmar detalles.",
+          }),
+        );
+        return;
+      }
+
       const reservationResult =
         await reservationsService.createReservationPublic({
           resourceId: property.$id,
@@ -263,7 +389,7 @@ const ReserveProperty = () => {
 
   if (loading) {
     return (
-      <section className="mx-auto max-w-5xl px-4 py-8">
+      <section className="mx-auto max-w-5xl px-4 pb-8 pt-24 sm:pt-28">
         <SkeletonLoader variant="detail" count={6} />
       </section>
     );
@@ -271,7 +397,7 @@ const ReserveProperty = () => {
 
   if (error && !property) {
     return (
-      <section className="mx-auto max-w-5xl space-y-4 px-4 py-8">
+      <section className="mx-auto max-w-5xl space-y-4 px-4 pb-8 pt-24 sm:pt-28">
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           {error}
         </p>
@@ -288,7 +414,7 @@ const ReserveProperty = () => {
   if (!property) return null;
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-6xl space-y-6 px-4 pb-6 pt-24 sm:px-6 sm:pt-28 lg:px-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           {t("reservePropertyPage.title")}
@@ -310,7 +436,9 @@ const ReserveProperty = () => {
             onImageClick={openImageViewer}
           />
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div
+            className={`grid gap-3 ${maxCapacity > 0 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+          >
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-300">
                 {t("client:reserveProperty.labels.operation")}
@@ -321,17 +449,19 @@ const ReserveProperty = () => {
                 })}
               </p>
             </div>
+            {maxCapacity > 0 && (
+              <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
+                <p className="text-xs text-slate-500 dark:text-slate-300">
+                  {t("reservePropertyPage.labels.capacity")}
+                </p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">
+                  {maxCapacity}
+                </p>
+              </div>
+            )}
             <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-300">
-                {t("client:reserveProperty.labels.maxGuests")}
-              </p>
-              <p className="font-semibold text-slate-900 dark:text-slate-100">
-                {property.maxGuests || "-"}
-              </p>
-            </div>
-            <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800">
-              <p className="text-xs text-slate-500 dark:text-slate-300">
-                {t("client:reserveProperty.labels.nightlyRate")}
+                {rateLabel}
               </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
                 {formatCurrency(property.price, property.currency, locale)}
@@ -348,28 +478,30 @@ const ReserveProperty = () => {
             {t("reservePropertyPage.form.title")}
           </h2>
 
-          <label className="grid gap-1 text-sm">
-            <span className="inline-flex items-center gap-2">
-              <CalendarDays size={14} />
-              {t("reservePropertyPage.form.fields.dateRange")}
-            </span>
-            <DateRangePicker
-              mode="range"
-              value={form.dateRange}
-              onChange={(nextRange) => updateForm({ dateRange: nextRange })}
-              minDate={new Date()}
-            />
-          </label>
+          {requiresSchedule && (
+            <label className="grid gap-1 text-sm">
+              <span className="inline-flex items-center gap-2">
+                <CalendarDays size={14} />
+                {t("reservePropertyPage.form.fields.dateRange")}
+              </span>
+              <DateRangePicker
+                mode="range"
+                value={form.dateRange}
+                onChange={(nextRange) => updateForm({ dateRange: nextRange })}
+                minDate={new Date()}
+              />
+            </label>
+          )}
 
           <label className="grid gap-1 text-sm">
             <span className="inline-flex items-center gap-2">
               <Users size={14} />
-              {t("reservePropertyPage.form.fields.guestCount")}
+              {capacityLabel}
             </span>
             <input
               type="number"
               min={1}
-              max={property.maxGuests || 500}
+              max={maxCapacity > 0 ? maxCapacity : 500}
               value={form.guestCount}
               onChange={(event) =>
                 updateForm({ guestCount: Number(event.target.value || 1) })
@@ -391,16 +523,18 @@ const ReserveProperty = () => {
             />
           </label>
 
-          <label className="grid gap-1 text-sm">
-            <span>{t("reservePropertyPage.form.fields.provider")}</span>
-            <Select
-              value={form.provider}
-              onChange={(value) => updateForm({ provider: value })}
-              options={providerOptions}
-              size="md"
-              disabled={behavior.requiresPayments && !behavior.canUsePayments}
-            />
-          </label>
+          {!createLeadOnly && (
+            <label className="grid gap-1 text-sm">
+              <span>{t("reservePropertyPage.form.fields.provider")}</span>
+              <Select
+                value={form.provider}
+                onChange={(value) => updateForm({ provider: value })}
+                options={providerOptions}
+                size="md"
+                disabled={behavior.requiresPayments && !behavior.canUsePayments}
+              />
+            </label>
+          )}
 
           <label className="grid gap-1 text-sm">
             <span>
@@ -417,10 +551,12 @@ const ReserveProperty = () => {
           </label>
 
           <div className="rounded-2xl bg-slate-100 p-3 text-sm dark:bg-slate-800">
-            <p className="flex items-center justify-between">
-              <span>{t("reservePropertyPage.summary.nights")}</span>
-              <strong>{nights}</strong>
-            </p>
+            {requiresSchedule && (
+              <p className="flex items-center justify-between">
+                <span>{t("reservePropertyPage.summary.nights")}</span>
+                <strong>{nights}</strong>
+              </p>
+            )}
             <p className="mt-1 flex items-center justify-between">
               <span>{t("reservePropertyPage.summary.baseAmount")}</span>
               <strong>
@@ -456,7 +592,11 @@ const ReserveProperty = () => {
             <CreditCard size={16} />
             {submitting
               ? t("reservePropertyPage.actions.processing")
-              : t("reservePropertyPage.actions.payAndConfirm")}
+              : createLeadOnly
+                ? t("reservePropertyPage.actions.sendRequest", {
+                    defaultValue: "Enviar solicitud",
+                  })
+                : t("reservePropertyPage.actions.payAndConfirm")}
           </button>
         </form>
       </div>

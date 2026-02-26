@@ -2310,7 +2310,14 @@
     "labels": {
       "operation": "Operacion",
       "maxGuests": "Huespedes maximos",
-      "nightlyRate": "Tarifa por noche"
+      "nightlyRate": "Tarifa por noche",
+      "dailyRate": "Tarifa por dia",
+      "hourlyRate": "Tarifa por hora",
+      "eventRate": "Tarifa por evento",
+      "personRate": "Tarifa por persona",
+      "monthlyRate": "Tarifa por mes",
+      "baseRate": "Tarifa base",
+      "capacity": "Capacidad maxima"
     },
     "form": {
       "title": "Completa tu reserva",
@@ -2330,10 +2337,13 @@
     "actions": {
       "processing": "Procesando...",
       "payAndConfirm": "Pagar y confirmar",
+      "sendRequest": "Enviar solicitud",
       "backToHome": "Volver al inicio"
     },
     "messages": {
-      "redirecting": "Redirigiendo a la pasarela de pago..."
+      "redirecting": "Redirigiendo a la pasarela de pago...",
+      "leadSent": "Solicitud enviada. Te contactaran pronto para confirmar detalles.",
+      "defaultLeadMessage": "Hola, me interesa este recurso. Quiero cotizar y revisar disponibilidad."
     },
     "errors": {
       "notFound": "No encontramos la propiedad solicitada.",
@@ -2341,6 +2351,7 @@
       "create": "No se pudo crear la reserva.",
       "invalidDates": "Selecciona un rango de fechas valido.",
       "invalidGuests": "El numero de huespedes debe ser mayor a cero.",
+      "exceedsCapacity": "La cantidad supera la capacidad maxima permitida.",
       "verifyEmail": "Debes verificar tu correo antes de reservar.",
       "missingReservation": "No se pudo generar la reserva.",
       "missingCheckout": "No se pudo generar el link de pago."

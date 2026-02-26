@@ -174,7 +174,7 @@ export default function BookingSummary({
         0;
       break;
     case "music":
-      maxCapacity = Number(attrs.musicMaxAudience) || resource.maxGuests || 0;
+      maxCapacity = Number(attrs.musicMaxAudience) || 0;
       break;
     default:
       maxCapacity = resource.maxGuests || resource.capacity || 0;

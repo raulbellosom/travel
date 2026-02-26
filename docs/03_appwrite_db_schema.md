@@ -295,7 +295,7 @@ Convencion UI v1:
 
 - `vehicle`: `vehicleModelYear`, `vehicleSeats`, `vehicleDoors`, `vehicleTransmission`, `vehicleFuelType`, `vehicleLuggageCapacity`.
 - `service`: `serviceDurationMinutes`, `serviceStaffCount`, `serviceAtClientLocation`, `serviceIncludesMaterials`, `serviceResponseTimeHours`.
-- `music`: `musicGenres`, `musicIncludesSound`, `musicIncludesLighting`, `musicMaxAudience`, `musicBandMembers`, `musicTravelsToVenue`, `musicSetDurationMinutes`, `musicRepertoireNotes`.
+- `music`: `musicIncludesSound`, `musicIncludesLighting`, `musicMaxAudience`, `musicBandMembers`, `musicTravelsToVenue`, `musicSetDurationMinutes`, `musicRepertoireNotes` (los generos se gestionan con `amenities`).
 - `experience`: `experienceDurationMinutes`, `experienceMinParticipants`, `experienceMaxParticipants`, `experienceDifficulty`, `experienceIncludesEquipment`, `experienceMinAge`.
 - `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
 - comerciales (renta larga): `minimumContractDuration`.

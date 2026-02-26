@@ -45,10 +45,6 @@ const MUSIC_CATEGORIES = [
   "sonora",
 ];
 
-const MUSIC_GENRE_AMENITY_SLUGS = new Set(
-  MUSIC_CATEGORIES.map((categoryId) => `music-${String(categoryId).replaceAll("_", "-")}`),
-);
-
 const OFFERINGS = [
   {
     id: "per_event_or_day",
@@ -89,7 +85,6 @@ const PRICING_CHOICES = {
 };
 
 const MUSIC_ATTRIBUTE_KEYS = [
-  "musicGenres",
   "musicIncludesSound",
   "musicIncludesLighting",
   "musicMaxAudience",
@@ -564,24 +559,6 @@ function getFieldsForStep({ t, context, stepId }) {
   return [];
 }
 
-function sanitizeMusicGenres(value) {
-  if (Array.isArray(value)) {
-    const normalized = value
-      .map((item) => String(item || "").trim())
-      .filter(Boolean);
-    return normalized.length > 0 ? normalized : undefined;
-  }
-
-  const raw = String(value || "").trim();
-  if (!raw) return undefined;
-  const tokens = raw
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-  if (tokens.length > 1) return tokens;
-  return raw;
-}
-
 function sanitizeAttributes({ attributes }) {
   const allowed = new Set([
     ...MUSIC_ATTRIBUTE_KEYS,
@@ -592,12 +569,6 @@ function sanitizeAttributes({ attributes }) {
   Object.entries(attributes || {}).forEach(([key, value]) => {
     if (!allowed.has(key)) return;
     if (value === undefined || value === null || value === "") return;
-
-    if (key === "musicGenres") {
-      const normalized = sanitizeMusicGenres(value);
-      if (normalized !== undefined) safe[key] = normalized;
-      return;
-    }
 
     safe[key] = value;
   });
@@ -693,13 +664,6 @@ function toSchemaPatch({ formState, context }) {
     : [];
   if (amenitySlugs.length > 0) {
     patch.amenities = amenitySlugs;
-
-    const genreAmenitySlugs = amenitySlugs.filter((slug) =>
-      MUSIC_GENRE_AMENITY_SLUGS.has(slug),
-    );
-    if (genreAmenitySlugs.length > 0) {
-      rawAttributes.musicGenres = genreAmenitySlugs;
-    }
   }
   const sanitized = sanitizeAttributes({ attributes: rawAttributes });
   patch.attributes = JSON.stringify(sanitized);

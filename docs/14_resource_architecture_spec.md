@@ -127,7 +127,7 @@ Catalogo inicial de atributos dinamicos (`attributes`) en UI:
 
 - `vehicle`: `vehicleModelYear`, `vehicleSeats`, `vehicleDoors`, `vehicleTransmission`, `vehicleFuelType`, `vehicleLuggageCapacity`.
 - `service`: `serviceDurationMinutes`, `serviceStaffCount`, `serviceAtClientLocation`, `serviceIncludesMaterials`, `serviceResponseTimeHours`.
-- `music`: `musicGenres`, `musicIncludesSound`, `musicIncludesLighting`, `musicMaxAudience`, `musicBandMembers`, `musicTravelsToVenue`, `musicSetDurationMinutes`, `musicRepertoireNotes`.
+- `music`: `musicIncludesSound`, `musicIncludesLighting`, `musicMaxAudience`, `musicBandMembers`, `musicTravelsToVenue`, `musicSetDurationMinutes`, `musicRepertoireNotes` (los generos se gestionan desde `amenities`).
 - `experience`: `experienceDurationMinutes`, `experienceMinParticipants`, `experienceMaxParticipants`, `experienceDifficulty`, `experienceIncludesEquipment`, `experienceMinAge`.
 - `venue`: `venueCapacitySeated`, `venueCapacityStanding`, `venueHasStage`, `venueOpeningTime`, `venueClosingTime`.
 - booking generico (no-property): `bookingMinUnits`, `bookingMaxUnits`, `availabilityStartTime`, `availabilityEndTime`.
