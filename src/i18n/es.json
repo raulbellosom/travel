@@ -1588,6 +1588,7 @@
       "selectedLabel": "Activa",
       "selectLabel": "Elegir",
       "searchLabel": "Buscar y agregar amenidad",
+      "suggestedTitle": "Sugeridas para musica",
       "searchPlaceholder": "Escribe para buscar amenidades...",
       "searchEmpty": "Sin resultados para esa amenidad",
       "noneSelected": "Aun no has agregado amenidades."

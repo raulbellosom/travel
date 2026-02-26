@@ -333,6 +333,14 @@ function getFieldsForStep({ t, context, stepId }) {
       );
     }
 
+    fields.push({
+      key: "amenities",
+      type: "amenities",
+      labelKey: "propertyForm.amenities.searchLabel",
+      helpKey: "propertyForm.amenitiesHelp",
+      required: false,
+    });
+
     return fields;
   }
 
@@ -650,6 +658,16 @@ function toSchemaPatch({ formState, context }) {
   rootKeys.forEach((k) => {
     if (formState?.[k] !== undefined) patch[k] = formState[k];
   });
+
+  if (Array.isArray(formState?.amenities)) {
+    patch.amenities = Array.from(
+      new Set(
+        formState.amenities
+          .map((slug) => String(slug || "").trim())
+          .filter(Boolean),
+      ),
+    );
+  }
 
   // Price fields
   if (formState?.price !== undefined) patch.price = Number(formState.price);

@@ -92,6 +92,7 @@ export const RESOURCE_AMENITY_RELEVANCE = Object.freeze({
   music: Object.freeze({
     categories: Object.freeze(["services", "tech", "general", "security"]),
     keywords: Object.freeze([
+      "music-",
       "sound",
       "audio",
       "lighting",
@@ -111,6 +112,10 @@ export const RESOURCE_AMENITY_RELEVANCE = Object.freeze({
       "professional",
       "portfolio",
       "security",
+      "karaoke",
+      "set",
+      "live",
+      "bilingual",
     ]),
   }),
   experience: Object.freeze({
@@ -253,6 +258,8 @@ const normalizeSearchableText = (value) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
+const MUSIC_RECOMMENDED_PREFIX = "music-";
+
 /**
  * Check if the text includes any of the keywords.
  */
@@ -294,6 +301,13 @@ export const getAmenityRelevanceScore = ({ item, resourceType, category }) => {
   }
   if (includesAnyKeyword(searchable, CATEGORY_AMENITY_KEYWORDS[category] || [])) {
     keywordScore += 12;
+  }
+
+  if (resourceType === "music") {
+    const slug = normalizeSearchableText(item?.slug || "");
+    if (slug.startsWith(MUSIC_RECOMMENDED_PREFIX)) {
+      keywordScore += 18;
+    }
   }
 
   return categoryScore + keywordScore;

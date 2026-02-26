@@ -198,6 +198,13 @@ function getFieldsForStep({ t, context, stepId }) {
         labelKey: "wizard.fields.venue.venueClosingTime.label",
         required: false,
       },
+      {
+        key: "amenities",
+        type: "amenities",
+        labelKey: "propertyForm.amenities.searchLabel",
+        helpKey: "propertyForm.amenitiesHelp",
+        required: false,
+      },
     ];
   }
 
@@ -380,6 +387,16 @@ function toSchemaPatch({ formState, context }) {
   locationKeys.forEach((k) => {
     if (formState?.[k] !== undefined) patch[k] = formState[k];
   });
+
+  if (Array.isArray(formState?.amenities)) {
+    patch.amenities = Array.from(
+      new Set(
+        formState.amenities
+          .map((slug) => String(slug || "").trim())
+          .filter(Boolean),
+      ),
+    );
+  }
 
   // Slot config (root) - relevant for hourly overlap logic
   if (formState?.slotDurationMinutes !== undefined) patch.slotDurationMinutes = formState.slotDurationMinutes;

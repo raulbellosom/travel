@@ -1588,6 +1588,7 @@
       "selectedLabel": "Selected",
       "selectLabel": "Select",
       "searchLabel": "Search and add amenity",
+      "suggestedTitle": "Suggested for music",
       "searchPlaceholder": "Type to search amenities...",
       "searchEmpty": "No amenities found",
       "noneSelected": "No amenities selected yet."

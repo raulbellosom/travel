@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "motion/react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 
 /**
@@ -50,7 +49,7 @@ const NumberInput = React.forwardRef(
     // Determine state
     const hasError = Boolean(error);
     const hasSuccess = Boolean(success) && !hasError;
-    const parseNumber = (rawValue) => {
+    const parseNumber = useCallback((rawValue) => {
       if (
         rawValue === "" ||
         rawValue === null ||
@@ -67,18 +66,18 @@ const NumberInput = React.forwardRef(
       const normalized = String(rawValue).replace(",", ".");
       const parsed = Number(normalized);
       return Number.isFinite(parsed) ? parsed : null;
-    };
+    }, []);
 
-    const formatValue = (rawValue) => {
+    const formatValue = useCallback((rawValue) => {
       const parsed = parseNumber(rawValue);
       if (parsed === null) return "";
       return precision > 0 ? parsed.toFixed(precision) : String(parsed);
-    };
+    }, [parseNumber, precision]);
 
     useEffect(() => {
       if (focused) return;
       setInputValue(formatValue(value));
-    }, [value, precision, focused]);
+    }, [value, focused, formatValue]);
 
     // Handle input change
     const handleChange = (e) => {
@@ -176,14 +175,6 @@ const NumberInput = React.forwardRef(
     const safeSize = sizeStyles[size] ? size : "md";
 
     // Icon sizes
-    const iconSizes = {
-      xs: "w-3 h-3",
-      sm: "w-4 h-4",
-      md: "w-5 h-5",
-      lg: "w-6 h-6",
-      xl: "w-7 h-7",
-    };
-
     // State styles
     const stateStyles = hasError
       ? "border-red-500 focus:border-red-500 focus:ring-red-500"
@@ -234,7 +225,7 @@ const NumberInput = React.forwardRef(
       const parsed = parseNumber(inputValue);
       if (parsed !== null) return parsed;
       return Math.max(Number(min) || 0, 0);
-    }, [inputValue, min]);
+    }, [inputValue, min, parseNumber]);
 
     const canIncrement = currentValue < max && !disabled && !readOnly;
     const canDecrement = currentValue > min && !disabled && !readOnly;
@@ -254,7 +245,7 @@ const NumberInput = React.forwardRef(
 
         <div className="relative">
           {/* Input with integrated stepper buttons */}
-          <motion.input
+          <input
             ref={ref}
             id={inputId}
             name={name}
@@ -275,6 +266,7 @@ const NumberInput = React.forwardRef(
             autoFocus={autoFocus}
             aria-describedby={
               [
+                ariaDescribedBy,
                 helperText ? helperTextId : undefined,
                 hasError ? errorId : undefined,
               ]

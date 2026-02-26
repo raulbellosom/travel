@@ -238,6 +238,14 @@ function getFieldsForStep({ t, context, stepId }) {
         break;
     }
 
+    fields.push({
+      key: "amenities",
+      type: "amenities",
+      labelKey: "propertyForm.amenities.searchLabel",
+      helpKey: "propertyForm.amenitiesHelp",
+      required: false,
+    });
+
     return fields;
   }
 
@@ -423,6 +431,16 @@ function toSchemaPatch({ formState, context }) {
   locationKeys.forEach((k) => {
     if (formState?.[k] !== undefined) patch[k] = formState[k];
   });
+
+  if (Array.isArray(formState?.amenities)) {
+    patch.amenities = Array.from(
+      new Set(
+        formState.amenities
+          .map((slug) => String(slug || "").trim())
+          .filter(Boolean),
+      ),
+    );
+  }
 
   // Optional scheduling/slot config (root)
   if (formState?.slotDurationMinutes !== undefined) patch.slotDurationMinutes = formState.slotDurationMinutes;

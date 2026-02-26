@@ -174,6 +174,13 @@ function getFieldsForStep({ t, context, stepId }) {
           { id: "unspecified", label: t("wizard.options.vehicleLuggageCapacity.unspecified") },
         ],
       },
+      {
+        key: "amenities",
+        type: "amenities",
+        labelKey: "propertyForm.amenities.searchLabel",
+        helpKey: "propertyForm.amenitiesHelp",
+        required: false,
+      },
     ];
   }
 
@@ -316,6 +323,16 @@ function toSchemaPatch({ formState, context }) {
   locationKeys.forEach((k) => {
     if (formState?.[k] !== undefined) patch[k] = formState[k];
   });
+
+  if (Array.isArray(formState?.amenities)) {
+    patch.amenities = Array.from(
+      new Set(
+        formState.amenities
+          .map((slug) => String(slug || "").trim())
+          .filter(Boolean),
+      ),
+    );
+  }
 
   // Price
   if (formState?.price !== undefined) patch.price = Number(formState.price);

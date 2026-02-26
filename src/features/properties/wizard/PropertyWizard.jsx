@@ -16,7 +16,9 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "../../../components/common";
+import { amenitiesService } from "../../../services/amenitiesService";
 import { propertiesService } from "../../../services/propertiesService";
+import { isValidSlug, normalizeSlug } from "../../../utils/slug";
 
 import { getProfile } from "../wizardProfiles";
 import {
@@ -39,6 +41,7 @@ import {
 import { validateStep } from "./wizardValidation";
 import WizardReview from "./components/WizardReview";
 import FieldRenderer from "./components/FieldRenderer";
+import LocationStepForm from "./components/LocationStepForm";
 
 const RESOURCE_TYPE_IDS = [
   "property",
@@ -99,6 +102,10 @@ function emitHaptic(duration = 8) {
   }
 }
 
+function getStepErrorPath(stepId, fieldKey) {
+  return `${stepId}.${fieldKey}`;
+}
+
 export default function PropertyWizard({
   mode = "create",
   initialResourceDoc = null,
@@ -110,10 +117,22 @@ export default function PropertyWizard({
   const [state, dispatch] = useReducer(wizardReducer, initialWizardState);
   const [existingImages, setExistingImages] = useState([]);
   const [existingImagesLoading, setExistingImagesLoading] = useState(false);
+  const [amenitiesOptions, setAmenitiesOptions] = useState([]);
+  const [amenitiesLoading, setAmenitiesLoading] = useState(false);
+  const [slugStatus, setSlugStatus] = useState({
+    state: "idle",
+    checkedSlug: "",
+  });
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(mode === "edit");
   const swipeRef = useRef({ startX: 0, startY: 0, ignore: false });
+  const slugCheckRequestRef = useRef(0);
   const resolvedInitialResourceId = useMemo(
     () => String(initialResourceDoc?.$id || initialResourceDoc?.id || "").trim(),
     [initialResourceDoc],
+  );
+  const initialSlug = useMemo(
+    () => normalizeSlug(initialResourceDoc?.slug || ""),
+    [initialResourceDoc?.slug],
   );
 
   const formState = selectors.formState(state);
@@ -158,7 +177,16 @@ export default function PropertyWizard({
       );
       dispatch(actions.hydrate({ formState: hydratedFormState }));
       dispatch(actions.setContext({ context: hydratedContext }));
+      setSlugManuallyEdited(true);
+      setSlugStatus({
+        state: hydratedFormState.slug ? "unchanged" : "idle",
+        checkedSlug: normalizeSlug(hydratedFormState.slug || ""),
+      });
+      return;
     }
+
+    setSlugManuallyEdited(false);
+    setSlugStatus({ state: "idle", checkedSlug: "" });
   }, [mode, initialResourceDoc]);
 
   useEffect(() => {
@@ -193,6 +221,30 @@ export default function PropertyWizard({
     };
   }, [mode, resolvedInitialResourceId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setAmenitiesLoading(true);
+
+    amenitiesService
+      .listActive()
+      .then((items) => {
+        if (cancelled) return;
+        setAmenitiesOptions(Array.isArray(items) ? items : []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAmenitiesOptions([]);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setAmenitiesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const activeSteps = useMemo(() => {
     if (!profile) return [];
     return getActiveSteps(profile, t, context);
@@ -216,6 +268,64 @@ export default function PropertyWizard({
   const progressPercent =
     stepCount > 1 ? Math.round((currentStepIndex / (stepCount - 1)) * 100) : 0;
 
+  useEffect(() => {
+    if (mode !== "create" || slugManuallyEdited) return;
+
+    const generatedSlug = normalizeSlug(formState.title || "");
+    if (generatedSlug === String(formState.slug || "")) return;
+    dispatch(actions.setField({ key: "slug", value: generatedSlug }));
+  }, [
+    mode,
+    slugManuallyEdited,
+    formState.title,
+    formState.slug,
+    dispatch,
+  ]);
+
+  useEffect(() => {
+    const candidate = normalizeSlug(formState.slug || "");
+
+    if (!candidate) {
+      setSlugStatus({ state: "idle", checkedSlug: "" });
+      return;
+    }
+
+    if (!isValidSlug(candidate) || candidate.length > 150) {
+      setSlugStatus({ state: "invalid", checkedSlug: candidate });
+      return;
+    }
+
+    if (mode === "edit" && candidate === initialSlug) {
+      setSlugStatus({ state: "unchanged", checkedSlug: candidate });
+      return;
+    }
+
+    const requestId = slugCheckRequestRef.current + 1;
+    slugCheckRequestRef.current = requestId;
+    setSlugStatus({ state: "checking", checkedSlug: candidate });
+
+    const timerId = window.setTimeout(async () => {
+      try {
+        const result = await propertiesService.checkSlugAvailability(candidate, {
+          excludePropertyId: resolvedInitialResourceId,
+        });
+
+        if (slugCheckRequestRef.current !== requestId) return;
+        setSlugStatus({
+          state: result.available ? "available" : "taken",
+          checkedSlug: candidate,
+        });
+      } catch {
+        if (slugCheckRequestRef.current !== requestId) return;
+        setSlugStatus({ state: "error", checkedSlug: candidate });
+      }
+    }, 450);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [formState.slug, initialSlug, mode, resolvedInitialResourceId]);
+
   function handleStepClick(stepIndex) {
     if (stepIndex < 0 || stepIndex > currentStepIndex || isSaving) return;
     dispatch(actions.setStepIndex({ stepIndex }));
@@ -237,14 +347,95 @@ export default function PropertyWizard({
     }
   }
 
+  function clearErrorPath(errorPath) {
+    if (!errorPath) return;
+    const currentErrors = selectors.stepErrors(state);
+    if (!currentErrors || !Object.prototype.hasOwnProperty.call(currentErrors, errorPath)) {
+      return;
+    }
+    const nextErrors = { ...currentErrors };
+    delete nextErrors[errorPath];
+    dispatch(actions.setStepErrors({ errors: nextErrors }));
+  }
+
+  function updateSlugField(nextValue, { manual = true } = {}) {
+    const normalized = normalizeSlug(nextValue || "");
+    setSlugManuallyEdited(Boolean(manual));
+    dispatch(actions.setField({ key: "slug", value: normalized }));
+    clearFieldErrors("slug");
+    clearErrorPath(getStepErrorPath("describe", "slug"));
+  }
+
+  function regenerateSlug() {
+    const generated = normalizeSlug(formState.title || "");
+    updateSlugField(generated, { manual: false });
+  }
+
+  async function ensureSlugAvailable() {
+    const currentSlug = normalizeSlug(formState.slug || "");
+    const fallbackSlug = normalizeSlug(formState.title || "");
+    const candidate = currentSlug || fallbackSlug;
+
+    if (!candidate) {
+      setSlugStatus({ state: "invalid", checkedSlug: "" });
+      return { ok: false, reason: "invalid" };
+    }
+
+    if (candidate !== currentSlug) {
+      dispatch(actions.setField({ key: "slug", value: candidate }));
+    }
+
+    if (!isValidSlug(candidate) || candidate.length > 150) {
+      setSlugStatus({ state: "invalid", checkedSlug: candidate });
+      return { ok: false, reason: "invalid" };
+    }
+
+    if (mode === "edit" && candidate === initialSlug) {
+      setSlugStatus({ state: "unchanged", checkedSlug: candidate });
+      return { ok: true, reason: "unchanged" };
+    }
+
+    setSlugStatus({ state: "checking", checkedSlug: candidate });
+    try {
+      const result = await propertiesService.checkSlugAvailability(candidate, {
+        excludePropertyId: resolvedInitialResourceId,
+      });
+      setSlugStatus({
+        state: result.available ? "available" : "taken",
+        checkedSlug: candidate,
+      });
+      return { ok: Boolean(result.available), reason: result.available ? "available" : "taken" };
+    } catch {
+      setSlugStatus({ state: "error", checkedSlug: candidate });
+      return { ok: false, reason: "error" };
+    }
+  }
+
   function handleFieldChange(key, value) {
     clearFieldErrors(key);
+
+    if (key === "title") {
+      dispatch(actions.setField({ key, value }));
+      if (mode === "create" && !slugManuallyEdited) {
+        const generated = normalizeSlug(value || "");
+        dispatch(actions.setField({ key: "slug", value: generated }));
+      }
+      clearFieldErrors("slug");
+      clearErrorPath(getStepErrorPath("describe", "slug"));
+      return;
+    }
+
+    if (key === "slug") {
+      updateSlugField(value, { manual: true });
+      return;
+    }
 
     if (key === "resourceType") {
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "category", value: "" }));
       dispatch(actions.setField({ key: "offeringId", value: "" }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
+      dispatch(actions.setField({ key: "amenities", value: [] }));
       dispatch(actions.setField({ key: "attributes", value: {} }));
       clearFieldErrors("category");
       clearFieldErrors("offeringId");
@@ -318,6 +509,27 @@ export default function PropertyWizard({
       return;
     }
 
+    const stepHasSlugField = fields.some((field) => field.key === "slug");
+    if (stepHasSlugField) {
+      const slugValidation = await ensureSlugAvailable();
+      if (!slugValidation.ok) {
+        const slugErrorMessage =
+          slugValidation.reason === "taken"
+            ? t("propertyForm.validation.slugTaken")
+            : t("propertyForm.validation.slugInvalid");
+        dispatch(
+          actions.setStepErrors({
+            errors: {
+              ...selectors.stepErrors(state),
+              [getStepErrorPath(currentStep.id, "slug")]:
+                slugErrorMessage,
+            },
+          }),
+        );
+        return;
+      }
+    }
+
     dispatch(actions.setStepErrors({ errors: {} }));
     dispatch(actions.setContext({ context: nextContext }));
     dispatch(actions.nextStep({ max: activeSteps.length }));
@@ -373,6 +585,28 @@ export default function PropertyWizard({
         if (idx >= 0) {
           dispatch(actions.setStepIndex({ stepIndex: idx }));
         }
+      }
+      return;
+    }
+
+    const slugValidation = await ensureSlugAvailable();
+    if (!slugValidation.ok) {
+      const slugErrorMessage =
+        slugValidation.reason === "taken"
+          ? t("propertyForm.validation.slugTaken")
+          : t("propertyForm.validation.slugInvalid");
+      const errorPath = getStepErrorPath("describe", "slug");
+      dispatch(
+        actions.setStepErrors({
+          errors: {
+            ...selectors.stepErrors(state),
+            [errorPath]: slugErrorMessage,
+          },
+        }),
+      );
+      const describeStepIndex = activeSteps.findIndex((step) => step.id === "describe");
+      if (describeStepIndex >= 0) {
+        dispatch(actions.setStepIndex({ stepIndex: describeStepIndex }));
       }
       return;
     }
@@ -657,6 +891,15 @@ export default function PropertyWizard({
                 context={context}
                 t={t}
               />
+            ) : currentStep.id === "location" ? (
+              <LocationStepForm
+                t={t}
+                fields={fields}
+                formState={formState}
+                stepErrors={stepErrors}
+                stepId={currentStep.id}
+                onFieldChange={handleFieldChange}
+              />
             ) : (
               <div className="space-y-5">
                 {fields.map((field) => {
@@ -672,6 +915,12 @@ export default function PropertyWizard({
                       t={t}
                       existingImages={existingImages}
                       existingImagesLoading={existingImagesLoading}
+                      slugStatus={slugStatus}
+                      onRegenerateSlug={regenerateSlug}
+                      amenitiesOptions={amenitiesOptions}
+                      amenitiesLoading={amenitiesLoading}
+                      resourceType={resourceType}
+                      category={context.category}
                       onChange={(nextValue) => handleFieldChange(field.key, nextValue)}
                     />
                   );

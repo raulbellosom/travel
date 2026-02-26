@@ -45,6 +45,10 @@ const MUSIC_CATEGORIES = [
   "sonora",
 ];
 
+const MUSIC_GENRE_AMENITY_SLUGS = new Set(
+  MUSIC_CATEGORIES.map((categoryId) => `music-${String(categoryId).replaceAll("_", "-")}`),
+);
+
 const OFFERINGS = [
   {
     id: "per_event_or_day",
@@ -259,8 +263,8 @@ function getFieldsForStep({ t, context, stepId }) {
   if (stepId === "details") {
     return [
       {
-        key: "attributes.musicGenres",
-        type: "text",
+        key: "amenities",
+        type: "amenities",
         labelKey: "wizard.fields.music.musicGenres.label",
         helpKey: "wizard.fields.music.musicGenres.help",
         required: false,
@@ -582,6 +586,25 @@ function toSchemaPatch({ formState, context }) {
   }
 
   const rawAttributes = { ...(formState?.attributes || {}) };
+  const amenitySlugs = Array.isArray(formState?.amenities)
+    ? Array.from(
+        new Set(
+          formState.amenities
+            .map((slug) => String(slug || "").trim())
+            .filter(Boolean),
+        ),
+      )
+    : [];
+  if (amenitySlugs.length > 0) {
+    patch.amenities = amenitySlugs;
+
+    const genreAmenitySlugs = amenitySlugs.filter((slug) =>
+      MUSIC_GENRE_AMENITY_SLUGS.has(slug),
+    );
+    if (genreAmenitySlugs.length > 0) {
+      rawAttributes.musicGenres = genreAmenitySlugs;
+    }
+  }
   const sanitized = sanitizeAttributes({ attributes: rawAttributes });
   patch.attributes = JSON.stringify(sanitized);
 

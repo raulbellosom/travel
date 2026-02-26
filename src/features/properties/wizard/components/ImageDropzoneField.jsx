@@ -416,7 +416,7 @@ export default function ImageDropzoneField({
             })}
           </p>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {normalizedExistingImages.map((image, index) => (
               <article
                 key={image.id}
@@ -462,7 +462,7 @@ export default function ImageDropzoneField({
             {t("propertyForm.images.empty")}
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {previewItems.map((item, index) => (
               <article
                 key={item.signature}
