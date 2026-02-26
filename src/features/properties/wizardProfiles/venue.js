@@ -38,6 +38,12 @@ const OFFERINGS = [
   },
 ];
 
+function getDefaultBookingTypeForCommercialMode(commercialMode) {
+  if (commercialMode === "rent_hourly") return "time_slot";
+  if (commercialMode === "rent_short_term") return "date_range";
+  return "manual_contact";
+}
+
 /**
  * Human pricing choices, mapped to schema pricingModel enum.
  * Keep schema enum `total`, but display it as "Precio fijo" (UI id fixed_total).
@@ -90,6 +96,7 @@ const GENERIC_BOOKING_CONDITION_KEYS = [
   "bookingMaxUnits",
   "availabilityStartTime",
   "availabilityEndTime",
+  "manualContactScheduleType",
 ];
 
 function getNarrativeSteps({ t }) {
@@ -122,8 +129,50 @@ function getOfferingOptions({ t }) {
   }));
 }
 
+function getBookingTypeOptions({ t, commercialMode, paymentsOnlineEnabled = true }) {
+  const defaultBookingType =
+    getDefaultBookingTypeForCommercialMode(commercialMode);
+  const manualOption = {
+    id: "manual_contact",
+    label: t("wizard.bookingType.manualContact", {
+      defaultValue: "Reservacion por contacto",
+    }),
+    description: t("propertyForm.helper.bookingTypeManual"),
+  };
+
+  if (!defaultBookingType || defaultBookingType === "manual_contact") {
+    return [manualOption];
+  }
+
+  if (!paymentsOnlineEnabled) {
+    return [manualOption];
+  }
+
+  const directLabel =
+    defaultBookingType === "time_slot"
+      ? t("wizard.bookingType.onlineTimeSlot", {
+          defaultValue: "Reserva en linea (horarios)",
+        })
+      : t("wizard.bookingType.onlineDateRange", {
+          defaultValue: "Reserva en linea (fechas)",
+        });
+
+  return [
+    {
+      id: defaultBookingType,
+      label: directLabel,
+      description: t("propertyForm.helper.bookingTypeDirect"),
+    },
+    manualOption,
+  ];
+}
+
 function getFieldsForStep({ t, context, stepId }) {
-  const { commercialMode } = context || {};
+  const {
+    commercialMode,
+    bookingType,
+    paymentsOnlineEnabled = true,
+  } = context || {};
 
   if (stepId === "publishWhat") {
     return [
@@ -139,7 +188,7 @@ function getFieldsForStep({ t, context, stepId }) {
   }
 
   if (stepId === "howOffer") {
-    return [
+    const fields = [
       {
         key: "offeringId",
         type: "select",
@@ -149,6 +198,22 @@ function getFieldsForStep({ t, context, stepId }) {
         required: true,
       },
     ];
+
+    if (commercialMode === "rent_short_term" || commercialMode === "rent_hourly") {
+      fields.push({
+        key: "bookingType",
+        type: "select",
+        labelKey: "propertyForm.fields.bookingType",
+        options: getBookingTypeOptions({
+          t,
+          commercialMode,
+          paymentsOnlineEnabled,
+        }),
+        required: true,
+      });
+    }
+
+    return fields;
   }
 
   if (stepId === "describe") {
@@ -216,6 +281,32 @@ function getFieldsForStep({ t, context, stepId }) {
     //
     // For short-term (date_range), we keep this step light (optional).
     const fields = [];
+
+    if (
+      bookingType === "manual_contact" &&
+      (commercialMode === "rent_short_term" || commercialMode === "rent_hourly")
+    ) {
+      fields.push({
+        key: "attributes.manualContactScheduleType",
+        type: "select",
+        labelKey: "propertyForm.fields.manualContactScheduleType",
+        options: [
+          {
+            id: "none",
+            label: t("propertyForm.options.manualContactScheduleType.none"),
+          },
+          {
+            id: "date_range",
+            label: t("propertyForm.options.manualContactScheduleType.date_range"),
+          },
+          {
+            id: "time_slot",
+            label: t("propertyForm.options.manualContactScheduleType.time_slot"),
+          },
+        ],
+        required: false,
+      });
+    }
 
     // Availability window (attributes) - optional for both modes
     fields.push(
@@ -362,11 +453,14 @@ function toSchemaPatch({ formState, context }) {
   const offering = OFFERINGS.find((o) => o.id === formState?.offeringId);
   if (offering) {
     patch.commercialMode = offering.commercialMode;
-    patch.bookingType = offering.bookingType;
-  } else if (context?.commercialMode && context?.bookingType) {
+  } else if (context?.commercialMode) {
     patch.commercialMode = context.commercialMode;
-    patch.bookingType = context.bookingType;
   }
+  patch.bookingType =
+    formState?.bookingType ||
+    offering?.bookingType ||
+    context?.bookingType ||
+    "";
 
   // Core descriptive fields
   if (formState?.title != null) patch.title = String(formState.title).trim();
@@ -422,6 +516,9 @@ function toSchemaPatch({ formState, context }) {
 
   // Attributes
   const rawAttributes = { ...(formState?.attributes || {}) };
+  if (patch.bookingType !== "manual_contact") {
+    delete rawAttributes.manualContactScheduleType;
+  }
   const sanitized = sanitizeAttributes({ attributes: rawAttributes, context });
 
   patch.attributes = JSON.stringify(sanitized);

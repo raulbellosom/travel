@@ -17,6 +17,7 @@ import { Button } from "../../../components/common";
 import { amenitiesService } from "../../../services/amenitiesService";
 import { propertiesService } from "../../../services/propertiesService";
 import { isValidSlug, normalizeSlug } from "../../../utils/slug";
+import { useInstanceModules } from "../../../hooks/useInstanceModules";
 import { getProfile } from "../wizardProfiles";
 import {
   getActiveSteps,
@@ -91,12 +92,37 @@ function getStepErrorPath(stepId, fieldKey) {
   return `${stepId}.${fieldKey}`;
 }
 
+function resolveBookingTypeByModule(rawBookingType, paymentsOnlineEnabled) {
+  const normalized = String(rawBookingType || "").trim();
+  if (
+    !paymentsOnlineEnabled &&
+    (normalized === "date_range" ||
+      normalized === "time_slot" ||
+      normalized === "fixed_event")
+  ) {
+    return "manual_contact";
+  }
+  return normalized;
+}
+
+function resolveOfferingOption(profile, category, offeringId) {
+  if (!profile?.getOfferingOptions || !offeringId) return null;
+  const options = profile.getOfferingOptions({
+    t: (key) => key,
+    category: category || "",
+  });
+  return Array.isArray(options)
+    ? options.find((item) => item.id === offeringId) || null
+    : null;
+}
+
 export default function PropertyTabsEditor({
   initialResourceDoc,
   onSave,
   onCancel,
 }) {
   const { t } = useTranslation();
+  const { isEnabled, loading: modulesLoading } = useInstanceModules();
   const [state, dispatch] = useReducer(wizardReducer, initialWizardState);
   const [existingImages, setExistingImages] = useState([]);
   const [existingImagesLoading, setExistingImagesLoading] = useState(false);
@@ -125,6 +151,18 @@ export default function PropertyTabsEditor({
   const context = useMemo(
     () => buildContextFromSelection(profile, formState),
     [profile, formState],
+  );
+  const paymentsOnlineEnabled = useMemo(
+    () =>
+      modulesLoading ? true : Boolean(isEnabled("module.payments.online")),
+    [modulesLoading, isEnabled],
+  );
+  const runtimeContext = useMemo(
+    () => ({
+      ...context,
+      paymentsOnlineEnabled,
+    }),
+    [context, paymentsOnlineEnabled],
   );
 
   useEffect(() => {
@@ -232,8 +270,8 @@ export default function PropertyTabsEditor({
 
   const activeSteps = useMemo(() => {
     if (!profile) return [];
-    return getActiveSteps(profile, t, context);
-  }, [profile, t, context]);
+    return getActiveSteps(profile, t, runtimeContext);
+  }, [profile, t, runtimeContext]);
 
   const currentStepIndex = selectors.stepIndex(state);
   const currentStep = activeSteps[currentStepIndex] || activeSteps[0] || null;
@@ -246,8 +284,8 @@ export default function PropertyTabsEditor({
 
   const fields = useMemo(() => {
     if (!profile || !currentStep) return [];
-    return getStepFields(profile, t, context, currentStep.id);
-  }, [profile, t, context, currentStep]);
+    return getStepFields(profile, t, runtimeContext, currentStep.id);
+  }, [profile, t, runtimeContext, currentStep]);
 
   const normalizedFormState = useMemo(
     () => normalizeFormState(formState),
@@ -433,14 +471,18 @@ export default function PropertyTabsEditor({
     if (key === "category") {
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "offeringId", value: "" }));
+      dispatch(actions.setField({ key: "bookingType", value: "" }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
       dispatch(actions.setField({ key: "attributes", value: {} }));
       clearFieldErrors("offeringId");
+      clearFieldErrors("bookingType");
+      clearFieldErrors("attributes.manualContactScheduleType");
       clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         category: value,
         offeringId: "",
+        bookingType: "",
         pricingChoiceId: "",
         attributes: {},
       });
@@ -449,15 +491,53 @@ export default function PropertyTabsEditor({
     }
 
     if (key === "offeringId") {
+      const selectedOffering = resolveOfferingOption(
+        profile,
+        state.formState.category,
+        value,
+      );
+      const nextBookingType = resolveBookingTypeByModule(
+        selectedOffering?.bookingType || "",
+        paymentsOnlineEnabled,
+      );
+
       dispatch(actions.setField({ key, value }));
+      dispatch(actions.setField({ key: "bookingType", value: nextBookingType }));
+      dispatch(
+        actions.setField({
+          key: "attributes.manualContactScheduleType",
+          value: "none",
+        }),
+      );
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
+      clearFieldErrors("bookingType");
+      clearFieldErrors("attributes.manualContactScheduleType");
       clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         offeringId: value,
+        bookingType: nextBookingType,
+        attributes: {
+          ...(state.formState.attributes || {}),
+          manualContactScheduleType: "none",
+        },
         pricingChoiceId: "",
       });
       dispatch(actions.setContext({ context: nextContext }));
+      return;
+    }
+
+    if (key === "bookingType") {
+      dispatch(actions.setField({ key, value }));
+      if (value !== "manual_contact") {
+        dispatch(
+          actions.setField({
+            key: "attributes.manualContactScheduleType",
+            value: "none",
+          }),
+        );
+      }
+      clearFieldErrors("attributes.manualContactScheduleType");
       return;
     }
 
@@ -478,7 +558,10 @@ export default function PropertyTabsEditor({
         stepId: step.id,
         fields: stepFields,
         formState: normalizedFormState,
-        context: nextContext,
+        context: {
+          ...nextContext,
+          paymentsOnlineEnabled,
+        },
         t,
       });
 
@@ -713,7 +796,7 @@ export default function PropertyTabsEditor({
             <WizardReview
               profile={profile}
               formState={formState}
-              context={context}
+              context={runtimeContext}
               t={t}
             />
           ) : currentStep.id === "location" ? (
@@ -813,10 +896,13 @@ function resolveOfferingId(profile, formState) {
     t: (key) => key,
     category,
   });
-  const selected = (Array.isArray(options) ? options : []).find(
-    (item) =>
-      item.commercialMode === formState?.commercialMode &&
-      item.bookingType === formState?.bookingType,
-  );
+  const list = Array.isArray(options) ? options : [];
+  const selected =
+    list.find(
+      (item) =>
+        item.commercialMode === formState?.commercialMode &&
+        item.bookingType === formState?.bookingType,
+    ) ||
+    list.find((item) => item.commercialMode === formState?.commercialMode);
   return selected?.id || "";
 }

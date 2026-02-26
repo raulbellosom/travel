@@ -19,6 +19,7 @@ import { Button } from "../../../components/common";
 import { amenitiesService } from "../../../services/amenitiesService";
 import { propertiesService } from "../../../services/propertiesService";
 import { isValidSlug, normalizeSlug } from "../../../utils/slug";
+import { useInstanceModules } from "../../../hooks/useInstanceModules";
 
 import { getProfile } from "../wizardProfiles";
 import {
@@ -76,12 +77,26 @@ function resolveOfferingId(profile, formState) {
     t: (key) => key,
     category,
   });
-  const selected = (Array.isArray(options) ? options : []).find(
-    (item) =>
-      item.commercialMode === formState?.commercialMode &&
-      item.bookingType === formState?.bookingType,
-  );
+  const list = Array.isArray(options) ? options : [];
+  const selected =
+    list.find(
+      (item) =>
+        item.commercialMode === formState?.commercialMode &&
+        item.bookingType === formState?.bookingType,
+    ) ||
+    list.find((item) => item.commercialMode === formState?.commercialMode);
   return selected?.id || "";
+}
+
+function resolveOfferingOption(profile, category, offeringId) {
+  if (!profile?.getOfferingOptions || !offeringId) return null;
+  const options = profile.getOfferingOptions({
+    t: (key) => key,
+    category: category || "",
+  });
+  return Array.isArray(options)
+    ? options.find((item) => item.id === offeringId) || null
+    : null;
 }
 
 function isInteractiveTarget(target) {
@@ -106,6 +121,19 @@ function getStepErrorPath(stepId, fieldKey) {
   return `${stepId}.${fieldKey}`;
 }
 
+function resolveBookingTypeByModule(rawBookingType, paymentsOnlineEnabled) {
+  const normalized = String(rawBookingType || "").trim();
+  if (
+    !paymentsOnlineEnabled &&
+    (normalized === "date_range" ||
+      normalized === "time_slot" ||
+      normalized === "fixed_event")
+  ) {
+    return "manual_contact";
+  }
+  return normalized;
+}
+
 export default function PropertyWizard({
   mode = "create",
   initialResourceDoc = null,
@@ -113,6 +141,7 @@ export default function PropertyWizard({
   onCancel,
 }) {
   const { t } = useTranslation();
+  const { isEnabled, loading: modulesLoading } = useInstanceModules();
 
   const [state, dispatch] = useReducer(wizardReducer, initialWizardState);
   const [existingImages, setExistingImages] = useState([]);
@@ -142,6 +171,18 @@ export default function PropertyWizard({
   const context = useMemo(
     () => buildContextFromSelection(profile, formState),
     [profile, formState],
+  );
+  const paymentsOnlineEnabled = useMemo(
+    () =>
+      modulesLoading ? true : Boolean(isEnabled("module.payments.online")),
+    [modulesLoading, isEnabled],
+  );
+  const runtimeContext = useMemo(
+    () => ({
+      ...context,
+      paymentsOnlineEnabled,
+    }),
+    [context, paymentsOnlineEnabled],
   );
   const resourceTypeField = useMemo(
     () => ({
@@ -247,18 +288,18 @@ export default function PropertyWizard({
 
   const activeSteps = useMemo(() => {
     if (!profile) return [];
-    return getActiveSteps(profile, t, context);
-  }, [profile, t, context]);
+    return getActiveSteps(profile, t, runtimeContext);
+  }, [profile, t, runtimeContext]);
 
   const currentStepIndex = selectors.stepIndex(state);
   const currentStep = activeSteps[currentStepIndex] || activeSteps[0] || null;
 
   const fields = useMemo(() => {
     if (!profile || !currentStep) return [];
-    const stepFields = getStepFields(profile, t, context, currentStep.id);
+    const stepFields = getStepFields(profile, t, runtimeContext, currentStep.id);
     if (currentStep.id !== "publishWhat") return stepFields;
     return [resourceTypeField, ...stepFields];
-  }, [profile, t, context, currentStep, resourceTypeField]);
+  }, [profile, t, runtimeContext, currentStep, resourceTypeField]);
 
   const stepErrors = selectors.stepErrors(state);
   const isSaving = selectors.isSaving(state);
@@ -434,6 +475,7 @@ export default function PropertyWizard({
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "category", value: "" }));
       dispatch(actions.setField({ key: "offeringId", value: "" }));
+      dispatch(actions.setField({ key: "bookingType", value: "" }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
       dispatch(actions.setField({ key: "amenities", value: [] }));
       dispatch(actions.setField({ key: "attributes", value: {} }));
@@ -458,14 +500,18 @@ export default function PropertyWizard({
     if (key === "category") {
       dispatch(actions.setField({ key, value }));
       dispatch(actions.setField({ key: "offeringId", value: "" }));
+      dispatch(actions.setField({ key: "bookingType", value: "" }));
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
       dispatch(actions.setField({ key: "attributes", value: {} }));
       clearFieldErrors("offeringId");
+      clearFieldErrors("bookingType");
+      clearFieldErrors("attributes.manualContactScheduleType");
       clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         category: value,
         offeringId: "",
+        bookingType: "",
         pricingChoiceId: "",
         attributes: {},
       });
@@ -474,15 +520,53 @@ export default function PropertyWizard({
     }
 
     if (key === "offeringId") {
+      const selectedOffering = resolveOfferingOption(
+        profile,
+        state.formState.category,
+        value,
+      );
+      const nextBookingType = resolveBookingTypeByModule(
+        selectedOffering?.bookingType || "",
+        paymentsOnlineEnabled,
+      );
+
       dispatch(actions.setField({ key, value }));
+      dispatch(actions.setField({ key: "bookingType", value: nextBookingType }));
+      dispatch(
+        actions.setField({
+          key: "attributes.manualContactScheduleType",
+          value: "none",
+        }),
+      );
       dispatch(actions.setField({ key: "pricingChoiceId", value: "" }));
+      clearFieldErrors("bookingType");
+      clearFieldErrors("attributes.manualContactScheduleType");
       clearFieldErrors("pricingChoiceId");
       const nextContext = buildContextFromSelection(profile, {
         ...state.formState,
         offeringId: value,
+        bookingType: nextBookingType,
+        attributes: {
+          ...(state.formState.attributes || {}),
+          manualContactScheduleType: "none",
+        },
         pricingChoiceId: "",
       });
       dispatch(actions.setContext({ context: nextContext }));
+      return;
+    }
+
+    if (key === "bookingType") {
+      dispatch(actions.setField({ key, value }));
+      if (value !== "manual_contact") {
+        dispatch(
+          actions.setField({
+            key: "attributes.manualContactScheduleType",
+            value: "none",
+          }),
+        );
+      }
+      clearFieldErrors("attributes.manualContactScheduleType");
       return;
     }
 
@@ -495,14 +579,17 @@ export default function PropertyWizard({
     const normalizedFormState = normalizeFormState(selectors.formState(state));
     const nextContext = buildContextFromSelection(profile, normalizedFormState);
 
-    const validation = validateStep({
-      profile,
-      stepId: currentStep.id,
-      fields,
-      formState: normalizedFormState,
-      context: nextContext,
-      t,
-    });
+      const validation = validateStep({
+        profile,
+        stepId: currentStep.id,
+        fields,
+        formState: normalizedFormState,
+        context: {
+          ...nextContext,
+          paymentsOnlineEnabled,
+        },
+        t,
+      });
 
     if (!validation.ok) {
       dispatch(actions.setStepErrors({ errors: validation.errors }));
@@ -568,7 +655,10 @@ export default function PropertyWizard({
         stepId: step.id,
         fields: stepFields,
         formState: normalizedFormState,
-        context: nextContext,
+        context: {
+          ...nextContext,
+          paymentsOnlineEnabled,
+        },
         t,
       });
 
@@ -885,12 +975,12 @@ export default function PropertyWizard({
 
           <div className="min-h-[360px] px-5 py-5 sm:px-6 sm:py-6">
             {currentStep.id === "review" ? (
-              <WizardReview
-                profile={profile}
-                formState={formState}
-                context={context}
-                t={t}
-              />
+            <WizardReview
+              profile={profile}
+              formState={formState}
+              context={runtimeContext}
+              t={t}
+            />
             ) : currentStep.id === "location" ? (
               <LocationStepForm
                 t={t}

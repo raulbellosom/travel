@@ -267,7 +267,7 @@ export default function FieldRenderer({
           max={Number.isFinite(field.max) ? field.max : NUMBER_FALLBACK_MAX}
           step={Number.isFinite(field.step) ? field.step : 1}
           showStepper={false}
-          className="min-w-0"
+          className="min-w-0 max-w-full"
           onChange={(nextValue) => onChange(String(nextValue ?? ""))}
         />
       );
@@ -285,7 +285,7 @@ export default function FieldRenderer({
           step={0.01}
           precision={2}
           showStepper={false}
-          className="min-w-0"
+          className="min-w-0 max-w-full"
           onChange={(nextValue) => onChange(String(nextValue ?? ""))}
         />
       );
@@ -299,7 +299,7 @@ export default function FieldRenderer({
           error={error}
           required={Boolean(field.required)}
           value={String(value ?? "")}
-          className="min-w-0"
+          className="min-w-0 max-w-full"
           onChange={(event) => onChange(event.target.value)}
         />
       );

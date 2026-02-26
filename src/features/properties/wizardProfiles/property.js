@@ -54,6 +54,11 @@ const OFFERINGS = [
   },
 ];
 
+function getDefaultBookingTypeForCommercialMode(commercialMode) {
+  if (commercialMode === "rent_short_term") return "date_range";
+  return "manual_contact";
+}
+
 /**
  * Pricing choices are human-facing (UI ids), then mapped to schema enum.
  * NOTE: We keep the schema enum `total` but display it as "Precio fijo" (UI id fixed_total).
@@ -166,6 +171,39 @@ function getOfferingOptions({ t }) {
   }));
 }
 
+function getBookingTypeOptions({ t, commercialMode, paymentsOnlineEnabled = true }) {
+  const defaultBookingType =
+    getDefaultBookingTypeForCommercialMode(commercialMode);
+  const manualOption = {
+    id: "manual_contact",
+    label: t("wizard.bookingType.manualContact", {
+      defaultValue: "Reservacion por contacto",
+    }),
+    description: t("propertyForm.helper.bookingTypeManual"),
+  };
+
+  if (!defaultBookingType || defaultBookingType === "manual_contact") {
+    return [manualOption];
+  }
+
+  if (!paymentsOnlineEnabled) {
+    return [manualOption];
+  }
+
+  const directLabel = t("wizard.bookingType.onlineDateRange", {
+    defaultValue: "Reserva en linea (fechas)",
+  });
+
+  return [
+    {
+      id: defaultBookingType,
+      label: directLabel,
+      description: t("propertyForm.helper.bookingTypeDirect"),
+    },
+    manualOption,
+  ];
+}
+
 /**
  * Field definitions by step.
  * The wizard engine renders these using a generic renderer.
@@ -175,7 +213,12 @@ function getOfferingOptions({ t }) {
  * - "attributes.<key>" maps to attributes JSON keys.
  */
 function getFieldsForStep({ t, context, stepId }) {
-  const { category, commercialMode } = context || {};
+  const {
+    category,
+    commercialMode,
+    bookingType,
+    paymentsOnlineEnabled = true,
+  } = context || {};
 
   if (stepId === "publishWhat") {
     return [
@@ -191,7 +234,7 @@ function getFieldsForStep({ t, context, stepId }) {
   }
 
   if (stepId === "howOffer") {
-    return [
+    const fields = [
       {
         key: "offeringId",
         type: "select",
@@ -201,6 +244,22 @@ function getFieldsForStep({ t, context, stepId }) {
         required: true,
       },
     ];
+
+    if (commercialMode === "rent_short_term") {
+      fields.push({
+        key: "bookingType",
+        type: "select",
+        labelKey: "propertyForm.fields.bookingType",
+        options: getBookingTypeOptions({
+          t,
+          commercialMode,
+          paymentsOnlineEnabled,
+        }),
+        required: true,
+      });
+    }
+
+    return fields;
   }
 
   if (stepId === "describe") {
@@ -346,6 +405,29 @@ function getFieldsForStep({ t, context, stepId }) {
 
   if (stepId === "conditions") {
     const fields = [];
+
+    if (commercialMode === "rent_short_term" && bookingType === "manual_contact") {
+      fields.push({
+        key: "attributes.manualContactScheduleType",
+        type: "select",
+        labelKey: "propertyForm.fields.manualContactScheduleType",
+        options: [
+          {
+            id: "none",
+            label: t("propertyForm.options.manualContactScheduleType.none"),
+          },
+          {
+            id: "date_range",
+            label: t("propertyForm.options.manualContactScheduleType.date_range"),
+          },
+          {
+            id: "time_slot",
+            label: t("propertyForm.options.manualContactScheduleType.time_slot"),
+          },
+        ],
+        required: false,
+      });
+    }
 
     // Sale conditions: furnished (not for land)
     if (commercialMode === "sale" && category !== "land" && isBuiltSpace(category)) {
@@ -567,7 +649,7 @@ function getFieldsForStep({ t, context, stepId }) {
  * - minimumContractDuration (rent_long_term)
  */
 function sanitizeAttributes({ attributes, context }) {
-  const { commercialMode, category } = context || {};
+  const { commercialMode, category, bookingType } = context || {};
   const safe = { ...(attributes || {}) };
 
   // Only keep minimumContractDuration when long term rent
@@ -580,6 +662,10 @@ function sanitizeAttributes({ attributes, context }) {
         if (k !== "minimumContractDuration") delete safe[k];
       });
     }
+  }
+
+  if (!(commercialMode === "rent_short_term" && bookingType === "manual_contact")) {
+    delete safe.manualContactScheduleType;
   }
 
   // Remove undefined/null
@@ -608,12 +694,15 @@ function toSchemaPatch({ formState, context }) {
   const offering = OFFERINGS.find((o) => o.id === formState?.offeringId);
   if (offering) {
     patch.commercialMode = offering.commercialMode;
-    patch.bookingType = offering.bookingType;
-  } else if (context?.commercialMode && context?.bookingType) {
+  } else if (context?.commercialMode) {
     // fallback (wizard may already store derived fields in context)
     patch.commercialMode = context.commercialMode;
-    patch.bookingType = context.bookingType;
   }
+  patch.bookingType =
+    formState?.bookingType ||
+    offering?.bookingType ||
+    context?.bookingType ||
+    "";
 
   // Title/description/slug
   if (formState?.title != null) patch.title = String(formState.title).trim();
@@ -680,7 +769,18 @@ function toSchemaPatch({ formState, context }) {
 
   // Attributes: gather only attribute.* keys from formState.attributes
   const rawAttributes = { ...(formState?.attributes || {}) };
-  const sanitized = sanitizeAttributes({ attributes: rawAttributes, context: { ...context, category: formState?.category, commercialMode: patch.commercialMode } });
+  if (patch.bookingType !== "manual_contact") {
+    delete rawAttributes.manualContactScheduleType;
+  }
+  const sanitized = sanitizeAttributes({
+    attributes: rawAttributes,
+    context: {
+      ...context,
+      category: formState?.category,
+      commercialMode: patch.commercialMode,
+      bookingType: patch.bookingType,
+    },
+  });
 
   patch.attributes = JSON.stringify(sanitized);
 

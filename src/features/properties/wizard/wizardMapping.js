@@ -37,9 +37,10 @@ export function buildContextFromSelection(profile, formState) {
     }
   }
 
-  // In edit mode, values may already exist on formState
+  // In edit mode, values may already exist on formState.
+  // bookingType can be explicitly overridden by the user (e.g. manual contact).
   commercialMode = commercialMode || formState?.commercialMode || "";
-  bookingType = bookingType || formState?.bookingType || "";
+  bookingType = formState?.bookingType || bookingType || "";
 
   return {
     resourceType,

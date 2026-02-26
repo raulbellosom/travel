@@ -58,6 +58,7 @@ import {
 } from "../utils/internalRoutes";
 import { getOptimizedImage, getFileViewUrl } from "../utils/imageOptimization";
 import { formatMoneyWithDenomination } from "../utils/money";
+import { getResourceDetails } from "../utils/getResourceDetails";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -385,6 +386,15 @@ const AppPropertyDetail = () => {
     );
   }
 
+  const resourceType = String(property.resourceType || "property").toLowerCase();
+  const isPropertyResource = resourceType === "property";
+  const dynamicFeatureDetails = getResourceDetails(property, t).filter(
+    (detail) =>
+      detail?.label &&
+      detail?.value != null &&
+      String(detail.value).trim() !== "",
+  );
+
   const isRent = property.operationType === "rent";
   const isVacationRental = property.operationType === "vacation_rental";
   const publicUrl = getPublicPropertyRoute(
@@ -539,7 +549,8 @@ const AppPropertyDetail = () => {
             title={t("appPropertyDetailPage.sections.features")}
             icon={Home}
           >
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {isPropertyResource ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <InfoCard
                 label={t("propertyForm.fields.bedrooms")}
                 value={property.bedrooms || 0}
@@ -592,7 +603,25 @@ const AppPropertyDetail = () => {
                   icon={Users}
                 />
               )}
-            </div>
+              </div>
+            ) : dynamicFeatureDetails.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {dynamicFeatureDetails.map((detail, index) => (
+                  <InfoCard
+                    key={`${detail.label}-${index}`}
+                    label={detail.label}
+                    value={detail.value}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t("appPropertyDetailPage.noSpecificFeatures", {
+                  defaultValue:
+                    "Sin características específicas para este tipo de recurso.",
+                })}
+              </p>
+            )}
           </SectionCard>
 
           {/* Rental Terms (rent only) */}

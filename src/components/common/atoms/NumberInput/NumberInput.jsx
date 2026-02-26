@@ -133,7 +133,7 @@ const NumberInput = React.forwardRef(
 
     // Base styles - updated for integrated stepper
     const baseInputStyles = [
-      "w-full border transition-all duration-200 ease-in-out",
+      "w-full min-w-0 max-w-full border transition-all duration-200 ease-in-out",
       "focus:outline-none focus:ring-2 focus:ring-offset-1",
       "disabled:opacity-50 disabled:cursor-not-allowed",
       "read-only:bg-gray-50 read-only:cursor-default",

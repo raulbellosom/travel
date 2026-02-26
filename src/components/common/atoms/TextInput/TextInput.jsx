@@ -55,7 +55,7 @@ const TextInput = React.forwardRef(
 
     // Base styles
     const baseInputStyles = [
-      "w-full border transition-all duration-200 ease-in-out",
+      "w-full min-w-0 max-w-full border transition-all duration-200 ease-in-out",
       "focus:outline-none focus:ring-2 focus:ring-offset-1",
       "disabled:opacity-50 disabled:cursor-not-allowed",
       "read-only:bg-gray-50 read-only:cursor-default",
@@ -215,7 +215,7 @@ const TextInput = React.forwardRef(
                 .filter(Boolean)
                 .join(" ") || undefined
             }
-            whileFocus={{ scale: 1.01 }}
+            whileFocus={type === "time" ? undefined : { scale: 1.01 }}
             transition={{ duration: 0.2 }}
             {...props}
           />
