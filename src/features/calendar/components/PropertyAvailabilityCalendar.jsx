@@ -94,11 +94,40 @@ export default function PropertyAvailabilityCalendar({
 
   const inHoverRange = (d) => {
     if (startDate && !endDate && hoverDate) {
+      // Don't show hover range if hovered date violates stay constraints
+      if (hoverDate > startDate) {
+        const nights = daysBetween(startDate, hoverDate);
+        if (property.minStayNights && nights < property.minStayNights)
+          return false;
+        if (property.maxStayNights && nights > property.maxStayNights)
+          return false;
+      }
       const a = startDate < hoverDate ? startDate : hoverDate;
       const b = startDate < hoverDate ? hoverDate : startDate;
       return d >= a && d <= b;
     }
     return false;
+  };
+
+  /**
+   * When startDate is picked but endDate is not yet, classify each day d:
+   *  - "valid"   = within [minStay, maxStay] range from startDate (selectable)
+   *  - "tooClose"= between 1 and minStay-1 nights (can't pick yet)
+   *  - "tooFar"  = beyond maxStay (can't pick)
+   *  - null      = not applicable (before startDate, already disabled, etc.)
+   */
+  const getRangeHint = (d) => {
+    if (!startDate || endDate) return null;
+    if (d <= startDate) return null;
+    if (isDisabled(d)) return null;
+
+    const nights = daysBetween(startDate, d);
+    const min = property.minStayNights || 1;
+    const max = property.maxStayNights || 365;
+
+    if (nights < min) return "tooClose";
+    if (nights > max) return "tooFar";
+    return "valid";
   };
 
   const priceOf = (d) => {
@@ -186,6 +215,7 @@ export default function PropertyAvailabilityCalendar({
             const inSel = inRange(d) || inHoverRange(d);
             const price = priceOf(d);
             const compactPrice = fmtCompactPrice(price);
+            const rangeHint = inThisMonth && !disabled ? getRangeHint(d) : null;
 
             return (
               <button
@@ -203,9 +233,15 @@ export default function PropertyAvailabilityCalendar({
                     ? "border-cyan-600 bg-cyan-600 text-white shadow-[0_8px_20px_-12px_rgba(8,145,178,0.95)]"
                     : inSel
                       ? "border-cyan-200 bg-cyan-50/90 text-cyan-800 dark:border-cyan-800/60 dark:bg-cyan-950/40 dark:text-cyan-100"
-                      : disabled
-                        ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-75 line-through dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-500"
-                        : "border-slate-200 bg-white text-slate-800 hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-cyan-600 dark:hover:bg-cyan-950/30",
+                      : rangeHint === "valid"
+                        ? "border-emerald-200 bg-emerald-50/70 text-emerald-800 ring-1 ring-emerald-200/60 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-200 dark:ring-emerald-700/40"
+                        : rangeHint === "tooClose"
+                          ? "border-amber-200 bg-amber-50/50 text-amber-700 opacity-60 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300"
+                          : rangeHint === "tooFar"
+                            ? "border-red-200 bg-red-50/40 text-red-400 opacity-50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400"
+                            : disabled
+                              ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-75 line-through dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-500"
+                              : "border-slate-200 bg-white text-slate-800 hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-cyan-600 dark:hover:bg-cyan-950/30",
                 ].join(" ")}
               >
                 <span
@@ -215,7 +251,11 @@ export default function PropertyAvailabilityCalendar({
                       ? "text-white"
                       : today
                         ? "text-cyan-600 dark:text-cyan-400"
-                        : "text-slate-900 dark:text-slate-100",
+                        : rangeHint === "valid"
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : rangeHint === "tooFar"
+                            ? "text-red-400 dark:text-red-500"
+                            : "text-slate-900 dark:text-slate-100",
                   ].join(" ")}
                 >
                   {d.getDate()}
@@ -373,6 +413,30 @@ export default function PropertyAvailabilityCalendar({
           </div>
         )}
 
+        {/* Range hint legend — only when picking end date */}
+        {startDate &&
+          !endDate &&
+          (property.minStayNights || property.maxStayNights) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-2">
+              <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="inline-block h-3 w-3 rounded border border-emerald-300 bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/40" />
+                {t("calendar.hint.selectable", { defaultValue: "Disponible" })}
+              </span>
+              {Number(property.minStayNights) > 1 && (
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="inline-block h-3 w-3 rounded border border-amber-300 bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40" />
+                  {t("calendar.hint.tooClose", {
+                    defaultValue: "Mín. no alcanzado",
+                  })}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="inline-block h-3 w-3 rounded border border-red-300 bg-red-100 dark:border-red-700 dark:bg-red-900/40" />
+                {t("calendar.hint.tooFar", { defaultValue: "Máx. excedido" })}
+              </span>
+            </div>
+          )}
+
         {/* Action buttons */}
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 pt-1">
           {/* On mobile, show expand button. On desktop, it's less needed but still available */}
@@ -463,7 +527,7 @@ export default function PropertyAvailabilityCalendar({
             )}
 
             {/* Legend */}
-            <div className="flex items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-3 w-3 rounded-md border border-cyan-600 bg-cyan-600" />
                 {t("calendar.selectDates", { defaultValue: "Seleccionado" })}
@@ -471,6 +535,22 @@ export default function PropertyAvailabilityCalendar({
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-3 w-3 rounded-md border border-cyan-200 bg-cyan-50" />
                 {t("calendar.booking.inRange", { defaultValue: "Rango" })}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-md border border-emerald-300 bg-emerald-100" />
+                {t("calendar.hint.selectable", { defaultValue: "Disponible" })}
+              </span>
+              {Number(property.minStayNights) > 1 && (
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 rounded-md border border-amber-300 bg-amber-100" />
+                  {t("calendar.hint.tooClose", {
+                    defaultValue: "Mín. no alcanzado",
+                  })}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-md border border-red-300 bg-red-100" />
+                {t("calendar.hint.tooFar", { defaultValue: "Máx. excedido" })}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-3 w-3 rounded-md border border-slate-200 bg-slate-50 opacity-75 line-through" />

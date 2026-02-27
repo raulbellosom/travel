@@ -2731,7 +2731,7 @@ const PropertyDetail = () => {
           </div>
 
           {/* ── Right Sidebar ───────────────────────────── */}
-          <aside className="min-w-0 space-y-5 lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 space-y-5 lg:sticky lg:top-24 lg:z-30 lg:self-start">
             {/* ── Price + CTA card (desktop only) ─────── */}
             <div className="hidden lg:block">
               <PriceCard
