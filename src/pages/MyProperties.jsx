@@ -21,7 +21,6 @@ import {
   ResourceActionMenu,
   ResourceListFilters,
 } from "../features/resources/components";
-import { propertiesService } from "../services/propertiesService";
 import { formatMoneyWithDenomination } from "../utils/money";
 
 // ─── Constants ──────────────────────────────────────────────────
@@ -434,7 +433,7 @@ const MyProperties = () => {
     Promise.all(
       toResolve.map(async (item) => {
         try {
-          const images = await propertiesService.listImages(item.$id);
+          const images = await resourcesService.listImages(item.$id);
           return [item.$id, images[0]?.url || null];
         } catch {
           return [item.$id, null];
@@ -475,7 +474,7 @@ const MyProperties = () => {
     const fallback = getResourceThumbnail(item);
 
     try {
-      const imageDocs = await propertiesService.listImages(id);
+      const imageDocs = await resourcesService.listImages(id);
       // Use original /view URLs for the modal so images are full-resolution, not
       // the card-preset (600px/q50) thumbnails stored in img.url.
       const urls = imageDocs

@@ -23,7 +23,7 @@ import Combobox from "../../../components/common/molecules/Combobox";
 import { Select } from "../../../components/common";
 import { getAmenityIcon } from "../../../data/amenitiesCatalog";
 import { getAmenityRelevanceScore } from "../amenityRelevance";
-import { propertiesService } from "../../../services/propertiesService";
+import { resourcesService } from "../../../services/resourcesService";
 import { isValidSlug, normalizeSlug } from "../../../utils/slug";
 import { locationOptionsService } from "../services/locationOptionsService";
 
@@ -58,7 +58,10 @@ const PROPERTY_TYPES = [
 const OPERATION_TYPES = [
   { value: "sale", key: "propertyForm.options.operationType.sale" },
   { value: "rent", key: "propertyForm.options.operationType.rent" },
-  { value: "vacation_rental", key: "propertyForm.options.operationType.vacationRental" },
+  {
+    value: "vacation_rental",
+    key: "propertyForm.options.operationType.vacationRental",
+  },
 ];
 
 const STATUS_OPTIONS = [
@@ -140,12 +143,16 @@ const toFileSignature = (file) =>
   `${String(file?.name || "").trim()}-${Number(file?.size || 0)}-${Number(file?.lastModified || 0)}`;
 
 const isValidPropertyImage = (file) => {
-  const mime = String(file?.type || "").trim().toLowerCase();
+  const mime = String(file?.type || "")
+    .trim()
+    .toLowerCase();
   if (["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(mime)) {
     return true;
   }
 
-  const filename = String(file?.name || "").trim().toLowerCase();
+  const filename = String(file?.name || "")
+    .trim()
+    .toLowerCase();
   return /\.(png|jpe?g|webp)$/.test(filename);
 };
 
@@ -175,7 +182,9 @@ const buildFormState = (initialValues = {}) => ({
   title: String(initialValues.title || ""),
   description: String(initialValues.description || ""),
   propertyType: String(initialValues.propertyType || defaultForm.propertyType),
-  operationType: String(initialValues.operationType || defaultForm.operationType),
+  operationType: String(
+    initialValues.operationType || defaultForm.operationType,
+  ),
   price: toInputString(initialValues.price, ""),
   currency: String(initialValues.currency || defaultForm.currency),
   bedrooms: toInputString(initialValues.bedrooms, "0"),
@@ -191,8 +200,8 @@ const buildFormState = (initialValues = {}) => ({
         new Set(
           initialValues.amenityIds
             .map((id) => String(id || "").trim())
-            .filter(Boolean)
-        )
+            .filter(Boolean),
+        ),
       )
     : [],
 });
@@ -212,19 +221,22 @@ const PropertyForm = ({
 
   const resolvedPropertyId = useMemo(
     () => String(propertyId || initialValues?.$id || "").trim(),
-    [initialValues?.$id, propertyId]
+    [initialValues?.$id, propertyId],
   );
 
   const mergedInitialValues = useMemo(
     () => buildFormState(initialValues || {}),
-    [initialValues]
+    [initialValues],
   );
 
   const [form, setForm] = useState(mergedInitialValues);
   const [errors, setErrors] = useState({});
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(mode === "edit");
-  const [slugStatus, setSlugStatus] = useState({ state: "idle", checkedSlug: "" });
+  const [slugStatus, setSlugStatus] = useState({
+    state: "idle",
+    checkedSlug: "",
+  });
   const [amenityPickerValue, setAmenityPickerValue] = useState("");
   const [amenityPickerKey, setAmenityPickerKey] = useState(0);
   const [pendingImageItems, setPendingImageItems] = useState([]);
@@ -242,7 +254,10 @@ const PropertyForm = ({
   const isLastSection = activeSectionIndex === FORM_SECTIONS.length - 1;
   const amenityNameField = i18n.language === "es" ? "name_es" : "name_en";
 
-  const initialSlug = useMemo(() => normalizeSlug(mergedInitialValues.slug), [mergedInitialValues.slug]);
+  const initialSlug = useMemo(
+    () => normalizeSlug(mergedInitialValues.slug),
+    [mergedInitialValues.slug],
+  );
 
   const clearPendingImages = useCallback(() => {
     setPendingImageItems((previous) => {
@@ -257,9 +272,11 @@ const PropertyForm = ({
 
   useEffect(
     () => () => {
-      pendingImageItemsRef.current.forEach((item) => revokeBlobUrl(item.previewUrl));
+      pendingImageItemsRef.current.forEach((item) =>
+        revokeBlobUrl(item.previewUrl),
+      );
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -295,7 +312,7 @@ const PropertyForm = ({
         value: option.value,
         label: t(option.key),
       })),
-    [t]
+    [t],
   );
 
   const operationTypeOptions = useMemo(
@@ -304,7 +321,7 @@ const PropertyForm = ({
         value: option.value,
         label: t(option.key),
       })),
-    [t]
+    [t],
   );
 
   const currencyOptions = useMemo(
@@ -313,7 +330,7 @@ const PropertyForm = ({
       { value: "USD", label: "USD" },
       { value: "EUR", label: "EUR" },
     ],
-    []
+    [],
   );
 
   const statusOptions = useMemo(
@@ -322,37 +339,43 @@ const PropertyForm = ({
         value: option.value,
         label: t(option.key),
       })),
-    [t]
+    [t],
   );
 
-  const countryOptions = useMemo(() => locationOptionsService.getCountries(), []);
+  const countryOptions = useMemo(
+    () => locationOptionsService.getCountries(),
+    [],
+  );
 
   const selectedCountry = useMemo(
     () => locationOptionsService.findCountry(form.country),
-    [form.country]
+    [form.country],
   );
 
   const selectedCountryCode = selectedCountry?.value || "";
 
   const stateOptions = useMemo(
     () => locationOptionsService.getStates(selectedCountryCode),
-    [selectedCountryCode]
+    [selectedCountryCode],
   );
 
   const selectedState = useMemo(
     () => locationOptionsService.findState(selectedCountryCode, form.state),
-    [form.state, selectedCountryCode]
+    [form.state, selectedCountryCode],
   );
 
   const selectedStateCode = selectedState?.stateCode || "";
 
   const cityOptions = useMemo(
-    () => locationOptionsService.getCities(selectedCountryCode, selectedStateCode),
-    [selectedCountryCode, selectedStateCode]
+    () =>
+      locationOptionsService.getCities(selectedCountryCode, selectedStateCode),
+    [selectedCountryCode, selectedStateCode],
   );
 
   const selectedAmenities = useMemo(() => {
-    const byId = new Map((amenitiesOptions || []).map((item) => [item.$id, item]));
+    const byId = new Map(
+      (amenitiesOptions || []).map((item) => [item.$id, item]),
+    );
     return (form.amenityIds || [])
       .map((amenityId) => byId.get(amenityId))
       .filter(Boolean);
@@ -361,9 +384,12 @@ const PropertyForm = ({
   const normalizedExistingImages = useMemo(
     () =>
       Array.isArray(existingImages)
-        ? [...existingImages].sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0))
+        ? [...existingImages].sort(
+            (left, right) =>
+              Number(left.sortOrder || 0) - Number(right.sortOrder || 0),
+          )
         : [],
-    [existingImages]
+    [existingImages],
   );
 
   const amenityPickerOptions = useMemo(() => {
@@ -373,7 +399,11 @@ const PropertyForm = ({
       .filter((item) => !selectedIds.has(item.$id))
       .map((item) => {
         const label =
-          item[amenityNameField] || item.name_es || item.name_en || item.slug || item.$id;
+          item[amenityNameField] ||
+          item.name_es ||
+          item.name_en ||
+          item.slug ||
+          item.$id;
 
         return {
           value: item.$id,
@@ -383,7 +413,8 @@ const PropertyForm = ({
             resourceType: "property",
             category: form.propertyType,
           }),
-          searchText: `${item.slug || ""} ${item.name_es || ""} ${item.name_en || ""}`.trim(),
+          searchText:
+            `${item.slug || ""} ${item.name_es || ""} ${item.name_en || ""}`.trim(),
         };
       })
       .sort((a, b) => {
@@ -435,7 +466,7 @@ const PropertyForm = ({
 
     const timerId = window.setTimeout(async () => {
       try {
-        const result = await propertiesService.checkSlugAvailability(candidate, {
+        const result = await resourcesService.checkSlugAvailability(candidate, {
           excludePropertyId: resolvedPropertyId,
         });
 
@@ -469,7 +500,7 @@ const PropertyForm = ({
     setSlugStatus({ state: "checking", checkedSlug: candidate });
 
     try {
-      const result = await propertiesService.checkSlugAvailability(candidate, {
+      const result = await resourcesService.checkSlugAvailability(candidate, {
         excludePropertyId: resolvedPropertyId,
       });
       setSlugStatus({
@@ -495,9 +526,16 @@ const PropertyForm = ({
 
     const validCountry = locationOptionsService.findCountry(form.country);
     const validCountryCode = validCountry?.value || "";
-    const validState = locationOptionsService.findState(validCountryCode, form.state);
+    const validState = locationOptionsService.findState(
+      validCountryCode,
+      form.state,
+    );
     const validStateCode = validState?.stateCode || "";
-    const validCity = locationOptionsService.findCity(validCountryCode, validStateCode, form.city);
+    const validCity = locationOptionsService.findCity(
+      validCountryCode,
+      validStateCode,
+      form.city,
+    );
 
     if (shouldValidate("slug")) {
       if (!slug) {
@@ -519,18 +557,24 @@ const PropertyForm = ({
 
     if (shouldValidate("description")) {
       if (!description) {
-        nextErrors.description = t("propertyForm.validation.descriptionRequired");
+        nextErrors.description = t(
+          "propertyForm.validation.descriptionRequired",
+        );
       } else if (description.length < 20) {
         nextErrors.description = t("propertyForm.validation.descriptionMin");
       }
     }
 
     if (shouldValidate("propertyType") && !form.propertyType) {
-      nextErrors.propertyType = t("propertyForm.validation.propertyTypeRequired");
+      nextErrors.propertyType = t(
+        "propertyForm.validation.propertyTypeRequired",
+      );
     }
 
     if (shouldValidate("operationType") && !form.operationType) {
-      nextErrors.operationType = t("propertyForm.validation.operationTypeRequired");
+      nextErrors.operationType = t(
+        "propertyForm.validation.operationTypeRequired",
+      );
     }
 
     if (shouldValidate("price")) {
@@ -584,7 +628,7 @@ const PropertyForm = ({
     setErrors(nextErrors);
 
     const firstSectionWithError = FORM_SECTIONS.findIndex((section) =>
-      section.fields.some((field) => nextErrors[field])
+      section.fields.some((field) => nextErrors[field]),
     );
 
     if (firstSectionWithError >= 0) {
@@ -595,9 +639,16 @@ const PropertyForm = ({
   const buildPayload = () => {
     const validCountry = locationOptionsService.findCountry(form.country);
     const validCountryCode = validCountry?.value || "MX";
-    const validState = locationOptionsService.findState(validCountryCode, form.state);
+    const validState = locationOptionsService.findState(
+      validCountryCode,
+      form.state,
+    );
     const validStateCode = validState?.stateCode || "";
-    const validCity = locationOptionsService.findCity(validCountryCode, validStateCode, form.city);
+    const validCity = locationOptionsService.findCity(
+      validCountryCode,
+      validStateCode,
+      form.city,
+    );
 
     return {
       slug: normalizeSlug(form.slug),
@@ -639,7 +690,7 @@ const PropertyForm = ({
     }
 
     setActiveSectionIndex((index) =>
-      Math.min(index + 1, FORM_SECTIONS.length - 1)
+      Math.min(index + 1, FORM_SECTIONS.length - 1),
     );
   };
 
@@ -709,7 +760,9 @@ const PropertyForm = ({
   };
 
   const handleCountryChange = (countryCode) => {
-    const nextCountryCode = String(countryCode || "").trim().toUpperCase();
+    const nextCountryCode = String(countryCode || "")
+      .trim()
+      .toUpperCase();
 
     setForm((previous) => {
       const countryChanged = previous.country !== nextCountryCode;
@@ -759,7 +812,9 @@ const PropertyForm = ({
     }
 
     setForm((previous) => {
-      const current = Array.isArray(previous.amenityIds) ? previous.amenityIds : [];
+      const current = Array.isArray(previous.amenityIds)
+        ? previous.amenityIds
+        : [];
       if (current.includes(nextAmenityId)) return previous;
       return {
         ...previous,
@@ -782,14 +837,16 @@ const PropertyForm = ({
     if (files.length === 0) return;
 
     setPendingImageItems((previous) => {
-      const existingSignatures = new Set(previous.map((item) => item.signature));
+      const existingSignatures = new Set(
+        previous.map((item) => item.signature),
+      );
       const availableSlots = Math.max(0, MAX_PROPERTY_IMAGES - previous.length);
 
       if (availableSlots === 0) {
         setImageUploadError(
           t("propertyForm.images.errors.maxFiles", {
             maxFiles: MAX_PROPERTY_IMAGES,
-          })
+          }),
         );
         return previous;
       }
@@ -819,14 +876,17 @@ const PropertyForm = ({
       }
 
       const filesToAppend = acceptedFiles.slice(0, availableSlots);
-      const skippedByLimitCount = Math.max(0, acceptedFiles.length - filesToAppend.length);
+      const skippedByLimitCount = Math.max(
+        0,
+        acceptedFiles.length - filesToAppend.length,
+      );
       const nextErrorParts = [];
 
       if (invalidTypeCount > 0) {
         nextErrorParts.push(
           t("propertyForm.images.errors.invalidType", {
             count: invalidTypeCount,
-          })
+          }),
         );
       }
       if (oversizeCount > 0) {
@@ -834,21 +894,21 @@ const PropertyForm = ({
           t("propertyForm.images.errors.sizeExceeded", {
             count: oversizeCount,
             maxSize: MAX_PROPERTY_IMAGE_SIZE_MB,
-          })
+          }),
         );
       }
       if (duplicateCount > 0) {
         nextErrorParts.push(
           t("propertyForm.images.errors.duplicates", {
             count: duplicateCount,
-          })
+          }),
         );
       }
       if (skippedByLimitCount > 0) {
         nextErrorParts.push(
           t("propertyForm.images.errors.maxFiles", {
             maxFiles: MAX_PROPERTY_IMAGES,
-          })
+          }),
         );
       }
 
@@ -1009,11 +1069,15 @@ const PropertyForm = ({
                   {t("propertyForm.actions.regenerateSlug")}
                 </button>
               </div>
-              <p className={`inline-flex items-center gap-1 text-xs ${slugStatusView.className}`}>
+              <p
+                className={`inline-flex items-center gap-1 text-xs ${slugStatusView.className}`}
+              >
                 {slugStatusView.icon ? (
                   <slugStatusView.icon
                     size={12}
-                    className={slugStatus.state === "checking" ? "animate-spin" : ""}
+                    className={
+                      slugStatus.state === "checking" ? "animate-spin" : ""
+                    }
                   />
                 ) : null}
                 <span>{slugStatusView.text}</span>
@@ -1031,7 +1095,9 @@ const PropertyForm = ({
                 maxLength={5000}
                 value={form.description}
                 className={getFieldClassName("description")}
-                onChange={(event) => setField("description", event.target.value)}
+                onChange={(event) =>
+                  setField("description", event.target.value)
+                }
               />
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>{t("propertyForm.helper.description")}</span>
@@ -1138,8 +1204,12 @@ const PropertyForm = ({
                 value={form.country}
                 options={countryOptions}
                 inputClassName={`${comboboxInputClassName} ${errors.country ? inputErrorClassName : ""}`}
-                placeholder={t("propertyForm.locationCombobox.countryPlaceholder")}
-                noResultsText={t("propertyForm.locationCombobox.noResultsCountry")}
+                placeholder={t(
+                  "propertyForm.locationCombobox.countryPlaceholder",
+                )}
+                noResultsText={t(
+                  "propertyForm.locationCombobox.noResultsCountry",
+                )}
                 onChange={handleCountryChange}
               />
               {renderFieldError("country")}
@@ -1155,8 +1225,12 @@ const PropertyForm = ({
                 options={stateOptions}
                 disabled={!selectedCountryCode}
                 inputClassName={`${comboboxInputClassName} ${errors.state ? inputErrorClassName : ""}`}
-                placeholder={t("propertyForm.locationCombobox.statePlaceholder")}
-                noResultsText={t("propertyForm.locationCombobox.noResultsState")}
+                placeholder={t(
+                  "propertyForm.locationCombobox.statePlaceholder",
+                )}
+                noResultsText={t(
+                  "propertyForm.locationCombobox.noResultsState",
+                )}
                 onChange={handleStateChange}
               />
               {renderFieldError("state")}
@@ -1399,7 +1473,10 @@ const PropertyForm = ({
                         {image.url ? (
                           <img
                             src={image.url}
-                            alt={image.altText || t("propertyForm.images.fallbackAlt")}
+                            alt={
+                              image.altText ||
+                              t("propertyForm.images.fallbackAlt")
+                            }
                             className="h-full w-full object-cover"
                             loading="lazy"
                           />
@@ -1445,7 +1522,10 @@ const PropertyForm = ({
                       <div className="relative aspect-video bg-slate-100 dark:bg-slate-800">
                         <img
                           src={item.previewUrl}
-                          alt={item.file?.name || t("propertyForm.images.fallbackAlt")}
+                          alt={
+                            item.file?.name ||
+                            t("propertyForm.images.fallbackAlt")
+                          }
                           className="h-full w-full object-cover"
                           loading="lazy"
                         />
@@ -1453,14 +1533,17 @@ const PropertyForm = ({
                           type="button"
                           onClick={() => removePendingImage(item.id)}
                           className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/60 bg-slate-900/70 text-white transition hover:bg-slate-950"
-                          aria-label={t("propertyForm.images.actions.removePending")}
+                          aria-label={t(
+                            "propertyForm.images.actions.removePending",
+                          )}
                         >
                           <X size={12} />
                         </button>
                       </div>
                       <div className="space-y-1 p-2">
                         <div className="line-clamp-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                          {item.file?.name || t("propertyForm.images.fallbackAlt")}
+                          {item.file?.name ||
+                            t("propertyForm.images.fallbackAlt")}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-300">
                           {formatFileSize(item.file?.size || 0)}
@@ -1487,7 +1570,9 @@ const PropertyForm = ({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
-              {isWizard ? t("propertyForm.mode.create") : t("propertyForm.mode.edit")}
+              {isWizard
+                ? t("propertyForm.mode.create")
+                : t("propertyForm.mode.edit")}
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-300">
               {isWizard
@@ -1518,8 +1603,8 @@ const PropertyForm = ({
                     isActive
                       ? "border-cyan-500 bg-cyan-500 text-white"
                       : isCompleted
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-                      : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
                   } ${!canOpen ? "cursor-not-allowed opacity-50" : ""}`}
                 >
                   <span
@@ -1527,8 +1612,8 @@ const PropertyForm = ({
                       isActive
                         ? "bg-white/20"
                         : isCompleted
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-200"
                     }`}
                   >
                     {isCompleted ? <Check size={12} /> : <Icon size={12} />}
@@ -1549,7 +1634,10 @@ const PropertyForm = ({
         >
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="inline-flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-lg">
-              <currentSection.icon size={18} className="text-cyan-600 dark:text-cyan-300" />
+              <currentSection.icon
+                size={18}
+                className="text-cyan-600 dark:text-cyan-300"
+              />
               {t(currentSection.titleKey)}
             </h2>
           </div>
@@ -1572,7 +1660,9 @@ const PropertyForm = ({
             <button
               type="button"
               disabled={loading || isFirstSection}
-              onClick={() => setActiveSectionIndex((index) => Math.max(index - 1, 0))}
+              onClick={() =>
+                setActiveSectionIndex((index) => Math.max(index - 1, 0))
+              }
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
             >
               <ArrowLeft size={14} />

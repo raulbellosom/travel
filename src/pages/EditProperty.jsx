@@ -5,12 +5,12 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, Eye, X } from "lucide-react";
 import PropertyTabsEditor from "../features/properties/wizard/PropertyTabsEditor";
 import { useAuth } from "../hooks/useAuth";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { getErrorMessage } from "../utils/errors";
 import { useToast } from "../hooks/useToast";
 import {
   INTERNAL_ROUTES,
-  getInternalPropertyDetailRoute,
+  getInternalResourceDetailRoute,
 } from "../utils/internalRoutes";
 
 const EditProperty = () => {
@@ -30,7 +30,7 @@ const EditProperty = () => {
     setLoading(true);
     setError("");
 
-    propertiesService
+    resourcesService
       .getById(id)
       .then((doc) => {
         if (!mounted) return;
@@ -72,17 +72,24 @@ const EditProperty = () => {
     try {
       const { imageFiles = [], ...resourcePatch } = patch || {};
 
-      const updated = await propertiesService.update(id, user.$id, resourcePatch);
+      const updated = await resourcesService.update(
+        id,
+        user.$id,
+        resourcePatch,
+      );
 
       if (Array.isArray(imageFiles) && imageFiles.length > 0) {
-        const existingImages = await propertiesService.listImages(id).catch(() => []);
+        const existingImages = await resourcesService
+          .listImages(id)
+          .catch(() => []);
         const nextSortOrder =
           existingImages.reduce(
-            (maxOrder, image) => Math.max(maxOrder, Number(image?.sortOrder || 0)),
+            (maxOrder, image) =>
+              Math.max(maxOrder, Number(image?.sortOrder || 0)),
             -1,
           ) + 1;
 
-        await propertiesService.uploadPropertyImages(id, imageFiles, {
+        await resourcesService.uploadResourceImages(id, imageFiles, {
           title: resourcePatch.title || initialResourceDoc?.title || "",
           startingSortOrder: nextSortOrder,
           existingFileIds: Array.from(
@@ -100,7 +107,10 @@ const EditProperty = () => {
       showToast({
         type: "success",
         title: t("editPropertyPage.title"),
-        message: t("editPropertyPage.messages.saved", "Cambios guardados correctamente."),
+        message: t(
+          "editPropertyPage.messages.saved",
+          "Cambios guardados correctamente.",
+        ),
       });
 
       return updated;
@@ -151,7 +161,7 @@ const EditProperty = () => {
           </Link>
           {id ? (
             <Link
-              to={getInternalPropertyDetailRoute(id)}
+              to={getInternalResourceDetailRoute(id)}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-cyan-300 bg-cyan-50 px-4 py-2.5 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
             >
               <Eye size={16} />
@@ -182,7 +192,7 @@ const EditProperty = () => {
         onSave={handleSave}
         onCancel={() => {
           if (id) {
-            navigate(getInternalPropertyDetailRoute(id));
+            navigate(getInternalResourceDetailRoute(id));
             return;
           }
           navigate(INTERNAL_ROUTES.myProperties);

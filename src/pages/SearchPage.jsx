@@ -40,7 +40,7 @@ import {
   TreePine,
 } from "lucide-react";
 
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
 import PropertyCard from "../components/common/molecules/PropertyCard";
@@ -426,7 +426,7 @@ const SearchPage = () => {
     // Separate page/limit from filter parameters
     const { page, limit, ...filterParams } = cleanFilters;
 
-    propertiesService
+    resourcesService
       .listPublic({ page, limit, filters: filterParams })
       .then((data) => {
         setProperties(data.documents || []);

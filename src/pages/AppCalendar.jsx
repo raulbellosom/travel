@@ -3,38 +3,38 @@ import { useTranslation } from "react-i18next";
 import { CalendarRange } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { AdminCalendar } from "../features/calendar";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { usePageSeo } from "../hooks/usePageSeo";
 
 /**
  * AppCalendar – Admin calendar page at /app/calendar.
  * Shows all reservations in calendar view with multi-view support
- * and property filtering.
+ * and resource filtering.
  */
 const AppCalendar = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [properties, setProperties] = useState([]);
+  const [resources, setResources] = useState([]);
 
   usePageSeo({
     title: t("calendarPage.title"),
     noIndex: true,
   });
 
-  // Load properties list for filter dropdown
-  const loadProperties = useCallback(async () => {
+  // Load resources list for filter dropdown
+  const loadResources = useCallback(async () => {
     if (!user?.$id) return;
     try {
-      const res = await propertiesService.listMine(user.$id);
-      setProperties(res.documents || []);
+      const res = await resourcesService.listMine(user.$id);
+      setResources(res.documents || []);
     } catch {
       // Silent fail – filter will just be empty
     }
   }, [user?.$id]);
 
   useEffect(() => {
-    loadProperties();
-  }, [loadProperties]);
+    loadResources();
+  }, [loadResources]);
 
   return (
     <div className="space-y-6">
@@ -51,8 +51,8 @@ const AppCalendar = () => {
         </p>
       </div>
 
-      {/* Calendar */}
-      <AdminCalendar properties={properties} />
+      {/* Calendar — prop name kept as `properties` for AdminCalendar compat */}
+      <AdminCalendar properties={resources} />
     </div>
   );
 };

@@ -2,18 +2,27 @@ import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AlertCircle, CalendarDays, CreditCard, Users } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarDays,
+  CreditCard,
+  Send,
+  Users,
+} from "lucide-react";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import DateRangePicker from "../components/common/molecules/DateRangePicker";
 import { Select } from "../components/common";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { reservationsService } from "../services/reservationsService";
 import { leadsService } from "../services/leadsService";
 import { useAuth } from "../hooks/useAuth";
 import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
-import { getResourceBehavior, parseResourceAttributes } from "../utils/resourceModel";
+import {
+  getResourceBehavior,
+  parseResourceAttributes,
+} from "../utils/resourceModel";
 import { useInstanceModules } from "../hooks/useInstanceModules";
 import { formatMoneyWithDenomination } from "../utils/money";
 
@@ -121,7 +130,8 @@ const ReserveProperty = () => {
       service: "calendar.booking.persons",
       music: "calendar.booking.persons",
     };
-    const i18nKey = keyByType[behavior.resourceType] || "calendar.booking.guests";
+    const i18nKey =
+      keyByType[behavior.resourceType] || "calendar.booking.guests";
     return t(i18nKey);
   }, [behavior.resourceType, t]);
   const rateLabel = useMemo(() => {
@@ -134,7 +144,10 @@ const ReserveProperty = () => {
       month: "reservePropertyPage.labels.monthlyRate",
       total: "reservePropertyPage.labels.baseRate",
     };
-    return t(keyByPriceLabel[behavior.priceLabel] || "reservePropertyPage.labels.baseRate");
+    return t(
+      keyByPriceLabel[behavior.priceLabel] ||
+        "reservePropertyPage.labels.baseRate",
+    );
   }, [behavior.priceLabel, t]);
   const requiresSchedule = useMemo(
     () =>
@@ -142,23 +155,45 @@ const ReserveProperty = () => {
       behavior.effectiveScheduleType === "time_slot",
     [behavior.effectiveScheduleType],
   );
+  const isTimeSlotSchedule = behavior.effectiveScheduleType === "time_slot";
+  const dateFieldLabel = useMemo(() => {
+    if (isTimeSlotSchedule) {
+      return t("reservePropertyPage.form.fields.timeSlotDate");
+    }
+    const keyByPriceLabel = {
+      night: "reservePropertyPage.form.fields.dateRangeStay",
+      day: "reservePropertyPage.form.fields.dateRangeEvent",
+      hour: "reservePropertyPage.form.fields.dateRangeService",
+      event: "reservePropertyPage.form.fields.dateRangeEvent",
+    };
+    return t(
+      keyByPriceLabel[behavior.priceLabel] ||
+        "reservePropertyPage.form.fields.dateRange",
+    );
+  }, [behavior.priceLabel, isTimeSlotSchedule, t]);
+  const unitsLabel = useMemo(() => {
+    const keyByPriceLabel = {
+      night: "reservePropertyPage.summary.nights",
+      day: "reservePropertyPage.summary.days",
+      hour: "reservePropertyPage.summary.hours",
+    };
+    return t(
+      keyByPriceLabel[behavior.priceLabel] ||
+        "reservePropertyPage.summary.units",
+    );
+  }, [behavior.priceLabel, t]);
   const createLeadOnly = useMemo(
     () =>
       behavior.bookingType === "manual_contact" ||
       !behavior.requiresPayments ||
       !behavior.canUsePayments,
-    [
-      behavior.bookingType,
-      behavior.canUsePayments,
-      behavior.requiresPayments,
-    ],
+    [behavior.bookingType, behavior.canUsePayments, behavior.requiresPayments],
   );
   usePageSeo({
     title: property?.title
-      ? `${property.title} | Reservar`
-      : "Inmobo | Reservar propiedad",
-    description:
-      "Flujo de reserva con seleccion de fechas, huespedes y pago seguro.",
+      ? `${property.title} | ${t("reservePropertyPage.title")}`
+      : `Inmobo | ${t("reservePropertyPage.title")}`,
+    description: t("reservePropertyPage.loading"),
     robots: "index, follow",
   });
 
@@ -167,14 +202,14 @@ const ReserveProperty = () => {
     setLoading(true);
     setError("");
 
-    propertiesService
+    resourcesService
       .getPublicBySlug(slug)
       .then(async (doc) => {
         if (!doc) {
           throw new Error(t("reservePropertyPage.errors.notFound"));
         }
 
-        const gallery = await propertiesService
+        const gallery = await resourcesService
           .listImages(doc.$id)
           .catch(() => []);
         if (!mounted) return;
@@ -287,12 +322,14 @@ const ReserveProperty = () => {
       return;
     }
 
-    if (
-      requiresSchedule &&
-      (!form.dateRange.startDate || !form.dateRange.endDate || nights < 1)
-    ) {
-      setError(t("reservePropertyPage.errors.invalidDates"));
-      return;
+    if (requiresSchedule) {
+      const hasStart = Boolean(form.dateRange.startDate);
+      const hasEnd = Boolean(form.dateRange.endDate);
+      const needsRange = !isTimeSlotSchedule;
+      if (!hasStart || (needsRange && (!hasEnd || nights < 1))) {
+        setError(t("reservePropertyPage.errors.invalidDates"));
+        return;
+      }
     }
 
     if (Number(form.guestCount) < 1) {
@@ -317,10 +354,13 @@ const ReserveProperty = () => {
         const endIso = form.dateRange.endDate
           ? new Date(form.dateRange.endDate).toISOString()
           : null;
-        const leadMessage = t("reservePropertyPage.messages.defaultLeadMessage", {
-          defaultValue:
-            "Hola, me interesa este recurso. Quiero cotizar y revisar disponibilidad.",
-        });
+        const leadMessage = t(
+          "reservePropertyPage.messages.defaultLeadMessage",
+          {
+            defaultValue:
+              "Hola, me interesa este recurso. Quiero cotizar y revisar disponibilidad.",
+          },
+        );
 
         await leadsService.createLead({
           resourceId: property.$id,
@@ -482,12 +522,20 @@ const ReserveProperty = () => {
             <label className="grid gap-1 text-sm">
               <span className="inline-flex items-center gap-2">
                 <CalendarDays size={14} />
-                {t("reservePropertyPage.form.fields.dateRange")}
+                {dateFieldLabel}
               </span>
               <DateRangePicker
-                mode="range"
-                value={form.dateRange}
-                onChange={(nextRange) => updateForm({ dateRange: nextRange })}
+                mode={isTimeSlotSchedule ? "single" : "range"}
+                value={
+                  isTimeSlotSchedule ? form.dateRange.startDate : form.dateRange
+                }
+                onChange={(next) =>
+                  updateForm({
+                    dateRange: isTimeSlotSchedule
+                      ? { startDate: next, endDate: null }
+                      : next,
+                  })
+                }
                 minDate={new Date()}
               />
             </label>
@@ -553,8 +601,8 @@ const ReserveProperty = () => {
           <div className="rounded-2xl bg-slate-100 p-3 text-sm dark:bg-slate-800">
             {requiresSchedule && (
               <p className="flex items-center justify-between">
-                <span>{t("reservePropertyPage.summary.nights")}</span>
-                <strong>{nights}</strong>
+                <span>{unitsLabel}</span>
+                <strong>{unitCount}</strong>
               </p>
             )}
             <p className="mt-1 flex items-center justify-between">
@@ -589,7 +637,7 @@ const ReserveProperty = () => {
             disabled={submitting}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-cyan-600 to-blue-600 px-6 py-4 font-bold text-white shadow-lg shadow-cyan-900/20 transition-all hover:shadow-cyan-900/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <CreditCard size={16} />
+            {createLeadOnly ? <Send size={16} /> : <CreditCard size={16} />}
             {submitting
               ? t("reservePropertyPage.actions.processing")
               : createLeadOnly

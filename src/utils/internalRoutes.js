@@ -4,8 +4,15 @@ const withInternalBase = (segment) => `${INTERNAL_BASE_PATH}/${segment}`;
 
 export const INTERNAL_ROUTES = Object.freeze({
   dashboard: withInternalBase("dashboard"),
+
+  // ── Canonical names (prefer these in new code) ────────────
+  myResources: withInternalBase("my-resources"),
+  createResource: withInternalBase("resources/new"),
+
+  // ── Legacy aliases (deprecated – do not use in new code) ──
   myProperties: withInternalBase("my-resources"),
   createProperty: withInternalBase("resources/new"),
+
   leads: withInternalBase("leads"),
   reservations: withInternalBase("reservations"),
   calendar: withInternalBase("calendar"),
@@ -22,11 +29,20 @@ export const INTERNAL_ROUTES = Object.freeze({
   profile: withInternalBase("profile"),
 });
 
-export const getInternalEditPropertyRoute = (id) =>
+/** Canonical resource route helpers */
+export const getInternalEditResourceRoute = (id) =>
   withInternalBase(`resources/${id}/edit`);
 
-export const getInternalPropertyDetailRoute = (id) =>
+export const getInternalResourceDetailRoute = (id) =>
   withInternalBase(`resources/${id}`);
+
+/** @deprecated Use getInternalEditResourceRoute */
+export const getInternalEditPropertyRoute = (id) =>
+  getInternalEditResourceRoute(id);
+
+/** @deprecated Use getInternalResourceDetailRoute */
+export const getInternalPropertyDetailRoute = (id) =>
+  getInternalResourceDetailRoute(id);
 
 export const getLegacyInternalEditPropertyRoute = (id) =>
   withInternalBase(`editar-propiedad/${id}`);
@@ -36,13 +52,18 @@ export const getLegacyInternalPropertyDetailRoute = (id) =>
 
 /* ── Public routes ─────────────────────────────────── */
 
-export const getPublicPropertyRoute = (slug, language = "es") => {
+/** Canonical public resource route */
+export const getPublicResourceRoute = (slug, language = "es") => {
   const normalizedLanguage = String(language || "es").toLowerCase();
   const basePath = normalizedLanguage.startsWith("en")
     ? "/resources"
     : "/recursos";
   return `${basePath}/${slug}`;
 };
+
+/** @deprecated Use getPublicResourceRoute */
+export const getPublicPropertyRoute = (slug, language = "es") =>
+  getPublicResourceRoute(slug, language);
 
 /* ── Conversations routes (role-based) ───────────────── */
 

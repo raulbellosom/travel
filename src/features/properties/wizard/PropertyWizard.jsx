@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../../components/common";
 import { amenitiesService } from "../../../services/amenitiesService";
-import { propertiesService } from "../../../services/propertiesService";
+import { resourcesService } from "../../../services/resourcesService";
 import { isValidSlug, normalizeSlug } from "../../../utils/slug";
 import { useInstanceModules } from "../../../hooks/useInstanceModules";
 
@@ -83,8 +83,7 @@ function resolveOfferingId(profile, formState) {
       (item) =>
         item.commercialMode === formState?.commercialMode &&
         item.bookingType === formState?.bookingType,
-    ) ||
-    list.find((item) => item.commercialMode === formState?.commercialMode);
+    ) || list.find((item) => item.commercialMode === formState?.commercialMode);
   return selected?.id || "";
 }
 
@@ -156,7 +155,8 @@ export default function PropertyWizard({
   const swipeRef = useRef({ startX: 0, startY: 0, ignore: false });
   const slugCheckRequestRef = useRef(0);
   const resolvedInitialResourceId = useMemo(
-    () => String(initialResourceDoc?.$id || initialResourceDoc?.id || "").trim(),
+    () =>
+      String(initialResourceDoc?.$id || initialResourceDoc?.id || "").trim(),
     [initialResourceDoc],
   );
   const initialSlug = useMemo(
@@ -197,7 +197,8 @@ export default function PropertyWizard({
 
   useEffect(() => {
     if (mode === "edit" && initialResourceDoc) {
-      const hydratedBaseState = hydrateFormStateFromResource(initialResourceDoc);
+      const hydratedBaseState =
+        hydrateFormStateFromResource(initialResourceDoc);
       const hydratedResourceType = hydratedBaseState.resourceType || "property";
       const hydratedProfile = getProfile(hydratedResourceType);
       const offeringId =
@@ -242,7 +243,7 @@ export default function PropertyWizard({
     }
 
     setExistingImagesLoading(true);
-    propertiesService
+    resourcesService
       .listImages(resolvedInitialResourceId)
       .then((images) => {
         if (cancelled) return;
@@ -296,7 +297,12 @@ export default function PropertyWizard({
 
   const fields = useMemo(() => {
     if (!profile || !currentStep) return [];
-    const stepFields = getStepFields(profile, t, runtimeContext, currentStep.id);
+    const stepFields = getStepFields(
+      profile,
+      t,
+      runtimeContext,
+      currentStep.id,
+    );
     if (currentStep.id !== "publishWhat") return stepFields;
     return [resourceTypeField, ...stepFields];
   }, [profile, t, runtimeContext, currentStep, resourceTypeField]);
@@ -315,13 +321,7 @@ export default function PropertyWizard({
     const generatedSlug = normalizeSlug(formState.title || "");
     if (generatedSlug === String(formState.slug || "")) return;
     dispatch(actions.setField({ key: "slug", value: generatedSlug }));
-  }, [
-    mode,
-    slugManuallyEdited,
-    formState.title,
-    formState.slug,
-    dispatch,
-  ]);
+  }, [mode, slugManuallyEdited, formState.title, formState.slug, dispatch]);
 
   useEffect(() => {
     const candidate = normalizeSlug(formState.slug || "");
@@ -347,7 +347,7 @@ export default function PropertyWizard({
 
     const timerId = window.setTimeout(async () => {
       try {
-        const result = await propertiesService.checkSlugAvailability(candidate, {
+        const result = await resourcesService.checkSlugAvailability(candidate, {
           excludePropertyId: resolvedInitialResourceId,
         });
 
@@ -391,7 +391,10 @@ export default function PropertyWizard({
   function clearErrorPath(errorPath) {
     if (!errorPath) return;
     const currentErrors = selectors.stepErrors(state);
-    if (!currentErrors || !Object.prototype.hasOwnProperty.call(currentErrors, errorPath)) {
+    if (
+      !currentErrors ||
+      !Object.prototype.hasOwnProperty.call(currentErrors, errorPath)
+    ) {
       return;
     }
     const nextErrors = { ...currentErrors };
@@ -438,14 +441,17 @@ export default function PropertyWizard({
 
     setSlugStatus({ state: "checking", checkedSlug: candidate });
     try {
-      const result = await propertiesService.checkSlugAvailability(candidate, {
+      const result = await resourcesService.checkSlugAvailability(candidate, {
         excludePropertyId: resolvedInitialResourceId,
       });
       setSlugStatus({
         state: result.available ? "available" : "taken",
         checkedSlug: candidate,
       });
-      return { ok: Boolean(result.available), reason: result.available ? "available" : "taken" };
+      return {
+        ok: Boolean(result.available),
+        reason: result.available ? "available" : "taken",
+      };
     } catch {
       setSlugStatus({ state: "error", checkedSlug: candidate });
       return { ok: false, reason: "error" };
@@ -531,7 +537,9 @@ export default function PropertyWizard({
       );
 
       dispatch(actions.setField({ key, value }));
-      dispatch(actions.setField({ key: "bookingType", value: nextBookingType }));
+      dispatch(
+        actions.setField({ key: "bookingType", value: nextBookingType }),
+      );
       dispatch(
         actions.setField({
           key: "attributes.manualContactScheduleType",
@@ -567,6 +575,31 @@ export default function PropertyWizard({
         );
       }
       clearFieldErrors("attributes.manualContactScheduleType");
+      const nextContext = buildContextFromSelection(profile, {
+        ...selectors.formState(state),
+        bookingType: value,
+        ...(value !== "manual_contact" && {
+          attributes: {
+            ...(selectors.formState(state).attributes || {}),
+            manualContactScheduleType: "none",
+          },
+        }),
+      });
+      dispatch(actions.setContext({ context: nextContext }));
+      return;
+    }
+
+    // Rebuild context when slotMode changes so conditional fields update
+    if (key === "attributes.slotMode") {
+      dispatch(actions.setField({ key, value }));
+      const nextContext = buildContextFromSelection(profile, {
+        ...selectors.formState(state),
+        attributes: {
+          ...(selectors.formState(state).attributes || {}),
+          slotMode: value,
+        },
+      });
+      dispatch(actions.setContext({ context: nextContext }));
       return;
     }
 
@@ -579,17 +612,17 @@ export default function PropertyWizard({
     const normalizedFormState = normalizeFormState(selectors.formState(state));
     const nextContext = buildContextFromSelection(profile, normalizedFormState);
 
-      const validation = validateStep({
-        profile,
-        stepId: currentStep.id,
-        fields,
-        formState: normalizedFormState,
-        context: {
-          ...nextContext,
-          paymentsOnlineEnabled,
-        },
-        t,
-      });
+    const validation = validateStep({
+      profile,
+      stepId: currentStep.id,
+      fields,
+      formState: normalizedFormState,
+      context: {
+        ...nextContext,
+        paymentsOnlineEnabled,
+      },
+      t,
+    });
 
     if (!validation.ok) {
       dispatch(actions.setStepErrors({ errors: validation.errors }));
@@ -608,8 +641,7 @@ export default function PropertyWizard({
           actions.setStepErrors({
             errors: {
               ...selectors.stepErrors(state),
-              [getStepErrorPath(currentStep.id, "slug")]:
-                slugErrorMessage,
+              [getStepErrorPath(currentStep.id, "slug")]: slugErrorMessage,
             },
           }),
         );
@@ -671,7 +703,9 @@ export default function PropertyWizard({
       dispatch(actions.setStepErrors({ errors: allErrors }));
       const firstErrorStepId = Object.keys(allErrors)[0]?.split(".")?.[0];
       if (firstErrorStepId) {
-        const idx = activeSteps.findIndex((step) => step.id === firstErrorStepId);
+        const idx = activeSteps.findIndex(
+          (step) => step.id === firstErrorStepId,
+        );
         if (idx >= 0) {
           dispatch(actions.setStepIndex({ stepIndex: idx }));
         }
@@ -694,7 +728,9 @@ export default function PropertyWizard({
           },
         }),
       );
-      const describeStepIndex = activeSteps.findIndex((step) => step.id === "describe");
+      const describeStepIndex = activeSteps.findIndex(
+        (step) => step.id === "describe",
+      );
       if (describeStepIndex >= 0) {
         dispatch(actions.setStepIndex({ stepIndex: describeStepIndex }));
       }
@@ -705,7 +741,11 @@ export default function PropertyWizard({
     dispatch(actions.setIsSaving({ isSaving: true }));
 
     try {
-      const patch = buildPatchForSave(profile, normalizedFormState, nextContext);
+      const patch = buildPatchForSave(
+        profile,
+        normalizedFormState,
+        nextContext,
+      );
       const saved = await onSave?.(patch, {
         mode,
         resourceId: initialResourceDoc?.$id || initialResourceDoc?.id,
@@ -719,8 +759,10 @@ export default function PropertyWizard({
         if (resolvedResourceId) {
           try {
             const refreshedImages =
-              await propertiesService.listImages(resolvedResourceId);
-            setExistingImages(Array.isArray(refreshedImages) ? refreshedImages : []);
+              await resourcesService.listImages(resolvedResourceId);
+            setExistingImages(
+              Array.isArray(refreshedImages) ? refreshedImages : [],
+            );
           } catch {
             // Keep existing images snapshot if refresh fails.
           }
@@ -730,7 +772,9 @@ export default function PropertyWizard({
       dispatch(actions.setSaveResult({ result: saved || null }));
       emitHaptic(18);
     } catch (err) {
-      dispatch(actions.setGlobalError({ error: err?.message || "SAVE_FAILED" }));
+      dispatch(
+        actions.setGlobalError({ error: err?.message || "SAVE_FAILED" }),
+      );
     } finally {
       dispatch(actions.setIsSaving({ isSaving: false }));
     }
@@ -819,7 +863,10 @@ export default function PropertyWizard({
             />
           </div>
 
-          <nav className="mt-6 flex flex-col gap-1" aria-label={t("wizard.title")}>
+          <nav
+            className="mt-6 flex flex-col gap-1"
+            aria-label={t("wizard.title")}
+          >
             {activeSteps.map((step, idx) => {
               const StepIcon = STEP_ICON_BY_ID[step.id] || Home;
               const isCurrent = idx === currentStepIndex;
@@ -889,7 +936,10 @@ export default function PropertyWizard({
             />
           </div>
 
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1" data-no-swipe="true">
+          <div
+            className="mt-4 flex gap-2 overflow-x-auto pb-1"
+            data-no-swipe="true"
+          >
             {activeSteps.map((step, idx) => {
               const isCurrent = idx === currentStepIndex;
               const isCompleted = idx < currentStepIndex;
@@ -975,12 +1025,12 @@ export default function PropertyWizard({
 
           <div className="min-h-[360px] px-5 py-5 sm:px-6 sm:py-6">
             {currentStep.id === "review" ? (
-            <WizardReview
-              profile={profile}
-              formState={formState}
-              context={runtimeContext}
-              t={t}
-            />
+              <WizardReview
+                profile={profile}
+                formState={formState}
+                context={runtimeContext}
+                t={t}
+              />
             ) : currentStep.id === "location" ? (
               <LocationStepForm
                 t={t}
@@ -991,28 +1041,44 @@ export default function PropertyWizard({
                 onFieldChange={handleFieldChange}
               />
             ) : (
-              <div className="space-y-5">
+              <div
+                className={
+                  currentStep.id === "conditions"
+                    ? "grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2"
+                    : "space-y-5"
+                }
+              >
                 {fields.map((field) => {
                   const value = selectors.getValue(state, field.key);
                   const error = stepErrors?.[`${currentStep.id}.${field.key}`];
+                  // Full-width fields in conditions grid (selects / textareas)
+                  const isFullWidth =
+                    currentStep.id === "conditions" &&
+                    (field.type === "select" || field.type === "textarea");
 
                   return (
-                    <FieldRenderer
+                    <div
                       key={field.key}
-                      field={field}
-                      value={value}
-                      error={error}
-                      t={t}
-                      existingImages={existingImages}
-                      existingImagesLoading={existingImagesLoading}
-                      slugStatus={slugStatus}
-                      onRegenerateSlug={regenerateSlug}
-                      amenitiesOptions={amenitiesOptions}
-                      amenitiesLoading={amenitiesLoading}
-                      resourceType={resourceType}
-                      category={context.category}
-                      onChange={(nextValue) => handleFieldChange(field.key, nextValue)}
-                    />
+                      className={isFullWidth ? "md:col-span-2" : undefined}
+                    >
+                      <FieldRenderer
+                        field={field}
+                        value={value}
+                        error={error}
+                        t={t}
+                        existingImages={existingImages}
+                        existingImagesLoading={existingImagesLoading}
+                        slugStatus={slugStatus}
+                        onRegenerateSlug={regenerateSlug}
+                        amenitiesOptions={amenitiesOptions}
+                        amenitiesLoading={amenitiesLoading}
+                        resourceType={resourceType}
+                        category={context.category}
+                        onChange={(nextValue) =>
+                          handleFieldChange(field.key, nextValue)
+                        }
+                      />
+                    </div>
                   );
                 })}
 
@@ -1039,7 +1105,10 @@ export default function PropertyWizard({
                 )}
               </div>
 
-              <div className="flex w-full items-center justify-end gap-2 sm:w-auto" data-no-swipe="true">
+              <div
+                className="flex w-full items-center justify-end gap-2 sm:w-auto"
+                data-no-swipe="true"
+              >
                 {isLastStep ? (
                   <Button
                     type="submit"
@@ -1049,7 +1118,9 @@ export default function PropertyWizard({
                     leftIcon={Save}
                     className="min-h-11 px-6 text-sm font-semibold"
                   >
-                    {isSaving ? t("wizard.actions.saving") : t("wizard.actions.save")}
+                    {isSaving
+                      ? t("wizard.actions.saving")
+                      : t("wizard.actions.save")}
                   </Button>
                 ) : (
                   <Button

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../../components/common";
 import { amenitiesService } from "../../../services/amenitiesService";
-import { propertiesService } from "../../../services/propertiesService";
+import { resourcesService } from "../../../services/resourcesService";
 import { isValidSlug, normalizeSlug } from "../../../utils/slug";
 import { useInstanceModules } from "../../../hooks/useInstanceModules";
 import { getProfile } from "../wizardProfiles";
@@ -135,9 +135,11 @@ export default function PropertyTabsEditor({
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(true);
   const slugCheckRequestRef = useRef(0);
   const [baselineSignature, setBaselineSignature] = useState("");
+  const hasHydratedOnceRef = useRef(false);
 
   const resolvedInitialResourceId = useMemo(
-    () => String(initialResourceDoc?.$id || initialResourceDoc?.id || "").trim(),
+    () =>
+      String(initialResourceDoc?.$id || initialResourceDoc?.id || "").trim(),
     [initialResourceDoc],
   );
   const initialSlug = useMemo(
@@ -202,7 +204,11 @@ export default function PropertyTabsEditor({
     dispatch(actions.setContext({ context: hydratedContext }));
     dispatch(actions.setStepErrors({ errors: {} }));
     dispatch(actions.setGlobalError({ error: null }));
-    dispatch(actions.setStepIndex({ stepIndex: 0 }));
+    // Only reset to step 0 on initial hydration; post-save re-hydration keeps current step.
+    if (!hasHydratedOnceRef.current) {
+      dispatch(actions.setStepIndex({ stepIndex: 0 }));
+      hasHydratedOnceRef.current = true;
+    }
     setSlugManuallyEdited(Boolean(hydratedFormState.slug));
     setSlugStatus({
       state: hydratedFormState.slug ? "unchanged" : "idle",
@@ -224,7 +230,7 @@ export default function PropertyTabsEditor({
     }
 
     setExistingImagesLoading(true);
-    propertiesService
+    resourcesService
       .listImages(resolvedInitialResourceId)
       .then((images) => {
         if (cancelled) return;
@@ -295,7 +301,11 @@ export default function PropertyTabsEditor({
   const currentComparableSignature = useMemo(() => {
     if (!profile) return "";
     try {
-      const comparable = buildComparablePatch(profile, normalizedFormState, context);
+      const comparable = buildComparablePatch(
+        profile,
+        normalizedFormState,
+        context,
+      );
       return JSON.stringify(comparable);
     } catch {
       return "";
@@ -304,8 +314,8 @@ export default function PropertyTabsEditor({
 
   const isDirty = Boolean(
     baselineSignature &&
-      currentComparableSignature &&
-      baselineSignature !== currentComparableSignature,
+    currentComparableSignature &&
+    baselineSignature !== currentComparableSignature,
   );
 
   const stepErrors = selectors.stepErrors(state);
@@ -345,7 +355,7 @@ export default function PropertyTabsEditor({
 
     const timerId = window.setTimeout(async () => {
       try {
-        const result = await propertiesService.checkSlugAvailability(candidate, {
+        const result = await resourcesService.checkSlugAvailability(candidate, {
           excludePropertyId: resolvedInitialResourceId,
         });
 
@@ -388,7 +398,10 @@ export default function PropertyTabsEditor({
   function clearErrorPath(errorPath) {
     if (!errorPath) return;
     const currentErrors = selectors.stepErrors(state);
-    if (!currentErrors || !Object.prototype.hasOwnProperty.call(currentErrors, errorPath)) {
+    if (
+      !currentErrors ||
+      !Object.prototype.hasOwnProperty.call(currentErrors, errorPath)
+    ) {
       return;
     }
     const nextErrors = { ...currentErrors };
@@ -435,14 +448,17 @@ export default function PropertyTabsEditor({
 
     setSlugStatus({ state: "checking", checkedSlug: candidate });
     try {
-      const result = await propertiesService.checkSlugAvailability(candidate, {
+      const result = await resourcesService.checkSlugAvailability(candidate, {
         excludePropertyId: resolvedInitialResourceId,
       });
       setSlugStatus({
         state: result.available ? "available" : "taken",
         checkedSlug: candidate,
       });
-      return { ok: Boolean(result.available), reason: result.available ? "available" : "taken" };
+      return {
+        ok: Boolean(result.available),
+        reason: result.available ? "available" : "taken",
+      };
     } catch {
       setSlugStatus({ state: "error", checkedSlug: candidate });
       return { ok: false, reason: "error" };
@@ -502,7 +518,9 @@ export default function PropertyTabsEditor({
       );
 
       dispatch(actions.setField({ key, value }));
-      dispatch(actions.setField({ key: "bookingType", value: nextBookingType }));
+      dispatch(
+        actions.setField({ key: "bookingType", value: nextBookingType }),
+      );
       dispatch(
         actions.setField({
           key: "attributes.manualContactScheduleType",
@@ -538,6 +556,31 @@ export default function PropertyTabsEditor({
         );
       }
       clearFieldErrors("attributes.manualContactScheduleType");
+      const nextContext = buildContextFromSelection(profile, {
+        ...state.formState,
+        bookingType: value,
+        ...(value !== "manual_contact" && {
+          attributes: {
+            ...(state.formState.attributes || {}),
+            manualContactScheduleType: "none",
+          },
+        }),
+      });
+      dispatch(actions.setContext({ context: nextContext }));
+      return;
+    }
+
+    // Rebuild context when slotMode changes so conditional fields update
+    if (key === "attributes.slotMode") {
+      dispatch(actions.setField({ key, value }));
+      const nextContext = buildContextFromSelection(profile, {
+        ...state.formState,
+        attributes: {
+          ...(state.formState.attributes || {}),
+          slotMode: value,
+        },
+      });
+      dispatch(actions.setContext({ context: nextContext }));
       return;
     }
 
@@ -598,7 +641,9 @@ export default function PropertyTabsEditor({
           },
         }),
       );
-      const describeStepIndex = activeSteps.findIndex((step) => step.id === "describe");
+      const describeStepIndex = activeSteps.findIndex(
+        (step) => step.id === "describe",
+      );
       if (describeStepIndex >= 0) {
         dispatch(actions.setStepIndex({ stepIndex: describeStepIndex }));
       }
@@ -610,7 +655,11 @@ export default function PropertyTabsEditor({
     dispatch(actions.setIsSaving({ isSaving: true }));
 
     try {
-      const patch = buildPatchForSave(profile, normalizedFormState, nextContext);
+      const patch = buildPatchForSave(
+        profile,
+        normalizedFormState,
+        nextContext,
+      );
       const saved = await onSave?.(patch, {
         mode: "edit",
         resourceId: resolvedInitialResourceId,
@@ -618,9 +667,12 @@ export default function PropertyTabsEditor({
 
       if (resolvedInitialResourceId) {
         try {
-          const refreshedImages =
-            await propertiesService.listImages(resolvedInitialResourceId);
-          setExistingImages(Array.isArray(refreshedImages) ? refreshedImages : []);
+          const refreshedImages = await resourcesService.listImages(
+            resolvedInitialResourceId,
+          );
+          setExistingImages(
+            Array.isArray(refreshedImages) ? refreshedImages : [],
+          );
         } catch {
           // Keep current snapshot when refresh fails.
         }
@@ -629,7 +681,9 @@ export default function PropertyTabsEditor({
       dispatch(actions.setSaveResult({ result: saved || null }));
       setBaselineSignature(currentComparableSignature);
     } catch (err) {
-      dispatch(actions.setGlobalError({ error: err?.message || "SAVE_FAILED" }));
+      dispatch(
+        actions.setGlobalError({ error: err?.message || "SAVE_FAILED" }),
+      );
     } finally {
       dispatch(actions.setIsSaving({ isSaving: false }));
     }
@@ -655,7 +709,10 @@ export default function PropertyTabsEditor({
             {t(`propertyForm.options.resourceType.${resourceType}`)}
           </p>
 
-          <nav className="mt-5 flex flex-col gap-1" aria-label={t("wizard.title")}>
+          <nav
+            className="mt-5 flex flex-col gap-1"
+            aria-label={t("wizard.title")}
+          >
             {activeSteps.map((step, idx) => {
               const StepIcon = STEP_ICON_BY_ID[step.id] || Home;
               const isCurrent = idx === currentStepIndex;
@@ -809,28 +866,43 @@ export default function PropertyTabsEditor({
               onFieldChange={handleFieldChange}
             />
           ) : (
-            <div className="space-y-5">
+            <div
+              className={
+                currentStep.id === "conditions"
+                  ? "grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2"
+                  : "space-y-5"
+              }
+            >
               {fields.map((field) => {
                 const value = selectors.getValue(state, field.key);
                 const error = stepErrors?.[`${currentStep.id}.${field.key}`];
+                const isFullWidth =
+                  currentStep.id === "conditions" &&
+                  (field.type === "select" || field.type === "textarea");
 
                 return (
-                  <FieldRenderer
+                  <div
                     key={field.key}
-                    field={field}
-                    value={value}
-                    error={error}
-                    t={t}
-                    existingImages={existingImages}
-                    existingImagesLoading={existingImagesLoading}
-                    slugStatus={slugStatus}
-                    onRegenerateSlug={regenerateSlug}
-                    amenitiesOptions={amenitiesOptions}
-                    amenitiesLoading={amenitiesLoading}
-                    resourceType={resourceType}
-                    category={context.category}
-                    onChange={(nextValue) => handleFieldChange(field.key, nextValue)}
-                  />
+                    className={isFullWidth ? "md:col-span-2" : undefined}
+                  >
+                    <FieldRenderer
+                      field={field}
+                      value={value}
+                      error={error}
+                      t={t}
+                      existingImages={existingImages}
+                      existingImagesLoading={existingImagesLoading}
+                      slugStatus={slugStatus}
+                      onRegenerateSlug={regenerateSlug}
+                      amenitiesOptions={amenitiesOptions}
+                      amenitiesLoading={amenitiesLoading}
+                      resourceType={resourceType}
+                      category={context.category}
+                      onChange={(nextValue) =>
+                        handleFieldChange(field.key, nextValue)
+                      }
+                    />
+                  </div>
                 );
               })}
             </div>
@@ -902,7 +974,6 @@ function resolveOfferingId(profile, formState) {
       (item) =>
         item.commercialMode === formState?.commercialMode &&
         item.bookingType === formState?.bookingType,
-    ) ||
-    list.find((item) => item.commercialMode === formState?.commercialMode);
+    ) || list.find((item) => item.commercialMode === formState?.commercialMode);
   return selected?.id || "";
 }

@@ -20,7 +20,7 @@ import {
 import dayjs from "dayjs";
 import { useAuth } from "../hooks/useAuth";
 import { reservationsService } from "../services/reservationsService";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { databases, Query } from "../api/appwriteClient";
 import env from "../env";
 import { getErrorMessage } from "../utils/errors";
@@ -319,7 +319,7 @@ const MyReservations = () => {
         const nameEntries = await Promise.all(
           propertyIds.map(async (pid) => {
             try {
-              const p = await propertiesService.getById(pid);
+              const p = await resourcesService.getById(pid);
               return [pid, p?.title || pid];
             } catch {
               return [pid, pid];

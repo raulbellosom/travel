@@ -264,7 +264,7 @@
         "music": "Música"
       },
       "category": {
-        "house": "House",
+        "house": "Casa",
         "apartment": "Departamento",
         "land": "Terreno",
         "commercial": "Comercial",
@@ -712,6 +712,10 @@
       "manualDateRangeMessage": "Hola, me interesa \"{{title}}\" para las fechas {{dates}}. ¿Podemos confirmar disponibilidad y condiciones?",
       "manualTimeSlotMessage": "Hola, me interesa \"{{title}}\" el {{date}} en el horario {{time}}. ¿Podemos confirmar disponibilidad?",
       "selectDate": "Selecciona una fecha",
+      "selectStartTime": "Hora de inicio",
+      "selectStartTimePlaceholder": "-- Elige hora --",
+      "selectHours": "¿Cuántas horas?",
+      "noHoursAvailable": "No hay suficiente disponibilidad para esa hora de inicio.",
       "dayUnavailable": "La fecha seleccionada no esta disponible.",
       "noSlots": "No hay horarios disponibles para la fecha seleccionada.",
       "contactForSlot": "Solicitar este horario"

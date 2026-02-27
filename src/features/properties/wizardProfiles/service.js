@@ -53,11 +53,26 @@ function getDefaultBookingTypeForCommercialMode(commercialMode) {
  * Keep schema enum `total`, but display it as "Precio fijo" (UI id fixed_total).
  */
 const PRICING_CHOICES = {
-  fixed_total: { schemaPricingModel: "fixed_total", labelKey: "wizard.pricing.fixed_total" },
-  per_day: { schemaPricingModel: "per_day", labelKey: "wizard.pricing.per_day" },
-  per_hour: { schemaPricingModel: "per_hour", labelKey: "wizard.pricing.per_hour" },
-  per_person: { schemaPricingModel: "per_person", labelKey: "wizard.pricing.per_person" },
-  per_event: { schemaPricingModel: "per_event", labelKey: "wizard.pricing.per_event" },
+  fixed_total: {
+    schemaPricingModel: "fixed_total",
+    labelKey: "wizard.pricing.fixed_total",
+  },
+  per_day: {
+    schemaPricingModel: "per_day",
+    labelKey: "wizard.pricing.per_day",
+  },
+  per_hour: {
+    schemaPricingModel: "per_hour",
+    labelKey: "wizard.pricing.per_hour",
+  },
+  per_person: {
+    schemaPricingModel: "per_person",
+    labelKey: "wizard.pricing.per_person",
+  },
+  per_event: {
+    schemaPricingModel: "per_event",
+    labelKey: "wizard.pricing.per_event",
+  },
 };
 
 function inferPricingChoiceId({ commercialMode, pricingModel }) {
@@ -69,8 +84,18 @@ function inferPricingChoiceId({ commercialMode, pricingModel }) {
         : "fixed_total";
 
   const allowedByMode = {
-    rent_hourly: new Set(["fixed_total", "per_hour", "per_person", "per_event"]),
-    rent_short_term: new Set(["fixed_total", "per_day", "per_person", "per_event"]),
+    rent_hourly: new Set([
+      "fixed_total",
+      "per_hour",
+      "per_person",
+      "per_event",
+    ]),
+    rent_short_term: new Set([
+      "fixed_total",
+      "per_day",
+      "per_person",
+      "per_event",
+    ]),
   };
 
   const byExistingModel = Object.entries(PRICING_CHOICES).find(
@@ -89,11 +114,40 @@ function inferPricingChoiceId({ commercialMode, pricingModel }) {
 
 /** Category-specific attribute keys to keep */
 const ATTRIBUTE_KEYS_BY_CATEGORY = {
-  cleaning: ["cleaningType", "cleaningMaxArea", "cleaningStaffCount", "cleaningIncludesSupplies"],
-  chef: ["chefCuisineType", "chefMaxDiners", "chefIncludesIngredients", "chefIncludesTableware", "chefTravelsToLocation"],
-  photography: ["photoSpecialty", "photoEditedCount", "photoIncludesVideo", "photoTravelsToLocation"],
-  catering: ["cateringServiceType", "cateringMinGuests", "cateringMaxGuests", "cateringIncludesWaiters", "cateringIncludesSetup", "cateringIncludesTableware"],
-  maintenance: ["maintenanceSpecialty", "maintenanceIncludesMaterials", "maintenanceEmergencyService", "maintenanceWarranty", "maintenanceResponseTimeHours"],
+  cleaning: [
+    "cleaningType",
+    "cleaningMaxArea",
+    "cleaningStaffCount",
+    "cleaningIncludesSupplies",
+  ],
+  chef: [
+    "chefCuisineType",
+    "chefMaxDiners",
+    "chefIncludesIngredients",
+    "chefIncludesTableware",
+    "chefTravelsToLocation",
+  ],
+  photography: [
+    "photoSpecialty",
+    "photoEditedCount",
+    "photoIncludesVideo",
+    "photoTravelsToLocation",
+  ],
+  catering: [
+    "cateringServiceType",
+    "cateringMinGuests",
+    "cateringMaxGuests",
+    "cateringIncludesWaiters",
+    "cateringIncludesSetup",
+    "cateringIncludesTableware",
+  ],
+  maintenance: [
+    "maintenanceSpecialty",
+    "maintenanceIncludesMaterials",
+    "maintenanceEmergencyService",
+    "maintenanceWarranty",
+    "maintenanceResponseTimeHours",
+  ],
 };
 
 /**
@@ -106,6 +160,7 @@ const GENERIC_BOOKING_CONDITION_KEYS = [
   "availabilityStartTime",
   "availabilityEndTime",
   "manualContactScheduleType",
+  "slotMode",
 ];
 
 /**
@@ -120,14 +175,46 @@ function getUnitLabelVariant(category) {
 
 function getNarrativeSteps({ t }) {
   return [
-    { id: "publishWhat", title: t("wizard.steps.publishWhat.title"), description: t("wizard.steps.publishWhat.description") },
-    { id: "howOffer", title: t("wizard.steps.howOffer.title"), description: t("wizard.steps.howOffer.description") },
-    { id: "describe", title: t("wizard.steps.describe.title"), description: t("wizard.steps.describe.description") },
-    { id: "details", title: t("wizard.steps.details.title"), description: t("wizard.steps.details.description") },
-    { id: "conditions", title: t("wizard.steps.conditions.title"), description: t("wizard.steps.conditions.description") },
-    { id: "price", title: t("wizard.steps.price.title"), description: t("wizard.steps.price.description") },
-    { id: "location", title: t("wizard.steps.location.title"), description: t("wizard.steps.location.description") },
-    { id: "review", title: t("wizard.steps.review.title"), description: t("wizard.steps.review.description") },
+    {
+      id: "publishWhat",
+      title: t("wizard.steps.publishWhat.title"),
+      description: t("wizard.steps.publishWhat.description"),
+    },
+    {
+      id: "howOffer",
+      title: t("wizard.steps.howOffer.title"),
+      description: t("wizard.steps.howOffer.description"),
+    },
+    {
+      id: "describe",
+      title: t("wizard.steps.describe.title"),
+      description: t("wizard.steps.describe.description"),
+    },
+    {
+      id: "details",
+      title: t("wizard.steps.details.title"),
+      description: t("wizard.steps.details.description"),
+    },
+    {
+      id: "conditions",
+      title: t("wizard.steps.conditions.title"),
+      description: t("wizard.steps.conditions.description"),
+    },
+    {
+      id: "price",
+      title: t("wizard.steps.price.title"),
+      description: t("wizard.steps.price.description"),
+    },
+    {
+      id: "location",
+      title: t("wizard.steps.location.title"),
+      description: t("wizard.steps.location.description"),
+    },
+    {
+      id: "review",
+      title: t("wizard.steps.review.title"),
+      description: t("wizard.steps.review.description"),
+    },
   ];
 }
 
@@ -148,7 +235,11 @@ function getOfferingOptions({ t }) {
   }));
 }
 
-function getBookingTypeOptions({ t, commercialMode, paymentsOnlineEnabled = true }) {
+function getBookingTypeOptions({
+  t,
+  commercialMode,
+  paymentsOnlineEnabled = true,
+}) {
   const defaultBookingType =
     getDefaultBookingTypeForCommercialMode(commercialMode);
   const manualOption = {
@@ -219,7 +310,10 @@ function getFieldsForStep({ t, context, stepId }) {
       },
     ];
 
-    if (commercialMode === "rent_short_term" || commercialMode === "rent_hourly") {
+    if (
+      commercialMode === "rent_short_term" ||
+      commercialMode === "rent_hourly"
+    ) {
       fields.push({
         key: "bookingType",
         type: "select",
@@ -238,11 +332,43 @@ function getFieldsForStep({ t, context, stepId }) {
 
   if (stepId === "describe") {
     return [
-      { key: "title", type: "text", labelKey: "wizard.fields.title.label", helpKey: "wizard.fields.title.help", required: true, minLength: 3 },
-      { key: "description", type: "textarea", labelKey: "wizard.fields.description.label", helpKey: "wizard.fields.description.help", required: true, minLength: 20 },
-      { key: "slug", type: "text", labelKey: "wizard.fields.slugPublic.label", helpKey: "wizard.fields.slugPublic.help", required: false },
-      { key: "imageFiles", type: "images", labelKey: "wizard.fields.images.label", helpKey: "wizard.fields.images.help", required: false },
-      { key: "videoUrl", type: "url", labelKey: "wizard.fields.videoUrl.label", helpKey: "wizard.fields.videoUrl.help", required: false },
+      {
+        key: "title",
+        type: "text",
+        labelKey: "wizard.fields.title.label",
+        helpKey: "wizard.fields.title.help",
+        required: true,
+        minLength: 3,
+      },
+      {
+        key: "description",
+        type: "textarea",
+        labelKey: "wizard.fields.description.label",
+        helpKey: "wizard.fields.description.help",
+        required: true,
+        minLength: 20,
+      },
+      {
+        key: "slug",
+        type: "text",
+        labelKey: "wizard.fields.slugPublic.label",
+        helpKey: "wizard.fields.slugPublic.help",
+        required: false,
+      },
+      {
+        key: "imageFiles",
+        type: "images",
+        labelKey: "wizard.fields.images.label",
+        helpKey: "wizard.fields.images.help",
+        required: false,
+      },
+      {
+        key: "videoUrl",
+        type: "url",
+        labelKey: "wizard.fields.videoUrl.label",
+        helpKey: "wizard.fields.videoUrl.help",
+        required: false,
+      },
     ];
   }
 
@@ -253,50 +379,188 @@ function getFieldsForStep({ t, context, stepId }) {
     switch (category) {
       case "chef":
         fields.push(
-          { key: "attributes.chefCuisineType", type: "text", labelKey: "wizard.fields.service.chefCuisineType.label", required: false },
-          { key: "attributes.chefMaxDiners", type: "number", labelKey: "wizard.fields.service.chefMaxDiners.label", required: false, min: 1, max: 10000 },
-          { key: "attributes.chefIncludesIngredients", type: "boolean", labelKey: "wizard.fields.service.chefIncludesIngredients.label", required: false },
-          { key: "attributes.chefIncludesTableware", type: "boolean", labelKey: "wizard.fields.service.chefIncludesTableware.label", required: false },
-          { key: "attributes.chefTravelsToLocation", type: "boolean", labelKey: "wizard.fields.service.chefTravelsToLocation.label", required: false },
+          {
+            key: "attributes.chefCuisineType",
+            type: "text",
+            labelKey: "wizard.fields.service.chefCuisineType.label",
+            required: false,
+          },
+          {
+            key: "attributes.chefMaxDiners",
+            type: "number",
+            labelKey: "wizard.fields.service.chefMaxDiners.label",
+            required: false,
+            min: 1,
+            max: 10000,
+          },
+          {
+            key: "attributes.chefIncludesIngredients",
+            type: "boolean",
+            labelKey: "wizard.fields.service.chefIncludesIngredients.label",
+            required: false,
+          },
+          {
+            key: "attributes.chefIncludesTableware",
+            type: "boolean",
+            labelKey: "wizard.fields.service.chefIncludesTableware.label",
+            required: false,
+          },
+          {
+            key: "attributes.chefTravelsToLocation",
+            type: "boolean",
+            labelKey: "wizard.fields.service.chefTravelsToLocation.label",
+            required: false,
+          },
         );
         break;
 
       case "photography":
         fields.push(
-          { key: "attributes.photoSpecialty", type: "text", labelKey: "wizard.fields.service.photoSpecialty.label", required: false },
-          { key: "attributes.photoEditedCount", type: "number", labelKey: "wizard.fields.service.photoEditedCount.label", required: false, min: 0, max: 100000 },
-          { key: "attributes.photoIncludesVideo", type: "boolean", labelKey: "wizard.fields.service.photoIncludesVideo.label", required: false },
-          { key: "attributes.photoTravelsToLocation", type: "boolean", labelKey: "wizard.fields.service.photoTravelsToLocation.label", required: false },
+          {
+            key: "attributes.photoSpecialty",
+            type: "text",
+            labelKey: "wizard.fields.service.photoSpecialty.label",
+            required: false,
+          },
+          {
+            key: "attributes.photoEditedCount",
+            type: "number",
+            labelKey: "wizard.fields.service.photoEditedCount.label",
+            required: false,
+            min: 0,
+            max: 100000,
+          },
+          {
+            key: "attributes.photoIncludesVideo",
+            type: "boolean",
+            labelKey: "wizard.fields.service.photoIncludesVideo.label",
+            required: false,
+          },
+          {
+            key: "attributes.photoTravelsToLocation",
+            type: "boolean",
+            labelKey: "wizard.fields.service.photoTravelsToLocation.label",
+            required: false,
+          },
         );
         break;
 
       case "catering":
         fields.push(
-          { key: "attributes.cateringServiceType", type: "text", labelKey: "wizard.fields.service.cateringServiceType.label", required: false },
-          { key: "attributes.cateringMinGuests", type: "number", labelKey: "wizard.fields.service.cateringMinGuests.label", required: false, min: 1, max: 100000 },
-          { key: "attributes.cateringMaxGuests", type: "number", labelKey: "wizard.fields.service.cateringMaxGuests.label", required: false, min: 1, max: 100000 },
-          { key: "attributes.cateringIncludesWaiters", type: "boolean", labelKey: "wizard.fields.service.cateringIncludesWaiters.label", required: false },
-          { key: "attributes.cateringIncludesSetup", type: "boolean", labelKey: "wizard.fields.service.cateringIncludesSetup.label", required: false },
-          { key: "attributes.cateringIncludesTableware", type: "boolean", labelKey: "wizard.fields.service.cateringIncludesTableware.label", required: false },
+          {
+            key: "attributes.cateringServiceType",
+            type: "text",
+            labelKey: "wizard.fields.service.cateringServiceType.label",
+            required: false,
+          },
+          {
+            key: "attributes.cateringMinGuests",
+            type: "number",
+            labelKey: "wizard.fields.service.cateringMinGuests.label",
+            required: false,
+            min: 1,
+            max: 100000,
+          },
+          {
+            key: "attributes.cateringMaxGuests",
+            type: "number",
+            labelKey: "wizard.fields.service.cateringMaxGuests.label",
+            required: false,
+            min: 1,
+            max: 100000,
+          },
+          {
+            key: "attributes.cateringIncludesWaiters",
+            type: "boolean",
+            labelKey: "wizard.fields.service.cateringIncludesWaiters.label",
+            required: false,
+          },
+          {
+            key: "attributes.cateringIncludesSetup",
+            type: "boolean",
+            labelKey: "wizard.fields.service.cateringIncludesSetup.label",
+            required: false,
+          },
+          {
+            key: "attributes.cateringIncludesTableware",
+            type: "boolean",
+            labelKey: "wizard.fields.service.cateringIncludesTableware.label",
+            required: false,
+          },
         );
         break;
 
       case "cleaning":
         fields.push(
-          { key: "attributes.cleaningType", type: "text", labelKey: "wizard.fields.service.cleaningType.label", required: false },
-          { key: "attributes.cleaningMaxArea", type: "number", labelKey: "wizard.fields.service.cleaningMaxArea.label", required: false, min: 0, max: 999999, suffixKey: "wizard.units.m2" },
-          { key: "attributes.cleaningStaffCount", type: "number", labelKey: "wizard.fields.service.cleaningStaffCount.label", required: false, min: 1, max: 1000 },
-          { key: "attributes.cleaningIncludesSupplies", type: "boolean", labelKey: "wizard.fields.service.cleaningIncludesSupplies.label", required: false },
+          {
+            key: "attributes.cleaningType",
+            type: "text",
+            labelKey: "wizard.fields.service.cleaningType.label",
+            required: false,
+          },
+          {
+            key: "attributes.cleaningMaxArea",
+            type: "number",
+            labelKey: "wizard.fields.service.cleaningMaxArea.label",
+            required: false,
+            min: 0,
+            max: 999999,
+            suffixKey: "wizard.units.m2",
+          },
+          {
+            key: "attributes.cleaningStaffCount",
+            type: "number",
+            labelKey: "wizard.fields.service.cleaningStaffCount.label",
+            required: false,
+            min: 1,
+            max: 1000,
+          },
+          {
+            key: "attributes.cleaningIncludesSupplies",
+            type: "boolean",
+            labelKey: "wizard.fields.service.cleaningIncludesSupplies.label",
+            required: false,
+          },
         );
         break;
 
       case "maintenance":
         fields.push(
-          { key: "attributes.maintenanceSpecialty", type: "text", labelKey: "wizard.fields.service.maintenanceSpecialty.label", required: false },
-          { key: "attributes.maintenanceIncludesMaterials", type: "boolean", labelKey: "wizard.fields.service.maintenanceIncludesMaterials.label", required: false },
-          { key: "attributes.maintenanceEmergencyService", type: "boolean", labelKey: "wizard.fields.service.maintenanceEmergencyService.label", required: false },
-          { key: "attributes.maintenanceWarranty", type: "boolean", labelKey: "wizard.fields.service.maintenanceWarranty.label", required: false },
-          { key: "attributes.maintenanceResponseTimeHours", type: "number", labelKey: "wizard.fields.service.maintenanceResponseTimeHours.label", required: false, min: 0, max: 9999, suffixKey: "wizard.units.hours" },
+          {
+            key: "attributes.maintenanceSpecialty",
+            type: "text",
+            labelKey: "wizard.fields.service.maintenanceSpecialty.label",
+            required: false,
+          },
+          {
+            key: "attributes.maintenanceIncludesMaterials",
+            type: "boolean",
+            labelKey:
+              "wizard.fields.service.maintenanceIncludesMaterials.label",
+            required: false,
+          },
+          {
+            key: "attributes.maintenanceEmergencyService",
+            type: "boolean",
+            labelKey: "wizard.fields.service.maintenanceEmergencyService.label",
+            required: false,
+          },
+          {
+            key: "attributes.maintenanceWarranty",
+            type: "boolean",
+            labelKey: "wizard.fields.service.maintenanceWarranty.label",
+            required: false,
+          },
+          {
+            key: "attributes.maintenanceResponseTimeHours",
+            type: "number",
+            labelKey:
+              "wizard.fields.service.maintenanceResponseTimeHours.label",
+            required: false,
+            min: 0,
+            max: 9999,
+            suffixKey: "wizard.units.hours",
+          },
         );
         break;
 
@@ -331,15 +595,26 @@ function getFieldsForStep({ t, context, stepId }) {
               options: [
                 {
                   id: "none",
-                  label: t("propertyForm.options.manualContactScheduleType.none"),
+                  label: t(
+                    "propertyForm.options.manualContactScheduleType.none",
+                  ),
                 },
-                {
-                  id: "date_range",
-                  label: t("propertyForm.options.manualContactScheduleType.date_range"),
-                },
+                // date_range solo es congruente con rent_short_term
+                ...(commercialMode === "rent_short_term"
+                  ? [
+                      {
+                        id: "date_range",
+                        label: t(
+                          "propertyForm.options.manualContactScheduleType.date_range",
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   id: "time_slot",
-                  label: t("propertyForm.options.manualContactScheduleType.time_slot"),
+                  label: t(
+                    "propertyForm.options.manualContactScheduleType.time_slot",
+                  ),
                 },
               ],
               required: false,
@@ -449,13 +724,50 @@ function getFieldsForStep({ t, context, stepId }) {
         options: [{ id: "MX", label: t("wizard.countries.MX") }],
         required: false,
       },
-      { key: "state", type: "text", labelKey: "wizard.fields.location.state.label", required: true, minLength: 2 },
-      { key: "city", type: "text", labelKey: "wizard.fields.location.city.label", required: true, minLength: 2 },
-      { key: "streetAddress", type: "text", labelKey: "wizard.fields.location.streetAddress.label", required: false },
-      { key: "neighborhood", type: "text", labelKey: "wizard.fields.location.neighborhood.label", required: false },
-      { key: "postalCode", type: "text", labelKey: "wizard.fields.location.postalCode.label", required: false },
-      { key: "latitude", type: "number", labelKey: "wizard.fields.location.latitude.label", required: false },
-      { key: "longitude", type: "number", labelKey: "wizard.fields.location.longitude.label", required: false },
+      {
+        key: "state",
+        type: "text",
+        labelKey: "wizard.fields.location.state.label",
+        required: true,
+        minLength: 2,
+      },
+      {
+        key: "city",
+        type: "text",
+        labelKey: "wizard.fields.location.city.label",
+        required: true,
+        minLength: 2,
+      },
+      {
+        key: "streetAddress",
+        type: "text",
+        labelKey: "wizard.fields.location.streetAddress.label",
+        required: false,
+      },
+      {
+        key: "neighborhood",
+        type: "text",
+        labelKey: "wizard.fields.location.neighborhood.label",
+        required: false,
+      },
+      {
+        key: "postalCode",
+        type: "text",
+        labelKey: "wizard.fields.location.postalCode.label",
+        required: false,
+      },
+      {
+        key: "latitude",
+        type: "number",
+        labelKey: "wizard.fields.location.latitude.label",
+        required: false,
+      },
+      {
+        key: "longitude",
+        type: "number",
+        labelKey: "wizard.fields.location.longitude.label",
+        required: false,
+      },
     ];
   }
 
@@ -509,19 +821,31 @@ function toSchemaPatch({ formState, context }) {
 
   // Core descriptive fields
   if (formState?.title != null) patch.title = String(formState.title).trim();
-  if (formState?.description != null) patch.description = String(formState.description).trim();
-  if (formState?.slug != null && String(formState.slug).trim() !== "") patch.slug = String(formState.slug).trim();
+  if (formState?.description != null)
+    patch.description = String(formState.description).trim();
+  if (formState?.slug != null && String(formState.slug).trim() !== "")
+    patch.slug = String(formState.slug).trim();
 
   // Media
   if (Array.isArray(formState?.imageFiles) && formState.imageFiles.length > 0) {
     patch.imageFiles = formState.imageFiles.filter(
-      (file) => file && typeof file === "object" && typeof file.name === "string",
+      (file) =>
+        file && typeof file === "object" && typeof file.name === "string",
     );
   }
   if (formState?.videoUrl) patch.videoUrl = formState.videoUrl;
 
   // Location root fields
-  const locationKeys = ["streetAddress", "neighborhood", "city", "state", "country", "postalCode", "latitude", "longitude"];
+  const locationKeys = [
+    "streetAddress",
+    "neighborhood",
+    "city",
+    "state",
+    "country",
+    "postalCode",
+    "latitude",
+    "longitude",
+  ];
   locationKeys.forEach((k) => {
     if (formState?.[k] !== undefined) patch[k] = formState[k];
   });
@@ -537,13 +861,16 @@ function toSchemaPatch({ formState, context }) {
   }
 
   // Optional scheduling/slot config (root)
-  if (formState?.slotDurationMinutes !== undefined) patch.slotDurationMinutes = formState.slotDurationMinutes;
-  if (formState?.slotBufferMinutes !== undefined) patch.slotBufferMinutes = formState.slotBufferMinutes;
+  if (formState?.slotDurationMinutes !== undefined)
+    patch.slotDurationMinutes = formState.slotDurationMinutes;
+  if (formState?.slotBufferMinutes !== undefined)
+    patch.slotBufferMinutes = formState.slotBufferMinutes;
 
   // Price
   if (formState?.price !== undefined) patch.price = Number(formState.price);
   if (formState?.currency) patch.currency = formState.currency;
-  if (formState?.priceNegotiable !== undefined) patch.priceNegotiable = Boolean(formState.priceNegotiable);
+  if (formState?.priceNegotiable !== undefined)
+    patch.priceNegotiable = Boolean(formState.priceNegotiable);
 
   const resolvedPricingChoiceId =
     formState?.pricingChoiceId ||
@@ -588,4 +915,3 @@ export const serviceProfile = {
 };
 
 export default serviceProfile;
-

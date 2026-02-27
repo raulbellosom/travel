@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PropertyWizard from "../features/properties/wizard/PropertyWizard";
 import { useAuth } from "../hooks/useAuth";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { getErrorMessage } from "../utils/errors";
 import {
   INTERNAL_ROUTES,
-  getInternalPropertyDetailRoute,
+  getInternalResourceDetailRoute,
 } from "../utils/internalRoutes";
 import { useToast } from "../hooks/useToast";
 import { X } from "lucide-react";
@@ -27,18 +27,21 @@ const CreateProperty = () => {
     showToast({
       type: "info",
       title: t("createPropertyPage.title"),
-      message: t("createPropertyPage.messages.saving", "Guardando publicacion..."),
+      message: t(
+        "createPropertyPage.messages.saving",
+        "Guardando publicacion...",
+      ),
       durationMs: 1800,
     });
 
     try {
       const { imageFiles = [], ...resourcePatch } = patch || {};
 
-      const created = await propertiesService.create(user.$id, resourcePatch);
+      const created = await resourcesService.create(user.$id, resourcePatch);
 
       if (Array.isArray(imageFiles) && imageFiles.length > 0) {
         try {
-          await propertiesService.uploadPropertyImages(created.$id, imageFiles, {
+          await resourcesService.uploadResourceImages(created.$id, imageFiles, {
             title: resourcePatch.title,
             startingSortOrder: 0,
             existingFileIds: created.galleryImageIds || [],
@@ -62,13 +65,19 @@ const CreateProperty = () => {
       showToast({
         type: "success",
         title: t("createPropertyPage.title"),
-        message: t("createPropertyPage.messages.saved", "Publicacion creada correctamente."),
+        message: t(
+          "createPropertyPage.messages.saved",
+          "Publicacion creada correctamente.",
+        ),
       });
 
-      navigate(getInternalPropertyDetailRoute(created.$id), { replace: true });
+      navigate(getInternalResourceDetailRoute(created.$id), { replace: true });
       return created;
     } catch (err) {
-      const message = getErrorMessage(err, t("createPropertyPage.errors.create"));
+      const message = getErrorMessage(
+        err,
+        t("createPropertyPage.errors.create"),
+      );
       setError(message);
       showToast({
         type: "error",

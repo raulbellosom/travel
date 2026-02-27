@@ -11,7 +11,7 @@ import {
   Star,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { propertiesService } from "../../../../services/propertiesService";
+import { resourcesService } from "../../../../services/resourcesService";
 import {
   getOptimizedImage,
   getFileViewUrl,
@@ -162,7 +162,7 @@ const HomeHeroCarousel = () => {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const data = await propertiesService.listPublic({
+        const data = await resourcesService.listPublic({
           limit: FEATURED_LIMIT,
           filters: { featured: true, sort: "recent" },
         });

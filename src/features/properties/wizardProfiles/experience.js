@@ -14,7 +14,14 @@
 
 const RESOURCE_TYPE = "experience";
 
-const EXPERIENCE_CATEGORIES = ["tour", "class", "workshop", "adventure", "wellness", "gastronomy"];
+const EXPERIENCE_CATEGORIES = [
+  "tour",
+  "class",
+  "workshop",
+  "adventure",
+  "wellness",
+  "gastronomy",
+];
 
 const OFFERINGS = [
   {
@@ -44,11 +51,26 @@ function getDefaultBookingTypeForCommercialMode(commercialMode) {
  * Keep schema enum `total`, but display it as "Precio fijo" (UI id fixed_total).
  */
 const PRICING_CHOICES = {
-  fixed_total: { schemaPricingModel: "fixed_total", labelKey: "wizard.pricing.fixed_total" },
-  per_hour: { schemaPricingModel: "per_hour", labelKey: "wizard.pricing.per_hour" },
-  per_person: { schemaPricingModel: "per_person", labelKey: "wizard.pricing.per_person" },
-  per_day: { schemaPricingModel: "per_day", labelKey: "wizard.pricing.per_day" },
-  per_event: { schemaPricingModel: "per_event", labelKey: "wizard.pricing.per_event" },
+  fixed_total: {
+    schemaPricingModel: "fixed_total",
+    labelKey: "wizard.pricing.fixed_total",
+  },
+  per_hour: {
+    schemaPricingModel: "per_hour",
+    labelKey: "wizard.pricing.per_hour",
+  },
+  per_person: {
+    schemaPricingModel: "per_person",
+    labelKey: "wizard.pricing.per_person",
+  },
+  per_day: {
+    schemaPricingModel: "per_day",
+    labelKey: "wizard.pricing.per_day",
+  },
+  per_event: {
+    schemaPricingModel: "per_event",
+    labelKey: "wizard.pricing.per_event",
+  },
 };
 
 function inferPricingChoiceId({ commercialMode, pricingModel }) {
@@ -60,8 +82,18 @@ function inferPricingChoiceId({ commercialMode, pricingModel }) {
         : "fixed_total";
 
   const allowedByMode = {
-    rent_hourly: new Set(["fixed_total", "per_hour", "per_person", "per_event"]),
-    rent_short_term: new Set(["fixed_total", "per_day", "per_person", "per_event"]),
+    rent_hourly: new Set([
+      "fixed_total",
+      "per_hour",
+      "per_person",
+      "per_event",
+    ]),
+    rent_short_term: new Set([
+      "fixed_total",
+      "per_day",
+      "per_person",
+      "per_event",
+    ]),
   };
 
   const byExistingModel = Object.entries(PRICING_CHOICES).find(
@@ -93,6 +125,7 @@ const GENERIC_BOOKING_CONDITION_KEYS = [
   "availabilityStartTime",
   "availabilityEndTime",
   "manualContactScheduleType",
+  "slotMode",
 ];
 
 /** Experiences usually use participants for booking units */
@@ -102,14 +135,46 @@ function getUnitLabelVariant() {
 
 function getNarrativeSteps({ t }) {
   return [
-    { id: "publishWhat", title: t("wizard.steps.publishWhat.title"), description: t("wizard.steps.publishWhat.description") },
-    { id: "howOffer", title: t("wizard.steps.howOffer.title"), description: t("wizard.steps.howOffer.description") },
-    { id: "describe", title: t("wizard.steps.describe.title"), description: t("wizard.steps.describe.description") },
-    { id: "details", title: t("wizard.steps.details.title"), description: t("wizard.steps.details.description") },
-    { id: "conditions", title: t("wizard.steps.conditions.title"), description: t("wizard.steps.conditions.description") },
-    { id: "price", title: t("wizard.steps.price.title"), description: t("wizard.steps.price.description") },
-    { id: "location", title: t("wizard.steps.location.title"), description: t("wizard.steps.location.description") },
-    { id: "review", title: t("wizard.steps.review.title"), description: t("wizard.steps.review.description") },
+    {
+      id: "publishWhat",
+      title: t("wizard.steps.publishWhat.title"),
+      description: t("wizard.steps.publishWhat.description"),
+    },
+    {
+      id: "howOffer",
+      title: t("wizard.steps.howOffer.title"),
+      description: t("wizard.steps.howOffer.description"),
+    },
+    {
+      id: "describe",
+      title: t("wizard.steps.describe.title"),
+      description: t("wizard.steps.describe.description"),
+    },
+    {
+      id: "details",
+      title: t("wizard.steps.details.title"),
+      description: t("wizard.steps.details.description"),
+    },
+    {
+      id: "conditions",
+      title: t("wizard.steps.conditions.title"),
+      description: t("wizard.steps.conditions.description"),
+    },
+    {
+      id: "price",
+      title: t("wizard.steps.price.title"),
+      description: t("wizard.steps.price.description"),
+    },
+    {
+      id: "location",
+      title: t("wizard.steps.location.title"),
+      description: t("wizard.steps.location.description"),
+    },
+    {
+      id: "review",
+      title: t("wizard.steps.review.title"),
+      description: t("wizard.steps.review.description"),
+    },
   ];
 }
 
@@ -130,7 +195,11 @@ function getOfferingOptions({ t }) {
   }));
 }
 
-function getBookingTypeOptions({ t, commercialMode, paymentsOnlineEnabled = true }) {
+function getBookingTypeOptions({
+  t,
+  commercialMode,
+  paymentsOnlineEnabled = true,
+}) {
   const defaultBookingType =
     getDefaultBookingTypeForCommercialMode(commercialMode);
   const manualOption = {
@@ -200,7 +269,10 @@ function getFieldsForStep({ t, context, stepId }) {
       },
     ];
 
-    if (commercialMode === "rent_short_term" || commercialMode === "rent_hourly") {
+    if (
+      commercialMode === "rent_short_term" ||
+      commercialMode === "rent_hourly"
+    ) {
       fields.push({
         key: "bookingType",
         type: "select",
@@ -219,11 +291,43 @@ function getFieldsForStep({ t, context, stepId }) {
 
   if (stepId === "describe") {
     return [
-      { key: "title", type: "text", labelKey: "wizard.fields.title.label", helpKey: "wizard.fields.title.help", required: true, minLength: 3 },
-      { key: "description", type: "textarea", labelKey: "wizard.fields.description.label", helpKey: "wizard.fields.description.help", required: true, minLength: 20 },
-      { key: "slug", type: "text", labelKey: "wizard.fields.slugPublic.label", helpKey: "wizard.fields.slugPublic.help", required: false },
-      { key: "imageFiles", type: "images", labelKey: "wizard.fields.images.label", helpKey: "wizard.fields.images.help", required: false },
-      { key: "videoUrl", type: "url", labelKey: "wizard.fields.videoUrl.label", helpKey: "wizard.fields.videoUrl.help", required: false },
+      {
+        key: "title",
+        type: "text",
+        labelKey: "wizard.fields.title.label",
+        helpKey: "wizard.fields.title.help",
+        required: true,
+        minLength: 3,
+      },
+      {
+        key: "description",
+        type: "textarea",
+        labelKey: "wizard.fields.description.label",
+        helpKey: "wizard.fields.description.help",
+        required: true,
+        minLength: 20,
+      },
+      {
+        key: "slug",
+        type: "text",
+        labelKey: "wizard.fields.slugPublic.label",
+        helpKey: "wizard.fields.slugPublic.help",
+        required: false,
+      },
+      {
+        key: "imageFiles",
+        type: "images",
+        labelKey: "wizard.fields.images.label",
+        helpKey: "wizard.fields.images.help",
+        required: false,
+      },
+      {
+        key: "videoUrl",
+        type: "url",
+        labelKey: "wizard.fields.videoUrl.label",
+        helpKey: "wizard.fields.videoUrl.help",
+        required: false,
+      },
     ];
   }
 
@@ -262,9 +366,15 @@ function getFieldsForStep({ t, context, stepId }) {
         required: false,
         options: [
           { id: "easy", label: t("wizard.options.experienceDifficulty.easy") },
-          { id: "medium", label: t("wizard.options.experienceDifficulty.medium") },
+          {
+            id: "medium",
+            label: t("wizard.options.experienceDifficulty.medium"),
+          },
           { id: "hard", label: t("wizard.options.experienceDifficulty.hard") },
-          { id: "unspecified", label: t("wizard.options.experienceDifficulty.unspecified") },
+          {
+            id: "unspecified",
+            label: t("wizard.options.experienceDifficulty.unspecified"),
+          },
         ],
       },
       {
@@ -294,6 +404,7 @@ function getFieldsForStep({ t, context, stepId }) {
 
   if (stepId === "conditions") {
     const unitVariant = getUnitLabelVariant();
+    const slotMode = context.slotMode || "predefined";
 
     return [
       ...(bookingType === "manual_contact" &&
@@ -306,39 +417,77 @@ function getFieldsForStep({ t, context, stepId }) {
               options: [
                 {
                   id: "none",
-                  label: t("propertyForm.options.manualContactScheduleType.none"),
+                  label: t(
+                    "propertyForm.options.manualContactScheduleType.none",
+                  ),
                 },
-                {
-                  id: "date_range",
-                  label: t("propertyForm.options.manualContactScheduleType.date_range"),
-                },
+                // date_range solo es congruente con rent_short_term
+                ...(commercialMode === "rent_short_term"
+                  ? [
+                      {
+                        id: "date_range",
+                        label: t(
+                          "propertyForm.options.manualContactScheduleType.date_range",
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   id: "time_slot",
-                  label: t("propertyForm.options.manualContactScheduleType.time_slot"),
+                  label: t(
+                    "propertyForm.options.manualContactScheduleType.time_slot",
+                  ),
                 },
               ],
               required: false,
             },
           ]
         : []),
-      {
-        key: "attributes.bookingMinUnits",
-        type: "number",
-        labelKey: `wizard.fields.experience.bookingMinUnits.${unitVariant}.label`,
-        helpKey: `wizard.fields.experience.bookingMinUnits.${unitVariant}.help`,
-        required: false,
-        min: 1,
-        max: 9999,
-      },
-      {
-        key: "attributes.bookingMaxUnits",
-        type: "number",
-        labelKey: `wizard.fields.experience.bookingMaxUnits.${unitVariant}.label`,
-        helpKey: `wizard.fields.experience.bookingMaxUnits.${unitVariant}.help`,
-        required: false,
-        min: 1,
-        max: 9999,
-      },
+      // Slot mode selector for hourly resources
+      ...(commercialMode === "rent_hourly"
+        ? [
+            {
+              key: "attributes.slotMode",
+              type: "select",
+              labelKey: "wizard.fields.slotMode.label",
+              helpKey: "wizard.fields.slotMode.help",
+              options: [
+                {
+                  id: "predefined",
+                  label: t("wizard.options.slotMode.predefined"),
+                },
+                {
+                  id: "hour_range",
+                  label: t("wizard.options.slotMode.hour_range"),
+                },
+              ],
+              required: false,
+            },
+          ]
+        : []),
+      // bookingMin/Max shown for non-hourly modes OR when hourly + hour_range
+      ...(commercialMode !== "rent_hourly" || slotMode === "hour_range"
+        ? [
+            {
+              key: "attributes.bookingMinUnits",
+              type: "number",
+              labelKey: `wizard.fields.experience.bookingMinUnits.${unitVariant}.label`,
+              helpKey: `wizard.fields.experience.bookingMinUnits.${unitVariant}.help`,
+              required: false,
+              min: 1,
+              max: 9999,
+            },
+            {
+              key: "attributes.bookingMaxUnits",
+              type: "number",
+              labelKey: `wizard.fields.experience.bookingMaxUnits.${unitVariant}.label`,
+              helpKey: `wizard.fields.experience.bookingMaxUnits.${unitVariant}.help`,
+              required: false,
+              min: 1,
+              max: 9999,
+            },
+          ]
+        : []),
       {
         key: "attributes.availabilityStartTime",
         type: "time",
@@ -353,7 +502,8 @@ function getFieldsForStep({ t, context, stepId }) {
         helpKey: "wizard.fields.experience.availabilityEndTime.help",
         required: false,
       },
-      ...(commercialMode === "rent_hourly"
+      // predefined mode: fixed-duration slot grid
+      ...(commercialMode === "rent_hourly" && slotMode === "predefined"
         ? [
             {
               key: "slotDurationMinutes",
@@ -422,13 +572,50 @@ function getFieldsForStep({ t, context, stepId }) {
         options: [{ id: "MX", label: t("wizard.countries.MX") }],
         required: false,
       },
-      { key: "state", type: "text", labelKey: "wizard.fields.location.state.label", required: true, minLength: 2 },
-      { key: "city", type: "text", labelKey: "wizard.fields.location.city.label", required: true, minLength: 2 },
-      { key: "streetAddress", type: "text", labelKey: "wizard.fields.location.streetAddress.label", required: false },
-      { key: "neighborhood", type: "text", labelKey: "wizard.fields.location.neighborhood.label", required: false },
-      { key: "postalCode", type: "text", labelKey: "wizard.fields.location.postalCode.label", required: false },
-      { key: "latitude", type: "number", labelKey: "wizard.fields.location.latitude.label", required: false },
-      { key: "longitude", type: "number", labelKey: "wizard.fields.location.longitude.label", required: false },
+      {
+        key: "state",
+        type: "text",
+        labelKey: "wizard.fields.location.state.label",
+        required: true,
+        minLength: 2,
+      },
+      {
+        key: "city",
+        type: "text",
+        labelKey: "wizard.fields.location.city.label",
+        required: true,
+        minLength: 2,
+      },
+      {
+        key: "streetAddress",
+        type: "text",
+        labelKey: "wizard.fields.location.streetAddress.label",
+        required: false,
+      },
+      {
+        key: "neighborhood",
+        type: "text",
+        labelKey: "wizard.fields.location.neighborhood.label",
+        required: false,
+      },
+      {
+        key: "postalCode",
+        type: "text",
+        labelKey: "wizard.fields.location.postalCode.label",
+        required: false,
+      },
+      {
+        key: "latitude",
+        type: "number",
+        labelKey: "wizard.fields.location.latitude.label",
+        required: false,
+      },
+      {
+        key: "longitude",
+        type: "number",
+        labelKey: "wizard.fields.location.longitude.label",
+        required: false,
+      },
     ];
   }
 
@@ -440,7 +627,10 @@ function getFieldsForStep({ t, context, stepId }) {
  * keep only experience keys + generic booking condition keys.
  */
 function sanitizeAttributes({ attributes }) {
-  const allowed = new Set([...EXPERIENCE_ATTRIBUTE_KEYS, ...GENERIC_BOOKING_CONDITION_KEYS]);
+  const allowed = new Set([
+    ...EXPERIENCE_ATTRIBUTE_KEYS,
+    ...GENERIC_BOOKING_CONDITION_KEYS,
+  ]);
 
   const safe = {};
   Object.entries(attributes || {}).forEach(([k, v]) => {
@@ -472,19 +662,31 @@ function toSchemaPatch({ formState, context }) {
 
   // Core descriptive fields
   if (formState?.title != null) patch.title = String(formState.title).trim();
-  if (formState?.description != null) patch.description = String(formState.description).trim();
-  if (formState?.slug != null && String(formState.slug).trim() !== "") patch.slug = String(formState.slug).trim();
+  if (formState?.description != null)
+    patch.description = String(formState.description).trim();
+  if (formState?.slug != null && String(formState.slug).trim() !== "")
+    patch.slug = String(formState.slug).trim();
 
   // Media
   if (Array.isArray(formState?.imageFiles) && formState.imageFiles.length > 0) {
     patch.imageFiles = formState.imageFiles.filter(
-      (file) => file && typeof file === "object" && typeof file.name === "string",
+      (file) =>
+        file && typeof file === "object" && typeof file.name === "string",
     );
   }
   if (formState?.videoUrl) patch.videoUrl = formState.videoUrl;
 
   // Location root fields
-  const locationKeys = ["streetAddress", "neighborhood", "city", "state", "country", "postalCode", "latitude", "longitude"];
+  const locationKeys = [
+    "streetAddress",
+    "neighborhood",
+    "city",
+    "state",
+    "country",
+    "postalCode",
+    "latitude",
+    "longitude",
+  ];
   locationKeys.forEach((k) => {
     if (formState?.[k] !== undefined) patch[k] = formState[k];
   });
@@ -500,13 +702,16 @@ function toSchemaPatch({ formState, context }) {
   }
 
   // Optional slot config (root)
-  if (formState?.slotDurationMinutes !== undefined) patch.slotDurationMinutes = formState.slotDurationMinutes;
-  if (formState?.slotBufferMinutes !== undefined) patch.slotBufferMinutes = formState.slotBufferMinutes;
+  if (formState?.slotDurationMinutes !== undefined)
+    patch.slotDurationMinutes = formState.slotDurationMinutes;
+  if (formState?.slotBufferMinutes !== undefined)
+    patch.slotBufferMinutes = formState.slotBufferMinutes;
 
   // Price
   if (formState?.price !== undefined) patch.price = Number(formState.price);
   if (formState?.currency) patch.currency = formState.currency;
-  if (formState?.priceNegotiable !== undefined) patch.priceNegotiable = Boolean(formState.priceNegotiable);
+  if (formState?.priceNegotiable !== undefined)
+    patch.priceNegotiable = Boolean(formState.priceNegotiable);
 
   const resolvedPricingChoiceId =
     formState?.pricingChoiceId ||
@@ -544,4 +749,3 @@ export const experienceProfile = {
 };
 
 export default experienceProfile;
-

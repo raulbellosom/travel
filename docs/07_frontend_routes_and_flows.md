@@ -29,15 +29,15 @@
 
 ## 3. Rutas publicas
 
-| Ruta | Descripcion |
-| --- | --- |
-| `/` | home/catalogo |
+| Ruta                 | Descripcion                                 |
+| -------------------- | ------------------------------------------- |
+| `/`                  | home/catalogo                               |
 | `/propiedades/:slug` | detalle publico de resource (slug canonico) |
-| `/reservar/:slug` | checkout/reserva |
-| `/voucher/:code` | lookup de voucher |
-| `/login` | auth |
-| `/register` | auth |
-| `/mis-favoritos` | lista de recursos favoritos del usuario |
+| `/reservar/:slug`    | checkout/reserva                            |
+| `/voucher/:code`     | lookup de voucher                           |
+| `/login`             | auth                                        |
+| `/register`          | auth                                        |
+| `/mis-favoritos`     | lista de recursos favoritos del usuario     |
 
 Compatibilidad:
 
@@ -48,35 +48,35 @@ Compatibilidad:
 
 ## 4. Rutas privadas de operacion
 
-| Ruta | Guard | Scope/Rol |
-| --- | --- | --- |
-| `/app/dashboard` | `InternalRoute` | interno |
-| `/app/my-properties` | `ScopeRoute` | `resources.read` (compat alias) |
-| `/app/properties/new` | `ScopeRoute` | `resources.write` (compat alias) |
-| `/app/properties/:id/edit` | `ScopeRoute` | `resources.write` (compat alias) |
-| `/app/leads` | `ScopeRoute` | `leads.read` |
-| `/app/reservations` | `ScopeRoute` | `reservations.read` |
-| `/app/calendar` | `ScopeRoute` | `reservations.read` |
-| `/app/payments` | `ScopeRoute` | `payments.read` |
-| `/app/reviews` | `ScopeRoute` | `reviews.moderate` |
-| `/app/team` | `ScopeRoute` | `staff.manage` |
-| `/perfil` | `ProtectedRoute` | cualquier auth |
-| `/mis-favoritos` | `ProtectedRoute` | cualquier auth |
-| `/mis-resenas` | `ProtectedRoute` | cualquier auth (client) |
-| `/my-reviews` | `ProtectedRoute` | cualquier auth (client) |
-| `/mis-reservas` | `ProtectedRoute` | cualquier auth (client) |
-| `/my-reservations` | `ProtectedRoute` | cualquier auth (client) |
+| Ruta                       | Guard            | Scope/Rol                        |
+| -------------------------- | ---------------- | -------------------------------- |
+| `/app/dashboard`           | `InternalRoute`  | interno                          |
+| `/app/my-properties`       | `ScopeRoute`     | `resources.read` (compat alias)  |
+| `/app/properties/new`      | `ScopeRoute`     | `resources.write` (compat alias) |
+| `/app/properties/:id/edit` | `ScopeRoute`     | `resources.write` (compat alias) |
+| `/app/leads`               | `ScopeRoute`     | `leads.read`                     |
+| `/app/reservations`        | `ScopeRoute`     | `reservations.read`              |
+| `/app/calendar`            | `ScopeRoute`     | `reservations.read`              |
+| `/app/payments`            | `ScopeRoute`     | `payments.read`                  |
+| `/app/reviews`             | `ScopeRoute`     | `reviews.moderate`               |
+| `/app/team`                | `ScopeRoute`     | `staff.manage`                   |
+| `/perfil`                  | `ProtectedRoute` | cualquier auth                   |
+| `/mis-favoritos`           | `ProtectedRoute` | cualquier auth                   |
+| `/mis-resenas`             | `ProtectedRoute` | cualquier auth (client)          |
+| `/my-reviews`              | `ProtectedRoute` | cualquier auth (client)          |
+| `/mis-reservas`            | `ProtectedRoute` | cualquier auth (client)          |
+| `/my-reservations`         | `ProtectedRoute` | cualquier auth (client)          |
 
 ---
 
 ## 5. Rutas root (modulos/instancia)
 
-| Ruta | Guard | Uso |
-| --- | --- | --- |
-| `/app/activity` | `RootRoute` | auditoria |
-| `/app/amenities` | `RootRoute` | catalogo amenidades |
-| `/app/root/instance` | `RootRoute` | settings generales de instancia |
-| `/app/root/modules` | `RootRoute` | toggles de modulos + limites + plan |
+| Ruta                 | Guard       | Uso                                 |
+| -------------------- | ----------- | ----------------------------------- |
+| `/app/activity`      | `RootRoute` | auditoria                           |
+| `/app/amenities`     | `RootRoute` | catalogo amenidades                 |
+| `/app/root/instance` | `RootRoute` | settings generales de instancia     |
+| `/app/root/modules`  | `RootRoute` | toggles de modulos + limites + plan |
 
 Estas rutas no deben mostrarse a owner/staff/client.
 
@@ -110,6 +110,9 @@ Estas rutas no deben mostrarse a owner/staff/client.
 - `bookingType = time_slot` o `fixed_event`
 - requiere modulo `module.booking.hourly`
 - si cobra online: `module.payments.online`
+- Modo de agenda controlado por `attributes.slotMode`:
+  - `predefined` (default): aside de detalle muestra grid de slots fijos generados por `slotDurationMinutes`/`slotBufferMinutes` entre `availabilityStartTime`/`availabilityEndTime`.
+  - `hour_range`: aside muestra dropdown de hora de inicio + grid de botones para cantidad de horas (acotado por `bookingMinUnits`/`bookingMaxUnits`).
 
 ## 6.5 Calendario publico en detalle
 
@@ -120,6 +123,13 @@ Estas rutas no deben mostrarse a owner/staff/client.
   - mobile: 2 meses apilados en vertical.
 - El calendario publico del aside solo se habilita para usuario autenticado con rol `client`.
 - Visitantes anonimos y roles internos (`root`, `owner`, `staff_*`) no deben ver este bloque.
+
+## 6.6 Agenda asistida para contacto manual
+
+- Recursos con `bookingType = manual_contact` pueden habilitar agenda sugerida en UI mediante `attributes.manualContactScheduleType`.
+- Valores: `none` (sin agenda), `date_range` (calendario de fechas), `time_slot` (selector de slots o hour-range).
+- Si el atributo no existe, el frontend infiere desde `commercialMode`: `rent_hourly` -> `time_slot`, `rent_short_term` -> `date_range`, otros -> `none`.
+- CTA sigue siendo contacto/chat; la agenda no genera checkout online.
 
 ---
 
@@ -180,4 +190,4 @@ Nota: backend vuelve a validar siempre.
 ---
 
 Ultima actualizacion: 2026-02-26
-Version: 3.5.0
+Version: 3.6.0

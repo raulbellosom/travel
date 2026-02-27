@@ -206,51 +206,161 @@ const ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE = Object.freeze({
   }),
   service: Object.freeze({
     cleaning: Object.freeze({
-      rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_day",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     chef: Object.freeze({
-      rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_day",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     photography: Object.freeze({
-      rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_day",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     catering: Object.freeze({
-      rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_day",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     maintenance: Object.freeze({
-      rent_short_term: Object.freeze(["per_day", "per_person", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_day",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
   }),
   music: MUSIC_PRICING_BY_CATEGORY,
   experience: Object.freeze({
     tour: Object.freeze({
-      rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     class: Object.freeze({
-      rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     workshop: Object.freeze({
-      rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     adventure: Object.freeze({
-      rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     wellness: Object.freeze({
-      rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
     gastronomy: Object.freeze({
-      rent_short_term: Object.freeze(["per_person", "per_day", "per_event", "fixed_total"]),
-      rent_hourly: Object.freeze(["per_hour", "per_person", "per_event", "fixed_total"]),
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "per_event",
+        "fixed_total",
+      ]),
     }),
   }),
   venue: Object.freeze({
@@ -293,7 +403,8 @@ export const getAllowedPricingModels = (
   const byType =
     ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE[normalizedType] ||
     ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE.property;
-  const byCategory = byType[normalizedCategory] || byType[Object.keys(byType)[0]];
+  const byCategory =
+    byType[normalizedCategory] || byType[Object.keys(byType)[0]];
   const direct = byCategory?.[normalizedMode];
   if (Array.isArray(direct) && direct.length > 0) return [...direct];
 
@@ -303,7 +414,9 @@ export const getAllowedPricingModels = (
   const fallbackFromProperty = pickFirstNonEmptyPricingModelList(
     ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE.property.house,
   );
-  return fallbackFromProperty.length > 0 ? [...fallbackFromProperty] : ["fixed_total"];
+  return fallbackFromProperty.length > 0
+    ? [...fallbackFromProperty]
+    : ["fixed_total"];
 };
 
 export const getAllowedBookingTypes = (
@@ -370,7 +483,8 @@ export const normalizePricingModel = (
 };
 
 export const toLegacyOperationType = (commercialMode) =>
-  COMMERCIAL_TO_LEGACY_OPERATION[normalizeCommercialMode(commercialMode)] || "sale";
+  COMMERCIAL_TO_LEGACY_OPERATION[normalizeCommercialMode(commercialMode)] ||
+  "sale";
 
 export const toLegacyPricePerUnit = (pricingModel) =>
   PRICING_MODEL_TO_LEGACY_UNIT[normalizePricingModel(pricingModel)] || "total";
@@ -426,9 +540,20 @@ export const normalizeManualContactScheduleType = (value) => {
 
 export const getManualContactScheduleType = (resourceDoc = {}) => {
   const attributes = parseResourceAttributes(resourceDoc.attributes);
-  return normalizeManualContactScheduleType(
-    attributes.manualContactScheduleType || attributes.manual_contact_schedule_type,
+  const explicit = normalizeManualContactScheduleType(
+    attributes.manualContactScheduleType ||
+      attributes.manual_contact_schedule_type,
   );
+  if (explicit !== "none") return explicit;
+
+  // Infer from commercialMode when the attribute is missing:
+  // rent_hourly → time_slot, rent_short_term → date_range
+  const mode = normalizeLower(
+    resourceDoc.commercialMode || resourceDoc.operationType || "",
+  );
+  if (mode === "rent_hourly") return "time_slot";
+  if (mode === "rent_short_term") return "date_range";
+  return "none";
 };
 
 export const normalizeResourceDocument = (doc = {}) => {
@@ -451,7 +576,9 @@ export const normalizeResourceDocument = (doc = {}) => {
   });
   const operationType = toLegacyOperationType(commercialMode);
   const pricePerUnit = toLegacyPricePerUnit(pricingModel);
-  const title = normalizeText(doc.title || doc.resourceTitle || doc.propertyTitle);
+  const title = normalizeText(
+    doc.title || doc.resourceTitle || doc.propertyTitle,
+  );
 
   return {
     ...doc,
@@ -483,7 +610,10 @@ const priceLabelByModel = Object.freeze({
   per_m2: "m2",
 });
 
-export const getResourceBehavior = (resourceDraftOrDoc = {}, modulesApi = {}) => {
+export const getResourceBehavior = (
+  resourceDraftOrDoc = {},
+  modulesApi = {},
+) => {
   const normalized = normalizeResourceDocument(resourceDraftOrDoc);
   const effectiveScheduleType =
     normalized.bookingType === "manual_contact"
@@ -495,7 +625,9 @@ export const getResourceBehavior = (resourceDraftOrDoc = {}, modulesApi = {}) =>
           ? "time_slot"
           : "none";
   const requiresCalendar =
-    ["date_range", "time_slot", "fixed_event"].includes(normalized.bookingType) ||
+    ["date_range", "time_slot", "fixed_event"].includes(
+      normalized.bookingType,
+    ) ||
     effectiveScheduleType === "date_range" ||
     effectiveScheduleType === "time_slot";
   const requiresPayments =
@@ -534,8 +666,7 @@ export const getResourceBehavior = (resourceDraftOrDoc = {}, modulesApi = {}) =>
       normalized.commercialMode,
       normalized.category,
     ),
-    ctaType:
-      normalized.bookingType === "manual_contact" ? "contact" : "book",
+    ctaType: normalized.bookingType === "manual_contact" ? "contact" : "book",
     priceLabel: priceLabelByModel[normalized.pricingModel] || "total",
   };
 };

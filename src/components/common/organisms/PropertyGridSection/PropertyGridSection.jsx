@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { propertiesService } from "../../../../services/propertiesService";
+import { resourcesService } from "../../../../services/resourcesService";
 import PropertyCard from "../../molecules/PropertyCard";
 import Button from "../../atoms/Button";
 
@@ -70,7 +70,7 @@ const PropertyGridSection = ({
   useEffect(() => {
     if (!isNearViewport) return;
 
-    propertiesService
+    resourcesService
       .listPublic({
         limit,
         filters: { ...filters, sort: filters.sort || "recent" },

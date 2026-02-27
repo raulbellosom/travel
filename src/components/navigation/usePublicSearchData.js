@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Building2, Home, MapPin, Palmtree } from "lucide-react";
 import { DEFAULT_AMENITIES_CATALOG } from "../../data/amenitiesCatalog";
-import { propertiesService } from "../../services/propertiesService";
+import { resourcesService } from "../../services/resourcesService";
 
 const SEARCH_DEBOUNCE_MS = 320;
 export const PUBLIC_SEARCH_MIN_QUERY_LENGTH = 2;
@@ -64,7 +64,7 @@ export const usePublicSearchData = ({ query, language = "es", t }) => {
 
     const timerId = setTimeout(async () => {
       try {
-        const response = await propertiesService.listPublic({
+        const response = await resourcesService.listPublic({
           page: 1,
           limit: PUBLIC_SEARCH_LIVE_LIMIT,
           filters: { search: trimmedQuery },

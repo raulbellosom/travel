@@ -943,7 +943,7 @@
       "location": "Ubicación",
       "type": "Tipo",
       "operation": "Operación",
-      "rooms": "Recámaras/Baños",
+      "rooms": "Detalles",
       "status": "Estado",
       "metrics": "Métricas",
       "views": "Vistas",
@@ -992,12 +992,12 @@
       "status": "Filtrar por estado",
       "all": "Todos",
       "search": "Buscar",
-      "searchPlaceholder": "Nombre, email, propiedad o mensaje"
+      "searchPlaceholder": "Nombre, email, recurso o mensaje"
     },
     "table": {
       "date": "Fecha",
       "contact": "Contacto",
-      "property": "Propiedad",
+      "property": "Recurso",
       "status": "Estado",
       "actions": "Acciones"
     },
@@ -1576,7 +1576,7 @@
     },
     "actions": {
       "saving": "Guardando...",
-      "saveProperty": "Guardar propiedad",
+      "saveProperty": "Guardar recurso",
       "regenerateSlug": "Regenerar",
       "previous": "Anterior",
       "next": "Siguiente"
@@ -1594,14 +1594,14 @@
       "noneSelected": "Aun no has agregado amenidades."
     },
     "images": {
-      "hint": "Agrega imagenes desde archivos o camara para completar la galeria de la propiedad.",
+      "hint": "Agrega imágenes desde archivos o cámara para completar la galería del recurso.",
       "dropzoneTitle": "Arrastra y suelta imagenes aqui",
       "dropzoneSubtitle": "Formatos permitidos: JPG, PNG y WEBP. Maximo {{maxSize}} MB por archivo, hasta {{maxFiles}} imagenes.",
       "existingTitle": "Imagenes actuales ({{count}})",
       "pendingTitle": "Imagenes por subir ({{count}})",
       "empty": "Aun no agregas imagenes nuevas.",
       "emptyPreview": "Sin previsualizacion",
-      "fallbackAlt": "Imagen de propiedad",
+      "fallbackAlt": "Imagen del recurso",
       "badges": {
         "existing": "Actual",
         "main": "Principal"
@@ -1627,7 +1627,7 @@
       "dropTitle": "Arrastra imágenes aquí o haz clic"
     },
     "slugStatus": {
-      "idle": "El slug se usa para la URL publica de la propiedad.",
+      "idle": "El slug se usa para la URL pública del recurso.",
       "checking": "Validando disponibilidad del slug...",
       "available": "Slug disponible.",
       "unchanged": "Slug sin cambios.",
@@ -1705,7 +1705,7 @@
         "music": "Música"
       },
       "category": {
-        "house": "House",
+        "house": "Casa",
         "apartment": "Departamento",
         "land": "Terreno",
         "commercial": "Comercial",
@@ -1729,11 +1729,14 @@
         "adventure": "Aventura",
         "wellness": "Bienestar",
         "gastronomy": "Gastronomia",
-        "eventHall": "Salon de eventos",
+        "eventHall": "Salón de eventos",
         "commercialLocal": "Local comercial",
         "studio": "Estudio",
         "coworking": "Coworking",
         "meetingRoom": "Sala de juntas",
+        "event_hall": "Salón de eventos",
+        "commercial_local": "Local comercial",
+        "meeting_room": "Sala de juntas",
         "banda": "Banda",
         "norteno": "Norteño",
         "sierreno": "Sierreño",
@@ -2085,15 +2088,7 @@
     "close": "Cerrar modal"
   },
   "dateRangePicker": {
-    "dayHeaders": [
-      "Do",
-      "Lu",
-      "Ma",
-      "Mi",
-      "Ju",
-      "Vi",
-      "Sa"
-    ],
+    "dayHeaders": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
     "placeholders": {
       "single": "Selecciona fecha",
       "range": "Selecciona fechas"
@@ -2305,7 +2300,7 @@
     "permissionsStorageHint": "Los permisos se guardan en users.role y users.scopesJson. Los cambios se aplican al guardar."
   },
   "reservePropertyPage": {
-    "title": "Reservar propiedad",
+    "title": "Solicitar reserva",
     "loading": "Cargando flujo de reserva...",
     "labels": {
       "operation": "Operacion",
@@ -2322,15 +2317,23 @@
     "form": {
       "title": "Completa tu reserva",
       "fields": {
-        "dateRange": "Fechas de estancia",
-        "guestCount": "Numero de huespedes",
-        "guestNameOptional": "Nombre del huesped (opcional)",
+        "dateRange": "Fechas",
+        "dateRangeStay": "Fechas de estancia",
+        "dateRangeEvent": "Fecha del evento",
+        "dateRangeService": "Fecha del servicio",
+        "timeSlotDate": "Fecha",
+        "timeSlotSlot": "Horario",
+        "guestCount": "Cantidad",
+        "guestNameOptional": "Nombre del contacto (opcional)",
         "provider": "Pasarela de pago",
         "specialRequestsOptional": "Solicitudes especiales (opcional)"
       }
     },
     "summary": {
       "nights": "Noches",
+      "hours": "Horas",
+      "days": "Dias",
+      "units": "Unidades",
       "baseAmount": "Subtotal",
       "total": "Total"
     },
@@ -2346,7 +2349,7 @@
       "defaultLeadMessage": "Hola, me interesa este recurso. Quiero cotizar y revisar disponibilidad."
     },
     "errors": {
-      "notFound": "No encontramos la propiedad solicitada.",
+      "notFound": "No encontramos el recurso solicitado.",
       "load": "No se pudo cargar la pantalla de reserva.",
       "create": "No se pudo crear la reserva.",
       "invalidDates": "Selecciona un rango de fechas valido.",
@@ -2370,7 +2373,7 @@
     },
     "labels": {
       "code": "Codigo de recibo",
-      "property": "Propiedad",
+      "property": "Recurso",
       "guest": "Huesped",
       "dates": "Fechas",
       "total": "Total",
@@ -3221,6 +3224,10 @@
         "label": "Recorrido virtual (opcional)",
         "help": "Pega un enlace a un tour virtual (si tienes)."
       },
+      "slotMode": {
+        "label": "Modo de agenda",
+        "help": "Elige cómo se selecciona el horario: por bloques fijos o por rango de horas."
+      },
       "pricingChoice": {
         "label": "¿Cómo quieres cobrar?",
         "help": "Elige la forma que mejor represente tu precio."
@@ -3651,6 +3658,10 @@
       }
     },
     "options": {
+      "slotMode": {
+        "predefined": "Bloques fijos (ej. 1 hora por bloque)",
+        "hour_range": "Rango de horas (el cliente elige cuántas horas)"
+      },
       "furnished": {
         "unspecified": "No especificado",
         "unfurnished": "Sin amueblar",

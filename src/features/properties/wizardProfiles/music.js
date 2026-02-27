@@ -73,7 +73,10 @@ const PRICING_CHOICES = {
     schemaPricingModel: "fixed_total",
     labelKey: "wizard.pricing.fixed_total",
   },
-  per_day: { schemaPricingModel: "per_day", labelKey: "wizard.pricing.per_day" },
+  per_day: {
+    schemaPricingModel: "per_day",
+    labelKey: "wizard.pricing.per_day",
+  },
   per_hour: {
     schemaPricingModel: "per_hour",
     labelKey: "wizard.pricing.per_hour",
@@ -100,6 +103,7 @@ const GENERIC_BOOKING_CONDITION_KEYS = [
   "availabilityStartTime",
   "availabilityEndTime",
   "manualContactScheduleType",
+  "slotMode",
 ];
 
 function inferPricingChoiceId({ commercialMode, pricingModel }) {
@@ -111,8 +115,18 @@ function inferPricingChoiceId({ commercialMode, pricingModel }) {
         : "fixed_total";
 
   const allowedByMode = {
-    rent_hourly: new Set(["fixed_total", "per_hour", "per_person", "per_event"]),
-    rent_short_term: new Set(["fixed_total", "per_day", "per_person", "per_event"]),
+    rent_hourly: new Set([
+      "fixed_total",
+      "per_hour",
+      "per_person",
+      "per_event",
+    ]),
+    rent_short_term: new Set([
+      "fixed_total",
+      "per_day",
+      "per_person",
+      "per_event",
+    ]),
   };
 
   const byExistingModel = Object.entries(PRICING_CHOICES).find(
@@ -191,7 +205,11 @@ function getOfferingOptions({ t }) {
   }));
 }
 
-function getBookingTypeOptions({ t, commercialMode, paymentsOnlineEnabled = true }) {
+function getBookingTypeOptions({
+  t,
+  commercialMode,
+  paymentsOnlineEnabled = true,
+}) {
   const defaultBookingType =
     getDefaultBookingTypeForCommercialMode(commercialMode);
   const manualOption = {
@@ -261,7 +279,10 @@ function getFieldsForStep({ t, context, stepId }) {
       },
     ];
 
-    if (commercialMode === "rent_short_term" || commercialMode === "rent_hourly") {
+    if (
+      commercialMode === "rent_short_term" ||
+      commercialMode === "rent_hourly"
+    ) {
       fields.push({
         key: "bookingType",
         type: "select",
@@ -383,6 +404,7 @@ function getFieldsForStep({ t, context, stepId }) {
   }
 
   if (stepId === "conditions") {
+    const slotMode = context.slotMode || "predefined";
     return [
       ...(bookingType === "manual_contact" &&
       (commercialMode === "rent_short_term" || commercialMode === "rent_hourly")
@@ -394,39 +416,54 @@ function getFieldsForStep({ t, context, stepId }) {
               options: [
                 {
                   id: "none",
-                  label: t("propertyForm.options.manualContactScheduleType.none"),
+                  label: t(
+                    "propertyForm.options.manualContactScheduleType.none",
+                  ),
                 },
-                {
-                  id: "date_range",
-                  label: t("propertyForm.options.manualContactScheduleType.date_range"),
-                },
+                // date_range solo es congruente con rent_short_term
+                ...(commercialMode === "rent_short_term"
+                  ? [
+                      {
+                        id: "date_range",
+                        label: t(
+                          "propertyForm.options.manualContactScheduleType.date_range",
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   id: "time_slot",
-                  label: t("propertyForm.options.manualContactScheduleType.time_slot"),
+                  label: t(
+                    "propertyForm.options.manualContactScheduleType.time_slot",
+                  ),
                 },
               ],
               required: false,
             },
           ]
         : []),
-      {
-        key: "attributes.bookingMinUnits",
-        type: "number",
-        labelKey: "wizard.fields.music.bookingMinUnits.hours.label",
-        helpKey: "wizard.fields.music.bookingMinUnits.hours.help",
-        required: false,
-        min: 1,
-        max: 9999,
-      },
-      {
-        key: "attributes.bookingMaxUnits",
-        type: "number",
-        labelKey: "wizard.fields.music.bookingMaxUnits.hours.label",
-        helpKey: "wizard.fields.music.bookingMaxUnits.hours.help",
-        required: false,
-        min: 1,
-        max: 9999,
-      },
+      // Slot mode selector: predefined fixed-duration slots vs. hour-range picker
+      ...(commercialMode === "rent_hourly"
+        ? [
+            {
+              key: "attributes.slotMode",
+              type: "select",
+              labelKey: "wizard.fields.slotMode.label",
+              helpKey: "wizard.fields.slotMode.help",
+              options: [
+                {
+                  id: "predefined",
+                  label: t("wizard.options.slotMode.predefined"),
+                },
+                {
+                  id: "hour_range",
+                  label: t("wizard.options.slotMode.hour_range"),
+                },
+              ],
+              required: false,
+            },
+          ]
+        : []),
       {
         key: "attributes.availabilityStartTime",
         type: "time",
@@ -441,7 +478,31 @@ function getFieldsForStep({ t, context, stepId }) {
         helpKey: "wizard.fields.music.availabilityEndTime.help",
         required: false,
       },
-      ...(commercialMode === "rent_hourly"
+      // hour_range mode: client picks start time + number of hours
+      ...(slotMode === "hour_range"
+        ? [
+            {
+              key: "attributes.bookingMinUnits",
+              type: "number",
+              labelKey: "wizard.fields.music.bookingMinUnits.hours.label",
+              helpKey: "wizard.fields.music.bookingMinUnits.hours.help",
+              required: false,
+              min: 1,
+              max: 9999,
+            },
+            {
+              key: "attributes.bookingMaxUnits",
+              type: "number",
+              labelKey: "wizard.fields.music.bookingMaxUnits.hours.label",
+              helpKey: "wizard.fields.music.bookingMaxUnits.hours.help",
+              required: false,
+              min: 1,
+              max: 9999,
+            },
+          ]
+        : []),
+      // predefined mode: owner defines fixed-duration slot grid
+      ...(commercialMode === "rent_hourly" && slotMode === "predefined"
         ? [
             {
               key: "slotDurationMinutes",
@@ -604,7 +665,8 @@ function toSchemaPatch({ formState, context }) {
 
   if (Array.isArray(formState?.imageFiles) && formState.imageFiles.length > 0) {
     patch.imageFiles = formState.imageFiles.filter(
-      (file) => file && typeof file === "object" && typeof file.name === "string",
+      (file) =>
+        file && typeof file === "object" && typeof file.name === "string",
     );
   }
   if (formState?.videoUrl) patch.videoUrl = formState.videoUrl;

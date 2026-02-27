@@ -14,7 +14,8 @@
  */
 
 export function buildContextFromSelection(profile, formState) {
-  const resourceType = profile?.resourceType || formState?.resourceType || "property";
+  const resourceType =
+    profile?.resourceType || formState?.resourceType || "property";
   const category = formState?.category || "";
 
   // derive offering -> commercialMode + bookingType
@@ -30,7 +31,9 @@ export function buildContextFromSelection(profile, formState) {
       category,
     });
 
-    const selected = Array.isArray(opts) ? opts.find((o) => o.id === offeringId) : null;
+    const selected = Array.isArray(opts)
+      ? opts.find((o) => o.id === offeringId)
+      : null;
     if (selected) {
       commercialMode = selected.commercialMode || "";
       bookingType = selected.bookingType || "";
@@ -42,11 +45,15 @@ export function buildContextFromSelection(profile, formState) {
   commercialMode = commercialMode || formState?.commercialMode || "";
   bookingType = formState?.bookingType || bookingType || "";
 
+  // Expose slotMode from attributes so profiles can conditionally show fields
+  const slotMode = formState?.attributes?.slotMode || "predefined";
+
   return {
     resourceType,
     category,
     commercialMode,
     bookingType,
+    slotMode,
   };
 }
 

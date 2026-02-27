@@ -161,7 +161,7 @@ const PropertyChatButton = ({
               variant="primary"
               onClick={handleConfirmChat}
               disabled={loading || !initialMessage.trim()}
-              isLoading={loading}
+              loading={loading}
             >
               {t("chat.modal.send", { defaultValue: "Enviar Mensaje" })}
             </Button>

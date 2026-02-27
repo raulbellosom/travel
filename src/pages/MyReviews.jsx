@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { reviewsService } from "../services/reviewsService";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { reservationsService } from "../services/reservationsService";
 import { getErrorMessage } from "../utils/errors";
 import { usePageSeo } from "../hooks/usePageSeo";
@@ -82,7 +82,11 @@ const StarRating = ({ rating, size = 14 }) => (
 const StarRatingInput = ({ value, onChange }) => {
   const [hovered, setHovered] = useState(0);
   return (
-    <div className="inline-flex items-center gap-1" role="radiogroup" aria-label="Rating">
+    <div
+      className="inline-flex items-center gap-1"
+      role="radiogroup"
+      aria-label="Rating"
+    >
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
@@ -203,8 +207,12 @@ const ReviewCard = ({ review, propertyName, locale, t }) => {
               className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-cyan-500 transition-colors [@media(hover:hover)]:hover:text-cyan-400"
             >
               {expanded
-                ? t("myReviewsPage.actions.readLess", { defaultValue: "Read less" })
-                : t("myReviewsPage.actions.readMore", { defaultValue: "Read more" })}
+                ? t("myReviewsPage.actions.readLess", {
+                    defaultValue: "Read less",
+                  })
+                : t("myReviewsPage.actions.readMore", {
+                    defaultValue: "Read more",
+                  })}
               {expanded ? (
                 <ChevronUp className="h-3 w-3" />
               ) : (
@@ -249,9 +257,7 @@ const WriteReviewForm = ({
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
 
-  const selected = allReservations.find(
-    (r) => r.$id === selectedReservation,
-  );
+  const selected = allReservations.find((r) => r.$id === selectedReservation);
   const isAlreadyReviewed = reviewedReservationIds.has(selectedReservation);
 
   // Build options for the Select component
@@ -284,7 +290,12 @@ const WriteReviewForm = ({
   }, [allReservations, propertyNames, reviewedReservationIds, locale, t]);
 
   const canSubmit =
-    selectedReservation && !isAlreadyReviewed && rating >= 1 && rating <= 5 && comment.trim().length >= 10 && !submitting;
+    selectedReservation &&
+    !isAlreadyReviewed &&
+    rating >= 1 &&
+    rating <= 5 &&
+    comment.trim().length >= 10 &&
+    !submitting;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -346,7 +357,8 @@ const WriteReviewForm = ({
             <p className="flex items-center gap-1.5 text-xs text-amber-500">
               <AlertCircle className="h-3 w-3" />
               {t("myReviewsPage.writeReview.alreadyReviewedHint", {
-                defaultValue: "This reservation already has a review. Choose another one.",
+                defaultValue:
+                  "This reservation already has a review. Choose another one.",
               })}
             </p>
           )}
@@ -402,14 +414,18 @@ const WriteReviewForm = ({
                        py-2.5 px-3 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition-colors
                        focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20"
           />
-          <span className="text-[10px] text-slate-400">{comment.length}/3000</span>
+          <span className="text-[10px] text-slate-400">
+            {comment.length}/3000
+          </span>
         </label>
 
         {/* Error */}
         {submitError && (
           <div className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 px-4 py-2.5">
             <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
-            <p className="text-xs text-red-600 dark:text-red-300">{submitError}</p>
+            <p className="text-xs text-red-600 dark:text-red-300">
+              {submitError}
+            </p>
           </div>
         )}
 
@@ -427,8 +443,12 @@ const WriteReviewForm = ({
             <Sparkles className="h-4 w-4" />
           )}
           {submitting
-            ? t("myReviewsPage.writeReview.submitting", { defaultValue: "Submitting..." })
-            : t("myReviewsPage.writeReview.submit", { defaultValue: "Submit review" })}
+            ? t("myReviewsPage.writeReview.submitting", {
+                defaultValue: "Submitting...",
+              })
+            : t("myReviewsPage.writeReview.submit", {
+                defaultValue: "Submit review",
+              })}
         </button>
       </form>
     </motion.div>
@@ -446,7 +466,9 @@ const MyReviews = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [allReservations, setAllReservations] = useState([]);
-  const [reviewedReservationIds, setReviewedReservationIds] = useState(new Set());
+  const [reviewedReservationIds, setReviewedReservationIds] = useState(
+    new Set(),
+  );
   const [showWriteForm, setShowWriteForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -486,8 +508,12 @@ const MyReviews = () => {
       // Collect all property IDs from reviews + reservations
       const allPropertyIds = [
         ...new Set([
-          ...docs.map((item) => item.resourceId || item.propertyId).filter(Boolean),
-          ...fetchedReservations.map((r) => r.resourceId || r.propertyId).filter(Boolean),
+          ...docs
+            .map((item) => item.resourceId || item.propertyId)
+            .filter(Boolean),
+          ...fetchedReservations
+            .map((r) => r.resourceId || r.propertyId)
+            .filter(Boolean),
         ]),
       ];
 
@@ -495,7 +521,7 @@ const MyReviews = () => {
         const entries = await Promise.all(
           allPropertyIds.map(async (propertyId) => {
             try {
-              const property = await propertiesService.getById(propertyId);
+              const property = await resourcesService.getById(propertyId);
               return [propertyId, property?.title || propertyId];
             } catch {
               return [propertyId, propertyId];
@@ -582,8 +608,7 @@ const MyReviews = () => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter((r) => {
-        const name =
-          propertyNames[r.resourceId || r.propertyId] || "";
+        const name = propertyNames[r.resourceId || r.propertyId] || "";
         return (
           name.toLowerCase().includes(q) ||
           (r.title || "").toLowerCase().includes(q) ||
@@ -779,8 +804,7 @@ const MyReviews = () => {
               </h3>
               <p className="mt-1 text-sm text-slate-500">
                 {t("myReviewsPage.emptyDesc", {
-                  defaultValue:
-                    "When you leave a review, it will appear here.",
+                  defaultValue: "When you leave a review, it will appear here.",
                 })}
               </p>
             </div>
@@ -812,31 +836,28 @@ const MyReviews = () => {
         )}
 
         {/* ── No results for filter ──────────────────────── */}
-        {!loading &&
-          !error &&
-          reviews.length > 0 &&
-          filtered.length === 0 && (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700/40 bg-slate-50 dark:bg-slate-800/20 px-6 py-10 text-center">
-              <Filter className="h-6 w-6 text-slate-500" />
-              <p className="text-sm text-slate-400">
-                {t("myReviewsPage.noResults", {
-                  defaultValue: "No reviews match your filter.",
-                })}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveFilter("all");
-                  setSearchQuery("");
-                }}
-                className="text-xs font-semibold text-cyan-400 transition-colors [@media(hover:hover)]:hover:text-cyan-300"
-              >
-                {t("myReviewsPage.actions.clearFilters", {
-                  defaultValue: "Clear filters",
-                })}
-              </button>
-            </div>
-          )}
+        {!loading && !error && reviews.length > 0 && filtered.length === 0 && (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700/40 bg-slate-50 dark:bg-slate-800/20 px-6 py-10 text-center">
+            <Filter className="h-6 w-6 text-slate-500" />
+            <p className="text-sm text-slate-400">
+              {t("myReviewsPage.noResults", {
+                defaultValue: "No reviews match your filter.",
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveFilter("all");
+                setSearchQuery("");
+              }}
+              className="text-xs font-semibold text-cyan-400 transition-colors [@media(hover:hover)]:hover:text-cyan-300"
+            >
+              {t("myReviewsPage.actions.clearFilters", {
+                defaultValue: "Clear filters",
+              })}
+            </button>
+          </div>
+        )}
 
         {/* ── Review list ────────────────────────────────── */}
         {!loading && !error && filtered.length > 0 && (
@@ -847,9 +868,7 @@ const MyReviews = () => {
                   key={review.$id}
                   review={review}
                   propertyName={
-                    propertyNames[
-                      review.resourceId || review.propertyId
-                    ] ||
+                    propertyNames[review.resourceId || review.propertyId] ||
                     review.resourceId ||
                     review.propertyId
                   }

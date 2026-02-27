@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import Button from "../../atoms/Button";
 import ListingCard from "../ListingCard";
 import Spinner from "../../atoms/Spinner";
-import { propertiesService } from "../../../../services/propertiesService";
+import { resourcesService } from "../../../../services/resourcesService";
 import {
   getOptimizedImage,
   getFileViewUrl,
@@ -29,7 +29,7 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
     setLoading(true);
     setError("");
 
-    propertiesService
+    resourcesService
       .listPublic({
         page: 1,
         limit,

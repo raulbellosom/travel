@@ -10,7 +10,7 @@ import {
   Activity,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { leadsService } from "../services/leadsService";
 import { getErrorMessage } from "../utils/errors";
 import { INTERNAL_ROUTES } from "../utils/internalRoutes";
@@ -61,7 +61,7 @@ const Dashboard = () => {
     const isGlobalResources = canViewGlobalResources(user);
 
     const propertiesPromise = canReadProperties
-      ? propertiesService.listMine(user.$id, {
+      ? resourcesService.listMine(user.$id, {
           ...(!isGlobalResources && { ownerUserId: user.$id }),
         })
       : Promise.resolve({ documents: [] });

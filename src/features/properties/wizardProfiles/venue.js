@@ -49,10 +49,22 @@ function getDefaultBookingTypeForCommercialMode(commercialMode) {
  * Keep schema enum `total`, but display it as "Precio fijo" (UI id fixed_total).
  */
 const PRICING_CHOICES = {
-  fixed_total: { schemaPricingModel: "fixed_total", labelKey: "wizard.pricing.fixed_total" },
-  per_day: { schemaPricingModel: "per_day", labelKey: "wizard.pricing.per_day" },
-  per_hour: { schemaPricingModel: "per_hour", labelKey: "wizard.pricing.per_hour" },
-  per_event: { schemaPricingModel: "per_event", labelKey: "wizard.pricing.per_event" },
+  fixed_total: {
+    schemaPricingModel: "fixed_total",
+    labelKey: "wizard.pricing.fixed_total",
+  },
+  per_day: {
+    schemaPricingModel: "per_day",
+    labelKey: "wizard.pricing.per_day",
+  },
+  per_hour: {
+    schemaPricingModel: "per_hour",
+    labelKey: "wizard.pricing.per_hour",
+  },
+  per_event: {
+    schemaPricingModel: "per_event",
+    labelKey: "wizard.pricing.per_event",
+  },
 };
 
 function inferPricingChoiceId({ commercialMode, pricingModel }) {
@@ -97,18 +109,51 @@ const GENERIC_BOOKING_CONDITION_KEYS = [
   "availabilityStartTime",
   "availabilityEndTime",
   "manualContactScheduleType",
+  "slotMode",
 ];
 
 function getNarrativeSteps({ t }) {
   return [
-    { id: "publishWhat", title: t("wizard.steps.publishWhat.title"), description: t("wizard.steps.publishWhat.description") },
-    { id: "howOffer", title: t("wizard.steps.howOffer.title"), description: t("wizard.steps.howOffer.description") },
-    { id: "describe", title: t("wizard.steps.describe.title"), description: t("wizard.steps.describe.description") },
-    { id: "details", title: t("wizard.steps.details.title"), description: t("wizard.steps.details.description") },
-    { id: "conditions", title: t("wizard.steps.conditions.title"), description: t("wizard.steps.conditions.description") },
-    { id: "price", title: t("wizard.steps.price.title"), description: t("wizard.steps.price.description") },
-    { id: "location", title: t("wizard.steps.location.title"), description: t("wizard.steps.location.description") },
-    { id: "review", title: t("wizard.steps.review.title"), description: t("wizard.steps.review.description") },
+    {
+      id: "publishWhat",
+      title: t("wizard.steps.publishWhat.title"),
+      description: t("wizard.steps.publishWhat.description"),
+    },
+    {
+      id: "howOffer",
+      title: t("wizard.steps.howOffer.title"),
+      description: t("wizard.steps.howOffer.description"),
+    },
+    {
+      id: "describe",
+      title: t("wizard.steps.describe.title"),
+      description: t("wizard.steps.describe.description"),
+    },
+    {
+      id: "details",
+      title: t("wizard.steps.details.title"),
+      description: t("wizard.steps.details.description"),
+    },
+    {
+      id: "conditions",
+      title: t("wizard.steps.conditions.title"),
+      description: t("wizard.steps.conditions.description"),
+    },
+    {
+      id: "price",
+      title: t("wizard.steps.price.title"),
+      description: t("wizard.steps.price.description"),
+    },
+    {
+      id: "location",
+      title: t("wizard.steps.location.title"),
+      description: t("wizard.steps.location.description"),
+    },
+    {
+      id: "review",
+      title: t("wizard.steps.review.title"),
+      description: t("wizard.steps.review.description"),
+    },
   ];
 }
 
@@ -129,7 +174,11 @@ function getOfferingOptions({ t }) {
   }));
 }
 
-function getBookingTypeOptions({ t, commercialMode, paymentsOnlineEnabled = true }) {
+function getBookingTypeOptions({
+  t,
+  commercialMode,
+  paymentsOnlineEnabled = true,
+}) {
   const defaultBookingType =
     getDefaultBookingTypeForCommercialMode(commercialMode);
   const manualOption = {
@@ -199,7 +248,10 @@ function getFieldsForStep({ t, context, stepId }) {
       },
     ];
 
-    if (commercialMode === "rent_short_term" || commercialMode === "rent_hourly") {
+    if (
+      commercialMode === "rent_short_term" ||
+      commercialMode === "rent_hourly"
+    ) {
       fields.push({
         key: "bookingType",
         type: "select",
@@ -218,12 +270,50 @@ function getFieldsForStep({ t, context, stepId }) {
 
   if (stepId === "describe") {
     return [
-      { key: "title", type: "text", labelKey: "wizard.fields.title.label", helpKey: "wizard.fields.title.help", required: true, minLength: 3 },
-      { key: "description", type: "textarea", labelKey: "wizard.fields.description.label", helpKey: "wizard.fields.description.help", required: true, minLength: 20 },
-      { key: "slug", type: "text", labelKey: "wizard.fields.slugPublic.label", helpKey: "wizard.fields.slugPublic.help", required: false },
-      { key: "imageFiles", type: "images", labelKey: "wizard.fields.images.label", helpKey: "wizard.fields.images.help", required: false },
-      { key: "videoUrl", type: "url", labelKey: "wizard.fields.videoUrl.label", helpKey: "wizard.fields.videoUrl.help", required: false },
-      { key: "virtualTourUrl", type: "url", labelKey: "wizard.fields.virtualTourUrl.label", helpKey: "wizard.fields.virtualTourUrl.help", required: false },
+      {
+        key: "title",
+        type: "text",
+        labelKey: "wizard.fields.title.label",
+        helpKey: "wizard.fields.title.help",
+        required: true,
+        minLength: 3,
+      },
+      {
+        key: "description",
+        type: "textarea",
+        labelKey: "wizard.fields.description.label",
+        helpKey: "wizard.fields.description.help",
+        required: true,
+        minLength: 20,
+      },
+      {
+        key: "slug",
+        type: "text",
+        labelKey: "wizard.fields.slugPublic.label",
+        helpKey: "wizard.fields.slugPublic.help",
+        required: false,
+      },
+      {
+        key: "imageFiles",
+        type: "images",
+        labelKey: "wizard.fields.images.label",
+        helpKey: "wizard.fields.images.help",
+        required: false,
+      },
+      {
+        key: "videoUrl",
+        type: "url",
+        labelKey: "wizard.fields.videoUrl.label",
+        helpKey: "wizard.fields.videoUrl.help",
+        required: false,
+      },
+      {
+        key: "virtualTourUrl",
+        type: "url",
+        labelKey: "wizard.fields.virtualTourUrl.label",
+        helpKey: "wizard.fields.virtualTourUrl.help",
+        required: false,
+      },
     ];
   }
 
@@ -280,28 +370,58 @@ function getFieldsForStep({ t, context, stepId }) {
     // - slot config (duration/buffer) for rent_hourly
     //
     // For short-term (date_range), we keep this step light (optional).
+    const slotMode = context.slotMode || "predefined";
     const fields = [];
 
     if (
       bookingType === "manual_contact" &&
       (commercialMode === "rent_short_term" || commercialMode === "rent_hourly")
     ) {
+      const scheduleOptions = [
+        {
+          id: "none",
+          label: t("propertyForm.options.manualContactScheduleType.none"),
+        },
+        // date_range solo es congruente con rent_short_term
+        ...(commercialMode === "rent_short_term"
+          ? [
+              {
+                id: "date_range",
+                label: t(
+                  "propertyForm.options.manualContactScheduleType.date_range",
+                ),
+              },
+            ]
+          : []),
+        {
+          id: "time_slot",
+          label: t("propertyForm.options.manualContactScheduleType.time_slot"),
+        },
+      ];
       fields.push({
         key: "attributes.manualContactScheduleType",
         type: "select",
         labelKey: "propertyForm.fields.manualContactScheduleType",
+        options: scheduleOptions,
+        required: false,
+      });
+    }
+
+    // Slot mode selector for hourly resources
+    if (commercialMode === "rent_hourly") {
+      fields.push({
+        key: "attributes.slotMode",
+        type: "select",
+        labelKey: "wizard.fields.slotMode.label",
+        helpKey: "wizard.fields.slotMode.help",
         options: [
           {
-            id: "none",
-            label: t("propertyForm.options.manualContactScheduleType.none"),
+            id: "predefined",
+            label: t("wizard.options.slotMode.predefined"),
           },
           {
-            id: "date_range",
-            label: t("propertyForm.options.manualContactScheduleType.date_range"),
-          },
-          {
-            id: "time_slot",
-            label: t("propertyForm.options.manualContactScheduleType.time_slot"),
+            id: "hour_range",
+            label: t("wizard.options.slotMode.hour_range"),
           },
         ],
         required: false,
@@ -327,46 +447,53 @@ function getFieldsForStep({ t, context, stepId }) {
     );
 
     if (commercialMode === "rent_hourly") {
-      fields.push(
-        {
-          key: "attributes.bookingMinUnits",
-          type: "number",
-          labelKey: "wizard.fields.venue.bookingMinUnits.hours.label",
-          helpKey: "wizard.fields.venue.bookingMinUnits.hours.help",
-          required: false,
-          min: 1,
-          max: 9999,
-        },
-        {
-          key: "attributes.bookingMaxUnits",
-          type: "number",
-          labelKey: "wizard.fields.venue.bookingMaxUnits.hours.label",
-          helpKey: "wizard.fields.venue.bookingMaxUnits.hours.help",
-          required: false,
-          min: 1,
-          max: 9999,
-        },
-        {
-          key: "slotDurationMinutes",
-          type: "number",
-          labelKey: "wizard.fields.venue.slotDurationMinutes.label",
-          helpKey: "wizard.fields.venue.slotDurationMinutes.help",
-          required: false,
-          min: 15,
-          max: 1440,
-          suffixKey: "wizard.units.minutes",
-        },
-        {
-          key: "slotBufferMinutes",
-          type: "number",
-          labelKey: "wizard.fields.venue.slotBufferMinutes.label",
-          helpKey: "wizard.fields.venue.slotBufferMinutes.help",
-          required: false,
-          min: 0,
-          max: 240,
-          suffixKey: "wizard.units.minutes",
-        },
-      );
+      // hour_range mode: client picks start time + number of hours
+      if (slotMode === "hour_range") {
+        fields.push(
+          {
+            key: "attributes.bookingMinUnits",
+            type: "number",
+            labelKey: "wizard.fields.venue.bookingMinUnits.hours.label",
+            helpKey: "wizard.fields.venue.bookingMinUnits.hours.help",
+            required: false,
+            min: 1,
+            max: 9999,
+          },
+          {
+            key: "attributes.bookingMaxUnits",
+            type: "number",
+            labelKey: "wizard.fields.venue.bookingMaxUnits.hours.label",
+            helpKey: "wizard.fields.venue.bookingMaxUnits.hours.help",
+            required: false,
+            min: 1,
+            max: 9999,
+          },
+        );
+      } else {
+        // predefined mode: fixed-duration slot grid
+        fields.push(
+          {
+            key: "slotDurationMinutes",
+            type: "number",
+            labelKey: "wizard.fields.venue.slotDurationMinutes.label",
+            helpKey: "wizard.fields.venue.slotDurationMinutes.help",
+            required: false,
+            min: 15,
+            max: 1440,
+            suffixKey: "wizard.units.minutes",
+          },
+          {
+            key: "slotBufferMinutes",
+            type: "number",
+            labelKey: "wizard.fields.venue.slotBufferMinutes.label",
+            helpKey: "wizard.fields.venue.slotBufferMinutes.help",
+            required: false,
+            min: 0,
+            max: 240,
+            suffixKey: "wizard.units.minutes",
+          },
+        );
+      }
     }
 
     return fields;
@@ -414,13 +541,50 @@ function getFieldsForStep({ t, context, stepId }) {
         options: [{ id: "MX", label: t("wizard.countries.MX") }],
         required: false,
       },
-      { key: "state", type: "text", labelKey: "wizard.fields.location.state.label", required: true, minLength: 2 },
-      { key: "city", type: "text", labelKey: "wizard.fields.location.city.label", required: true, minLength: 2 },
-      { key: "streetAddress", type: "text", labelKey: "wizard.fields.location.streetAddress.label", required: true },
-      { key: "neighborhood", type: "text", labelKey: "wizard.fields.location.neighborhood.label", required: false },
-      { key: "postalCode", type: "text", labelKey: "wizard.fields.location.postalCode.label", required: false },
-      { key: "latitude", type: "number", labelKey: "wizard.fields.location.latitude.label", required: false },
-      { key: "longitude", type: "number", labelKey: "wizard.fields.location.longitude.label", required: false },
+      {
+        key: "state",
+        type: "text",
+        labelKey: "wizard.fields.location.state.label",
+        required: true,
+        minLength: 2,
+      },
+      {
+        key: "city",
+        type: "text",
+        labelKey: "wizard.fields.location.city.label",
+        required: true,
+        minLength: 2,
+      },
+      {
+        key: "streetAddress",
+        type: "text",
+        labelKey: "wizard.fields.location.streetAddress.label",
+        required: true,
+      },
+      {
+        key: "neighborhood",
+        type: "text",
+        labelKey: "wizard.fields.location.neighborhood.label",
+        required: false,
+      },
+      {
+        key: "postalCode",
+        type: "text",
+        labelKey: "wizard.fields.location.postalCode.label",
+        required: false,
+      },
+      {
+        key: "latitude",
+        type: "number",
+        labelKey: "wizard.fields.location.latitude.label",
+        required: false,
+      },
+      {
+        key: "longitude",
+        type: "number",
+        labelKey: "wizard.fields.location.longitude.label",
+        required: false,
+      },
     ];
   }
 
@@ -432,7 +596,10 @@ function getFieldsForStep({ t, context, stepId }) {
  * keep venue keys + (optional) booking condition keys.
  */
 function sanitizeAttributes({ attributes }) {
-  const allowed = new Set([...VENUE_ATTRIBUTE_KEYS, ...GENERIC_BOOKING_CONDITION_KEYS]);
+  const allowed = new Set([
+    ...VENUE_ATTRIBUTE_KEYS,
+    ...GENERIC_BOOKING_CONDITION_KEYS,
+  ]);
 
   const safe = {};
   Object.entries(attributes || {}).forEach(([k, v]) => {
@@ -464,20 +631,33 @@ function toSchemaPatch({ formState, context }) {
 
   // Core descriptive fields
   if (formState?.title != null) patch.title = String(formState.title).trim();
-  if (formState?.description != null) patch.description = String(formState.description).trim();
-  if (formState?.slug != null && String(formState.slug).trim() !== "") patch.slug = String(formState.slug).trim();
+  if (formState?.description != null)
+    patch.description = String(formState.description).trim();
+  if (formState?.slug != null && String(formState.slug).trim() !== "")
+    patch.slug = String(formState.slug).trim();
 
   // Media
   if (Array.isArray(formState?.imageFiles) && formState.imageFiles.length > 0) {
     patch.imageFiles = formState.imageFiles.filter(
-      (file) => file && typeof file === "object" && typeof file.name === "string",
+      (file) =>
+        file && typeof file === "object" && typeof file.name === "string",
     );
   }
   if (formState?.videoUrl) patch.videoUrl = formState.videoUrl;
-  if (formState?.virtualTourUrl) patch.virtualTourUrl = formState.virtualTourUrl;
+  if (formState?.virtualTourUrl)
+    patch.virtualTourUrl = formState.virtualTourUrl;
 
   // Location root fields (venues require address)
-  const locationKeys = ["streetAddress", "neighborhood", "city", "state", "country", "postalCode", "latitude", "longitude"];
+  const locationKeys = [
+    "streetAddress",
+    "neighborhood",
+    "city",
+    "state",
+    "country",
+    "postalCode",
+    "latitude",
+    "longitude",
+  ];
   locationKeys.forEach((k) => {
     if (formState?.[k] !== undefined) patch[k] = formState[k];
   });
@@ -493,13 +673,16 @@ function toSchemaPatch({ formState, context }) {
   }
 
   // Slot config (root) - relevant for hourly overlap logic
-  if (formState?.slotDurationMinutes !== undefined) patch.slotDurationMinutes = formState.slotDurationMinutes;
-  if (formState?.slotBufferMinutes !== undefined) patch.slotBufferMinutes = formState.slotBufferMinutes;
+  if (formState?.slotDurationMinutes !== undefined)
+    patch.slotDurationMinutes = formState.slotDurationMinutes;
+  if (formState?.slotBufferMinutes !== undefined)
+    patch.slotBufferMinutes = formState.slotBufferMinutes;
 
   // Price
   if (formState?.price !== undefined) patch.price = Number(formState.price);
   if (formState?.currency) patch.currency = formState.currency;
-  if (formState?.priceNegotiable !== undefined) patch.priceNegotiable = Boolean(formState.priceNegotiable);
+  if (formState?.priceNegotiable !== undefined)
+    patch.priceNegotiable = Boolean(formState.priceNegotiable);
 
   const resolvedPricingChoiceId =
     formState?.pricingChoiceId ||
@@ -537,4 +720,3 @@ export const venueProfile = {
 };
 
 export default venueProfile;
-

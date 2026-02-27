@@ -1,3 +1,11 @@
+/**
+ * resourcesService.js
+ *
+ * Canonical resource CRUD service.
+ * All new code should import from this module.
+ * `propertiesService` remains as a deprecated compatibility alias
+ * inside propertiesService.js.
+ */
 import { propertiesService } from "./propertiesService";
 
 const toResourceId = (value = "") => String(value || "").trim();
@@ -13,6 +21,10 @@ export const resourcesService = {
 
   async getPublicBySlug(slug) {
     return propertiesService.getPublicBySlug(slug);
+  },
+
+  async listPublicByIds(resourceIds) {
+    return propertiesService.listPublicByIds(resourceIds);
   },
 
   async getById(resourceId) {
@@ -55,4 +67,3 @@ export const resourcesService = {
     return propertiesService.getOwnerProfile(ownerId);
   },
 };
-

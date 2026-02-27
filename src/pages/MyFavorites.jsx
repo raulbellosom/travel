@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Heart } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { favoritesService } from "../services/favoritesService";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import PropertyCard from "../components/common/molecules/PropertyCard";
 import { getErrorMessage } from "../utils/errors";
 
@@ -43,7 +43,7 @@ const MyFavorites = () => {
 
       const groups = chunk(favoriteResourceIds, 100);
       const docs = await Promise.all(
-        groups.map((group) => propertiesService.listPublicByIds(group)),
+        groups.map((group) => resourcesService.listPublicByIds(group)),
       );
       const resolvedDocs = docs.flat();
       const byId = new Map(resolvedDocs.map((doc) => [doc.$id, doc]));

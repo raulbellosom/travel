@@ -219,55 +219,55 @@ Purpose: catalogo principal de recursos comercializables.
 
 ### Attributes
 
-| Attribute             | Type     | Size  | Required | Default       | Constraint                                                                             |
-| --------------------- | -------- | ----- | -------- | ------------- | -------------------------------------------------------------------------------------- |
-| `ownerUserId`         | string   | 64    | yes      | -             | FK logical `users.$id`                                                                 |
-| `slug`                | string   | 150   | yes      | -             | regex slug unico                                                                       |
-| `title`               | string   | 200   | yes      | -             | min 3                                                                                  |
-| `description`         | string   | 5000  | yes      | -             | min 20                                                                                 |
-| `resourceType`        | enum     | -     | yes      | -             | `property`,`service`,`music`,`vehicle`,`experience`,`venue`                            |
-| `category`            | string   | 80    | yes      | -             | categoria controlada                                                                   |
-| `commercialMode`      | enum     | -     | yes      | -             | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly`                                |
+| Attribute             | Type     | Size  | Required | Default       | Constraint                                                                                           |
+| --------------------- | -------- | ----- | -------- | ------------- | ---------------------------------------------------------------------------------------------------- |
+| `ownerUserId`         | string   | 64    | yes      | -             | FK logical `users.$id`                                                                               |
+| `slug`                | string   | 150   | yes      | -             | regex slug unico                                                                                     |
+| `title`               | string   | 200   | yes      | -             | min 3                                                                                                |
+| `description`         | string   | 5000  | yes      | -             | min 20                                                                                               |
+| `resourceType`        | enum     | -     | yes      | -             | `property`,`service`,`music`,`vehicle`,`experience`,`venue`                                          |
+| `category`            | string   | 80    | yes      | -             | categoria controlada                                                                                 |
+| `commercialMode`      | enum     | -     | yes      | -             | `sale`,`rent_long_term`,`rent_short_term`,`rent_hourly`                                              |
 | `pricingModel`        | enum     | -     | no       | `fixed_total` | `fixed_total`,`total`,`per_month`,`per_night`,`per_day`,`per_hour`,`per_person`,`per_event`,`per_m2` |
-| `bookingType`         | enum     | -     | yes      | -             | `manual_contact`,`date_range`,`time_slot`,`fixed_event`                                |
-| `attributes`          | string   | 20000 | no       | -             | JSON serializado extensible                                                            |
-| `price`               | float    | -     | yes      | -             | min `0`, max `999999999`                                                               |
-| `currency`            | enum     | -     | no       | `MXN`         | `MXN`,`USD`,`EUR`                                                                      |
-| `priceNegotiable`     | boolean  | -     | no       | false         | -                                                                                      |
-| `streetAddress`       | string   | 200   | no       | -             | min 3                                                                                  |
-| `neighborhood`        | string   | 100   | no       | -             | min 2                                                                                  |
-| `city`                | string   | 100   | yes      | -             | min 2                                                                                  |
-| `state`               | string   | 100   | yes      | -             | min 2                                                                                  |
-| `country`             | string   | 2     | no       | `MX`          | ISO2                                                                                   |
-| `postalCode`          | string   | 10    | no       | -             | regex `^[0-9A-Za-z -]{3,10}$`                                                          |
-| `latitude`            | float    | -     | no       | -             | min `-90`, max `90`                                                                    |
-| `longitude`           | float    | -     | no       | -             | min `-180`, max `180`                                                                  |
-| `bedrooms`            | integer  | -     | no       | 0             | min `0`, max `50`                                                                      |
-| `bathrooms`           | float    | -     | no       | 0             | min `0`, max `50`                                                                      |
-| `parkingSpaces`       | integer  | -     | no       | 0             | min `0`, max `100`                                                                     |
-| `totalArea`           | float    | -     | no       | -             | min `0`, max `999999`                                                                  |
-| `builtArea`           | float    | -     | no       | -             | min `0`, max `999999`                                                                  |
-| `floors`              | integer  | -     | no       | 1             | min `1`, max `200`                                                                     |
-| `yearBuilt`           | integer  | -     | no       | -             | min `1800`, max `2100`                                                                 |
-| `maxGuests`           | integer  | -     | no       | 1             | min `1`, max `500`                                                                     |
-| `furnished`           | enum     | -     | no       | `unspecified` | `unspecified`,`unfurnished`,`semi_furnished`,`furnished`                               |
-| `petsAllowed`         | boolean  | -     | no       | false         | -                                                                                      |
-| `minStayNights`       | integer  | -     | no       | 1             | min `1`, max `365`                                                                     |
-| `maxStayNights`       | integer  | -     | no       | 365           | min `1`, max `365`                                                                     |
-| `checkInTime`         | string   | 5     | no       | `15:00`       | regex `^[0-2][0-9]:[0-5][0-9]$`                                                        |
-| `checkOutTime`        | string   | 5     | no       | `11:00`       | regex `^[0-2][0-9]:[0-5][0-9]$`                                                        |
-| `slotDurationMinutes` | integer  | -     | no       | 60            | min `15`, max `1440`                                                                   |
-| `slotBufferMinutes`   | integer  | -     | no       | 0             | min `0`, max `240`                                                                     |
-| `videoUrl`            | url      | -     | no       | -             | URL valida                                                                             |
-| `virtualTourUrl`      | url      | -     | no       | -             | URL valida                                                                             |
-| `galleryImageIds`     | string[] | 64    | no       | -             | max 50 elementos                                                                       |
-| `amenities`           | string[] | 64    | no       | -             | slugs de `amenities`                                                                   |
-| `status`              | enum     | -     | no       | `draft`       | `draft`,`published`,`inactive`,`archived`                                              |
-| `featured`            | boolean  | -     | no       | false         | -                                                                                      |
-| `views`               | integer  | -     | no       | 0             | min `0`, max `2147483647`                                                              |
-| `contactCount`        | integer  | -     | no       | 0             | min `0`, max `2147483647`                                                              |
-| `reservationCount`    | integer  | -     | no       | 0             | min `0`, max `2147483647`                                                              |
-| `enabled`             | boolean  | -     | no       | true          | -                                                                                      |
+| `bookingType`         | enum     | -     | yes      | -             | `manual_contact`,`date_range`,`time_slot`,`fixed_event`                                              |
+| `attributes`          | string   | 20000 | no       | -             | JSON serializado extensible                                                                          |
+| `price`               | float    | -     | yes      | -             | min `0`, max `999999999`                                                                             |
+| `currency`            | enum     | -     | no       | `MXN`         | `MXN`,`USD`,`EUR`                                                                                    |
+| `priceNegotiable`     | boolean  | -     | no       | false         | -                                                                                                    |
+| `streetAddress`       | string   | 200   | no       | -             | min 3                                                                                                |
+| `neighborhood`        | string   | 100   | no       | -             | min 2                                                                                                |
+| `city`                | string   | 100   | yes      | -             | min 2                                                                                                |
+| `state`               | string   | 100   | yes      | -             | min 2                                                                                                |
+| `country`             | string   | 2     | no       | `MX`          | ISO2                                                                                                 |
+| `postalCode`          | string   | 10    | no       | -             | regex `^[0-9A-Za-z -]{3,10}$`                                                                        |
+| `latitude`            | float    | -     | no       | -             | min `-90`, max `90`                                                                                  |
+| `longitude`           | float    | -     | no       | -             | min `-180`, max `180`                                                                                |
+| `bedrooms`            | integer  | -     | no       | 0             | min `0`, max `50`                                                                                    |
+| `bathrooms`           | float    | -     | no       | 0             | min `0`, max `50`                                                                                    |
+| `parkingSpaces`       | integer  | -     | no       | 0             | min `0`, max `100`                                                                                   |
+| `totalArea`           | float    | -     | no       | -             | min `0`, max `999999`                                                                                |
+| `builtArea`           | float    | -     | no       | -             | min `0`, max `999999`                                                                                |
+| `floors`              | integer  | -     | no       | 1             | min `1`, max `200`                                                                                   |
+| `yearBuilt`           | integer  | -     | no       | -             | min `1800`, max `2100`                                                                               |
+| `maxGuests`           | integer  | -     | no       | 1             | min `1`, max `500`                                                                                   |
+| `furnished`           | enum     | -     | no       | `unspecified` | `unspecified`,`unfurnished`,`semi_furnished`,`furnished`                                             |
+| `petsAllowed`         | boolean  | -     | no       | false         | -                                                                                                    |
+| `minStayNights`       | integer  | -     | no       | 1             | min `1`, max `365`                                                                                   |
+| `maxStayNights`       | integer  | -     | no       | 365           | min `1`, max `365`                                                                                   |
+| `checkInTime`         | string   | 5     | no       | `15:00`       | regex `^[0-2][0-9]:[0-5][0-9]$`                                                                      |
+| `checkOutTime`        | string   | 5     | no       | `11:00`       | regex `^[0-2][0-9]:[0-5][0-9]$`                                                                      |
+| `slotDurationMinutes` | integer  | -     | no       | 60            | min `15`, max `1440`                                                                                 |
+| `slotBufferMinutes`   | integer  | -     | no       | 0             | min `0`, max `240`                                                                                   |
+| `videoUrl`            | url      | -     | no       | -             | URL valida                                                                                           |
+| `virtualTourUrl`      | url      | -     | no       | -             | URL valida                                                                                           |
+| `galleryImageIds`     | string[] | 64    | no       | -             | max 50 elementos                                                                                     |
+| `amenities`           | string[] | 64    | no       | -             | slugs de `amenities`                                                                                 |
+| `status`              | enum     | -     | no       | `draft`       | `draft`,`published`,`inactive`,`archived`                                                            |
+| `featured`            | boolean  | -     | no       | false         | -                                                                                                    |
+| `views`               | integer  | -     | no       | 0             | min `0`, max `2147483647`                                                                            |
+| `contactCount`        | integer  | -     | no       | 0             | min `0`, max `2147483647`                                                                            |
+| `reservationCount`    | integer  | -     | no       | 0             | min `0`, max `2147483647`                                                                            |
+| `enabled`             | boolean  | -     | no       | true          | -                                                                                                    |
 
 Notas de aplicabilidad por modo comercial:
 
@@ -301,6 +301,7 @@ Convencion UI v1:
 - comerciales (renta larga): `minimumContractDuration`.
 - booking generico no-inmobiliario: `bookingMinUnits`, `bookingMaxUnits`, `availabilityStartTime`, `availabilityEndTime`.
 - booking manual asistido: `manualContactScheduleType` (`none`,`date_range`,`time_slot`).
+- modo de agenda horaria: `slotMode` (`predefined`,`hour_range`). Aplica a `rent_hourly`. `predefined` genera bloques fijos usando `slotDurationMinutes`/`slotBufferMinutes` root. `hour_range` permite al cliente elegir hora de inicio + cantidad de horas (acotado por `bookingMinUnits`/`bookingMaxUnits`).
 
 Reglas:
 
@@ -312,44 +313,44 @@ Reglas:
 
 `category` permanece como `string`, pero su valor se valida contra catalogos controlados por `resourceType`.
 
-| resourceType | categories permitidas                                               |
-| ------------ | ------------------------------------------------------------------- |
-| `property`   | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse`        |
-| `service`    | `cleaning`,`chef`,`photography`,`catering`,`maintenance`            |
+| resourceType | categories permitidas                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `property`   | `house`,`apartment`,`land`,`commercial`,`office`,`warehouse`                                                                                                                                                                                                                                                                                                                                                                     |
+| `service`    | `cleaning`,`chef`,`photography`,`catering`,`maintenance`                                                                                                                                                                                                                                                                                                                                                                         |
 | `music`      | `dj`,`banda`,`norteno`,`sierreno`,`mariachi`,`corridos`,`corridos_tumbados`,`corrido_mexicano`,`regional_mexicano`,`duranguense`,`grupera`,`cumbia`,`cumbia_sonidera`,`cumbia_rebajada`,`salsa`,`bachata`,`merengue`,`pop`,`rock`,`rock_urbano`,`hip_hop`,`rap`,`reggaeton`,`urbano_latino`,`electronica`,`house`,`techno`,`trance`,`jazz`,`blues`,`boleros`,`trova`,`instrumental`,`versatil`,`son_jarocho`,`huapango`,`sonora` |
-| `vehicle`    | `car`,`suv`,`pickup`,`van`,`motorcycle`,`boat`                      |
-| `experience` | `tour`,`class`,`workshop`,`adventure`,`wellness`,`gastronomy`       |
-| `venue`      | `event_hall`,`commercial_local`,`studio`,`coworking`,`meeting_room` |
+| `vehicle`    | `car`,`suv`,`pickup`,`van`,`motorcycle`,`boat`                                                                                                                                                                                                                                                                                                                                                                                   |
+| `experience` | `tour`,`class`,`workshop`,`adventure`,`wellness`,`gastronomy`                                                                                                                                                                                                                                                                                                                                                                    |
+| `venue`      | `event_hall`,`commercial_local`,`studio`,`coworking`,`meeting_room`                                                                                                                                                                                                                                                                                                                                                              |
 
 `commercialMode` tambien se valida por `resourceType`:
 
-| resourceType | commercialMode permitido                                |
-| ------------ | ------------------------------------------------------- |
-| `property`   | `sale`,`rent_long_term`,`rent_short_term`               |
-| `service`    | `rent_short_term`,`rent_hourly`                         |
-| `music`      | `rent_short_term`,`rent_hourly`                         |
-| `vehicle`    | `sale`,`rent_long_term`,`rent_short_term`               |
-| `experience` | `rent_short_term`,`rent_hourly`                         |
-| `venue`      | `rent_short_term`,`rent_hourly`                         |
+| resourceType | commercialMode permitido                  |
+| ------------ | ----------------------------------------- |
+| `property`   | `sale`,`rent_long_term`,`rent_short_term` |
+| `service`    | `rent_short_term`,`rent_hourly`           |
+| `music`      | `rent_short_term`,`rent_hourly`           |
+| `vehicle`    | `sale`,`rent_long_term`,`rent_short_term` |
+| `experience` | `rent_short_term`,`rent_hourly`           |
+| `venue`      | `rent_short_term`,`rent_hourly`           |
 
 `pricingModel` tambien se valida por combinacion `resourceType + category + commercialMode`:
 
-| resourceType | commercialMode    | pricingModel permitido                      |
-| ------------ | ----------------- | ------------------------------------------- |
-| `property`   | `sale`            | `fixed_total`,`per_m2`                            |
-| `property`   | `rent_long_term`  | `per_month`,`fixed_total`,`per_m2`                |
+| resourceType | commercialMode    | pricingModel permitido                                                                                             |
+| ------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `property`   | `sale`            | `fixed_total`,`per_m2`                                                                                             |
+| `property`   | `rent_long_term`  | `per_month`,`fixed_total`,`per_m2`                                                                                 |
 | `property`   | `rent_short_term` | `per_night`,`per_day`,`fixed_total` (house/apartment) y `per_day`,`fixed_total` (land/commercial/office/warehouse) |
-| `service`    | `rent_short_term` | `per_day`,`per_person`,`per_event`,`fixed_total`  |
-| `service`    | `rent_hourly`     | `per_hour`,`per_person`,`per_event`,`fixed_total` |
-| `music`      | `rent_short_term` | `per_day`,`per_event`,`fixed_total`               |
-| `music`      | `rent_hourly`     | `per_hour`,`per_event`,`fixed_total`              |
-| `vehicle`    | `sale`            | `fixed_total`                                     |
-| `vehicle`    | `rent_long_term`  | `per_month`,`fixed_total`                         |
-| `vehicle`    | `rent_short_term` | `per_day`                                         |
-| `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`fixed_total`  |
-| `experience` | `rent_hourly`     | `per_hour`,`per_person`,`per_event`,`fixed_total` |
-| `venue`      | `rent_short_term` | `per_day`,`per_event`,`fixed_total`               |
-| `venue`      | `rent_hourly`     | `per_hour`,`per_event`,`fixed_total`              |
+| `service`    | `rent_short_term` | `per_day`,`per_person`,`per_event`,`fixed_total`                                                                   |
+| `service`    | `rent_hourly`     | `per_hour`,`per_person`,`per_event`,`fixed_total`                                                                  |
+| `music`      | `rent_short_term` | `per_day`,`per_event`,`fixed_total`                                                                                |
+| `music`      | `rent_hourly`     | `per_hour`,`per_event`,`fixed_total`                                                                               |
+| `vehicle`    | `sale`            | `fixed_total`                                                                                                      |
+| `vehicle`    | `rent_long_term`  | `per_month`,`fixed_total`                                                                                          |
+| `vehicle`    | `rent_short_term` | `per_day`                                                                                                          |
+| `experience` | `rent_short_term` | `per_person`,`per_day`,`per_event`,`fixed_total`                                                                   |
+| `experience` | `rent_hourly`     | `per_hour`,`per_person`,`per_event`,`fixed_total`                                                                  |
+| `venue`      | `rent_short_term` | `per_day`,`per_event`,`fixed_total`                                                                                |
+| `venue`      | `rent_hourly`     | `per_hour`,`per_event`,`fixed_total`                                                                               |
 
 ### Indexes
 
@@ -422,26 +423,26 @@ Estado operativo (MVP 2026-02):
 
 ### Attributes
 
-| Attribute            | Type    | Size  | Required | Default    | Constraint                                                                             |
-| -------------------- | ------- | ----- | -------- | ---------- | -------------------------------------------------------------------------------------- |
-| `resourceId`         | string  | 64    | yes      | -          | FK logical `resources.$id`                                                             |
-| `name`               | string  | 120   | yes      | -          | min 2                                                                                  |
+| Attribute            | Type    | Size  | Required | Default    | Constraint                                                                                           |
+| -------------------- | ------- | ----- | -------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `resourceId`         | string  | 64    | yes      | -          | FK logical `resources.$id`                                                                           |
+| `name`               | string  | 120   | yes      | -          | min 2                                                                                                |
 | `pricingModel`       | enum    | -     | yes      | -          | `fixed_total`,`total`,`per_month`,`per_night`,`per_day`,`per_hour`,`per_person`,`per_event`,`per_m2` |
-| `bookingType`        | enum    | -     | yes      | -          | `manual_contact`,`date_range`,`time_slot`,`fixed_event`                                |
-| `basePrice`          | float   | -     | yes      | -          | min `0`, max `999999999`                                                               |
-| `currency`           | enum    | -     | no       | `MXN`      | `MXN`,`USD`,`EUR`                                                                      |
-| `minQuantity`        | integer | -     | no       | 1          | min `1`, max `9999`                                                                    |
-| `maxQuantity`        | integer | -     | no       | 9999       | min `1`, max `9999`                                                                    |
-| `minStayNights`      | integer | -     | no       | 1          | min `1`, max `365`                                                                     |
-| `maxStayNights`      | integer | -     | no       | 365        | min `1`, max `365`                                                                     |
-| `cleaningFee`        | float   | -     | no       | 0          | min `0`, max `999999999`                                                               |
-| `serviceFee`         | float   | -     | no       | 0          | min `0`, max `999999999`                                                               |
-| `taxRate`            | float   | -     | no       | 0          | min `0`, max `100`                                                                     |
-| `depositType`        | enum    | -     | no       | `none`     | `none`,`fixed`,`percent`                                                               |
-| `depositAmount`      | float   | -     | no       | 0          | min `0`, max `999999999`                                                               |
-| `cancellationPolicy` | enum    | -     | no       | `moderate` | `flexible`,`moderate`,`strict`,`custom`                                                |
-| `rulesJson`          | string  | 20000 | no       | -          | JSON serializado                                                                       |
-| `enabled`            | boolean | -     | no       | true       | -                                                                                      |
+| `bookingType`        | enum    | -     | yes      | -          | `manual_contact`,`date_range`,`time_slot`,`fixed_event`                                              |
+| `basePrice`          | float   | -     | yes      | -          | min `0`, max `999999999`                                                                             |
+| `currency`           | enum    | -     | no       | `MXN`      | `MXN`,`USD`,`EUR`                                                                                    |
+| `minQuantity`        | integer | -     | no       | 1          | min `1`, max `9999`                                                                                  |
+| `maxQuantity`        | integer | -     | no       | 9999       | min `1`, max `9999`                                                                                  |
+| `minStayNights`      | integer | -     | no       | 1          | min `1`, max `365`                                                                                   |
+| `maxStayNights`      | integer | -     | no       | 365        | min `1`, max `365`                                                                                   |
+| `cleaningFee`        | float   | -     | no       | 0          | min `0`, max `999999999`                                                                             |
+| `serviceFee`         | float   | -     | no       | 0          | min `0`, max `999999999`                                                                             |
+| `taxRate`            | float   | -     | no       | 0          | min `0`, max `100`                                                                                   |
+| `depositType`        | enum    | -     | no       | `none`     | `none`,`fixed`,`percent`                                                                             |
+| `depositAmount`      | float   | -     | no       | 0          | min `0`, max `999999999`                                                                             |
+| `cancellationPolicy` | enum    | -     | no       | `moderate` | `flexible`,`moderate`,`strict`,`custom`                                                              |
+| `rulesJson`          | string  | 20000 | no       | -          | JSON serializado                                                                                     |
+| `enabled`            | boolean | -     | no       | true       | -                                                                                                    |
 
 ### Indexes
 

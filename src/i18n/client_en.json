@@ -712,6 +712,10 @@
       "manualDateRangeMessage": "Hi, I am interested in \"{{title}}\" for {{dates}}. Can we confirm availability and conditions?",
       "manualTimeSlotMessage": "Hi, I am interested in \"{{title}}\" on {{date}} during {{time}}. Can we confirm availability?",
       "selectDate": "Select a date",
+      "selectStartTime": "Start time",
+      "selectStartTimePlaceholder": "-- Pick a time --",
+      "selectHours": "How many hours?",
+      "noHoursAvailable": "Not enough availability for that start time.",
       "dayUnavailable": "The selected date is not available.",
       "noSlots": "No available time slots for the selected date.",
       "contactForSlot": "Request this slot"

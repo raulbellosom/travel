@@ -1,5 +1,9 @@
 import env from "../env";
-import { databases, ensureAppwriteConfigured, Query } from "../api/appwriteClient";
+import {
+  databases,
+  ensureAppwriteConfigured,
+  Query,
+} from "../api/appwriteClient";
 import { deepSearchService } from "./deepSearchService";
 import { staffService } from "./staffService";
 
@@ -36,6 +40,33 @@ const SEARCHABLE_MODULES = Object.freeze({
     "casas",
     "inmueble",
     "inmuebles",
+    "resource",
+    "resources",
+    "recurso",
+    "recursos",
+    "servicio",
+    "servicios",
+    "service",
+    "services",
+    "vehiculo",
+    "vehículo",
+    "vehiculos",
+    "vehículos",
+    "vehicle",
+    "vehicles",
+    "musica",
+    "música",
+    "music",
+    "experiencia",
+    "experiencias",
+    "experience",
+    "experiences",
+    "venue",
+    "venues",
+    "local",
+    "locales",
+    "salon",
+    "salón",
   ],
   team: [
     "team",
@@ -84,8 +115,22 @@ const SEARCHABLE_MODULES = Object.freeze({
     "cobros",
   ],
   reviews: ["review", "reviews", "resena", "resenas"],
-  clients: ["client", "clients", "customer", "customers", "cliente", "clientes"],
-  profile: ["profile", "perfil", "account", "cuenta", "preferences", "preferencias"],
+  clients: [
+    "client",
+    "clients",
+    "customer",
+    "customers",
+    "cliente",
+    "clientes",
+  ],
+  profile: [
+    "profile",
+    "perfil",
+    "account",
+    "cuenta",
+    "preferences",
+    "preferencias",
+  ],
 });
 
 const moduleDataCache = new Map();
@@ -149,7 +194,12 @@ const getScore = (query, values = []) => {
   return score;
 };
 
-const rankDocuments = (documents, query, valueSelector, limit = MAX_RESULTS_PER_ENTITY) =>
+const rankDocuments = (
+  documents,
+  query,
+  valueSelector,
+  limit = MAX_RESULTS_PER_ENTITY,
+) =>
   (documents || [])
     .map((document) => ({
       document,
@@ -190,14 +240,23 @@ const detectSearchPlan = ({ query }) => {
   };
 };
 
-const fetchCollectionRecency = async ({ userId, moduleName, collectionId, queries = [] }) => {
+const fetchCollectionRecency = async ({
+  userId,
+  moduleName,
+  collectionId,
+  queries = [],
+}) => {
   const cacheKey = `${userId || "anonymous"}:${moduleName}`;
   const cached = getCached(moduleDataCache, cacheKey, MODULE_CACHE_TTL_MS);
   if (cached) return cached;
 
   const rows = await listDocumentsSafe({
     collectionId,
-    queries: [...queries, Query.orderDesc("$createdAt"), Query.limit(MAX_ITEMS_PER_COLLECTION)],
+    queries: [
+      ...queries,
+      Query.orderDesc("$createdAt"),
+      Query.limit(MAX_ITEMS_PER_COLLECTION),
+    ],
   });
 
   return setCached(moduleDataCache, cacheKey, rows);
@@ -395,7 +454,11 @@ export const globalSearchService = {
       canReadProfile,
     ].join("|");
     const cacheKey = `${actorUserId || "anonymous"}:${permissionsKey}:${normalizedQuery}`;
-    const cachedResult = getCached(searchResultCache, cacheKey, SEARCH_CACHE_TTL_MS);
+    const cachedResult = getCached(
+      searchResultCache,
+      cacheKey,
+      SEARCH_CACHE_TTL_MS,
+    );
     if (cachedResult) return cachedResult;
 
     if (deepSearchService.isConfigured()) {
@@ -427,7 +490,10 @@ export const globalSearchService = {
         ? searchLeadsLocal({ userId: actorUserId, query: normalizedQuery })
         : Promise.resolve([]),
       canReadReservations && hasModuleHint("reservations")
-        ? searchReservationsLocal({ userId: actorUserId, query: normalizedQuery })
+        ? searchReservationsLocal({
+            userId: actorUserId,
+            query: normalizedQuery,
+          })
         : Promise.resolve([]),
       canReadPayments && hasModuleHint("payments")
         ? searchPaymentsLocal({ userId: actorUserId, query: normalizedQuery })
@@ -445,7 +511,10 @@ export const globalSearchService = {
         ? searchProfileLocal({ userId: actorUserId, query: normalizedQuery })
         : Promise.resolve(null),
       canReadProfile && hasModuleHint("profile")
-        ? searchPreferencesLocal({ userId: actorUserId, query: normalizedQuery })
+        ? searchPreferencesLocal({
+            userId: actorUserId,
+            query: normalizedQuery,
+          })
         : Promise.resolve(null),
     ];
 

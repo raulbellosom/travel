@@ -68,7 +68,7 @@ import {
 import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
 import { amenitiesService } from "../services/amenitiesService";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { reservationsService } from "../services/reservationsService";
 import { profileService } from "../services/profileService";
 import { executeJsonFunction } from "../utils/functions";
@@ -89,7 +89,10 @@ import { useInstanceModules } from "../hooks/useInstanceModules";
 import { buildPathFromLocation } from "../utils/authRedirect";
 import { formatMoneyParts } from "../utils/money";
 import { favoritesService } from "../services/favoritesService";
-import { PropertyAvailabilityCalendar } from "../features/calendar";
+import {
+  PropertyAvailabilityCalendar,
+  daysBetween,
+} from "../features/calendar";
 import { getFileViewUrl } from "../utils/imageOptimization"; // HD fallback for viewer modal
 import { getBookingTypeLabel } from "../utils/resourceLabels";
 
@@ -173,6 +176,9 @@ const PropertyDetail = () => {
   const [selectedGuestCount, setSelectedGuestCount] = useState(1);
   const [selectedSlotDate, setSelectedSlotDate] = useState("");
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  // Hour-range mode state
+  const [selectedHourStart, setSelectedHourStart] = useState("");
+  const [selectedHourCount, setSelectedHourCount] = useState(0);
   const [availabilityData, setAvailabilityData] = useState({
     blockedDateKeys: [],
     occupiedSlotsByDate: {},
@@ -220,14 +226,14 @@ const PropertyDetail = () => {
     setLoading(true);
     setError("");
 
-    propertiesService
+    resourcesService
       .getPublicBySlug(slug)
       .then(async (doc) => {
         if (!doc) throw new Error(t("client:propertyDetail.errors.notFound"));
 
         const [ownerDoc, imageDocs, amenityDocs] = await Promise.all([
-          propertiesService.getOwnerProfile(doc.ownerUserId).catch(() => null),
-          propertiesService.listImages(doc.$id).catch(() => []),
+          resourcesService.getOwnerProfile(doc.ownerUserId).catch(() => null),
+          resourcesService.listImages(doc.$id).catch(() => []),
           amenitiesService.getBySlugs(doc.amenities || []).catch(() => []),
         ]);
 
@@ -356,9 +362,14 @@ const PropertyDetail = () => {
       0,
       Number(property?.slotBufferMinutes || 0),
     );
-    const rangeStartMinutes = parseClockTime(property?.checkInTime, 9 * 60);
+    // For time_slot resources, use availabilityStartTime/EndTime from attributes
+    // falling back to checkInTime/checkOutTime for property-type resources
+    const rangeStartMinutes = parseClockTime(
+      attrs?.availabilityStartTime || property?.checkInTime,
+      9 * 60,
+    );
     const configuredEndMinutes = parseClockTime(
-      property?.checkOutTime,
+      attrs?.availabilityEndTime || property?.checkOutTime,
       20 * 60,
     );
     const rangeEndMinutes =
@@ -412,6 +423,8 @@ const PropertyDetail = () => {
 
     return slots;
   }, [
+    attrs?.availabilityStartTime,
+    attrs?.availabilityEndTime,
     availabilityData.occupiedSlotsByDate,
     blockedDateSet,
     isTimeSlotSchedule,
@@ -421,6 +434,105 @@ const PropertyDetail = () => {
     property?.slotBufferMinutes,
     property?.slotDurationMinutes,
     selectedSlotDate,
+  ]);
+
+  // Determine if hour-range picker should be used instead of predefined slots
+  const isHourRangeMode =
+    isTimeSlotSchedule && attrs?.slotMode === "hour_range";
+
+  // Hour-range picker: compute available start times and hour count bounds
+  const hourRangeConfig = useMemo(() => {
+    if (!isHourRangeMode) return null;
+    const startMin = parseClockTime(
+      attrs?.availabilityStartTime || property?.checkInTime,
+      9 * 60,
+    );
+    const endMin = parseClockTime(
+      attrs?.availabilityEndTime || property?.checkOutTime,
+      20 * 60,
+    );
+    const effectiveEnd = endMin > startMin ? endMin : startMin + 8 * 60;
+    const minHours = Math.max(1, Number(attrs?.bookingMinUnits || 1));
+    const maxHours = Math.max(minHours, Number(attrs?.bookingMaxUnits || 8));
+
+    // Generate start-time options every 30 min within availability window
+    // ensuring at least minHours fit before effectiveEnd
+    const startOptions = [];
+    for (let m = startMin; m + minHours * 60 <= effectiveEnd; m += 30) {
+      const hh24 = Math.floor(m / 60);
+      const mm = String(m % 60).padStart(2, "0");
+      const value = `${String(hh24).padStart(2, "0")}:${mm}`;
+      const hh12 = hh24 === 0 ? 12 : hh24 > 12 ? hh24 - 12 : hh24;
+      const period = hh24 < 12 ? "AM" : "PM";
+      startOptions.push({ value, minutes: m, label: `${hh12}:${mm}`, period });
+    }
+
+    return { startMin, endMin: effectiveEnd, minHours, maxHours, startOptions };
+  }, [
+    isHourRangeMode,
+    attrs?.availabilityStartTime,
+    attrs?.availabilityEndTime,
+    attrs?.bookingMinUnits,
+    attrs?.bookingMaxUnits,
+    property?.checkInTime,
+    property?.checkOutTime,
+  ]);
+
+  // Compute max selectable hours for chosen start time
+  const hourCountOptions = useMemo(() => {
+    if (!hourRangeConfig || !selectedHourStart) return [];
+    const chosen = hourRangeConfig.startOptions.find(
+      (o) => o.value === selectedHourStart,
+    );
+    if (!chosen) return [];
+    const remainingMinutes = hourRangeConfig.endMin - chosen.minutes;
+    const maxPossible = Math.min(
+      hourRangeConfig.maxHours,
+      Math.floor(remainingMinutes / 60),
+    );
+    const opts = [];
+    for (let h = hourRangeConfig.minHours; h <= maxPossible; h++) {
+      opts.push(h);
+    }
+    return opts;
+  }, [hourRangeConfig, selectedHourStart]);
+
+  // Build a synthetic time-slot object from hour-range selection
+  const hourRangeSlot = useMemo(() => {
+    if (
+      !hourRangeConfig ||
+      !selectedSlotDate ||
+      !selectedHourStart ||
+      !selectedHourCount
+    )
+      return null;
+    const [year, month, day] = selectedSlotDate.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const chosen = hourRangeConfig.startOptions.find(
+      (o) => o.value === selectedHourStart,
+    );
+    if (!chosen) return null;
+    const startDate = new Date(
+      year,
+      month - 1,
+      day,
+      Math.floor(chosen.minutes / 60),
+      chosen.minutes % 60,
+    );
+    const endDate = new Date(
+      startDate.getTime() + selectedHourCount * 60 * 60 * 1000,
+    );
+    return {
+      startDateTime: startDate.toISOString(),
+      endDateTime: endDate.toISOString(),
+      label: `${startDate.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })} - ${endDate.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })} (${selectedHourCount}h)`,
+    };
+  }, [
+    hourRangeConfig,
+    selectedSlotDate,
+    selectedHourStart,
+    selectedHourCount,
+    locale,
   ]);
 
   const ownerName = useMemo(() => {
@@ -573,17 +685,38 @@ const PropertyDetail = () => {
         const rangeLabel = `${new Date(startDate).toLocaleDateString(
           locale,
         )} - ${new Date(endDate).toLocaleDateString(locale)}`;
+        const guests = summary.guestCount || selectedGuestCount;
+        const nights =
+          summary.nights ||
+          (startDate && endDate ? daysBetween(startDate, endDate) : 0);
+
         setChatScheduleMeta({
           scheduleType: "date_range",
           checkInDate,
           checkOutDate,
+          ...(guests > 1 ? { guestCount: guests } : {}),
+          ...(nights > 0 ? { nights } : {}),
         });
+
+        // Build contextual extras
+        const extras = [];
+        if (nights > 0)
+          extras.push(
+            `${nights} ${nights === 1 ? t("calendar.booking.night", { defaultValue: "noche" }) : t("calendar.booking.nights", { defaultValue: "noches" })}`,
+          );
+        if (guests > 1)
+          extras.push(
+            `${guests} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
+          );
+        const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
+
         setChatInitialMessage(
           t("client:propertyDetail.calendar.manualDateRangeMessage", {
             defaultValue:
-              'Hola, me interesa "{{title}}" para las fechas {{dates}}. ¿Podemos confirmar disponibilidad y condiciones?',
+              'Hola, me interesa "{{title}}" para las fechas {{dates}}{{extras}}. ¿Podemos confirmar disponibilidad y condiciones?',
             title: property.title,
             dates: rangeLabel,
+            extras: extraLabel,
           }),
         );
         setIsChatModalOpen(true);
@@ -609,6 +742,7 @@ const PropertyDetail = () => {
       registerToChatPath,
       selectedDateRange.endDate,
       selectedDateRange.startDate,
+      selectedGuestCount,
       t,
       user,
     ],
@@ -846,14 +980,52 @@ const PropertyDetail = () => {
     if (!isClient || !isVerified) return;
     if (user?.$id === property.ownerUserId) return;
 
+    // Build contextual extras based on current selections
+    const extras = [];
+    const { startDate, endDate } = selectedDateRange;
+    if (startDate && endDate) {
+      const rangeLabel = `${startDate.toLocaleDateString(locale)} - ${endDate.toLocaleDateString(locale)}`;
+      const nights = daysBetween(startDate, endDate);
+      extras.push(rangeLabel);
+      if (nights > 0)
+        extras.push(
+          `${nights} ${nights === 1 ? t("calendar.booking.night", { defaultValue: "noche" }) : t("calendar.booking.nights", { defaultValue: "noches" })}`,
+        );
+    }
+    if (selectedGuestCount > 1)
+      extras.push(
+        `${selectedGuestCount} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
+      );
+    const extraLabel = extras.length ? `\n${extras.join(", ")}` : "";
+
+    // Set schedule meta if we have date selections
+    if (startDate && endDate) {
+      setChatScheduleMeta({
+        scheduleType: "date_range",
+        checkInDate: formatDateForQuery(startDate),
+        checkOutDate: formatDateForQuery(endDate),
+        ...(selectedGuestCount > 1 ? { guestCount: selectedGuestCount } : {}),
+      });
+    } else {
+      setChatScheduleMeta(null);
+    }
+
     setChatInitialMessage(
       t("client:propertyDetail.agent.defaultInitialMessage", {
-        defaultValue: `Hola, me interesa la propiedad "${property.title}". Quiero más información.`,
+        defaultValue: `Hola, me interesa "${property.title}".${extraLabel ? " " + extraLabel.trim() + "." : ""} Quiero más información.`,
       }),
     );
-    setChatScheduleMeta(null);
     setIsChatModalOpen(true);
-  }, [property, isChatAuth, chatLoading, user, t]);
+  }, [
+    property,
+    isChatAuth,
+    chatLoading,
+    user,
+    t,
+    selectedDateRange,
+    selectedGuestCount,
+    locale,
+  ]);
 
   const handleManualSlotContact = useCallback(() => {
     if (!property || !selectedTimeSlot) return;
@@ -886,20 +1058,32 @@ const PropertyDetail = () => {
       minute: "2-digit",
     })}`;
 
+    const guests = selectedGuestCount;
+
     setChatScheduleMeta({
       scheduleType: "time_slot",
       startDateTime: startDate.toISOString(),
       endDateTime: endDate.toISOString(),
       slotDurationMinutes: Number(property.slotDurationMinutes || 60),
       slotBufferMinutes: Number(property.slotBufferMinutes || 0),
+      ...(guests > 1 ? { guestCount: guests } : {}),
     });
+
+    const extras = [];
+    if (guests > 1)
+      extras.push(
+        `${guests} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
+      );
+    const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
+
     setChatInitialMessage(
       t("client:propertyDetail.calendar.manualTimeSlotMessage", {
         defaultValue:
-          'Hola, me interesa "{{title}}" el {{date}} en el horario {{time}}. ¿Podemos confirmar disponibilidad?',
+          'Hola, me interesa "{{title}}" el {{date}} en el horario {{time}}{{extras}}. ¿Podemos confirmar disponibilidad?',
         title: property.title,
         date: dateLabel,
         time: timeLabel,
+        extras: extraLabel,
       }),
     );
     setIsChatModalOpen(true);
@@ -910,10 +1094,89 @@ const PropertyDetail = () => {
     navigate,
     property,
     registerToChatPath,
+    selectedGuestCount,
     selectedTimeSlot,
     t,
     user,
   ]);
+
+  /** Handle hour-range manual contact (chat) */
+  const handleHourRangeContact = useCallback(() => {
+    if (!property || !hourRangeSlot) return;
+    if (!isChatAuth || !user?.$id) {
+      navigate(registerToChatPath, { state: { from: location } });
+      return;
+    }
+    const isClient = user.role === "client";
+    const isVerified = Boolean(user.emailVerified);
+    if (!isClient || !isVerified || user.$id === property.ownerUserId) return;
+
+    const startDate = new Date(hourRangeSlot.startDateTime);
+    const endDate = new Date(hourRangeSlot.endDateTime);
+
+    const dateLabel = startDate.toLocaleDateString(locale);
+    const timeLabel = `${startDate.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} - ${endDate.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+
+    const guests = selectedGuestCount;
+
+    setChatScheduleMeta({
+      scheduleType: "hour_range",
+      startDateTime: startDate.toISOString(),
+      endDateTime: endDate.toISOString(),
+      hours: selectedHourCount,
+      ...(guests > 1 ? { guestCount: guests } : {}),
+    });
+
+    const extras = [];
+    if (selectedHourCount > 0) extras.push(`${selectedHourCount}h`);
+    if (guests > 1)
+      extras.push(
+        `${guests} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
+      );
+    const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
+
+    setChatInitialMessage(
+      t("client:propertyDetail.calendar.manualTimeSlotMessage", {
+        defaultValue:
+          'Hola, me interesa "{{title}}" el {{date}} en el horario {{time}}{{extras}}. ¿Podemos confirmar disponibilidad?',
+        title: property.title,
+        date: dateLabel,
+        time: timeLabel,
+        extras: extraLabel,
+      }),
+    );
+    setIsChatModalOpen(true);
+  }, [
+    hourRangeSlot,
+    isChatAuth,
+    location,
+    locale,
+    navigate,
+    property,
+    registerToChatPath,
+    selectedGuestCount,
+    selectedHourCount,
+    t,
+    user,
+  ]);
+
+  /** Navigate to /reservar/ pre-filling the selected time slot */
+  const handleSlotReserve = useCallback(() => {
+    // Support both predefined selectedTimeSlot and hour-range hourRangeSlot
+    const slot = selectedTimeSlot || hourRangeSlot;
+    if (!property?.slug || !slot) return;
+    const params = new URLSearchParams();
+    params.set("checkIn", formatDateForQuery(new Date(slot.startDateTime)));
+    params.set("slotStart", slot.startDateTime);
+    params.set("slotEnd", slot.endDateTime);
+    navigate(`/reservar/${property.slug}?${params.toString()}`);
+  }, [navigate, property, selectedTimeSlot, hourRangeSlot]);
 
   const handleConfirmChat = useCallback(async () => {
     if (!property || !isChatAuth || chatLoading) return;
@@ -1569,6 +1832,7 @@ const PropertyDetail = () => {
                 property={property}
                 opType={opType}
                 bookingType={resourceBehavior.bookingType}
+                scheduleType={resourceBehavior.effectiveScheduleType}
                 bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
@@ -2002,7 +2266,7 @@ const PropertyDetail = () => {
                       label={t("client:resource.includesSound", {
                         defaultValue: "Incluye sonido",
                       })}
-                      value={t("common.yes", "S�")}
+                      value={t("common.yes", "S�")}
                     />
                   )}
                   {attrs.musicIncludesLighting && (
@@ -2011,7 +2275,7 @@ const PropertyDetail = () => {
                       label={t("client:resource.includesLighting", {
                         defaultValue: "Incluye iluminacion",
                       })}
-                      value={t("common.yes", "S�")}
+                      value={t("common.yes", "S�")}
                     />
                   )}
                   {Number(attrs.musicBandMembers) > 0 && (
@@ -2047,7 +2311,7 @@ const PropertyDetail = () => {
                       label={t("client:resource.travelsToVenue", {
                         defaultValue: "Se traslada al lugar",
                       })}
-                      value={t("common.yes", "S�")}
+                      value={t("common.yes", "S�")}
                     />
                   )}
                 </>
@@ -2467,7 +2731,7 @@ const PropertyDetail = () => {
           </div>
 
           {/* ── Right Sidebar ───────────────────────────── */}
-          <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 space-y-5 lg:sticky lg:top-24 lg:self-start">
             {/* ── Price + CTA card (desktop only) ─────── */}
             <div className="hidden lg:block">
               <PriceCard
@@ -2478,6 +2742,7 @@ const PropertyDetail = () => {
                 property={property}
                 opType={opType}
                 bookingType={resourceBehavior.bookingType}
+                scheduleType={resourceBehavior.effectiveScheduleType}
                 bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
@@ -2523,8 +2788,9 @@ const PropertyDetail = () => {
                     guestCount={selectedGuestCount}
                     onGuestCountChange={setSelectedGuestCount}
                   />
-                ) : isTimeSlotSchedule && isManualContactBooking ? (
+                ) : isTimeSlotSchedule ? (
                   <div className="space-y-3">
+                    {/* Shared date picker for both modes */}
                     <label className="grid gap-1 text-sm">
                       <span className="font-medium text-slate-700 dark:text-slate-200">
                         {t("client:propertyDetail.calendar.selectDate", {
@@ -2551,7 +2817,143 @@ const PropertyDetail = () => {
                             "La fecha seleccionada no esta disponible.",
                         })}
                       </p>
+                    ) : isHourRangeMode && hourRangeConfig ? (
+                      /* ── Hour-range picker ────────────────── */
+                      <>
+                        <div className="grid gap-1.5 text-sm">
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {t(
+                              "client:propertyDetail.calendar.selectStartTime",
+                              {
+                                defaultValue: "Hora de inicio",
+                              },
+                            )}
+                          </span>
+                          <div className="max-h-56 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50/50 p-2 dark:border-slate-700 dark:bg-slate-800/40">
+                            {(() => {
+                              const am = hourRangeConfig.startOptions.filter(
+                                (o) => o.period === "AM",
+                              );
+                              const pm = hourRangeConfig.startOptions.filter(
+                                (o) => o.period === "PM",
+                              );
+                              const renderChips = (opts) => (
+                                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+                                  {opts.map((opt) => (
+                                    <button
+                                      key={opt.value}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedHourStart(opt.value);
+                                        setSelectedHourCount(0);
+                                      }}
+                                      className={`min-h-10 rounded-lg border px-2 py-1.5 text-sm font-medium transition ${
+                                        selectedHourStart === opt.value
+                                          ? "border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
+                                          : "border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
+                                      }`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              );
+                              return (
+                                <div className="flex flex-col gap-2">
+                                  {am.length > 0 && (
+                                    <>
+                                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                        AM
+                                      </span>
+                                      {renderChips(am)}
+                                    </>
+                                  )}
+                                  {pm.length > 0 && (
+                                    <>
+                                      <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                        PM
+                                      </span>
+                                      {renderChips(pm)}
+                                    </>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+
+                        {selectedHourStart && hourCountOptions.length > 0 ? (
+                          <label className="grid gap-1 text-sm">
+                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                              {t("client:propertyDetail.calendar.selectHours", {
+                                defaultValue: "¿Cuántas horas?",
+                              })}
+                            </span>
+                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                              {hourCountOptions.map((h) => (
+                                <button
+                                  key={h}
+                                  type="button"
+                                  onClick={() => setSelectedHourCount(h)}
+                                  className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                                    selectedHourCount === h
+                                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
+                                      : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
+                                  }`}
+                                >
+                                  {h}h
+                                </button>
+                              ))}
+                            </div>
+                          </label>
+                        ) : selectedHourStart ? (
+                          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                            {t(
+                              "client:propertyDetail.calendar.noHoursAvailable",
+                              {
+                                defaultValue:
+                                  "No hay suficiente disponibilidad para esa hora de inicio.",
+                              },
+                            )}
+                          </p>
+                        ) : null}
+
+                        {hourRangeSlot ? (
+                          <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 px-3 py-2 text-sm text-cyan-800 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-200">
+                            {hourRangeSlot.label}
+                          </div>
+                        ) : null}
+
+                        {hourRangeSlot ? (
+                          isManualContactBooking ? (
+                            <button
+                              type="button"
+                              onClick={handleHourRangeContact}
+                              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
+                            >
+                              {t(
+                                "client:propertyDetail.calendar.contactForSlot",
+                                {
+                                  defaultValue: "Solicitar este horario",
+                                },
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleSlotReserve}
+                              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-500"
+                            >
+                              {t("client:propertyDetail.calendar.reserveSlot", {
+                                defaultValue: "Reservar este horario",
+                              })}
+                              <ArrowRight size={16} />
+                            </button>
+                          )
+                        ) : null}
+                      </>
                     ) : availableTimeSlots.length === 0 ? (
+                      /* ── Predefined slots: no slots message ─ */
                       <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
                         {t("client:propertyDetail.calendar.noSlots", {
                           defaultValue:
@@ -2559,44 +2961,64 @@ const PropertyDetail = () => {
                         })}
                       </p>
                     ) : (
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {availableTimeSlots.map((slot) => {
-                          const isSelected =
-                            selectedTimeSlot?.startDateTime ===
-                              slot.startDateTime &&
-                            selectedTimeSlot?.endDateTime === slot.endDateTime;
-                          return (
-                            <button
-                              key={slot.startDateTime}
-                              type="button"
-                              disabled={!slot.isAvailable}
-                              onClick={() => setSelectedTimeSlot(slot)}
-                              className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                                !slot.isAvailable
-                                  ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
-                                  : isSelected
-                                    ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
-                                    : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
-                              }`}
-                            >
-                              {slot.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                      /* ── Predefined slots: grid ──────────── */
+                      <>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {availableTimeSlots.map((slot) => {
+                            const isSelected =
+                              selectedTimeSlot?.startDateTime ===
+                                slot.startDateTime &&
+                              selectedTimeSlot?.endDateTime ===
+                                slot.endDateTime;
+                            return (
+                              <button
+                                key={slot.startDateTime}
+                                type="button"
+                                disabled={!slot.isAvailable}
+                                onClick={() => setSelectedTimeSlot(slot)}
+                                className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                                  !slot.isAvailable
+                                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                                    : isSelected
+                                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
+                                      : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
+                                }`}
+                              >
+                                {slot.label}
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                    {selectedTimeSlot ? (
-                      <button
-                        type="button"
-                        onClick={handleManualSlotContact}
-                        className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
-                      >
-                        {t("client:propertyDetail.calendar.contactForSlot", {
-                          defaultValue: "Solicitar este horario",
-                        })}
-                      </button>
-                    ) : null}
+                        {selectedTimeSlot ? (
+                          isManualContactBooking ? (
+                            <button
+                              type="button"
+                              onClick={handleManualSlotContact}
+                              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
+                            >
+                              {t(
+                                "client:propertyDetail.calendar.contactForSlot",
+                                {
+                                  defaultValue: "Solicitar este horario",
+                                },
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleSlotReserve}
+                              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-500"
+                            >
+                              {t("client:propertyDetail.calendar.reserveSlot", {
+                                defaultValue: "Reservar este horario",
+                              })}
+                              <ArrowRight size={16} />
+                            </button>
+                          )
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
@@ -2826,7 +3248,7 @@ const PropertyDetail = () => {
               variant="primary"
               onClick={handleConfirmChat}
               disabled={chatLoading || !chatInitialMessage.trim()}
-              isLoading={chatLoading}
+              loading={chatLoading}
             >
               {t("chat.modal.send", { defaultValue: "Enviar Mensaje" })}
             </Button>
@@ -2910,6 +3332,7 @@ function PriceCard({
   property,
   opType,
   bookingType,
+  scheduleType,
   bookingTypeLabel,
   isCtaBlocked,
   onContactAgent,
@@ -3005,7 +3428,14 @@ function PriceCard({
 
       {/* CTA Button */}
       {!isCtaBlocked &&
-        (isBookFlow ? (
+        (scheduleType === "time_slot" ? (
+          <p className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-center text-sm font-medium text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300">
+            {t("client:propertyDetail.cta.hourly.selectSlotHint", {
+              defaultValue:
+                "Selecciona una fecha y horario en el calendario de abajo para continuar.",
+            })}
+          </p>
+        ) : isBookFlow ? (
           <Link
             to={`/reservar/${property.slug}`}
             className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition ${s.btn}`}

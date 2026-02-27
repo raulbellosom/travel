@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
-import { propertiesService } from "../../../../services/propertiesService";
+import { resourcesService } from "../../../../services/resourcesService";
 import PropertyCard from "../../molecules/PropertyCard";
 import Button from "../../atoms/Button";
 
@@ -13,7 +13,7 @@ const FeaturedPropertiesSection = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    propertiesService
+    resourcesService
       .listPublic({
         limit: 3,
         filters: { featured: true, sort: "recent" },

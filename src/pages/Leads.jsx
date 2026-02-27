@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Select, TablePagination } from "../components/common";
 import { leadsService } from "../services/leadsService";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { profileService } from "../services/profileService";
 import { reservationsService } from "../services/reservationsService";
 import { getErrorMessage } from "../utils/errors";
@@ -118,7 +118,7 @@ const Leads = () => {
           status: statusFilter || undefined,
           ...(!isGlobalLeads && { propertyOwnerId: user.$id }),
         }),
-        propertiesService.listMine(user.$id, {
+        resourcesService.listMine(user.$id, {
           ...(!isGlobalResources && { ownerUserId: user.$id }),
         }),
       ]);

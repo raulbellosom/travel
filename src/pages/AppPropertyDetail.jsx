@@ -43,7 +43,7 @@ import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import Select from "../components/common/atoms/Select/Select";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import { ImageViewerModal } from "../components/common/organisms/ImageViewerModal/ImageViewerModal";
-import { propertiesService } from "../services/propertiesService";
+import { resourcesService } from "../services/resourcesService";
 import { amenitiesService } from "../services/amenitiesService";
 import { staffService } from "../services/staffService";
 import { leadsService } from "../services/leadsService";
@@ -53,7 +53,7 @@ import { getAmenityIcon } from "../data/amenitiesCatalog";
 import { getErrorMessage } from "../utils/errors";
 import {
   INTERNAL_ROUTES,
-  getInternalEditPropertyRoute,
+  getInternalEditResourceRoute,
   getPublicPropertyRoute,
 } from "../utils/internalRoutes";
 import { getOptimizedImage, getFileViewUrl } from "../utils/imageOptimization";
@@ -202,8 +202,8 @@ const AppPropertyDetail = () => {
 
     try {
       const [doc, gallery] = await Promise.all([
-        propertiesService.getById(id),
-        propertiesService.listImages(id).catch(() => []),
+        resourcesService.getById(id),
+        resourcesService.listImages(id).catch(() => []),
       ]);
 
       if (!doc || doc.enabled === false) {
@@ -262,7 +262,7 @@ const AppPropertyDetail = () => {
     if (!property?.$id || staffSaving || !selectedResponsibleId) return;
     setStaffSaving(true);
     try {
-      await propertiesService.updateResponsibleAgent(
+      await resourcesService.updateResponsibleAgent(
         property.$id,
         selectedResponsibleId,
       );
@@ -316,9 +316,9 @@ const AppPropertyDetail = () => {
     setDeleting(true);
     setError("");
     try {
-      await propertiesService.softDelete(property.$id);
+      await resourcesService.softDelete(property.$id);
       setIsDeleteModalOpen(false);
-      navigate(INTERNAL_ROUTES.myProperties, { replace: true });
+      navigate(INTERNAL_ROUTES.myResources, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, t("myPropertiesPage.errors.delete")));
     } finally {
@@ -362,9 +362,7 @@ const AppPropertyDetail = () => {
 
   // ── Loading state ─────────────────────────────────────────
   if (loading) {
-    return (
-      <SkeletonLoader variant="detail" className="py-4" />
-    );
+    return <SkeletonLoader variant="detail" className="py-4" />;
   }
 
   if (!property) {
@@ -376,7 +374,7 @@ const AppPropertyDetail = () => {
           </div>
         ) : null}
         <Link
-          to={INTERNAL_ROUTES.myProperties}
+          to={INTERNAL_ROUTES.myResources}
           className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           <ArrowLeft size={14} />
@@ -386,7 +384,9 @@ const AppPropertyDetail = () => {
     );
   }
 
-  const resourceType = String(property.resourceType || "property").toLowerCase();
+  const resourceType = String(
+    property.resourceType || "property",
+  ).toLowerCase();
   const isPropertyResource = resourceType === "property";
   const dynamicFeatureDetails = getResourceDetails(property, t).filter(
     (detail) =>
@@ -410,7 +410,7 @@ const AppPropertyDetail = () => {
           {/* Back breadcrumb */}
           <div className="mb-2">
             <Link
-              to={INTERNAL_ROUTES.myProperties}
+              to={INTERNAL_ROUTES.myResources}
               className="inline-flex items-center gap-1 text-xs text-slate-500 transition hover:text-cyan-600 dark:text-slate-400 dark:hover:text-cyan-400"
             >
               <ArrowLeft size={12} />
@@ -482,7 +482,7 @@ const AppPropertyDetail = () => {
         {/* Action buttons */}
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
-            to={getInternalEditPropertyRoute(property.$id)}
+            to={getInternalEditResourceRoute(property.$id)}
             className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
           >
             <Pencil size={14} />
@@ -551,58 +551,58 @@ const AppPropertyDetail = () => {
           >
             {isPropertyResource ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <InfoCard
-                label={t("propertyForm.fields.bedrooms")}
-                value={property.bedrooms || 0}
-                icon={BedDouble}
-              />
-              <InfoCard
-                label={t("propertyForm.fields.bathrooms")}
-                value={property.bathrooms || 0}
-                icon={Bath}
-              />
-              {property.parkingSpaces != null && (
                 <InfoCard
-                  label={t("propertyForm.fields.parkingSpaces")}
-                  value={property.parkingSpaces}
-                  icon={Package}
+                  label={t("propertyForm.fields.bedrooms")}
+                  value={property.bedrooms || 0}
+                  icon={BedDouble}
                 />
-              )}
-              {property.totalArea && (
                 <InfoCard
-                  label={t("propertyForm.fields.totalArea")}
-                  value={`${property.totalArea} m²`}
-                  icon={Maximize2}
+                  label={t("propertyForm.fields.bathrooms")}
+                  value={property.bathrooms || 0}
+                  icon={Bath}
                 />
-              )}
-              {property.builtArea && (
-                <InfoCard
-                  label={t("propertyForm.fields.builtArea")}
-                  value={`${property.builtArea} m²`}
-                  icon={Building2}
-                />
-              )}
-              {property.floors && (
-                <InfoCard
-                  label={t("propertyForm.fields.floors")}
-                  value={property.floors}
-                  icon={Building2}
-                />
-              )}
-              {property.yearBuilt && (
-                <InfoCard
-                  label={t("propertyForm.fields.yearBuilt")}
-                  value={property.yearBuilt}
-                  icon={Calendar}
-                />
-              )}
-              {isVacationRental && property.maxGuests && (
-                <InfoCard
-                  label={t("propertyForm.fields.maxGuests")}
-                  value={property.maxGuests}
-                  icon={Users}
-                />
-              )}
+                {property.parkingSpaces != null && (
+                  <InfoCard
+                    label={t("propertyForm.fields.parkingSpaces")}
+                    value={property.parkingSpaces}
+                    icon={Package}
+                  />
+                )}
+                {property.totalArea && (
+                  <InfoCard
+                    label={t("propertyForm.fields.totalArea")}
+                    value={`${property.totalArea} m²`}
+                    icon={Maximize2}
+                  />
+                )}
+                {property.builtArea && (
+                  <InfoCard
+                    label={t("propertyForm.fields.builtArea")}
+                    value={`${property.builtArea} m²`}
+                    icon={Building2}
+                  />
+                )}
+                {property.floors && (
+                  <InfoCard
+                    label={t("propertyForm.fields.floors")}
+                    value={property.floors}
+                    icon={Building2}
+                  />
+                )}
+                {property.yearBuilt && (
+                  <InfoCard
+                    label={t("propertyForm.fields.yearBuilt")}
+                    value={property.yearBuilt}
+                    icon={Calendar}
+                  />
+                )}
+                {isVacationRental && property.maxGuests && (
+                  <InfoCard
+                    label={t("propertyForm.fields.maxGuests")}
+                    value={property.maxGuests}
+                    icon={Users}
+                  />
+                )}
               </div>
             ) : dynamicFeatureDetails.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

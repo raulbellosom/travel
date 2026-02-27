@@ -1,4 +1,7 @@
-import { normalizeCommercialMode, normalizeResourceType } from "./resourceModel.js";
+import {
+  normalizeCommercialMode,
+  normalizeResourceType,
+} from "./resourceModel.js";
 
 const MUSIC_CATEGORIES = Object.freeze([
   "dj",
@@ -40,7 +43,10 @@ const MUSIC_CATEGORIES = Object.freeze([
   "sonora",
 ]);
 
-const BOOKABLE_COMMERCIAL_MODES = Object.freeze(["rent_short_term", "rent_hourly"]);
+const BOOKABLE_COMMERCIAL_MODES = Object.freeze([
+  "rent_short_term",
+  "rent_hourly",
+]);
 
 const BOOKABLE_MODES_BY_CATEGORY = Object.freeze(
   Object.fromEntries(
@@ -52,7 +58,7 @@ const MUSIC_CATEGORY_I18N_KEYS = Object.freeze(
   Object.fromEntries(
     MUSIC_CATEGORIES.map((category) => [
       category,
-      `propertyForm.options.category.${category}`,
+      `client:common.enums.category.${category}`,
     ]),
   ),
 );
@@ -74,14 +80,7 @@ export const CATEGORY_BY_RESOURCE_TYPE = Object.freeze({
     "maintenance",
   ]),
   music: MUSIC_CATEGORIES,
-  vehicle: Object.freeze([
-    "car",
-    "suv",
-    "pickup",
-    "van",
-    "motorcycle",
-    "boat",
-  ]),
+  vehicle: Object.freeze(["car", "suv", "pickup", "van", "motorcycle", "boat"]),
   experience: Object.freeze([
     "tour",
     "class",
@@ -151,35 +150,41 @@ const COMMERCIAL_MODE_BY_RESOURCE_AND_CATEGORY = Object.freeze({
 });
 
 export const CATEGORY_I18N_KEY_BY_SLUG = Object.freeze({
-  house: "propertyForm.options.category.house",
-  apartment: "propertyForm.options.category.apartment",
-  land: "propertyForm.options.category.land",
-  commercial: "propertyForm.options.category.commercial",
-  office: "propertyForm.options.category.office",
-  warehouse: "propertyForm.options.category.warehouse",
-  cleaning: "propertyForm.options.category.cleaning",
-  chef: "propertyForm.options.category.chef",
-  photography: "propertyForm.options.category.photography",
-  catering: "propertyForm.options.category.catering",
-  maintenance: "propertyForm.options.category.maintenance",
+  // property
+  house: "client:common.enums.category.house",
+  apartment: "client:common.enums.category.apartment",
+  land: "client:common.enums.category.land",
+  commercial: "client:common.enums.category.commercial",
+  office: "client:common.enums.category.office",
+  warehouse: "client:common.enums.category.warehouse",
+  // service
+  cleaning: "client:common.enums.category.cleaning",
+  chef: "client:common.enums.category.chef",
+  photography: "client:common.enums.category.photography",
+  catering: "client:common.enums.category.catering",
+  maintenance: "client:common.enums.category.maintenance",
+  // music (auto-generated from MUSIC_CATEGORIES)
   ...MUSIC_CATEGORY_I18N_KEYS,
-  car: "propertyForm.options.category.car",
-  suv: "propertyForm.options.category.suv",
-  pickup: "propertyForm.options.category.pickup",
-  van: "propertyForm.options.category.van",
-  motorcycle: "propertyForm.options.category.motorcycle",
-  boat: "propertyForm.options.category.boat",
-  tour: "propertyForm.options.category.tour",
-  class: "propertyForm.options.category.class",
-  workshop: "propertyForm.options.category.workshop",
-  adventure: "propertyForm.options.category.adventure",
-  wellness: "propertyForm.options.category.wellness",
-  gastronomy: "propertyForm.options.category.gastronomy",
-  event_hall: "propertyForm.options.category.eventHall",
-  commercial_local: "propertyForm.options.category.commercialLocal",
-  studio: "propertyForm.options.category.studio",
-  coworking: "propertyForm.options.category.coworking",
-  meeting_room: "propertyForm.options.category.meetingRoom",
+  // vehicle
+  car: "client:common.enums.category.car",
+  suv: "client:common.enums.category.suv",
+  pickup: "client:common.enums.category.pickup",
+  van: "client:common.enums.category.van",
+  motorcycle: "client:common.enums.category.motorcycle",
+  boat: "client:common.enums.category.boat",
+  // experience
+  tour: "client:common.enums.category.tour",
+  class: "client:common.enums.category.class",
+  workshop: "client:common.enums.category.workshop",
+  adventure: "client:common.enums.category.adventure",
+  wellness: "client:common.enums.category.wellness",
+  gastronomy: "client:common.enums.category.gastronomy",
+  // venue
+  event_hall: "client:common.enums.category.event_hall",
+  commercial_local: "client:common.enums.category.commercial_local",
+  studio: "client:common.enums.category.studio",
+  coworking: "client:common.enums.category.coworking",
+  meeting_room: "client:common.enums.category.meeting_room",
 });
 
 export const normalizeCategory = (value) =>
@@ -195,14 +200,19 @@ const getDefaultCommercialMode = (resourceType) =>
 
 export const getAllowedCategories = (resourceType) => {
   const normalizedType = normalizeResourceType(resourceType);
-  return [...(CATEGORY_BY_RESOURCE_TYPE[normalizedType] || CATEGORY_BY_RESOURCE_TYPE.property)];
+  return [
+    ...(CATEGORY_BY_RESOURCE_TYPE[normalizedType] ||
+      CATEGORY_BY_RESOURCE_TYPE.property),
+  ];
 };
 
 export const getAllowedCommercialModes = (resourceType, category = "") => {
   const normalizedType = normalizeResourceType(resourceType);
   const normalizedCategory = normalizeCategory(category);
   const byCategory =
-    COMMERCIAL_MODE_BY_RESOURCE_AND_CATEGORY[normalizedType]?.[normalizedCategory];
+    COMMERCIAL_MODE_BY_RESOURCE_AND_CATEGORY[normalizedType]?.[
+      normalizedCategory
+    ];
   if (Array.isArray(byCategory) && byCategory.length > 0) {
     return [...byCategory];
   }

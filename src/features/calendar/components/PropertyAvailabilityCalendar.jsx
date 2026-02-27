@@ -268,8 +268,24 @@ export default function PropertyAvailabilityCalendar({
     <div className="space-y-4">
       {/* ── Inline calendar card ─────────────────────────── */}
       <div
-        className="overflow-hidden rounded-2xl border border-slate-200 bg-linear-to-b from-white to-slate-50/70 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-950"
-        onMouseEnter={() => setIsDesktopSecondMonthVisible(true)}
+        className={[
+          "overflow-hidden rounded-2xl border bg-linear-to-b from-white to-slate-50/70 dark:from-slate-900 dark:to-slate-950 transition-all duration-300 ease-out",
+          isDesktopSecondMonthVisible
+            ? "relative z-50 border-cyan-200 shadow-2xl dark:border-cyan-800"
+            : "border-slate-200 shadow-sm dark:border-slate-700",
+        ].join(" ")}
+        style={
+          isDesktopSecondMonthVisible
+            ? {
+                width: "48rem",
+                maxWidth: "90vw",
+                marginLeft: "calc(100% - 48rem)",
+              }
+            : undefined
+        }
+        onMouseEnter={() => {
+          if (window.innerWidth >= 1024) setIsDesktopSecondMonthVisible(true);
+        }}
         onMouseLeave={() => setIsDesktopSecondMonthVisible(false)}
       >
         {/* Navigation header */}
