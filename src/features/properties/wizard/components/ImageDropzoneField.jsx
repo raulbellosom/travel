@@ -60,12 +60,13 @@ function normalizeExistingImages(images) {
     .filter(Boolean);
 }
 
+const EMPTY_ARRAY = [];
 export default function ImageDropzoneField({
   value,
   error,
   t,
   onChange,
-  existingImages = [],
+  existingImages = EMPTY_ARRAY,
   existingImagesLoading = false,
 }) {
   const galleryInputRef = useRef(null);

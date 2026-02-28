@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { X } from "lucide-react";
 
 /**
@@ -209,7 +209,7 @@ const Chip = React.forwardRef(
     ].join(" ");
 
     return (
-      <motion.span
+      <m.span
         ref={ref}
         id={chipId}
         className={chipStyles}
@@ -254,7 +254,7 @@ const Chip = React.forwardRef(
             <X className={iconSizes[size] || iconSizes.md} />
           </button>
         )}
-      </motion.span>
+      </m.span>
     );
   }
 );

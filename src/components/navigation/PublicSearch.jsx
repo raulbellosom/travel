@@ -3,7 +3,7 @@ import { Search, X, MapPin, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion as Motion } from "framer-motion";
+import { AnimatePresence, m as Motion } from "framer-motion";
 import {
   getOptimizedImage,
   getFileViewUrl,
@@ -19,6 +19,149 @@ import {
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=200&q=60";
+
+const SuggestionList = ({
+  compact = false,
+  dropdownRef,
+  trimmedQuery,
+  liveLoading,
+  decoratedLiveResults,
+  amenityMatches,
+  suggestions,
+  activeIndex,
+  setActiveIndex,
+  goTo,
+  language,
+  t,
+}) => {
+  let indexOffset = trimmedQuery.length > 0 ? 1 : 0;
+
+  return (
+    <div ref={dropdownRef} className={cn("py-2", compact && "px-1")}>
+      {trimmedQuery.length >= PUBLIC_SEARCH_MIN_QUERY_LENGTH && (
+        <div className="border-b border-slate-100 dark:border-slate-700">
+          {liveLoading ? (
+            <div className="flex items-center justify-center gap-2 py-4 text-xs text-slate-400">
+              <Search size={14} className="animate-pulse" />
+              {t("publicSearch.searching")}
+            </div>
+          ) : decoratedLiveResults.length > 0 ? (
+            <div className="py-1.5">
+              <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                {t("publicSearch.properties")}
+              </p>
+              {decoratedLiveResults.map((property) => {
+                const currentIndex = indexOffset++;
+                return (
+                  <button
+                    key={property.$id}
+                    type="button"
+                    data-nav-item
+                    onClick={() =>
+                      goTo(getPublicPropertyRoute(property.slug, language))
+                    }
+                    onMouseEnter={() => setActiveIndex(currentIndex)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
+                      activeIndex === currentIndex
+                        ? "bg-cyan-50 dark:bg-slate-700"
+                        : "hover:bg-cyan-50 dark:hover:bg-slate-700",
+                    )}
+                  >
+                    <LazyImage
+                      src={property.previewImage}
+                      alt={property.title}
+                      className="h-11 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        {property.title}
+                      </p>
+                      <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <MapPin size={10} />
+                        {property.city}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs font-bold text-cyan-700 dark:text-cyan-400">
+                      {property.formattedPrice}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="px-3 py-3 text-center text-xs text-slate-400 dark:text-slate-500">
+              {t("publicSearch.noResults")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {amenityMatches.length > 0 && (
+        <>
+          <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            {t("publicSearch.matchingAmenities")}
+          </p>
+          {amenityMatches.map((amenity) => {
+            const currentIndex = indexOffset++;
+            return (
+              <button
+                key={amenity.slug}
+                type="button"
+                data-nav-item
+                onClick={() =>
+                  goTo(`/buscar?q=${encodeURIComponent(amenity.displayName)}`)
+                }
+                onMouseEnter={() => setActiveIndex(currentIndex)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-300",
+                  activeIndex === currentIndex
+                    ? "bg-cyan-50 dark:bg-slate-700"
+                    : "hover:bg-cyan-50 dark:hover:bg-slate-700",
+                )}
+              >
+                <Search
+                  size={13}
+                  className="text-cyan-600 dark:text-cyan-400"
+                />
+                <span>
+                  {t("publicSearch.propertiesWith")}{" "}
+                  <strong>{amenity.displayName}</strong>
+                </span>
+              </button>
+            );
+          })}
+        </>
+      )}
+
+      <p className="px-3 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        {t("publicSearch.quickFilters")}
+      </p>
+      {suggestions.map((suggestion) => {
+        const currentIndex = indexOffset++;
+        const Icon = suggestion.icon;
+        return (
+          <button
+            key={suggestion.to}
+            type="button"
+            data-nav-item
+            onClick={() => goTo(suggestion.to)}
+            onMouseEnter={() => setActiveIndex(currentIndex)}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-300",
+              activeIndex === currentIndex
+                ? "bg-cyan-50 dark:bg-slate-700"
+                : "hover:bg-cyan-50 dark:hover:bg-slate-700",
+            )}
+          >
+            <Icon size={15} className="text-cyan-600 dark:text-cyan-400" />
+            <span>{suggestion.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 const PublicSearch = ({
   showDesktopInput = true,
@@ -214,136 +357,6 @@ const PublicSearch = ({
     [activeIndex, closeAll, doSearch, navItems, trimmedQuery],
   );
 
-  const SuggestionList = ({ compact = false }) => {
-    let indexOffset = trimmedQuery.length > 0 ? 1 : 0;
-
-    return (
-      <div ref={dropdownRef} className={cn("py-2", compact && "px-1")}>
-        {trimmedQuery.length >= PUBLIC_SEARCH_MIN_QUERY_LENGTH && (
-          <div className="border-b border-slate-100 dark:border-slate-700">
-            {liveLoading ? (
-              <div className="flex items-center justify-center gap-2 py-4 text-xs text-slate-400">
-                <Search size={14} className="animate-pulse" />
-                {t("publicSearch.searching")}
-              </div>
-            ) : decoratedLiveResults.length > 0 ? (
-              <div className="py-1.5">
-                <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                  {t("publicSearch.properties")}
-                </p>
-                {decoratedLiveResults.map((property) => {
-                  const currentIndex = indexOffset++;
-                  return (
-                    <button
-                      key={property.$id}
-                      type="button"
-                      data-nav-item
-                      onClick={() =>
-                        goTo(getPublicPropertyRoute(property.slug, language))
-                      }
-                      onMouseEnter={() => setActiveIndex(currentIndex)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
-                        activeIndex === currentIndex
-                          ? "bg-cyan-50 dark:bg-slate-700"
-                          : "hover:bg-cyan-50 dark:hover:bg-slate-700",
-                      )}
-                    >
-                      <LazyImage
-                        src={property.previewImage}
-                        alt={property.title}
-                        className="h-11 w-14 shrink-0 rounded-lg object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                          {property.title}
-                        </p>
-                        <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                          <MapPin size={10} />
-                          {property.city}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-xs font-bold text-cyan-700 dark:text-cyan-400">
-                        {property.formattedPrice}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="px-3 py-3 text-center text-xs text-slate-400 dark:text-slate-500">
-                {t("publicSearch.noResults")}
-              </p>
-            )}
-          </div>
-        )}
-
-        {amenityMatches.length > 0 && (
-          <>
-            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-              {t("publicSearch.matchingAmenities")}
-            </p>
-            {amenityMatches.map((amenity) => {
-              const currentIndex = indexOffset++;
-              return (
-                <button
-                  key={amenity.slug}
-                  type="button"
-                  data-nav-item
-                  onClick={() =>
-                    goTo(`/buscar?q=${encodeURIComponent(amenity.displayName)}`)
-                  }
-                  onMouseEnter={() => setActiveIndex(currentIndex)}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-300",
-                    activeIndex === currentIndex
-                      ? "bg-cyan-50 dark:bg-slate-700"
-                      : "hover:bg-cyan-50 dark:hover:bg-slate-700",
-                  )}
-                >
-                  <Search
-                    size={13}
-                    className="text-cyan-600 dark:text-cyan-400"
-                  />
-                  <span>
-                    {t("publicSearch.propertiesWith")}{" "}
-                    <strong>{amenity.displayName}</strong>
-                  </span>
-                </button>
-              );
-            })}
-          </>
-        )}
-
-        <p className="px-3 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-          {t("publicSearch.quickFilters")}
-        </p>
-        {suggestions.map((suggestion) => {
-          const currentIndex = indexOffset++;
-          const Icon = suggestion.icon;
-          return (
-            <button
-              key={suggestion.to}
-              type="button"
-              data-nav-item
-              onClick={() => goTo(suggestion.to)}
-              onMouseEnter={() => setActiveIndex(currentIndex)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-300",
-                activeIndex === currentIndex
-                  ? "bg-cyan-50 dark:bg-slate-700"
-                  : "hover:bg-cyan-50 dark:hover:bg-slate-700",
-              )}
-            >
-              <Icon size={15} className="text-cyan-600 dark:text-cyan-400" />
-              <span>{suggestion.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
   const mobileOverlay = (
     <AnimatePresence>
       {isMobileOpen && (
@@ -369,7 +382,6 @@ const PublicSearch = ({
                 <input
                   ref={mobileInputRef}
                   type="text"
-                  autoFocus
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={onKeyDown}
@@ -405,7 +417,20 @@ const PublicSearch = ({
                   </button>
                 </div>
               ) : null}
-              <SuggestionList compact />
+              <SuggestionList
+                compact
+                dropdownRef={dropdownRef}
+                trimmedQuery={trimmedQuery}
+                liveLoading={liveLoading}
+                decoratedLiveResults={decoratedLiveResults}
+                amenityMatches={amenityMatches}
+                suggestions={suggestions}
+                activeIndex={activeIndex}
+                setActiveIndex={setActiveIndex}
+                goTo={goTo}
+                language={language}
+                t={t}
+              />
             </div>
           </Motion.section>
         </Motion.div>
@@ -492,7 +517,19 @@ const PublicSearch = ({
                     </button>
                   </div>
                 )}
-                <SuggestionList />
+                <SuggestionList
+                  dropdownRef={dropdownRef}
+                  trimmedQuery={trimmedQuery}
+                  liveLoading={liveLoading}
+                  decoratedLiveResults={decoratedLiveResults}
+                  amenityMatches={amenityMatches}
+                  suggestions={suggestions}
+                  activeIndex={activeIndex}
+                  setActiveIndex={setActiveIndex}
+                  goTo={goTo}
+                  language={language}
+                  t={t}
+                />
               </Motion.div>
             )}
           </AnimatePresence>

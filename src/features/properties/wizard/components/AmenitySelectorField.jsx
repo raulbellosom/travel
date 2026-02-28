@@ -25,13 +25,14 @@ function normalizeValue(value) {
   );
 }
 
+const EMPTY_ARRAY = [];
 export default function AmenitySelectorField({
   value,
   error,
   t,
   field,
   onChange,
-  amenitiesOptions = [],
+  amenitiesOptions = EMPTY_ARRAY,
   amenitiesLoading = false,
   resourceType = "property",
   category = "",

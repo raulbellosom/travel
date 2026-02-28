@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   getMonthGridDays,
   isSameMonth,
@@ -20,15 +20,16 @@ import CalendarEventCard from "./CalendarEventCard";
  * @param {Function} props.onDayClick
  * @param {Function} props.onEventClick
  */
+const EMPTY_OBJECT = {};
 export default function CalendarMonthView({
   currentDate,
-  eventsByDate = {},
+  eventsByDate = EMPTY_OBJECT,
   onDayClick,
   onEventClick,
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
 
   const days = useMemo(() => getMonthGridDays(currentDate), [currentDate]);
 
@@ -54,9 +55,9 @@ export default function CalendarMonthView({
     >
       {/* Day headers */}
       <div className="grid grid-cols-7 mb-1">
-        {dayHeaders.map((h, i) => (
+        {dayHeaders.map((h) => (
           <div
-            key={i}
+            key={h.short}
             className="text-center py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
           >
             <span className="hidden sm:inline">{h.short}</span>
@@ -67,19 +68,23 @@ export default function CalendarMonthView({
 
       {/* Day grid */}
       <div className="grid grid-cols-7 border-t border-l border-gray-200 dark:border-gray-700">
-        {days.map((day, idx) => {
+        {days.map((day) => {
           const key = dateKey(day);
           const events = eventsByDate[key] || [];
           const inMonth = isSameMonth(day, currentDate);
           const today = isToday(day);
 
           return (
-            <button
-              key={idx}
-              type="button"
+            <div
+              key={key}
+              role="button"
+              tabIndex={0}
               onClick={() => onDayClick?.(day)}
+              onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") && onDayClick?.(day)
+              }
               className={[
-                "relative border-r border-b border-gray-200 dark:border-gray-700 p-1 sm:p-2 text-left transition-colors min-h-15 sm:min-h-25 lg:min-h-30",
+                "relative border-r border-b border-gray-200 dark:border-gray-700 p-1 sm:p-2 text-left transition-colors min-h-15 sm:min-h-25 lg:min-h-30 cursor-pointer",
                 inMonth
                   ? "bg-white dark:bg-gray-900"
                   : "bg-gray-50 dark:bg-gray-900/50",
@@ -105,12 +110,12 @@ export default function CalendarMonthView({
                 <>
                   {/* Mobile: colored dots */}
                   <div className="flex gap-0.5 mt-1 sm:hidden flex-wrap">
-                    {events.slice(0, 3).map((ev, i) => {
+                    {events.slice(0, 3).map((ev) => {
                       const color =
                         STATUS_COLORS[ev.status] || STATUS_COLORS.pending;
                       return (
                         <span
-                          key={i}
+                          key={ev.$id}
                           className={`w-2 h-2 rounded-full ${color.dot}`}
                         />
                       );
@@ -140,7 +145,7 @@ export default function CalendarMonthView({
                   </div>
                 </>
               )}
-            </button>
+            </div>
           );
         })}
       </div>

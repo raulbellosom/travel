@@ -20,7 +20,7 @@ import SkeletonLoader from "../../../components/common/molecules/SkeletonLoader"
 
 const ReservationEditPage = () => {
   const { id } = useParams();
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const { user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();

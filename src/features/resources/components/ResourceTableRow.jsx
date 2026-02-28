@@ -18,10 +18,7 @@ import {
   getCommercialModeLabel,
 } from "../../../utils/resourceLabels";
 import { getResourceDetails } from "../../../utils/getResourceDetails";
-import {
-  getInternalEditPropertyRoute,
-  getInternalPropertyDetailRoute,
-} from "../../../utils/internalRoutes";
+import { getInternalPropertyDetailRoute } from "../../../utils/internalRoutes";
 
 /**
  * ResourceTableRow
@@ -46,6 +43,7 @@ import {
  * @param {Function} formatDate - Date formatter function
  * @param {React.Ref} triggerRef - Ref callback for action menu trigger
  */
+const EMPTY_ARRAY = [];
 const ResourceTableRow = ({
   item,
   isFocused,
@@ -53,7 +51,7 @@ const ResourceTableRow = ({
   thumbnailUrl,
   fileId,
   statusOptions,
-  staffUsers = [],
+  staffUsers = EMPTY_ARRAY,
   loadingStaff = false,
   canEditResponsible = false,
   onStatusChange,

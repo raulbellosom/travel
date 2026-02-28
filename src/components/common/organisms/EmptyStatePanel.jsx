@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Link } from "react-router-dom";
 
 const EmptyStatePanel = ({
@@ -13,7 +13,7 @@ const EmptyStatePanel = ({
   className = "",
 }) => {
   return (
-    <motion.section
+    <m.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
@@ -28,13 +28,13 @@ const EmptyStatePanel = ({
         className={`relative mx-auto flex max-w-xl flex-col items-center text-center ${compact ? "gap-2" : "gap-3"}`}
       >
         {Icon ? (
-          <motion.div
+          <m.div
             animate={{ y: [0, -4, 0] }}
             transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
             className="grid h-14 w-14 place-items-center rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-900/50 dark:bg-cyan-900/20 dark:text-cyan-200"
           >
             <Icon size={24} />
-          </motion.div>
+          </m.div>
         ) : null}
 
         <h3
@@ -69,7 +69,7 @@ const EmptyStatePanel = ({
 
         {action ? action : null}
       </div>
-    </motion.section>
+    </m.section>
   );
 };
 

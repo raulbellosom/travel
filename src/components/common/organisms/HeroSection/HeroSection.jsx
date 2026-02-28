@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Home as HomeIcon, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import Button from "../../atoms/Button";
 import Select from "../../atoms/Select";
 
@@ -72,33 +72,33 @@ const HeroSection = ({ className = "" }) => {
       <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Left Column - Text Content */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="flex flex-col justify-center space-y-6"
           >
             <div className="space-y-4">
-              <motion.h1
+              <m.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
               >
                 {t("client:hero.title")}
-              </motion.h1>
-              <motion.p
+              </m.h1>
+              <m.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-lg leading-relaxed text-slate-200 sm:text-xl"
               >
                 {t("client:hero.subtitle")}
-              </motion.p>
+              </m.p>
             </div>
 
             {/* Quick Stats */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
@@ -131,11 +131,11 @@ const HeroSection = ({ className = "" }) => {
                   {t("client:hero.stats.cities")}
                 </p>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
 
           {/* Right Column - Search Card */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -213,7 +213,7 @@ const HeroSection = ({ className = "" }) => {
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </div>
 

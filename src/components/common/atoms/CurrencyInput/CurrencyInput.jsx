@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 /**
  * CurrencyInput component with locale-aware formatting and validation.
@@ -30,11 +30,11 @@ const CurrencyInput = React.forwardRef(
       id,
       name,
       autoComplete,
-      autoFocus = false,
-      "aria-describedby": ariaDescribedBy,
+      autoFocus: _autoFocus = false,
+      "aria-describedby": _ariaDescribedBy,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [focused, setFocused] = useState(false);
     const [internalValue, setInternalValue] = useState(value ?? "");
@@ -59,7 +59,11 @@ const CurrencyInput = React.forwardRef(
 
     // Parse numeric value from formatted string
     const parseValue = (formattedValue) => {
-      if (formattedValue === "" || formattedValue === null || formattedValue === undefined) {
+      if (
+        formattedValue === "" ||
+        formattedValue === null ||
+        formattedValue === undefined
+      ) {
         return null;
       }
 
@@ -89,7 +93,9 @@ const CurrencyInput = React.forwardRef(
 
       const currentValue = value !== undefined ? value : internalValue;
       const numericValue =
-        typeof currentValue === "number" ? currentValue : parseValue(currentValue);
+        typeof currentValue === "number"
+          ? currentValue
+          : parseValue(currentValue);
 
       if (numericValue === null) {
         setDisplayValue("");
@@ -130,7 +136,11 @@ const CurrencyInput = React.forwardRef(
     const handleFocus = (e) => {
       setFocused(true);
       const currentValue = value !== undefined ? value : internalValue;
-      if (currentValue !== "" && currentValue !== null && currentValue !== undefined) {
+      if (
+        currentValue !== "" &&
+        currentValue !== null &&
+        currentValue !== undefined
+      ) {
         setDisplayValue(String(currentValue));
       }
       onFocus?.(e);
@@ -203,8 +213,8 @@ const CurrencyInput = React.forwardRef(
     const stateStyles = hasError
       ? "border-red-500 focus:border-red-500 focus:ring-red-500"
       : hasSuccess
-      ? "border-green-500 focus:border-green-500 focus:ring-green-500"
-      : "";
+        ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+        : "";
 
     // Label styles
     const labelStyles = [
@@ -221,8 +231,8 @@ const CurrencyInput = React.forwardRef(
       hasError
         ? "text-red-600 dark:text-red-400"
         : hasSuccess
-        ? "text-green-600 dark:text-green-400"
-        : "text-gray-500 dark:text-gray-400",
+          ? "text-green-600 dark:text-green-400"
+          : "text-gray-500 dark:text-gray-400",
     ].join(" ");
 
     // Combine input styles
@@ -246,7 +256,7 @@ const CurrencyInput = React.forwardRef(
           </label>
         )}
 
-        <motion.input
+        <m.input
           ref={ref}
           id={inputId}
           name={name}
@@ -261,7 +271,6 @@ const CurrencyInput = React.forwardRef(
           readOnly={readOnly}
           required={required}
           autoComplete={autoComplete}
-          autoFocus={autoFocus}
           aria-describedby={
             [
               helperText ? helperTextId : undefined,
@@ -294,7 +303,7 @@ const CurrencyInput = React.forwardRef(
         )}
       </div>
     );
-  }
+  },
 );
 
 CurrencyInput.displayName = "CurrencyInput";

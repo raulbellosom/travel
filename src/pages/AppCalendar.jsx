@@ -51,8 +51,8 @@ const AppCalendar = () => {
         </p>
       </div>
 
-      {/* Calendar — prop name kept as `properties` for AdminCalendar compat */}
-      <AdminCalendar properties={resources} />
+      {/* Calendar */}
+      <AdminCalendar resources={resources} />
     </div>
   );
 };

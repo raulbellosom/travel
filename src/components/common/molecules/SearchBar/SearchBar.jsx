@@ -1,5 +1,5 @@
 ﻿import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { m, AnimatePresence } from "motion/react";
 import { Search, MapPin, Calendar, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Select } from "../../atoms";
@@ -21,7 +21,7 @@ const SearchBar = ({
   const [dateRange, setDateRange] = useState(null);
   const [isExpanded, setIsExpanded] = useState(!collapsed);
 
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
 
   const tabs = [
     { id: "rentals", label: t("searchBar.tabs.rentals"), icon: MapPin },

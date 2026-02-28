@@ -177,6 +177,7 @@ const MapPickerModal = ({
                   <li
                     key={`${result.lat}-${result.lng}-${index}`}
                     role="option"
+                    aria-selected={selected !== null && selected.lat === result.lat && selected.lng === result.lng}
                   >
                     <button
                       type="button"
@@ -293,3 +294,4 @@ const MapPickerModal = ({
 };
 
 export default MapPickerModal;
+

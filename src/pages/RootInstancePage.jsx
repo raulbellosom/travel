@@ -355,7 +355,7 @@ const RootInstancePage = () => {
               <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
                 {Object.entries(MODULE_DISPLAY_GROUPS).map(
                   ([groupName, group]) => {
-                    const activeInGroup = group.keys.filter((k) =>
+                    const _activeInGroup = group.keys.filter((k) =>
                       enabledSet.has(k),
                     );
                     return (

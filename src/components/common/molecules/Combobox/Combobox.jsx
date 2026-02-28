@@ -15,8 +15,9 @@ const normalizeText = (value = "") =>
     .toLowerCase()
     .trim();
 
+const EMPTY_ARRAY = [];
 const Combobox = ({
-  options = [],
+  options = EMPTY_ARRAY,
   value = "",
   onChange,
   onInputChange,

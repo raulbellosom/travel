@@ -438,10 +438,14 @@ const Team = () => {
     return filteredStaff.slice(start, start + effectivePageSize);
   }, [effectivePageSize, filteredStaff, page, pageSize]);
 
+  const effectiveRowActionMenu = rowActionMenu && !loadingList && paginatedStaff.some((s) => s.$id === rowActionMenu.userId)
+    ? rowActionMenu
+    : null;
+
   const rowActionItem = useMemo(() => {
-    if (!rowActionMenu?.userId) return null;
-    return staff.find((item) => item.$id === rowActionMenu.userId) || null;
-  }, [rowActionMenu?.userId, staff]);
+    if (!effectiveRowActionMenu?.userId) return null;
+    return staff.find((item) => item.$id === effectiveRowActionMenu.userId) || null;
+  }, [effectiveRowActionMenu?.userId, staff]);
 
   useEffect(() => {
     if (!focusId || filteredStaff.length === 0) return;
@@ -456,16 +460,6 @@ const Team = () => {
     row?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [focusId, loadingList, page, paginatedStaff.length]);
 
-  useEffect(() => {
-    setRowActionMenu(null);
-  }, [
-    filters.role,
-    filters.search,
-    filters.status,
-    page,
-    pageSize,
-    loadingList,
-  ]);
 
   const resetForm = () => {
     if (isBlobUrl(form.avatarPreviewUrl)) {
@@ -868,14 +862,14 @@ const Team = () => {
     const closeOnViewportChange = () => closeRowActionMenu();
 
     document.addEventListener("mousedown", closeOnOutsideClick);
-    document.addEventListener("touchstart", closeOnOutsideClick);
+    document.addEventListener("touchstart", closeOnOutsideClick, { passive: true });
     document.addEventListener("keydown", closeOnEscape);
     window.addEventListener("resize", closeOnViewportChange);
     window.addEventListener("scroll", closeOnViewportChange, true);
 
     return () => {
       document.removeEventListener("mousedown", closeOnOutsideClick);
-      document.removeEventListener("touchstart", closeOnOutsideClick);
+      document.removeEventListener("touchstart", closeOnOutsideClick, { passive: true });
       document.removeEventListener("keydown", closeOnEscape);
       window.removeEventListener("resize", closeOnViewportChange);
       window.removeEventListener("scroll", closeOnViewportChange, true);
@@ -925,7 +919,7 @@ const Team = () => {
         defaultValue: "Abrir menu de acciones",
       })}
       aria-haspopup="menu"
-      aria-expanded={rowActionMenu?.userId === item.$id}
+      aria-expanded={effectiveRowActionMenu?.userId === item.$id}
       className={`inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 ${
         compact ? "h-9 w-9" : "h-10 w-10"
       }`}
@@ -1229,7 +1223,7 @@ const Team = () => {
         ) : null}
       </section>
 
-      {rowActionMenu && rowActionItem && typeof document !== "undefined"
+      {effectiveRowActionMenu && rowActionItem && typeof document !== "undefined"
         ? createPortal(
             <div
               ref={rowActionMenuRef}
@@ -1239,9 +1233,9 @@ const Team = () => {
               })}
               className="fixed z-[130] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
               style={{
-                top: `${rowActionMenu.top}px`,
-                left: `${rowActionMenu.left}px`,
-                width: `${rowActionMenu.width}px`,
+                top: `${effectiveRowActionMenu.top}px`,
+                left: `${effectiveRowActionMenu.left}px`,
+                width: `${effectiveRowActionMenu.width}px`,
               }}
             >
               <div className="p-1.5">

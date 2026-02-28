@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 export default function ComponentSection({
   title,
@@ -8,7 +8,7 @@ export default function ComponentSection({
   className = "",
 }) {
   return (
-    <motion.section
+    <m.section
       id={id}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -22,6 +22,6 @@ export default function ComponentSection({
         <p className="text-gray-600 dark:text-gray-400">{description}</p>
       </div>
       <div className="space-y-8">{children}</div>
-    </motion.section>
+    </m.section>
   );
 }

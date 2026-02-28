@@ -15,11 +15,13 @@ import { Spinner } from "../../../components/common";
 /**
  * AdminCalendar – full calendar experience for the admin dashboard.
  * Composes all calendar views, filters, and event interactions.
+ * Resource-aware: supports all resource types, commercial modes, and booking types.
  *
  * @param {Object} props
- * @param {Array} props.properties - List of properties for filtering
+ * @param {Array} props.resources - List of resources for filtering and enrichment
  */
-export default function AdminCalendar({ properties = [] }) {
+const EMPTY_ARRAY = [];
+export default function AdminCalendar({ resources = EMPTY_ARRAY }) {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -35,17 +37,26 @@ export default function AdminCalendar({ properties = [] }) {
   } = useCalendar({ defaultView: "month" });
 
   const [filters, setFilters] = useState({
-    propertyId: "",
+    resourceId: "",
+    resourceType: "",
+    commercialMode: "",
     status: "",
     paymentStatus: "",
   });
 
-  const { eventsByDate, rangeReservations, loading, error, refresh } =
-    useCalendarReservations({
-      userId: user?.$id,
-      range,
-      filters,
-    });
+  const {
+    eventsByDate,
+    rangeReservations,
+    resourceMap,
+    loading,
+    error,
+    refresh,
+  } = useCalendarReservations({
+    userId: user?.$id,
+    range,
+    filters,
+    resources,
+  });
 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -83,6 +94,7 @@ export default function AdminCalendar({ properties = [] }) {
             currentDate={currentDate}
             eventsByDate={eventsByDate}
             onEventClick={handleEventClick}
+            resourceMap={resourceMap}
           />
         );
       case "week":
@@ -132,7 +144,7 @@ export default function AdminCalendar({ properties = [] }) {
       <CalendarFilters
         filters={filters}
         onFiltersChange={setFilters}
-        properties={properties}
+        resources={resources}
       />
 
       {/* Stats bar */}
@@ -174,6 +186,7 @@ export default function AdminCalendar({ properties = [] }) {
           setModalOpen(false);
           setSelectedEvent(null);
         }}
+        resourceMap={resourceMap}
       />
     </div>
   );

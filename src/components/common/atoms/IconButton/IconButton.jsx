@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 /**
  * IconButton component for actions with only an icon.
@@ -127,7 +127,7 @@ const IconButton = React.forwardRef(
     }
 
     return (
-      <motion.button
+      <m.button
         ref={ref}
         type={type}
         className={buttonStyles}
@@ -164,7 +164,7 @@ const IconButton = React.forwardRef(
         ) : (
           Icon && <Icon className={iconSize} aria-hidden="true" />
         )}
-      </motion.button>
+      </m.button>
     );
   }
 );

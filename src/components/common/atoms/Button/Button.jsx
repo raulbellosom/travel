@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 /**
  * Button component with multiple variants, sizes, and states.
@@ -189,7 +189,7 @@ const Button = React.forwardRef(
     );
 
     return (
-      <motion.button
+      <m.button
         ref={ref}
         type={type}
         className={buttonStyles}
@@ -204,7 +204,7 @@ const Button = React.forwardRef(
         {...props}
       >
         {buttonContent}
-      </motion.button>
+      </m.button>
     );
   }
 );

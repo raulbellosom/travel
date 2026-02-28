@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import clsx from "clsx";
 
 /**
@@ -48,7 +48,7 @@ const Card = ({
 
   const cardStyles = clsx([...baseStyles, ...hoverStyles, className]);
 
-  const Component = onClick ? motion.div : "div";
+  const Component = onClick ? m.div : "div";
 
   return (
     <Component

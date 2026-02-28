@@ -19,12 +19,12 @@ import env from "../env";
 const AuthContext = createContext(null);
 const BASE_PREFERENCE_FIELDS = new Set(["theme", "locale"]);
 
-const normalizeRole = (role) =>
+const _normalizeRole = (role) =>
   String(role || "")
     .trim()
     .toLowerCase();
 
-const sanitizePreferencesPatch = (patch, role) => {
+const sanitizePreferencesPatch = (patch, _role) => {
   const source = patch && typeof patch === "object" ? patch : {};
   const allowedFields = BASE_PREFERENCE_FIELDS;
   const safePatch = {};
@@ -41,6 +41,7 @@ const sanitizePreferencesPatch = (patch, role) => {
 
 export { AuthContext };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

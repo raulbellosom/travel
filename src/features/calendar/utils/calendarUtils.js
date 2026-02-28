@@ -220,24 +220,46 @@ export const STATUS_COLORS = {
   },
 };
 
-/** Get events for a specific day from reservations list */
+/** Get events for a specific day from reservations list (supports all booking types) */
 export const getEventsForDay = (date, reservations) => {
   const dayStart = stripTime(date);
   return reservations.filter((r) => {
-    const checkIn = stripTime(new Date(r.checkInDate));
-    const checkOut = stripTime(new Date(r.checkOutDate));
-    return dayStart >= checkIn && dayStart <= checkOut;
+    // For time_slot / fixed_event: use startDateTime/endDateTime if available
+    if (r.startDateTime && r.endDateTime) {
+      const start = stripTime(new Date(r.startDateTime));
+      const end = stripTime(new Date(r.endDateTime));
+      if (dayStart >= start && dayStart <= end) return true;
+    }
+    // For date_range / fallback: use checkInDate/checkOutDate
+    if (r.checkInDate && r.checkOutDate) {
+      const checkIn = stripTime(new Date(r.checkInDate));
+      const checkOut = stripTime(new Date(r.checkOutDate));
+      if (dayStart >= checkIn && dayStart <= checkOut) return true;
+    }
+    return false;
   });
 };
 
-/** Group reservations by date key for fast lookup */
+/** Group reservations by date key for fast lookup (supports all booking types) */
 export const groupReservationsByDate = (reservations) => {
   const map = {};
   for (const r of reservations) {
-    const checkIn = stripTime(new Date(r.checkInDate));
-    const checkOut = stripTime(new Date(r.checkOutDate));
-    let cur = new Date(checkIn);
-    while (cur <= checkOut) {
+    let startDate = null;
+    let endDate = null;
+
+    // Prefer startDateTime/endDateTime for time_slot/fixed_event
+    if (r.startDateTime && r.endDateTime) {
+      startDate = stripTime(new Date(r.startDateTime));
+      endDate = stripTime(new Date(r.endDateTime));
+    } else if (r.checkInDate && r.checkOutDate) {
+      startDate = stripTime(new Date(r.checkInDate));
+      endDate = stripTime(new Date(r.checkOutDate));
+    }
+
+    if (!startDate || !endDate) continue;
+
+    let cur = new Date(startDate);
+    while (cur <= endDate) {
       const key = dateKey(cur);
       if (!map[key]) map[key] = [];
       map[key].push(r);
@@ -262,4 +284,101 @@ export const calculateRangePrice = (startDate, endDate, pricing = {}) => {
     cur = addDays(cur, 1);
   }
   return { total, nights, breakdown };
+};
+
+/* ── Lead schedule parser ───────────────────────────── */
+
+/**
+ * Attempt to parse schedule information from a reservation's specialRequests text.
+ * Lead-generated reservations with bookingType=manual_contact often contain a structured
+ * message like:
+ *   "... el 27/2/2026 en el horario 11:30 a.m. - 03:30 p.m. ..."
+ *   "... on 2/27/2026 from 11:30 AM - 3:30 PM ..."
+ *
+ * Returns { startDateTime, endDateTime } ISO strings or null if not parseable.
+ */
+export const parseScheduleFromText = (text) => {
+  if (!text || typeof text !== "string") return null;
+
+  // ── Try to extract date (DD/MM/YYYY or D/M/YYYY) ─────────────
+  const dateRegex = /(\d{1,2})\/(\d{1,2})\/(\d{4})/;
+  const dateMatch = text.match(dateRegex);
+  if (!dateMatch) return null;
+
+  const day = parseInt(dateMatch[1], 10);
+  const month = parseInt(dateMatch[2], 10);
+  const year = parseInt(dateMatch[3], 10);
+
+  // Validate date components
+  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 2020)
+    return null;
+
+  // ── Try to extract time range ─────────────────────────────────
+  // Pattern: HH:MM a.m./p.m./AM/PM - HH:MM a.m./p.m./AM/PM
+  const timeRegex =
+    /(\d{1,2}):(\d{2})\s*([ap]\.?m\.?)\s*[-–—]\s*(\d{1,2}):(\d{2})\s*([ap]\.?m\.?)/i;
+  const timeMatch = text.match(timeRegex);
+
+  const parseHour = (h, m, period) => {
+    let hour = parseInt(h, 10);
+    const minute = parseInt(m, 10);
+    const isAm = /^a/i.test(period);
+    const isPm = /^p/i.test(period);
+
+    if (isPm && hour !== 12) hour += 12;
+    if (isAm && hour === 12) hour = 0;
+
+    return { hour, minute };
+  };
+
+  if (timeMatch) {
+    const start = parseHour(timeMatch[1], timeMatch[2], timeMatch[3]);
+    const end = parseHour(timeMatch[4], timeMatch[5], timeMatch[6]);
+
+    const startDt = new Date(year, month - 1, day, start.hour, start.minute, 0);
+    const endDt = new Date(year, month - 1, day, end.hour, end.minute, 0);
+
+    // Handle overnight (end < start)
+    if (endDt <= startDt) endDt.setDate(endDt.getDate() + 1);
+
+    return {
+      startDateTime: startDt.toISOString(),
+      endDateTime: endDt.toISOString(),
+    };
+  }
+
+  // No time found, just use the date as a full-day event
+  const startDt = new Date(year, month - 1, day, 0, 0, 0);
+  const endDt = new Date(year, month - 1, day, 23, 59, 59);
+
+  return {
+    startDateTime: startDt.toISOString(),
+    endDateTime: endDt.toISOString(),
+  };
+};
+
+/**
+ * Enrich a reservation with parsed schedule when it's a manual_contact booking
+ * that has no startDateTime/endDateTime or checkInDate/checkOutDate.
+ * Returns a new object with injected date fields (does not mutate original).
+ */
+export const enrichReservationDates = (reservation) => {
+  if (!reservation) return reservation;
+
+  // Already has dates? Nothing to do
+  const hasDates =
+    (reservation.startDateTime && reservation.endDateTime) ||
+    (reservation.checkInDate && reservation.checkOutDate);
+  if (hasDates) return reservation;
+
+  // Try parsing from specialRequests
+  const parsed = parseScheduleFromText(reservation.specialRequests);
+  if (!parsed) return reservation;
+
+  return {
+    ...reservation,
+    startDateTime: parsed.startDateTime,
+    endDateTime: parsed.endDateTime,
+    _parsedFromText: true, // Flag for UI to know this was inferred
+  };
 };

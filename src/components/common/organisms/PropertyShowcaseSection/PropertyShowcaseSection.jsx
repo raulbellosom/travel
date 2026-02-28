@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import Button from "../../atoms/Button";
 import ListingCard from "../ListingCard";
 import Spinner from "../../atoms/Spinner";
@@ -55,7 +55,7 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
     };
   }, [limit, t]);
 
-  const handleCardClick = (property) => {
+  const handleCardClick = (_property) => {
     // Navigation handled by Link in ListingCard
   };
 
@@ -65,7 +65,7 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -85,7 +85,7 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
               {t("landing.propertyShowcase.viewAll")}
             </Button>
           </Link>
-        </motion.div>
+        </m.div>
 
         {/* Loading State */}
         {loading && (
@@ -124,7 +124,7 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
                   : [];
 
               return (
-                <motion.div
+                <m.div
                   key={property.$id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -148,7 +148,7 @@ const PropertyShowcaseSection = ({ className = "", limit = 6 }) => {
                       className="h-full transition hover:shadow-xl"
                     />
                   </Link>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>

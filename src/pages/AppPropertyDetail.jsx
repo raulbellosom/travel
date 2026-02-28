@@ -144,13 +144,16 @@ const LEAD_STATUS_COLORS = {
   closed_lost:
     "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
 };
-const LeadStatusBadge = ({ status }) => (
-  <span
-    className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${LEAD_STATUS_COLORS[status] || LEAD_STATUS_COLORS.new}`}
-  >
-    {status}
-  </span>
-);
+const LeadStatusBadge = ({ status }) => {
+  const { t } = useTranslation();
+  return (
+    <span
+      className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${LEAD_STATUS_COLORS[status] || LEAD_STATUS_COLORS.new}`}
+    >
+      {t(`leadStatus.${status}`, { defaultValue: status })}
+    </span>
+  );
+};
 
 /** FieldRow - Generic key/value display row */
 const FieldRow = ({ label, value }) => (
@@ -883,7 +886,12 @@ const AppPropertyDetail = () => {
                 label={t("propertyForm.fields.propertyType")}
                 value={t(
                   `propertyForm.options.propertyType.${property.propertyType}`,
-                  { defaultValue: property.propertyType },
+                  {
+                    defaultValue: t(
+                      `propertyForm.options.category.${property.propertyType}`,
+                      { defaultValue: property.propertyType },
+                    ),
+                  },
                 )}
                 icon={Building2}
               />

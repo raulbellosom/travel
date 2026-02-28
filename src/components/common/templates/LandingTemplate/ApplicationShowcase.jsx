@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { m, AnimatePresence, useInView } from "framer-motion";
 import { LayoutDashboard, Home, Globe, Lock } from "lucide-react";
 import { ListingsMockup, CrmMockup, WebsiteMockup } from "./Mockups";
 
@@ -19,14 +19,14 @@ const Reveal = ({ children, delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.5, delay, ease: "easeOut" }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -115,7 +115,7 @@ const ApplicationShowcase = () => {
                 }`}
               >
                 {activeTab === tab.id && (
-                  <motion.div
+                  <m.div
                     layoutId="activeTabBg"
                     className="absolute inset-0 bg-slate-900 dark:bg-white"
                     initial={false}
@@ -129,7 +129,7 @@ const ApplicationShowcase = () => {
 
                 {/* Progress bar for auto-play indicator (optional) */}
                 {activeTab === tab.id && (
-                  <motion.div
+                  <m.div
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
                     transition={{ duration: 5, ease: "linear" }}
@@ -176,7 +176,7 @@ const ApplicationShowcase = () => {
                   {/* Mobile Scaling Wrapper */}
                   <div className="absolute inset-0 origin-top-left md:static md:scale-100 transform scale-[0.55] w-[181%] h-[181%] md:w-full md:h-full">
                     <AnimatePresence mode="wait">
-                      <motion.div
+                      <m.div
                         key={activeTab}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -191,7 +191,7 @@ const ApplicationShowcase = () => {
                         {activeTab === "website" && (
                           <WebsiteMockup hideUI={true} />
                         )}
-                      </motion.div>
+                      </m.div>
                     </AnimatePresence>
                   </div>
                 </div>

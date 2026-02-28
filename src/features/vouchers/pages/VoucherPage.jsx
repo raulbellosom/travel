@@ -13,7 +13,7 @@
 import { useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowLeft, Ticket, Home, WifiOff } from "lucide-react";
 import SkeletonLoader from "../../../components/common/molecules/SkeletonLoader";
 import { usePageSeo } from "../../../hooks/usePageSeo";
@@ -24,7 +24,7 @@ import VoucherTicket from "../components/VoucherTicket";
 import VoucherHistoryPanel from "../components/VoucherHistoryPanel";
 
 /* ── Shared page header ───────────────────────────────────────────────── */
-const PageHeader = ({ t, code }) => (
+const PageHeader = ({ t, code, navigate }) => (
   <header className="mb-6">
     {/* Breadcrumb / back nav */}
     <nav className="mb-3 flex items-center gap-2 text-xs text-slate-500">
@@ -112,7 +112,7 @@ const VoucherPage = () => {
     reload: reloadHistory,
   } = useVoucherHistory();
 
-  const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [_selectedVoucher, setSelectedVoucher] = useState(null);
 
   usePageSeo({
     title: `Inmobo | ${t("voucherPage.title")}`,
@@ -138,7 +138,7 @@ const VoucherPage = () => {
     return (
       <div className="min-h-screen pt-20 pb-12 sm:pt-24">
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <PageHeader t={t} code={code} />
+          <PageHeader t={t} code={code} navigate={navigate} />
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
             {/* Ticket skeleton */}
             <div className="w-full lg:flex-1 lg:max-w-lg">
@@ -188,7 +188,7 @@ const VoucherPage = () => {
     return (
       <div className="min-h-screen pt-20 pb-12 sm:pt-24">
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <PageHeader t={t} code={code} />
+          <PageHeader t={t} code={code} navigate={navigate} />
           <div className="mx-auto max-w-md space-y-4">
             <div className="flex flex-col items-center gap-4 rounded-3xl border border-slate-200 dark:border-slate-700/40 bg-white dark:bg-slate-800/30 px-6 py-12 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-950/40 text-red-500 dark:text-red-400">
@@ -244,9 +244,7 @@ const VoucherPage = () => {
   return (
     <div className="min-h-screen pt-20 pb-12 sm:pt-24">
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <PageHeader t={t} code={code} />
-
-        {/* Offline indicator */}
+        <PageHeader t={t} code={code} navigate={navigate} />
         {isOffline && (
           <div className="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/30 px-4 py-2.5 text-xs font-medium text-amber-700 dark:text-amber-300">
             <WifiOff className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -260,7 +258,7 @@ const VoucherPage = () => {
         {/* 2-column on lg, stacked on mobile */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           {/* ── Left: Ticket ────────────────────────────────── */}
-          <motion.div
+          <m.div
             className="w-full lg:flex-1 lg:max-w-lg"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -271,11 +269,11 @@ const VoucherPage = () => {
               reservation={reservation}
               resource={resource}
             />
-          </motion.div>
+          </m.div>
 
           {/* ── Right: History ──────────────────────────────── */}
           {isAuthenticated && (
-            <motion.div
+            <m.div
               className="w-full lg:w-80 xl:w-96"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -291,7 +289,7 @@ const VoucherPage = () => {
                   selectedCode={code}
                 />
               </div>
-            </motion.div>
+            </m.div>
           )}
         </div>
       </section>

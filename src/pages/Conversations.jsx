@@ -709,11 +709,14 @@ const Conversations = () => {
                       <img
                         src={avatarUrl}
                         alt={contactName(conv) || ""}
+                        role="button"
+                        tabIndex={0}
                         className="h-10 w-10 cursor-pointer rounded-full object-cover transition hover:opacity-80"
                         onClick={(e) => {
                           e.stopPropagation();
                           setViewerImage({ src: avatarUrl, alt: contactName(conv) });
                         }}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setViewerImage({ src: avatarUrl, alt: contactName(conv) }); } }}
                       />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
@@ -807,8 +810,11 @@ const Conversations = () => {
                     <img
                       src={contactAvatarUrl}
                       alt={contactName(activeConversation || {}) || ""}
+                      role="button"
+                      tabIndex={0}
                       className="h-8 w-8 cursor-pointer rounded-full object-cover transition hover:opacity-80"
                       onClick={() => setViewerImage({ src: contactAvatarUrl, alt: contactName(activeConversation || {}) })}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setViewerImage({ src: contactAvatarUrl, alt: contactName(activeConversation || {}) }); }}
                     />
                   ) : (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">

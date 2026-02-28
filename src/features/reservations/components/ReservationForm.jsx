@@ -89,7 +89,7 @@ const Section = ({ icon: Icon, title, children }) => (
 );
 
 // ── Summary panel (desktop sidebar) ─────────────────────────────────────────
-const SummaryPanel = ({ form, resources, t }) => {
+const SummaryPanel = ({ form, resources, t: _t }) => {
   const resource = resources.find((r) => r.$id === form.resourceId);
   const nights = calcNights(form.checkInDate, form.checkOutDate);
 
@@ -208,10 +208,11 @@ const ClientCombobox = ({ clients, value, onChange }) => {
 
   return (
     <div className="relative" ref={wrapperRef}>
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+      <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
         Seleccionar cliente
-      </label>
+      </span>
       <button
+        id="client-selector"
         type="button"
         onClick={() => setOpen(!open)}
         className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-left transition
@@ -238,7 +239,6 @@ const ClientCombobox = ({ clients, value, onChange }) => {
             <Search size={14} className="text-slate-400" />
             <input
               type="text"
-              autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre o email…"
@@ -290,11 +290,13 @@ const ClientCombobox = ({ clients, value, onChange }) => {
 };
 
 // ── Main component ───────────────────────────────────────────────────────────
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 const ReservationForm = ({
   form,
-  errors = {},
-  resources = [],
-  clients = [],
+  errors = EMPTY_OBJECT,
+  resources = EMPTY_ARRAY,
+  clients = EMPTY_ARRAY,
   loading = false,
   submitting = false,
   mode = "create",

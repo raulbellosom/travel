@@ -11,16 +11,35 @@
  *  - Range selection: first tap sets start, second tap sets end
  *  - Shows two months for easier range selection
  */
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import dayjs from "dayjs";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
-import Modal, { ModalFooter } from "../../../components/common/organisms/Modal/Modal";
+import Modal, {
+  ModalFooter,
+} from "../../../components/common/organisms/Modal/Modal";
 
 const DAYS = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"];
 const MONTHS = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 
 /** Build a 6-week grid of day objects for a given month */
@@ -58,38 +77,57 @@ const buildMonthGrid = (year, month) => {
 
 /** Single calendar month grid */
 const MonthGrid = ({
-  year, month, startDate, endDate, hoverDate,
-  onDayClick, onDayHover, minDate, maxDate,
+  year,
+  month,
+  startDate,
+  endDate,
+  hoverDate,
+  onDayClick,
+  onDayHover,
+  minDate,
+  maxDate,
 }) => {
   const cells = useMemo(() => buildMonthGrid(year, month), [year, month]);
 
   return (
     <div className="min-w-70 select-none">
       <div className="mb-2 grid grid-cols-7 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-        {DAYS.map((d) => <span key={d}>{d}</span>)}
+        {DAYS.map((d) => (
+          <span key={d}>{d}</span>
+        ))}
       </div>
       <div className="grid grid-cols-7 gap-y-0.5">
-        {cells.map((cell, i) => {
+        {cells.map((cell) => {
           const iso = cell.date.format("YYYY-MM-DD");
           const isStart = startDate === iso;
           const isEnd = endDate === iso;
-          const isInRange = startDate && endDate && iso > startDate && iso < endDate;
-          const isHovered = startDate && !endDate && hoverDate && iso > startDate && iso <= hoverDate;
+          const isInRange =
+            startDate && endDate && iso > startDate && iso < endDate;
+          const isHovered =
+            startDate &&
+            !endDate &&
+            hoverDate &&
+            iso > startDate &&
+            iso <= hoverDate;
           const isToday = cell.date.isSame(dayjs(), "day");
-          const isDisabled = !cell.thisMonth || (minDate && iso < minDate) || (maxDate && iso > maxDate);
+          const isDisabled =
+            !cell.thisMonth ||
+            (minDate && iso < minDate) ||
+            (maxDate && iso > maxDate);
 
           let bgClass = "";
           if (isStart || isEnd) {
             bgClass = "bg-cyan-600 text-white font-semibold";
           } else if (isInRange || isHovered) {
-            bgClass = "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-200";
+            bgClass =
+              "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-200";
           } else if (isToday) {
             bgClass = "ring-2 ring-cyan-400 ring-offset-1";
           }
 
           return (
             <button
-              key={i}
+              key={iso}
               type="button"
               disabled={isDisabled}
               onClick={() => !isDisabled && onDayClick(iso)}
@@ -99,9 +137,15 @@ const MonthGrid = ({
               className={`flex h-9 w-full items-center justify-center rounded-lg text-sm transition
                 ${isDisabled ? "cursor-not-allowed text-slate-300 dark:text-slate-600" : "cursor-pointer"}
                 ${bgClass}
-                ${!isDisabled && !isStart && !isEnd && !isInRange && !isHovered && !isToday
-                  ? "text-slate-700 dark:text-slate-200 [@media(hover:hover)]:hover:bg-slate-100 [@media(hover:hover)]:dark:hover:bg-slate-800"
-                  : ""
+                ${
+                  !isDisabled &&
+                  !isStart &&
+                  !isEnd &&
+                  !isInRange &&
+                  !isHovered &&
+                  !isToday
+                    ? "text-slate-700 dark:text-slate-200 [@media(hover:hover)]:hover:bg-slate-100 [@media(hover:hover)]:dark:hover:bg-slate-800"
+                    : ""
                 }`}
             >
               {cell.day}
@@ -115,9 +159,17 @@ const MonthGrid = ({
 
 /** Shared calendar content used in both popover and modal */
 const CalendarContent = ({
-  viewMonth, secondMonth, startDate, endDate, hoverDate,
-  handleDayClick, setHoverDate, prevMonth, nextMonth,
-  minDate, maxDate,
+  viewMonth,
+  secondMonth,
+  startDate,
+  endDate,
+  hoverDate,
+  handleDayClick,
+  setHoverDate,
+  prevMonth,
+  nextMonth,
+  minDate,
+  maxDate,
 }) => (
   <>
     <div className="mb-3 flex items-center justify-between">
@@ -203,7 +255,9 @@ const DateRangePicker = ({
   const panelRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767px)").matches,
   );
   const [flipRight, setFlipRight] = useState(false);
   const [flipUp, setFlipUp] = useState(false);
@@ -292,9 +346,17 @@ const DateRangePicker = ({
   };
 
   const calendarProps = {
-    viewMonth, secondMonth, startDate, endDate, hoverDate,
-    handleDayClick, setHoverDate, prevMonth, nextMonth,
-    minDate, maxDate,
+    viewMonth,
+    secondMonth,
+    startDate,
+    endDate,
+    hoverDate,
+    handleDayClick,
+    setHoverDate,
+    prevMonth,
+    nextMonth,
+    minDate,
+    maxDate,
   };
 
   return (
@@ -321,7 +383,9 @@ const DateRangePicker = ({
             role="button"
             tabIndex={0}
             onClick={clearRange}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && clearRange(e)}
+            onKeyDown={(e) =>
+              (e.key === "Enter" || e.key === " ") && clearRange(e)
+            }
             aria-label="Limpiar fechas"
             className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition
               [@media(hover:hover)]:hover:bg-slate-200 [@media(hover:hover)]:hover:text-slate-700
@@ -372,7 +436,7 @@ const DateRangePicker = ({
       {!isMobile && (
         <AnimatePresence>
           {open && (
-            <motion.div
+            <m.div
               ref={panelRef}
               role="dialog"
               aria-label="Seleccionar rango de fechas"
@@ -387,10 +451,12 @@ const DateRangePicker = ({
                 "dark:border-slate-700 dark:bg-slate-900",
                 flipRight ? "right-0 left-auto" : "left-0 right-auto",
                 flipUp ? "top-auto! bottom-[calc(100%+6px)]!" : "",
-              ].filter(Boolean).join(" ")}
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
               <CalendarContent {...calendarProps} />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       )}

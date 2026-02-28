@@ -31,11 +31,11 @@ const NumberInput = React.forwardRef(
       id,
       name,
       autoComplete,
-      autoFocus = false,
+      autoFocus: _autoFocus = false,
       "aria-describedby": ariaDescribedBy,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [focused, setFocused] = useState(false);
     const [inputValue, setInputValue] = useState("");
@@ -68,11 +68,14 @@ const NumberInput = React.forwardRef(
       return Number.isFinite(parsed) ? parsed : null;
     }, []);
 
-    const formatValue = useCallback((rawValue) => {
-      const parsed = parseNumber(rawValue);
-      if (parsed === null) return "";
-      return precision > 0 ? parsed.toFixed(precision) : String(parsed);
-    }, [parseNumber, precision]);
+    const formatValue = useCallback(
+      (rawValue) => {
+        const parsed = parseNumber(rawValue);
+        if (parsed === null) return "";
+        return precision > 0 ? parsed.toFixed(precision) : String(parsed);
+      },
+      [parseNumber, precision],
+    );
 
     useEffect(() => {
       if (focused) return;
@@ -179,8 +182,8 @@ const NumberInput = React.forwardRef(
     const stateStyles = hasError
       ? "border-red-500 focus:border-red-500 focus:ring-red-500"
       : hasSuccess
-      ? "border-green-500 focus:border-green-500 focus:ring-green-500"
-      : "";
+        ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+        : "";
 
     // Label styles
     const labelStyles = [
@@ -197,8 +200,8 @@ const NumberInput = React.forwardRef(
       hasError
         ? "text-red-600 dark:text-red-400"
         : hasSuccess
-        ? "text-green-600 dark:text-green-400"
-        : "text-gray-500 dark:text-gray-400",
+          ? "text-green-600 dark:text-green-400"
+          : "text-gray-500 dark:text-gray-400",
     ].join(" ");
 
     // Stepper button styles - enhanced for better integration
@@ -263,7 +266,6 @@ const NumberInput = React.forwardRef(
             max={max}
             step={step}
             autoComplete={autoComplete}
-            autoFocus={autoFocus}
             aria-describedby={
               [
                 ariaDescribedBy,
@@ -325,7 +327,7 @@ const NumberInput = React.forwardRef(
         )}
       </div>
     );
-  }
+  },
 );
 
 NumberInput.displayName = "NumberInput";

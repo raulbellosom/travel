@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Code, Eye } from "lucide-react";
 import { IconButton } from "../../atoms";
 import Modal from "../../organisms/Modal";
@@ -51,14 +51,14 @@ const ComponentDemo = ({
       </div>
 
       {/* Component Demo */}
-      <motion.div
+      <m.div
         className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         {children}
-      </motion.div>
+      </m.div>
 
       {/* Code Modal */}
       {code && (

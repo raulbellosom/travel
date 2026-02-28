@@ -24,9 +24,11 @@ const SortIcon = ({ column, sortKey, sortDir }) => {
 /**
  * ReservationTable
  */
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 const ReservationTable = ({
-  reservations = [],
-  resourceMap = {},
+  reservations = EMPTY_ARRAY,
+  resourceMap = EMPTY_OBJECT,
   locale,
   busyId,
   focusId,
@@ -38,7 +40,7 @@ const ReservationTable = ({
   sortDir = "desc",
   onSort,
 }) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const navigate = useNavigate();
 
   const th = (label, col, className = "") => (

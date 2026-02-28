@@ -1,14 +1,14 @@
 import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Mail, Phone, Send, MessageSquare } from "lucide-react";
-import { motion, useInView } from "framer-motion";
+import { m, useInView } from "framer-motion";
 import { marketingService } from "../../../../services/marketingService";
 
 const Reveal = ({ children, delay = 0, className = "" }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
@@ -16,7 +16,7 @@ const Reveal = ({ children, delay = 0, className = "" }) => {
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 

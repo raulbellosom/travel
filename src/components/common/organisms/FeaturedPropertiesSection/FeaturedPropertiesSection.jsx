@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
 import { resourcesService } from "../../../../services/resourcesService";
 import PropertyCard from "../../molecules/PropertyCard";
@@ -64,7 +64,7 @@ const FeaturedPropertiesSection = () => {
         ) : (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((property, index) => (
-              <motion.div
+              <m.div
                 key={property.$id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -72,7 +72,7 @@ const FeaturedPropertiesSection = () => {
                 transition={{ delay: index * 0.1 }}
               >
                 <PropertyCard property={property} />
-              </motion.div>
+              </m.div>
             ))}
           </div>
         )}

@@ -164,8 +164,8 @@ const LocationPicker = ({
               role="listbox"
               aria-label={t("mapPicker.searchPlaceholder")}
             >
-              {searchResults.map((result, index) => (
-                <li key={`${result.lat}-${result.lng}-${index}`} role="option">
+              {searchResults.map((result) => (
+                <li key={`${result.lat}-${result.lng}`} role="option" aria-selected={selected !== null && selected.lat === result.lat && selected.lng === result.lng}>
                   <button
                     type="button"
                     className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"

@@ -65,9 +65,11 @@ const ViewToggle = ({ view, onViewChange }) => {
 /**
  * ReservationList
  */
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 const ReservationList = ({
-  reservations = [],
-  resourceMap = {},
+  reservations = EMPTY_ARRAY,
+  resourceMap = EMPTY_OBJECT,
   locale,
   loading,
   page,

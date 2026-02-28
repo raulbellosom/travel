@@ -12,11 +12,12 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { MoreVertical } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useAuth } from "../../../hooks/useAuth";
 import { canWriteReservations } from "../rbac";
 import { getReservationActions } from "../actions";
 
+const EMPTY_ARRAY = [];
 const ReservationActionsMenu = ({
   reservation,
   busyId,
@@ -27,7 +28,7 @@ const ReservationActionsMenu = ({
   /** Override navigate targets if needed */
   basePath = "/app/reservations",
   /** Extra actions to append */
-  extraActions = [],
+  extraActions = EMPTY_ARRAY,
   /** Compact mode (smaller trigger) */
   compact = false,
 }) => {
@@ -176,7 +177,7 @@ const ReservationActionsMenu = ({
                   onClick={close}
                   aria-hidden="true"
                 />
-                <motion.div
+                <m.div
                   ref={menuRef}
                   role="menu"
                   aria-label="Acciones de reserva"
@@ -209,7 +210,7 @@ const ReservationActionsMenu = ({
                       </button>
                     );
                   })}
-                </motion.div>
+                </m.div>
               </>
             )}
           </AnimatePresence>,

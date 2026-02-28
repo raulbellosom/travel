@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useChat } from "../../contexts/ChatContext";
 import ConversationList from "./ConversationList";
 import ConversationView from "./ConversationView";
@@ -34,7 +34,7 @@ const ChatWindow = () => {
     <div className="flex h-full flex-col overflow-hidden overscroll-contain bg-white sm:rounded-2xl dark:bg-slate-900">
       <AnimatePresence mode="wait" custom={direction}>
         {activeConversationId ? (
-          <motion.div
+          <m.div
             key="conversation-view"
             custom={direction}
             variants={slideVariants}
@@ -44,9 +44,9 @@ const ChatWindow = () => {
             className="h-full"
           >
             <ConversationView />
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="conversation-list"
             custom={direction}
             variants={slideVariants}
@@ -56,7 +56,7 @@ const ChatWindow = () => {
             className="h-full"
           >
             <ConversationList />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -54,6 +54,18 @@ export default function PropertyAvailabilityCalendar({
   const [isExpandedViewOpen, setIsExpandedViewOpen] = useState(false);
   const [isDesktopSecondMonthVisible, setIsDesktopSecondMonthVisible] =
     useState(false);
+
+  // Suppress horizontal scrollbar while the expanded two-month view is open.
+  // overflow-x: hidden on <html> stops the scrollbar without clipping anything
+  // visible (all calendar content is well within the viewport bounds).
+  useEffect(() => {
+    if (!isDesktopSecondMonthVisible) return;
+    const prev = document.documentElement.style.overflowX;
+    document.documentElement.style.overflowX = "hidden";
+    return () => {
+      document.documentElement.style.overflowX = prev;
+    };
+  }, [isDesktopSecondMonthVisible]);
 
   const minDate = stripTime(new Date());
   const maxDate = addDays(new Date(), 365);
@@ -393,7 +405,7 @@ export default function PropertyAvailabilityCalendar({
               />
               {isDesktopSecondMonthVisible && (
                 <MotionDiv
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
                 >

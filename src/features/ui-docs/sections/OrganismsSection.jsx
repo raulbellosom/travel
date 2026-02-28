@@ -15,7 +15,7 @@ import { ComponentSection } from "../components";
 import { useUIDocsTranslation } from "../../../hooks/useUIDocsTranslation";
 
 export default function OrganismsSection({
-  selectedVariant,
+  selectedVariant: _selectedVariant,
   selectedSize,
   id = "organisms",
 }) {
@@ -250,7 +250,7 @@ export default function OrganismsSection({
     <TextInput label="Asunto" placeholder="¿En qué podemos ayudarte?" />
     <textarea
       className="w-full p-3 border rounded-md"
-      rows="4"
+      id="mensaje-textarea" id="mensaje-textarea" rows="4"
       placeholder="Escribe tu mensaje..."
     />
     <div className="flex justify-end gap-3">
@@ -479,8 +479,14 @@ export default function OrganismsSection({
                 placeholder="¿En qué podemos ayudarte?"
               />
               <div className="space-y-2">
-                <label className="text-sm font-medium">Mensaje</label>
+                <label
+                  htmlFor="mensaje-textarea"
+                  className="text-sm font-medium"
+                >
+                  Mensaje
+                </label>
                 <textarea
+                  id="mensaje-textarea"
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows="4"
                   placeholder="Escribe tu mensaje aquí..."

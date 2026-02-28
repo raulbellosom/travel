@@ -27,6 +27,7 @@ const getFullName = (user) => {
   );
 };
 
+const EMPTY_ARRAY = [];
 const normalizeText = (value = "") =>
   String(value)
     .normalize("NFD")
@@ -49,7 +50,7 @@ const normalizeText = (value = "") =>
  */
 const ResourceResponsibleCell = ({
   ownerUserId,
-  staffUsers = [],
+  staffUsers = EMPTY_ARRAY,
   loading = false,
   readOnly = false,
   disabled = false,
@@ -195,18 +196,14 @@ const ResourceResponsibleCell = ({
       <div className="flex items-center gap-2">
         <span
           className="shrink-0"
-          onClick={() => avatarUrl && onAvatarClick?.(avatarUrl)}
+          onClick={avatarUrl && onAvatarClick ? () => onAvatarClick(avatarUrl) : undefined}
           role={avatarUrl && onAvatarClick ? "button" : undefined}
           tabIndex={avatarUrl && onAvatarClick ? 0 : undefined}
-          onKeyDown={(e) => {
-            if (
-              (e.key === "Enter" || e.key === " ") &&
-              avatarUrl &&
-              onAvatarClick
-            ) {
+          onKeyDown={avatarUrl && onAvatarClick ? (e) => {
+            if (e.key === "Enter" || e.key === " ") {
               onAvatarClick(avatarUrl);
             }
-          }}
+          } : undefined}
         >
           <Avatar
             src={avatarUrl || undefined}
@@ -250,24 +247,15 @@ const ResourceResponsibleCell = ({
         {/* Avatar — clicking it also opens the dropdown; if user wants to view avatar, they do so from the image */}
         <span
           className="shrink-0"
-          onClick={(e) => {
-            if (avatarUrl && onAvatarClick) {
-              e.stopPropagation();
-              onAvatarClick(avatarUrl);
-            }
-          }}
+          onClick={avatarUrl && onAvatarClick ? (e) => { e.stopPropagation(); onAvatarClick(avatarUrl); } : undefined}
           role={avatarUrl && onAvatarClick ? "button" : undefined}
           tabIndex={avatarUrl && onAvatarClick ? 0 : undefined}
-          onKeyDown={(e) => {
-            if (
-              (e.key === "Enter" || e.key === " ") &&
-              avatarUrl &&
-              onAvatarClick
-            ) {
+          onKeyDown={avatarUrl && onAvatarClick ? (e) => {
+            if (e.key === "Enter" || e.key === " ") {
               e.stopPropagation();
               onAvatarClick(avatarUrl);
             }
-          }}
+          } : undefined}
         >
           <Avatar
             src={avatarUrl || undefined}

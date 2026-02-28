@@ -5,12 +5,13 @@
  * Selecting a mini-ticket navigates to (or selects) the full voucher view.
  */
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Ticket, RefreshCw, AlertTriangle } from "lucide-react";
 import VoucherTicketMini from "./VoucherTicketMini";
 
+const EMPTY_ARRAY = [];
 const VoucherHistoryPanel = ({
-  vouchers = [],
+  vouchers = EMPTY_ARRAY,
   loading = false,
   error = "",
   onSelect,
@@ -86,7 +87,7 @@ const VoucherHistoryPanel = ({
 
       {/* List */}
       {vouchers.length > 0 && (
-        <motion.div
+        <m.div
           className="flex flex-col gap-2"
           initial="hidden"
           animate="show"
@@ -96,7 +97,7 @@ const VoucherHistoryPanel = ({
           }}
         >
           {vouchers.map((v) => (
-            <motion.div
+            <m.div
               key={v.$id || v.voucherCode}
               variants={{
                 hidden: { opacity: 0, y: 8 },
@@ -112,9 +113,9 @@ const VoucherHistoryPanel = ({
               >
                 <VoucherTicketMini voucher={v} onClick={() => onSelect?.(v)} />
               </div>
-            </motion.div>
+            </m.div>
           ))}
-        </motion.div>
+        </m.div>
       )}
     </div>
   );

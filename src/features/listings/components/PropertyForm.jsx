@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
@@ -206,15 +206,16 @@ const buildFormState = (initialValues = {}) => ({
     : [],
 });
 
+const EMPTY_ARRAY = [];
 const PropertyForm = ({
   mode = "create",
   propertyId = "",
   initialValues,
   submitLabel,
   loading = false,
-  amenitiesOptions = [],
+  amenitiesOptions = EMPTY_ARRAY,
   amenitiesLoading = false,
-  existingImages = [],
+  existingImages = EMPTY_ARRAY,
   onSubmit,
 }) => {
   const { t, i18n } = useTranslation();
@@ -1562,7 +1563,7 @@ const PropertyForm = ({
     }
   };
 
-  const MotionSection = motion.section;
+  const MotionSection = m.section;
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>

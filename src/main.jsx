@@ -1,6 +1,7 @@
 // src/main.jsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { LazyMotion, domAnimation } from "framer-motion";
 import "./index.css";
 import "./i18n"; // Inicializar i18n
 import App from "./App.jsx";
@@ -9,7 +10,7 @@ import App from "./App.jsx";
 import { registerSW } from "virtual:pwa-register";
 
 // Registrar el SW con auto-update
-const updateSW = registerSW({
+registerSW({
   onNeedRefresh() {
     // Se puede mostrar un toast o notificación al usuario
     console.log("Nueva versión disponible, actualizando...");
@@ -36,6 +37,8 @@ const updateSW = registerSW({
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
+    <LazyMotion features={domAnimation} strict>
+      <App />
+    </LazyMotion>
   </StrictMode>,
 );

@@ -10,7 +10,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { QRCodeSVG } from "qrcode.react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Copy,
   Link2,
@@ -329,7 +329,7 @@ const VoucherTicket = ({ voucher, reservation, resource }) => {
 
             <AnimatePresence>
               {showQr && (
-                <motion.div
+                <m.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -392,7 +392,7 @@ const VoucherTicket = ({ voucher, reservation, resource }) => {
                           })}
                     </p>
                   </div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>

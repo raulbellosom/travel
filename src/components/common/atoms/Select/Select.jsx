@@ -287,10 +287,10 @@ const Select = React.forwardRef(
       };
 
       document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside, { passive: true });
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside, { passive: true });
       };
     }, []);
 
@@ -320,11 +320,6 @@ const Select = React.forwardRef(
     // Unmount dropdown after exit transition ends
     const handleTransitionEnd = useCallback(() => {
       if (!isOpen) setShouldRender(false);
-    }, [isOpen]);
-
-    // Ensure shouldRender is true when isOpen becomes true
-    useEffect(() => {
-      if (isOpen) setShouldRender(true);
     }, [isOpen]);
 
     return (
@@ -455,6 +450,7 @@ const Select = React.forwardRef(
                             "hover:bg-slate-100 dark:hover:bg-slate-700",
                           ].join(" ")}
                           onClick={() => handleOptionSelect(option)}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleOptionSelect(option); }}
                           onMouseEnter={() => setActiveIndex(index)}
                         >
                           {option.icon && (

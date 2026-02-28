@@ -40,9 +40,10 @@ const ACTION_WIDTH = 180;
  * Swipe LEFT  → Cancel               (only if valid for current status)
  * ⋮ button    → Full actions menu     (status-validated via getReservationActions)
  */
+const EMPTY_OBJECT = {};
 const ReservationCard = ({
   reservation,
-  resourceMap = {},
+  resourceMap = EMPTY_OBJECT,
   locale,
   busyId,
   onConfirm,
@@ -141,6 +142,7 @@ const ReservationCard = ({
       closeSwipe();
       return;
     }
+    if (e.target.closest("[data-stop-card-nav]")) return;
     navigate(`/app/reservations/${reservation.$id}`);
   };
 
@@ -223,7 +225,6 @@ const ReservationCard = ({
           transition: isDragging
             ? "none"
             : "transform 0.25s cubic-bezier(0.25,1,0.5,1)",
-          willChange: swipeX !== 0 ? "transform" : "auto",
         }}
       >
         {/* ── Top section: resource + badges + menu ─── */}
@@ -247,7 +248,7 @@ const ReservationCard = ({
           </div>
 
           {/* Actions menu (⋮) — portal-based, status validated */}
-          <div onClick={(e) => e.stopPropagation()}>
+          <div data-stop-card-nav>
             <ReservationActionsMenu
               reservation={reservation}
               busyId={busyId}

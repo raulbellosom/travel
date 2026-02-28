@@ -247,7 +247,7 @@ const SkeletonLoader = ({ variant = "list", count, className = "" }) => {
 };
 
 SkeletonLoader.propTypes = {
-  variant: PropTypes.oneOf(["list", "cards", "detail"]),
+  variant: PropTypes.oneOf(["list", "cards", "detail", "dashboard", "table"]),
   count: PropTypes.number,
   className: PropTypes.string,
 };

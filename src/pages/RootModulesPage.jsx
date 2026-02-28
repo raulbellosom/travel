@@ -1,5 +1,5 @@
 import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Save, SlidersHorizontal, ShieldCheck, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -34,7 +34,7 @@ const RootModulesPage = () => {
   } = useInstanceModules();
 
   const [draft, setDraft] = useState(null);
-  const [dismissedError, setDismissedError] = useState(false);
+  const [dismissedError, setDismissedError] = useState(null);
   const current = draft || settings;
 
   const enabledSet = useMemo(
@@ -88,24 +88,15 @@ const RootModulesPage = () => {
           defaultValue: "Configuracion guardada correctamente.",
         }),
       });
-    } catch {
-      // Error state is handled by useInstanceModules and rendered below.
+    } catch (err) {
+      showToast({
+        type: "error",
+        title: t("rootModulesPage.title", { defaultValue: "Modules & Plan" }),
+        message: error || String(err?.message || ""),
+        durationMs: 7000,
+      });
     }
   };
-
-  useEffect(() => {
-    setDismissedError(false);
-  }, [error]);
-
-  useEffect(() => {
-    if (!error) return;
-    showToast({
-      type: "error",
-      title: t("rootModulesPage.title", { defaultValue: "Modules & Plan" }),
-      message: error,
-      durationMs: 7000,
-    });
-  }, [error, showToast, t]);
 
   return (
     <section className="space-y-5">
@@ -124,13 +115,13 @@ const RootModulesPage = () => {
 
       {loading ? <SkeletonLoader /> : null}
 
-      {error && !dismissedError ? (
+      {error && error !== dismissedError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
           <div className="flex items-start justify-between gap-3">
             <p className="break-words">{error}</p>
             <button
               type="button"
-              onClick={() => setDismissedError(true)}
+              onClick={() => setDismissedError(error)}
               className="rounded-md p-1 opacity-80 transition hover:bg-red-100 hover:opacity-100 dark:hover:bg-red-900/40"
               aria-label={t("common.close", { defaultValue: "Cerrar" })}
             >

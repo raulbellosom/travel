@@ -62,7 +62,7 @@ const MapDisplay = ({
         zoom,
         disableDefaultUI: true,
         zoomControl: true,
-        gestureHandling: "cooperative",
+        gestureHandling: "greedy",
         keyboardShortcuts: false,
         clickableIcons: false,
         mapId: GOOGLE_MAPS_MAP_ID || undefined,

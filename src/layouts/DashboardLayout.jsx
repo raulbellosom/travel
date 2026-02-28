@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/navigation/Sidebar";
 import DashboardNavbar from "../components/navigation/DashboardNavbar";
@@ -9,7 +9,7 @@ import { Footer } from "../components/common/organisms";
 const SIDEBAR_COLLAPSE_STORAGE_KEY = "dashboard.sidebar.collapsed";
 
 const DashboardLayout = () => {
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {

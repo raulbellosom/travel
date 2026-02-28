@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { useChat } from "../../contexts/ChatContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -16,7 +16,7 @@ import ChatWindow from "./ChatWindow";
  * Can be dismissed (hidden) via hover X; re-enabled from user menu.
  */
 const ChatBubble = () => {
-  const Motion = motion;
+  const Motion = m;
   const { t } = useTranslation();
   const location = useLocation();
   const { user } = useAuth();

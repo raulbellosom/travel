@@ -1,7 +1,7 @@
 // src/components/DatePicker.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -33,6 +33,109 @@ import {
  * - navegacion de mes
  */
 
+const DefaultTrigger = ({ open, toggle, formatted, hasStart }) => (
+  <button
+    type="button"
+    onClick={toggle}
+    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center justify-between"
+    aria-expanded={open}
+  >
+    <span
+      className={`text-sm ${
+        hasStart
+          ? "text-gray-900 dark:text-gray-100"
+          : "text-gray-500 dark:text-gray-400"
+      } whitespace-nowrap truncate`}
+    >
+      {formatted}
+    </span>
+    <CalendarIcon className="w-5 h-5 text-gray-400" />
+  </button>
+);
+
+const MonthGrid = ({
+  base,
+  daysInGrid,
+  dayNameHeaders,
+  isDisabled,
+  sameDay,
+  current,
+  isRange,
+  inRange,
+  inHoverRange,
+  priceOf,
+  showPrices,
+  pick,
+  setHoverDate,
+  numMonths,
+}) => {
+  const days = daysInGrid(base);
+  const inThisMonth = (d) => d.getMonth() === base.getMonth();
+
+  return (
+    <div
+      className={`flex-shrink-0 ${numMonths === 1 ? "p-4 w-full" : "p-6 w-80"}`}
+    >
+      {/* Encabezados de dias */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {dayNameHeaders.map((d) => (
+          <div key={d} className="h-8 flex items-center justify-center">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              {d}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Dias */}
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((d) => {
+          const disabled = isDisabled(d);
+          const selected =
+            sameDay(d, current?.startDate) ||
+            (isRange && sameDay(d, current?.endDate));
+          const inSelRange = inRange(d) || inHoverRange(d);
+          const price = priceOf(d);
+
+          return (
+            <button
+              key={`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`}
+              type="button"
+              onClick={() => pick(d)}
+              onMouseEnter={() => setHoverDate(d)}
+              onMouseLeave={() => setHoverDate(null)}
+              disabled={disabled}
+              className={[
+                "relative h-12 w-full flex flex-col items-center justify-center rounded-lg text-sm transition-colors",
+                inThisMonth(d)
+                  ? "text-gray-900 dark:text-gray-100"
+                  : "text-gray-300 dark:text-gray-600",
+                disabled
+                  ? "opacity-30 cursor-not-allowed line-through"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer",
+                selected
+                  ? "bg-blue-600 text-white shadow"
+                  : inSelRange
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100"
+                    : "",
+              ].join(" ")}
+            >
+              <span className="font-medium">{d.getDate()}</span>
+              {showPrices && price && inThisMonth(d) && !disabled && (
+                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  ${price}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 export default function DatePicker({
   mode = "range",
   value = mode === "range" ? { startDate: null, endDate: null } : null,
@@ -40,9 +143,9 @@ export default function DatePicker({
   inline = false,
   renderTrigger,
   numberOfMonths: propNumberOfMonths,
-  pricing = {},
-  disabledDates = [],
-  availableDates = [],
+  pricing = EMPTY_OBJECT,
+  disabledDates = EMPTY_ARRAY,
+  availableDates = EMPTY_ARRAY,
   minDate = new Date(),
   maxDate = null,
   showPrices = true,
@@ -52,14 +155,14 @@ export default function DatePicker({
 }) {
   const { i18n, t } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
 
   // --- control interno vs controlado
   const isRange = mode === "range";
   const [internalRange, setInternalRange] = useState(
     isRange
       ? value || { startDate: null, endDate: null }
-      : { startDate: value || null, endDate: null }
+      : { startDate: value || null, endDate: null },
   );
   const [isOpen, setIsOpen] = useState(false);
 
@@ -94,8 +197,8 @@ export default function DatePicker({
     typeof propNumberOfMonths === "number"
       ? propNumberOfMonths
       : typeof window !== "undefined" && window.innerWidth < 768
-      ? 1
-      : 2;
+        ? 1
+        : 2;
 
   // --- click afuera cierra
   const popRef = useRef(null);
@@ -230,96 +333,6 @@ export default function DatePicker({
   // --- precio
   const priceOf = (d) => pricing[keyOf(d)];
 
-  // --- Trigger por defecto
-  const DefaultTrigger = ({ open, toggle }) => (
-    <button
-      type="button"
-      onClick={toggle}
-      className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center justify-between"
-      aria-expanded={open}
-    >
-      <span
-        className={`text-sm ${
-          current?.startDate
-            ? "text-gray-900 dark:text-gray-100"
-            : "text-gray-500 dark:text-gray-400"
-        } whitespace-nowrap truncate`}
-      >
-        {formatted}
-      </span>
-      <CalendarIcon className="w-5 h-5 text-gray-400" />
-    </button>
-  );
-
-  // --- Mes (solo grid; el titulo esta en el header global para evitar duplicacion)
-  const MonthGrid = ({ base }) => {
-    const days = daysInGrid(base);
-    const inThisMonth = (d) => d.getMonth() === base.getMonth();
-
-    return (
-      <div
-        className={`flex-shrink-0 ${
-          numMonths === 1 ? "p-4 w-full" : "p-6 w-80"
-        }`}
-      >
-        {/* Encabezados de dias */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {dayNameHeaders.map((d) => (
-            <div key={d} className="h-8 flex items-center justify-center">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {d}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Dias */}
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((d, idx) => {
-            const disabled = isDisabled(d);
-            const selected =
-              sameDay(d, current?.startDate) ||
-              (isRange && sameDay(d, current?.endDate));
-            const inSelRange = inRange(d) || inHoverRange(d);
-            const price = priceOf(d);
-
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => pick(d)}
-                onMouseEnter={() => setHoverDate(d)}
-                onMouseLeave={() => setHoverDate(null)}
-                disabled={disabled}
-                className={[
-                  "relative h-12 w-full flex flex-col items-center justify-center rounded-lg text-sm transition-colors",
-                  inThisMonth(d)
-                    ? "text-gray-900 dark:text-gray-100"
-                    : "text-gray-300 dark:text-gray-600",
-                  disabled
-                    ? "opacity-30 cursor-not-allowed line-through"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer",
-                  selected
-                    ? "bg-blue-600 text-white shadow"
-                    : inSelRange
-                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100"
-                    : "",
-                ].join(" ")}
-              >
-                <span className="font-medium">{d.getDate()}</span>
-                {showPrices && price && inThisMonth(d) && !disabled && (
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                    ${price}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   // --- Contenido del popover (o inline)
   const CalendarPanel = (
     <div
@@ -390,8 +403,40 @@ export default function DatePicker({
 
       {/* Grids */}
       <div className={numMonths === 1 ? "p-2" : "flex justify-center"}>
-        <MonthGrid base={month} />
-        {numMonths === 2 && <MonthGrid base={addMonths(month, 1)} />}
+        <MonthGrid
+          base={month}
+          daysInGrid={daysInGrid}
+          dayNameHeaders={dayNameHeaders}
+          isDisabled={isDisabled}
+          sameDay={sameDay}
+          current={current}
+          isRange={isRange}
+          inRange={inRange}
+          inHoverRange={inHoverRange}
+          priceOf={priceOf}
+          showPrices={showPrices}
+          pick={pick}
+          setHoverDate={setHoverDate}
+          numMonths={numMonths}
+        />
+        {numMonths === 2 && (
+          <MonthGrid
+            base={addMonths(month, 1)}
+            daysInGrid={daysInGrid}
+            dayNameHeaders={dayNameHeaders}
+            isDisabled={isDisabled}
+            sameDay={sameDay}
+            current={current}
+            isRange={isRange}
+            inRange={inRange}
+            inHoverRange={inHoverRange}
+            priceOf={priceOf}
+            showPrices={showPrices}
+            pick={pick}
+            setHoverDate={setHoverDate}
+            numMonths={numMonths}
+          />
+        )}
       </div>
     </div>
   );
@@ -411,7 +456,12 @@ export default function DatePicker({
           value: isRange ? current : current?.startDate,
         })
       ) : (
-        <DefaultTrigger open={isOpen} toggle={() => setIsOpen((v) => !v)} />
+        <DefaultTrigger
+          open={isOpen}
+          toggle={() => setIsOpen((v) => !v)}
+          formatted={formatted}
+          hasStart={!!current?.startDate}
+        />
       )}
 
       <AnimatePresence>
@@ -432,8 +482,3 @@ export default function DatePicker({
     </div>
   );
 }
-
-
-
-
-

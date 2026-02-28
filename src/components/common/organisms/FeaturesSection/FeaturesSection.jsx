@@ -1,13 +1,13 @@
 import { Shield, Zap, Heart, Award, TrendingUp, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 /**
  * FeatureCard - Individual feature card component
  */
 const FeatureCard = ({ icon: Icon, title, description, delay = 0 }) => {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -31,7 +31,7 @@ const FeatureCard = ({ icon: Icon, title, description, delay = 0 }) => {
           {description}
         </p>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -81,7 +81,7 @@ const FeaturesSection = ({ className = "" }) => {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -94,7 +94,7 @@ const FeaturesSection = ({ className = "" }) => {
           <p className="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-300">
             {t("landing.features.sectionSubtitle")}
           </p>
-        </motion.div>
+        </m.div>
 
         {/* Features Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">

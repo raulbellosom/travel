@@ -1,6 +1,6 @@
 import { Building2, Users, MapPinned, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { useState, useEffect, useRef } from "react";
 
 /**
@@ -65,7 +65,7 @@ const CountUpAnimation = ({ end, duration = 2000, suffix = "" }) => {
  */
 const StatCard = ({ icon: Icon, value, suffix = "", label, delay = 0 }) => {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
@@ -91,7 +91,7 @@ const StatCard = ({ icon: Icon, value, suffix = "", label, delay = 0 }) => {
 
       {/* Hover effect */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 opacity-0 transition-opacity group-hover:opacity-100" />
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -145,7 +145,7 @@ const StatsSection = ({ className = "" }) => {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -158,7 +158,7 @@ const StatsSection = ({ className = "" }) => {
           <p className="mx-auto max-w-2xl text-lg text-slate-200">
             {t("landing.stats.sectionSubtitle")}
           </p>
-        </motion.div>
+        </m.div>
 
         {/* Stats Grid */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">

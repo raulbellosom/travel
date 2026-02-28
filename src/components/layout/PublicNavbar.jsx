@@ -17,7 +17,7 @@ import {
   MoreHorizontal,
   Sun,
 } from "lucide-react";
-import { motion as Motion, AnimatePresence } from "framer-motion";
+import { m as Motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   ThemeAnimationType,

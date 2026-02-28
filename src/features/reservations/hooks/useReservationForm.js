@@ -52,7 +52,7 @@ const validate = (form) => {
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 export const useReservationForm = (initialValues = {}) => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
 

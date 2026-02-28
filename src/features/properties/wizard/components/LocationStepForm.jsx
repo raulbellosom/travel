@@ -34,11 +34,13 @@ function getFieldError(errors = {}, stepId, key) {
   return errors?.[`${stepId}.${key}`];
 }
 
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 export default function LocationStepForm({
   t,
-  fields = [],
-  formState = {},
-  stepErrors = {},
+  fields = EMPTY_ARRAY,
+  formState = EMPTY_OBJECT,
+  stepErrors = EMPTY_OBJECT,
   stepId = "location",
   onFieldChange,
 }) {

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 /**
  * LoadingSpinner - Elegant loading indicator for in-component use
@@ -103,7 +103,7 @@ const LoadingSpinner = ({
       {/* Animated Spinner */}
       <div className="relative">
         {/* Outer orbit ring */}
-        <motion.div
+        <m.div
           className={`${config.spinner} relative`}
           animate={{ rotate: 360 }}
           transition={{
@@ -146,10 +146,10 @@ const LoadingSpinner = ({
               strokeDashoffset="132"
             />
           </svg>
-        </motion.div>
+        </m.div>
 
         {/* Inner counter-rotating ring */}
-        <motion.div
+        <m.div
           className={`absolute inset-0 flex items-center justify-center ${config.innerSpinner}`}
           animate={{ rotate: -360 }}
           transition={{
@@ -183,10 +183,10 @@ const LoadingSpinner = ({
               strokeDashoffset="170"
             />
           </svg>
-        </motion.div>
+        </m.div>
 
         {/* Center pulse dot */}
-        <motion.div
+        <m.div
           className="absolute inset-0 flex items-center justify-center"
           animate={{
             scale: [1, 1.3, 1],
@@ -207,18 +207,18 @@ const LoadingSpinner = ({
               boxShadow: "0 0 12px rgba(6, 182, 212, 0.6)",
             }}
           />
-        </motion.div>
+        </m.div>
       </div>
 
       {/* Loading message */}
       {showMessage && (
-        <motion.p
+        <m.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           className={`${config.text} font-medium text-slate-600 dark:text-slate-400`}
         >
-          <motion.span
+          <m.span
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{
               duration: 1.5,
@@ -227,14 +227,14 @@ const LoadingSpinner = ({
             }}
           >
             {resolvedMessage}
-          </motion.span>
-        </motion.p>
+          </m.span>
+        </m.p>
       )}
 
       {/* Animated dots indicator */}
       <div className="flex items-center gap-1.5">
         {Array.from({ length: config.dots }).map((_, i) => (
-          <motion.span
+          <m.span
             key={i}
             className="rounded-full"
             style={{

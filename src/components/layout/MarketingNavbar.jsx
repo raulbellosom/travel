@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, LogIn, Monitor, Moon, Sun } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
   ThemeAnimationType,
@@ -103,7 +103,7 @@ const MarketingNavbar = () => {
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -335,7 +335,7 @@ const MarketingNavbar = () => {
         {isMobileMenuOpen && (
           <>
             {/* Blurred backdrop */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -345,7 +345,7 @@ const MarketingNavbar = () => {
             />
 
             {/* Sidebar panel */}
-            <motion.div
+            <m.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -372,7 +372,7 @@ const MarketingNavbar = () => {
                 {/* Section links */}
                 <div className="space-y-1">
                   {sections.map((s, idx) => (
-                    <motion.button
+                    <m.button
                       key={s.id}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -381,7 +381,7 @@ const MarketingNavbar = () => {
                       className="w-full text-left px-4 py-3 rounded-xl text-lg font-bold text-slate-900 dark:text-white hover:bg-cyan-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       {s.label}
-                    </motion.button>
+                    </m.button>
                   ))}
                 </div>
 
@@ -463,7 +463,7 @@ const MarketingNavbar = () => {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

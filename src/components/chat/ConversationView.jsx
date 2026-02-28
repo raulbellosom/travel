@@ -361,8 +361,11 @@ const ConversationView = () => {
             <img
               src={contactAvatarUrl}
               alt={contactName || ""}
+              role="button"
+              tabIndex={0}
               className="h-8 w-8 cursor-pointer rounded-full object-cover transition hover:opacity-80"
               onClick={() => setViewerImage({ src: contactAvatarUrl, alt: contactName })}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setViewerImage({ src: contactAvatarUrl, alt: contactName }); }}
             />
           ) : (
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">

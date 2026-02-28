@@ -1,10 +1,11 @@
 ﻿import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
 const Carousel = ({
-  images = [],
+  images = EMPTY_ARRAY,
   autoPlay = false,
   autoPlayInterval = 3000,
   showDots = true,
@@ -20,9 +21,9 @@ const Carousel = ({
   ...props
 }) => {
   const { t } = useTranslation();
-  const MotionDiv = motion.div;
-  const MotionImg = motion.img;
-  const MotionButton = motion.button;
+  const MotionDiv = m.div;
+  const MotionImg = m.img;
+  const MotionButton = m.button;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(autoPlay);
@@ -309,9 +310,9 @@ const Carousel = ({
       {controls.showDots && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
           <div className="flex gap-2 px-3 py-2 bg-black/20 backdrop-blur-md rounded-full border border-white/10">
-            {images.map((_, index) => (
+            {images.map((img, index) => (
               <MotionButton
-                key={index}
+                key={img}
                 onClick={() => goToSlide(index)}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex

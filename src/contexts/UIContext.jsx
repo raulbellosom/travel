@@ -91,7 +91,7 @@ export function UIProvider({ children }) {
     async (lng) => {
       i18n.changeLanguage(lng);
       document.documentElement.lang = lng;
-      
+
       // Persist to database if user is authenticated
       if (user?.$id && updatePreferences) {
         try {
@@ -128,7 +128,7 @@ export function UIProvider({ children }) {
       ) {
         apply();
         setTheme(next);
-        
+
         // Persist to database if user is authenticated
         if (user?.$id && updatePreferences) {
           try {
@@ -137,7 +137,7 @@ export function UIProvider({ children }) {
             console.error("Failed to persist theme preference:", error);
           }
         }
-        
+
         return;
       }
 
@@ -168,7 +168,7 @@ export function UIProvider({ children }) {
       // Update React state without retriggering applyTheme
       // (apply() already handled everything synchronously)
       setTheme(next);
-      
+
       // Persist to database if user is authenticated
       if (user?.$id && updatePreferences) {
         try {
@@ -206,7 +206,7 @@ export function UIProvider({ children }) {
       effectiveTheme: getEffectiveTheme(theme),
       changeTheme: async (next) => {
         setTheme(next);
-        
+
         // Persist to database if user is authenticated
         if (user?.$id && updatePreferences) {
           try {
@@ -220,7 +220,7 @@ export function UIProvider({ children }) {
       toggleTheme: async () => {
         const newTheme = getEffectiveTheme(theme) === "dark" ? "light" : "dark";
         setTheme(newTheme);
-        
+
         // Persist to database if user is authenticated
         if (user?.$id && updatePreferences) {
           try {
@@ -238,6 +238,7 @@ export function UIProvider({ children }) {
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useUI = () => {
   const ctx = useContext(UIContext);
   if (!ctx) throw new Error("useUI must be used within a UIProvider");

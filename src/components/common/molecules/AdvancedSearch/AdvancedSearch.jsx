@@ -13,7 +13,7 @@ import {
   Store,
   Square,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import Button from "../../atoms/Button";
 import Select from "../../atoms/Select/Select";
 
@@ -123,7 +123,7 @@ const AdvancedSearch = ({ className = "" }) => {
           >
             {tab.label}
             {activeTab === tab.id && (
-              <motion.div
+              <m.div
                 layoutId="activeTabIndicator"
                 className="absolute bottom-0 left-0 right-0 h-1 bg-cyan-600 dark:bg-cyan-400 rounded-t-full"
               />
@@ -136,7 +136,7 @@ const AdvancedSearch = ({ className = "" }) => {
       <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         {/* Location Input */}
         <div className="md:col-span-1 space-y-1.5 container-input">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
+          <label htmlFor="search-location" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
             {t("client:search.location", "Ubicación")}
           </label>
           <div className="relative group">
@@ -145,6 +145,7 @@ const AdvancedSearch = ({ className = "" }) => {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-500 transition-colors z-10"
             />
             <input
+              id="search-location"
               type="text"
               placeholder={t(
                 "client:search.locationPlaceholder",
@@ -161,10 +162,11 @@ const AdvancedSearch = ({ className = "" }) => {
 
         {/* Property Type */}
         <div className="md:col-span-1 space-y-1.5 container-select">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
+          <label htmlFor="search-type" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
             {t("client:search.type", "Tipo de Propiedad")}
           </label>
           <Select
+            id="search-type"
             options={propertyTypeOptions}
             value={filters.type}
             onChange={(val) => setFilters({ ...filters, type: val })}
@@ -177,7 +179,7 @@ const AdvancedSearch = ({ className = "" }) => {
         {/* Price Range / Filters Toggle */}
         <div className="md:col-span-1 flex gap-2">
           <div className="flex-1 space-y-1.5 container-input">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
+            <label htmlFor="search-max-price" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
               {t("client:search.price", "Precio Máx")}
             </label>
             <div className="relative group">
@@ -186,6 +188,7 @@ const AdvancedSearch = ({ className = "" }) => {
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-green-500 transition-colors z-10"
               />
               <input
+                id="search-max-price"
                 type="number"
                 placeholder={t("client:search.price", "Max...")}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-2 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-green-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-green-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-all"
@@ -197,9 +200,9 @@ const AdvancedSearch = ({ className = "" }) => {
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="invisible text-xs font-bold uppercase">
+            <div className="invisible text-xs font-bold uppercase">
               Filters
-            </label>
+            </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex h-[46px] w-[46px] items-center justify-center rounded-xl border transition-all ${showFilters ? "bg-cyan-50 border-cyan-200 text-cyan-600 dark:bg-cyan-900/20 dark:border-cyan-700 dark:text-cyan-400" : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"}`}
@@ -211,9 +214,9 @@ const AdvancedSearch = ({ className = "" }) => {
 
         {/* Search Button */}
         <div className="md:col-span-1">
-          <label className="invisible text-xs font-bold uppercase block mb-1.5">
+          <div className="invisible text-xs font-bold uppercase block mb-1.5">
             Search
-          </label>
+          </div>
           <Button
             onClick={handleSearch}
             size="lg"
@@ -227,7 +230,7 @@ const AdvancedSearch = ({ className = "" }) => {
       {/* Expanded Filters */}
       <AnimatePresence>
         {showFilters && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -235,10 +238,11 @@ const AdvancedSearch = ({ className = "" }) => {
           >
             <div className="p-4 sm:p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1.5 container-input">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <label htmlFor="search-min-price" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {t("client:search.minPrice", "Precio Mínimo")}
                 </label>
                 <input
+                  id="search-min-price"
                   type="number"
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                   value={filters.minPrice}
@@ -248,10 +252,11 @@ const AdvancedSearch = ({ className = "" }) => {
                 />
               </div>
               <div className="space-y-1.5 container-select">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <label htmlFor="search-bedrooms" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {t("client:search.bedrooms", "Habitaciones")}
                 </label>
                 <Select
+                  id="search-bedrooms"
                   options={bedroomOptions}
                   value={filters.bedrooms}
                   onChange={(val) => setFilters({ ...filters, bedrooms: val })}
@@ -260,10 +265,11 @@ const AdvancedSearch = ({ className = "" }) => {
                 />
               </div>
               <div className="space-y-1.5 container-select">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <label htmlFor="search-bathrooms" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {t("client:search.bathrooms", "Baños")}
                 </label>
                 <Select
+                  id="search-bathrooms"
                   options={bathroomOptions}
                   value={filters.bathrooms}
                   onChange={(val) => setFilters({ ...filters, bathrooms: val })}
@@ -272,7 +278,7 @@ const AdvancedSearch = ({ className = "" }) => {
                 />
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

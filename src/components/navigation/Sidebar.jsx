@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import {
   CalendarDays,
   CalendarRange,
@@ -27,9 +27,9 @@ import { hasScope } from "../../utils/roles";
 import { isScopeAllowedByModules } from "../../utils/moduleAccess";
 
 const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
-  const MotionAside = motion.aside;
-  const MotionButton = motion.button;
-  const MotionSpan = motion.span;
+  const MotionAside = m.aside;
+  const MotionButton = m.button;
+  const MotionSpan = m.span;
   const { t } = useTranslation();
   const { user } = useAuth();
   const { isEnabled } = useInstanceModules();

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   Star,
   MessageSquareText,
@@ -149,7 +149,7 @@ const ReviewCard = ({ review, propertyName, locale, t }) => {
   const isLongComment = (review.comment || "").length > 180;
 
   return (
-    <motion.article
+    <m.article
       layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -236,7 +236,7 @@ const ReviewCard = ({ review, propertyName, locale, t }) => {
           )}
         </div>
       </div>
-    </motion.article>
+    </m.article>
   );
 };
 
@@ -310,7 +310,7 @@ const WriteReviewForm = ({
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
@@ -451,7 +451,7 @@ const WriteReviewForm = ({
               })}
         </button>
       </form>
-    </motion.div>
+    </m.div>
   );
 };
 

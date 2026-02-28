@@ -152,7 +152,7 @@ export default async ({ req, res, error }) => {
       config.usersCollectionId,
       targetUserId,
     );
-    const targetRole = normalizeText(targetUser.role, 40).toLowerCase();
+    const _targetRole = normalizeText(targetUser.role, 40).toLowerCase();
     const targetCanManageOwnStripe = canManageOwnStripe(targetUser);
     if (!targetCanManageOwnStripe) {
       return json(res, 422, {

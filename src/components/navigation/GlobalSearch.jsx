@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -36,8 +36,8 @@ const groupByLabel = (items) => {
 };
 
 const GlobalSearch = ({ showDesktopInput = true, showMobileTrigger = true }) => {
-  const MotionDiv = motion.div;
-  const MotionSection = motion.section;
+  const MotionDiv = m.div;
+  const MotionSection = m.section;
   const { t } = useTranslation();
   const { user } = useAuth();
   const { isEnabled } = useInstanceModules();

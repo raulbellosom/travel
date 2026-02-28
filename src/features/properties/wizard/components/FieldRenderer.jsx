@@ -101,17 +101,18 @@ function getSlugStatusView(t, slugStatus) {
  * FieldRenderer
  * Uses shared UI atoms to keep visual consistency with the rest of the app.
  */
+const EMPTY_ARRAY = [];
 export default function FieldRenderer({
   field,
   value,
   error,
   t,
   onChange,
-  existingImages = [],
+  existingImages = EMPTY_ARRAY,
   existingImagesLoading = false,
   slugStatus = null,
   onRegenerateSlug = null,
-  amenitiesOptions = [],
+  amenitiesOptions = EMPTY_ARRAY,
   amenitiesLoading = false,
   resourceType = "property",
   category = "",

@@ -177,11 +177,12 @@ const toPositiveInt = (value, fallback = 0) => {
  * Modal for configuring instance modules, plan and limits.
  * Provides a responsive, well-organized form for root users.
  */
+const EMPTY_ARRAY = [];
 const ModulesConfigModal = ({
   isOpen,
   onClose,
   settings,
-  moduleCatalog = [],
+  moduleCatalog = EMPTY_ARRAY,
   saving,
   onSave,
   userId,
@@ -367,14 +368,12 @@ const ModulesConfigModal = ({
                       })}
                     </span>
                   </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <Toggle
+                  <Toggle
                       checked={current?.enabled !== false}
                       onChange={(checked) => updateDraft({ enabled: checked })}
                       variant="success"
                       size="sm"
                     />
-                  </div>
                 </div>
               </div>
             </div>
@@ -421,7 +420,7 @@ const ModulesConfigModal = ({
                         <button
                           key={moduleKey}
                           type="button"
-                          onClick={() => handleToggle(moduleKey)}
+                          onClick={(e) => { if (!(e.target instanceof HTMLInputElement)) handleToggle(moduleKey); }}
                           className={`flex min-w-0 items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-all ${
                             isOn
                               ? "border-cyan-200 bg-cyan-50/80 dark:border-cyan-800/60 dark:bg-cyan-950/30"
@@ -439,14 +438,12 @@ const ModulesConfigModal = ({
                               {formatModuleLabel(moduleKey)}
                             </span>
                           </div>
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <Toggle
+                          <Toggle
                               checked={isOn}
                               onChange={() => handleToggle(moduleKey)}
                               size="sm"
                               variant={isOn ? "success" : "primary"}
                             />
-                          </div>
                         </button>
                       );
                     })}

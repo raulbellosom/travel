@@ -37,6 +37,7 @@ const AppPayments = () => {
   useEffect(() => {
     const nextSearch = String(searchParams.get("search") || "").trim();
     setQueryFilter((prev) => (prev === nextSearch ? prev : nextSearch));
+    setPage(1);
   }, [searchParams]);
 
   const load = useCallback(async () => {
@@ -65,9 +66,6 @@ const AppPayments = () => {
     load();
   }, [load]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filters.provider, filters.status, queryFilter]);
 
   const normalizedFilter = String(queryFilter || "")
     .trim()
@@ -162,7 +160,7 @@ const AppPayments = () => {
           </span>
           <input
             value={queryFilter}
-            onChange={(event) => setQueryFilter(event.target.value)}
+            onChange={(event) => { setQueryFilter(event.target.value); setPage(1); }}
             placeholder={t("appPaymentsPage.filters.searchPlaceholder", {
               defaultValue: "Proveedor, estado, referencia o ID",
             })}
@@ -177,9 +175,10 @@ const AppPayments = () => {
           </span>
           <Select
             value={filters.provider}
-            onChange={(value) =>
-              setFilters((prev) => ({ ...prev, provider: value }))
-            }
+            onChange={(value) => {
+              setFilters((prev) => ({ ...prev, provider: value }));
+              setPage(1);
+            }}
             options={providerOptions}
             size="md"
           />
@@ -191,9 +190,10 @@ const AppPayments = () => {
           </span>
           <Select
             value={filters.status}
-            onChange={(value) =>
-              setFilters((prev) => ({ ...prev, status: value }))
-            }
+            onChange={(value) => {
+              setFilters((prev) => ({ ...prev, status: value }));
+              setPage(1);
+            }}
             options={statusOptions}
             size="md"
           />

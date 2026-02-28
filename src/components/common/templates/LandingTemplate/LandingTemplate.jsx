@@ -20,7 +20,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import {
-  motion,
+  m,
   useInView,
   useSpring,
   useTransform,
@@ -51,7 +51,7 @@ const Reveal = ({ children, delay = 0, className = "", direction = "up" }) => {
   };
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial={{ opacity: 0, ...origins[direction] }}
       animate={
@@ -63,7 +63,7 @@ const Reveal = ({ children, delay = 0, className = "", direction = "up" }) => {
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -72,7 +72,7 @@ const ScaleIn = ({ children, delay = 0, className = "" }) => {
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
@@ -80,7 +80,7 @@ const ScaleIn = ({ children, delay = 0, className = "" }) => {
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -197,7 +197,7 @@ const Counter = ({ value, suffix = "", label }) => {
   return (
     <div ref={ref} className="text-center">
       <div className="text-4xl sm:text-5xl md:text-6xl font-black text-white flex justify-center items-center">
-        <motion.span>{displayValue}</motion.span>
+        <m.span>{displayValue}</m.span>
         <span>{suffix}</span>
       </div>
       <span className="mt-2 block text-sm sm:text-base text-white/70 font-medium">
@@ -389,10 +389,9 @@ const LandingTemplate = () => {
           {/* CTA */}
           <Reveal delay={0.3}>
             <div className="flex flex-col sm:flex-row gap-4 mb-20">
-              <a
-                href="#contacto"
-                onClick={(e) => {
-                  e.preventDefault();
+              <button
+                type="button"
+                onClick={() => {
                   document
                     .getElementById("contacto")
                     ?.scrollIntoView({ behavior: "smooth" });
@@ -404,7 +403,7 @@ const LandingTemplate = () => {
                   size={20}
                   className="transition-transform group-hover:translate-x-1"
                 />
-              </a>
+              </button>
             </div>
           </Reveal>
 
@@ -413,7 +412,7 @@ const LandingTemplate = () => {
             {/* Dynamic Title */}
             <div className="h-8 flex items-center justify-center overflow-hidden relative w-full">
               <AnimatePresence mode="wait">
-                <motion.span
+                <m.span
                   key={activeMockup}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -422,7 +421,7 @@ const LandingTemplate = () => {
                   className="absolute text-lg sm:text-2xl font-bold bg-linear-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-blue-500 bg-clip-text text-transparent"
                 >
                   {mockups[activeMockup].title}
-                </motion.span>
+                </m.span>
               </AnimatePresence>
             </div>
 
@@ -456,7 +455,7 @@ const LandingTemplate = () => {
                   const opacity = 1 - offset * 0.2;
 
                   return (
-                    <motion.div
+                    <m.div
                       key={item.id}
                       initial={{ opacity: 0, scale: 0.9, y: 100 }}
                       animate={{
@@ -496,7 +495,7 @@ const LandingTemplate = () => {
                           {offset === 0 ? item.component : null}
                         </div>
                       </div>
-                    </motion.div>
+                    </m.div>
                   );
                 })}
               </AnimatePresence>
@@ -811,7 +810,7 @@ const LandingTemplate = () => {
                       </div>
                       <div className="flex items-end gap-2 h-20">
                         {[40, 65, 50, 80, 70, 90, 60].map((h, i) => (
-                          <motion.div
+                          <m.div
                             key={i}
                             className="flex-1 bg-gradient-to-t from-cyan-500 to-blue-500 rounded-t-md"
                             initial={{ height: 0 }}
@@ -829,7 +828,7 @@ const LandingTemplate = () => {
                 </div>
 
                 {/* Floating notification card */}
-                <motion.div
+                <m.div
                   className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl border border-slate-200 dark:border-slate-700 max-w-[200px] sm:max-w-[240px]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -855,7 +854,7 @@ const LandingTemplate = () => {
                       </p>
                     </div>
                   </div>
-                </motion.div>
+                </m.div>
               </div>
             </Reveal>
           </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
@@ -23,23 +23,13 @@ const VerifyEmail = () => {
   const [message, setMessage] = useState("");
   const [resending, setResending] = useState(false);
 
-  const authRedirectTarget = useMemo(
-    () => resolveAuthRedirectPath({ location, searchParams }),
-    [location, searchParams],
-  );
+  const authRedirectTarget = resolveAuthRedirectPath({ location, searchParams });
 
-  const authRedirectQuery = useMemo(
-    () =>
-      authRedirectTarget
-        ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
-        : "",
-    [authRedirectTarget],
-  );
+  const authRedirectQuery = authRedirectTarget
+    ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
+    : "";
 
-  const hasVerificationPayload = useMemo(
-    () => Boolean(token || (userId && secret)),
-    [secret, token, userId]
-  );
+  const hasVerificationPayload = Boolean(token || (userId && secret));
 
   useEffect(() => {
     rememberAuthRedirect({ location, searchParams });

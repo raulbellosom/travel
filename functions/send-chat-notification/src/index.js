@@ -73,7 +73,12 @@ export default async ({ req, res, log, error }) => {
     return res.json({ ok: false, error: "Missing Appwrite credentials" }, 500);
   }
 
-  const { conversationId, messageId, senderName, body: messageBody } = body;
+  const {
+    conversationId,
+    messageId: _messageId,
+    senderName,
+    body: messageBody,
+  } = body;
   if (!conversationId || !senderName || !messageBody) {
     return res.json(
       {
@@ -112,8 +117,13 @@ export default async ({ req, res, log, error }) => {
 
     // If there's more than 1 message, this is not the first message - skip notification
     if (messagesResult.total > 1) {
-      log(`Conversation ${conversationId} already has ${messagesResult.total} messages, skipping notification.`);
-      return res.json({ ok: true, skipped: true, reason: "not_first_message" }, 200);
+      log(
+        `Conversation ${conversationId} already has ${messagesResult.total} messages, skipping notification.`,
+      );
+      return res.json(
+        { ok: true, skipped: true, reason: "not_first_message" },
+        200,
+      );
     }
 
     // Determine who receives the notification (the other party)

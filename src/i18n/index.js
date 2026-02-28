@@ -90,8 +90,6 @@ i18n
 
       // Optimización: solo re-renderizar componentes cuando realmente cambian las traducciones
       transEmptyNodeValue: "",
-      transSupportBasicHtmlNodes: true,
-      transKeepBasicHtmlNodesFor: ["br", "strong", "i", "b", "p"],
     },
   });
 

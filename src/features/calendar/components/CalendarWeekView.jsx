@@ -1,14 +1,12 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   getWeekDays,
   isToday,
   dateKey,
   HOUR_SLOTS,
   formatHour,
-  sameDay,
-  stripTime,
 } from "../utils/calendarUtils";
 import CalendarEventCard from "./CalendarEventCard";
 
@@ -22,15 +20,16 @@ import CalendarEventCard from "./CalendarEventCard";
  * @param {Function} props.onDayClick
  * @param {Function} props.onEventClick
  */
+const EMPTY_OBJECT = {};
 export default function CalendarWeekView({
   currentDate,
-  eventsByDate = {},
+  eventsByDate = EMPTY_OBJECT,
   onDayClick,
   onEventClick,
 }) {
   const { i18n } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
 
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
 
@@ -54,11 +53,11 @@ export default function CalendarWeekView({
       {/* Day headers (sticky) */}
       <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 bg-white dark:bg-gray-900">
         <div className="p-2 border-r border-gray-200 dark:border-gray-700" />
-        {weekDays.map((day, i) => {
+        {weekDays.map((day) => {
           const today = isToday(day);
           return (
             <button
-              key={i}
+              key={dateKey(day)}
               type="button"
               onClick={() => onDayClick?.(day)}
               className={[
@@ -89,12 +88,12 @@ export default function CalendarWeekView({
         <div className="p-1 border-r border-gray-200 dark:border-gray-700 text-[10px] text-gray-400 flex items-center justify-center">
           All day
         </div>
-        {weekDays.map((day, i) => {
+        {weekDays.map((day) => {
           const key = dateKey(day);
           const events = allDayEvents[key] || [];
           return (
             <div
-              key={i}
+              key={key}
               className="border-r border-gray-200 dark:border-gray-700 p-1 space-y-0.5 overflow-hidden"
             >
               {events.slice(0, 2).map((ev, j) => (
@@ -125,11 +124,16 @@ export default function CalendarWeekView({
             <div className="p-1 border-r border-gray-200 dark:border-gray-700 text-[11px] text-gray-400 dark:text-gray-500 text-right pr-2 pt-0.5">
               {formatHour(hour, locale)}
             </div>
-            {weekDays.map((day, i) => (
+            {weekDays.map((day) => (
               <div
-                key={i}
+                key={dateKey(day)}
+                role="button"
+                tabIndex={0}
                 className="border-r border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                 onClick={() => onDayClick?.(day)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") onDayClick?.(day);
+                }}
               />
             ))}
           </div>

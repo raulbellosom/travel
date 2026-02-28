@@ -72,7 +72,7 @@ const RatingStars = ({
     }
   };
 
-  const handleStarHover = (starIndex) => {
+  const handleStarHover = (_starIndex) => {
     if (interactive) {
       // You can add hover preview functionality here
     }
@@ -81,14 +81,19 @@ const RatingStars = ({
   const renderStar = (starIndex) => {
     const fillPercentage = Math.max(0, Math.min(1, roundedRating - starIndex));
     const isFilled = fillPercentage > 0;
-    const isPartiallyFilled = fillPercentage > 0 && fillPercentage < 1;
+    const _isPartiallyFilled = fillPercentage > 0 && fillPercentage < 1;
 
     return (
       <div
         key={starIndex}
+        role="button"
+        tabIndex={0}
         className="relative inline-block"
         onClick={() => handleStarClick(starIndex)}
         onMouseEnter={() => handleStarHover(starIndex)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") handleStarClick(starIndex);
+        }}
       >
         {/* Background star (empty) */}
         <Star
@@ -135,7 +140,7 @@ const RatingStars = ({
           <div className={`flex items-center gap-1 ${className}`}>
             <div className="flex items-center">
               {Array.from({ length: maxRating }, (_, index) =>
-                renderStar(index)
+                renderStar(index),
               )}
             </div>
             {showValue && (
@@ -159,7 +164,7 @@ const RatingStars = ({
             <div className="flex items-center gap-2">
               <div className="flex items-center">
                 {Array.from({ length: maxRating }, (_, index) =>
-                  renderStar(index)
+                  renderStar(index),
                 )}
               </div>
               <span
@@ -181,7 +186,7 @@ const RatingStars = ({
           <div className={`flex items-center gap-1 ${className}`} {...props}>
             <div className="flex items-center">
               {Array.from({ length: maxRating }, (_, index) =>
-                renderStar(index)
+                renderStar(index),
               )}
             </div>
             {(showValue || reviewCount !== undefined) && (

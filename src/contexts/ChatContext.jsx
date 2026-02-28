@@ -24,6 +24,7 @@ import { hasScope, isInternalRole } from "../utils/roles";
 
 const ChatContext = createContext(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useChat = () => {
   const ctx = useContext(ChatContext);
   if (!ctx) throw new Error("useChat must be used within a ChatProvider");
@@ -317,6 +318,11 @@ export const ChatProvider = ({ children }) => {
       const { openChatBubble = true } = options;
       setActiveConversationId(conversationId);
       if (openChatBubble) {
+        // Ensure the bubble is visible so the user can see the conversation.
+        // This overrides the "hide bubble" preference when a conversation is
+        // opened programmatically (e.g. after sending a lead / schedule request).
+        setIsBubbleVisible(true);
+        localStorage.setItem("chatBubbleVisible", "true");
         setIsChatOpen(true);
       }
       // Messages will be loaded automatically by the useEffect above

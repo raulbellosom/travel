@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight, Calendar } from "lucide-react";
 import Button from "../../atoms/Button";
 import LazyImage from "../../atoms/LazyImage";
@@ -69,7 +69,7 @@ const ArticlesSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {articles.map((article, index) => (
-            <motion.article
+            <m.article
               key={article.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -99,15 +99,15 @@ const ArticlesSection = () => {
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6 grow">
                   {article.excerpt}
                 </p>
-                <a
-                  href="#"
+                <button
+                  type="button"
                   className="inline-flex items-center gap-2 text-sm font-bold text-cyan-600 dark:text-cyan-400 hover:gap-3 transition-all"
                 >
                   {t("client:articles.readMore", "Leer artículo")}{" "}
                   <ArrowRight size={16} />
-                </a>
+                </button>
               </div>
-            </motion.article>
+            </m.article>
           ))}
         </div>
       </div>

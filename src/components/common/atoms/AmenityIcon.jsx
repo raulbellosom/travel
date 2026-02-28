@@ -211,6 +211,7 @@ const CATEGORY_ICON_MAP = {
  * Resolves an amenity icon key to a Lucide component.
  * Returns the component reference (not a rendered element).
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const resolveAmenityIcon = (iconKey, category) => {
   if (iconKey && ICON_COMPONENT_MAP[iconKey]) {
     return ICON_COMPONENT_MAP[iconKey];

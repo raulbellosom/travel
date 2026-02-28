@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Menu, X, Home, Atom, Component, Layers } from "lucide-react";
 import { useUIDocsTranslation } from "../../../hooks/useUIDocsTranslation";
 
@@ -95,7 +95,7 @@ export default React.memo(function DocsNavigation({ className = "" }) {
         const isActive = activeSection === item.id;
 
         return (
-          <motion.button
+          <m.button
             key={item.id}
             onClick={() => scrollToSection(item.id)}
             className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
@@ -111,7 +111,7 @@ export default React.memo(function DocsNavigation({ className = "" }) {
               className={isActive ? "text-blue-600 dark:text-blue-400" : ""}
             />
             <span>{t(`navigation.${item.id}`)}</span>
-          </motion.button>
+          </m.button>
         );
       })}
     </nav>
@@ -120,19 +120,19 @@ export default React.memo(function DocsNavigation({ className = "" }) {
   return (
     <>
       {/* Botón toggle para mobile */}
-      <motion.button
+      <m.button
         onClick={() => setIsOpen(!isOpen)}
         className="lg:hidden fixed top-20 left-4 z-30 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
-      </motion.button>
+      </m.button>
 
       {/* Overlay para mobile */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -163,7 +163,7 @@ export default React.memo(function DocsNavigation({ className = "" }) {
       {/* Navegación lateral - Mobile */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ x: -280 }}
             animate={{ x: 0 }}
             exit={{ x: -280 }}
@@ -182,7 +182,7 @@ export default React.memo(function DocsNavigation({ className = "" }) {
 
               <NavigationContent />
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

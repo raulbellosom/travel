@@ -77,30 +77,30 @@ const MarketingFooter = () => {
               )}
             </p>
             <div className="flex gap-4">
-              <a
-                href="#"
+              <button
+                type="button"
                 className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-cyan-500 hover:text-white transition-all duration-300"
               >
                 <Facebook size={18} />
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
                 className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-cyan-500 hover:text-white transition-all duration-300"
               >
                 <Twitter size={18} />
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
                 className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-cyan-500 hover:text-white transition-all duration-300"
               >
                 <Instagram size={18} />
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
                 className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-cyan-500 hover:text-white transition-all duration-300"
               >
                 <Linkedin size={18} />
-              </a>
+              </button>
             </div>
           </div>
 
@@ -263,4 +263,3 @@ const MarketingFooter = () => {
 };
 
 export default MarketingFooter;
-

@@ -1,5 +1,5 @@
 import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,18 +23,12 @@ import {
   canViewGlobalResources,
 } from "../utils/roles";
 import { isScopeAllowedByModules } from "../utils/moduleAccess";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+const ActivityAreaChart = lazy(
+  () => import("../components/dashboard/ActivityAreaChart"),
+);
+const LeadsPieChart = lazy(
+  () => import("../components/dashboard/LeadsPieChart"),
+);
 
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
@@ -241,102 +235,19 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
-              <div className="h-72 w-full mt-2">
-                <ResponsiveContainer width="99%" height={280}>
-                  <AreaChart
+              <Suspense fallback={<SkeletonLoader />}>
+                <div className="h-72 w-full mt-2">
+                  <ActivityAreaChart
                     data={viewDataMock}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="colorVistas"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#0ea5e9"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#0ea5e9"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                      <linearGradient
-                        id="colorLeads"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#10b981"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#10b981"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="#cbd5e1"
-                      opacity={0.2}
-                    />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#64748b", fontSize: 12 }}
-                      dy={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#64748b", fontSize: 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "12px",
-                        border: "none",
-                        boxShadow:
-                          "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-                      }}
-                      itemStyle={{ fontWeight: 600 }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="vistas"
-                      name={t("dashboardPage.stats.views", {
-                        defaultValue: "Vistas",
-                      })}
-                      stroke="#0ea5e9"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorVistas)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="leads"
-                      name={t("dashboardPage.stats.leads", {
-                        defaultValue: "Leads",
-                      })}
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorLeads)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+                    viewsLabel={t("dashboardPage.stats.views", {
+                      defaultValue: "Vistas",
+                    })}
+                    leadsLabel={t("dashboardPage.stats.leads", {
+                      defaultValue: "Leads",
+                    })}
+                  />
+                </div>
+              </Suspense>
             </article>
 
             <article className="col-span-1 lg:col-span-1 xl:col-span-1 rounded-2xl border border-slate-200 bg-white/50 p-5 shadow-sm backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900/50 flex flex-col">
@@ -348,37 +259,17 @@ const Dashboard = () => {
                   })}
                 </h2>
               </div>
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="99%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={leadsPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {leadsPieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "none",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                      }}
-                      itemStyle={{ color: "#1e293b" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <Suspense fallback={<SkeletonLoader />}>
+                <div className="h-64 w-full">
+                  <LeadsPieChart data={leadsPieData} />
+                </div>
+              </Suspense>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                {leadsPieData.map((entry, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
+                {leadsPieData.map((entry) => (
+                  <div
+                    key={entry.color}
+                    className="flex items-center gap-2 text-xs"
+                  >
                     <span
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: entry.color }}

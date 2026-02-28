@@ -1,6 +1,5 @@
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   isToday,
   dateKey,
@@ -18,14 +17,15 @@ import CalendarEventCard from "./CalendarEventCard";
  * @param {Object} props.eventsByDate
  * @param {Function} props.onEventClick
  */
+const EMPTY_OBJECT = {};
 export default function CalendarDayView({
   currentDate,
-  eventsByDate = {},
+  eventsByDate = EMPTY_OBJECT,
   onEventClick,
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
 
   const key = dateKey(currentDate);
   const dayEvents = eventsByDate[key] || [];

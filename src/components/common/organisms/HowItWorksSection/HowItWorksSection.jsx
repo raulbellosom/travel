@@ -1,6 +1,6 @@
 import { Search, FileCheck, Key, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 /**
  * StepCard - Individual step in the process
@@ -14,7 +14,7 @@ const StepCard = ({
   delay = 0,
 }) => {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
@@ -45,7 +45,7 @@ const StepCard = ({
           {description}
         </p>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -85,7 +85,7 @@ const HowItWorksSection = ({ className = "" }) => {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -98,7 +98,7 @@ const HowItWorksSection = ({ className = "" }) => {
           <p className="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-300">
             {t("landing.howItWorks.sectionSubtitle")}
           </p>
-        </motion.div>
+        </m.div>
 
         {/* Steps Grid - Vertical on mobile, 4 columns on desktop */}
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
@@ -116,7 +116,7 @@ const HowItWorksSection = ({ className = "" }) => {
         </div>
 
         {/* Bottom CTA */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -126,7 +126,7 @@ const HowItWorksSection = ({ className = "" }) => {
           <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
             {t("landing.howItWorks.bottomText")}
           </p>
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );

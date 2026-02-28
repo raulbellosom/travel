@@ -4,12 +4,13 @@ import {
   useMemo,
   useState,
   useCallback,
+  useRef,
   lazy,
   Suspense,
 } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   BedDouble,
@@ -76,7 +77,7 @@ import { getErrorMessage } from "../utils/errors";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { useChat } from "../contexts/ChatContext";
-import { Spinner, Modal, ModalFooter, Button } from "../components/common";
+import { Spinner, Modal, ModalFooter, Button, Select } from "../components/common";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import ProgressiveImage from "../components/common/atoms/ProgressiveImage";
@@ -112,7 +113,6 @@ const isSale = (op) => op === "sale";
 const isRent = (op) => op === "rent";
 const isVacation = (op) => op === "vacation_rental";
 const isHourly = (op) => op === "rent_hourly";
-const _MOTION = motion;
 const formatDateForQuery = (dateValue) => {
   if (!dateValue) return "";
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
@@ -186,6 +186,17 @@ const PropertyDetail = () => {
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
   const [chatScheduleMeta, setChatScheduleMeta] = useState(null);
+  // Hour-range input state (splits selectedHourStart into 3 editable parts)
+  const [startHour12, setStartHour12] = useState(9);
+  const [startMinute, setStartMinute] = useState("00");
+  const [startPeriod, setStartPeriod] = useState("AM");
+  // Guest count input draft (validated on blur)
+  const [guestCountDraft, setGuestCountDraft] = useState("1");
+  // Ref for scroll-to-calendar action from PriceCard
+  const calendarSectionRef = useRef(null);
+  const handleScrollToCalendar = useCallback(() => {
+    calendarSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const resourceBehavior = useMemo(
@@ -208,6 +219,14 @@ const PropertyDetail = () => {
   const isDateRangeSchedule = scheduleType === "date_range";
   const isTimeSlotSchedule = scheduleType === "time_slot";
   const canUseClientCalendar = Boolean(user?.$id) && user?.role === "client";
+
+  // Convert 12-hour inputs to 24-hour string for selectedHourStart
+  const computeHourStart = useCallback((h12, min, period) => {
+    const h = Number(h12);
+    if (!h || h < 1 || h > 12) return "";
+    const h24 = period === "AM" ? (h === 12 ? 0 : h) : (h === 12 ? 12 : h + 12);
+    return `${String(h24).padStart(2, "0")}:${min}`;
+  }, []);
 
   usePageSeo({
     title: property?.title
@@ -629,26 +648,15 @@ const PropertyDetail = () => {
     ],
   );
 
-  const authReturnPath = useMemo(
-    () => buildPathFromLocation(location),
-    [location],
-  );
+  const authReturnPath = buildPathFromLocation(location);
 
-  const authRedirectQuery = useMemo(
-    () =>
-      authReturnPath ? `?redirect=${encodeURIComponent(authReturnPath)}` : "",
-    [authReturnPath],
-  );
+  const authRedirectQuery = authReturnPath
+    ? `?redirect=${encodeURIComponent(authReturnPath)}`
+    : "";
 
-  const registerToChatPath = useMemo(
-    () => `/register${authRedirectQuery}`,
-    [authRedirectQuery],
-  );
+  const registerToChatPath = `/register${authRedirectQuery}`;
 
-  const loginToChatPath = useMemo(
-    () => `/login${authRedirectQuery}`,
-    [authRedirectQuery],
-  );
+  const loginToChatPath = `/login${authRedirectQuery}`;
 
   const handleGoBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -1435,9 +1443,9 @@ const PropertyDetail = () => {
           {/* Slide indicators */}
           {gallery.length > 1 && (
             <div className="absolute right-0 bottom-1.5 left-0 z-30 flex justify-center gap-1.5">
-              {gallery.slice(0, 6).map((_, i) => (
+              {gallery.slice(0, 6).map((img, i) => (
                 <span
-                  key={i}
+                  key={img}
                   className={`h-1 rounded-full transition-all duration-300 ${
                     i === heroSlide ? "w-4 bg-white" : "w-1 bg-white/50"
                   }`}
@@ -1836,6 +1844,7 @@ const PropertyDetail = () => {
                 bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
+                onScrollToCalendar={handleScrollToCalendar}
                 canChat={
                   isChatAuth &&
                   user?.role === "client" &&
@@ -2746,6 +2755,7 @@ const PropertyDetail = () => {
                 bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
+                onScrollToCalendar={handleScrollToCalendar}
                 canChat={
                   isChatAuth &&
                   user?.role === "client" &&
@@ -2758,7 +2768,7 @@ const PropertyDetail = () => {
 
             {/* ── Calendar placeholder ───────────────── */}
             {canRenderScheduleAside && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div ref={calendarSectionRef} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                 <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
                   <Calendar
                     size={18}
@@ -2790,25 +2800,34 @@ const PropertyDetail = () => {
                   />
                 ) : isTimeSlotSchedule ? (
                   <div className="space-y-3">
-                    {/* Shared date picker for both modes */}
-                    <label className="grid gap-1 text-sm">
-                      <span className="font-medium text-slate-700 dark:text-slate-200">
-                        {t("client:propertyDetail.calendar.selectDate", {
-                          defaultValue: "Selecciona una fecha",
-                        })}
-                      </span>
-                      <input
-                        type="date"
-                        min={formatDateForQuery(new Date())}
-                        value={selectedSlotDate}
-                        onChange={(event) =>
-                          setSelectedSlotDate(
-                            normalizeDateKey(event.target.value),
-                          )
+                    {/* Single-date picker using the rich availability calendar */}
+                    <PropertyAvailabilityCalendar
+                      property={property}
+                      pricing={{}}
+                      disabledDates={disabledCalendarDates}
+                      selectedRange={{
+                        startDate: selectedSlotDate
+                          ? new Date(selectedSlotDate + "T12:00:00")
+                          : null,
+                        endDate: null,
+                      }}
+                      onRangeChange={(range) => {
+                        const picked = range?.endDate || range?.startDate;
+                        if (!picked) {
+                          setSelectedSlotDate("");
+                          return;
                         }
-                        className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                      />
-                    </label>
+                        const y = picked.getFullYear();
+                        const mo = String(picked.getMonth() + 1).padStart(
+                          2,
+                          "0",
+                        );
+                        const d = String(picked.getDate()).padStart(2, "0");
+                        setSelectedSlotDate(`${y}-${mo}-${d}`);
+                      }}
+                      resourceType={resourceBehavior.resourceType}
+                      priceLabel={resourceBehavior.priceLabel}
+                    />
 
                     {blockedDateSet.has(selectedSlotDate) ? (
                       <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
@@ -2820,68 +2839,65 @@ const PropertyDetail = () => {
                     ) : isHourRangeMode && hourRangeConfig ? (
                       /* ── Hour-range picker ────────────────── */
                       <>
+                        {/* Start time: hour / minutes / AM-PM inputs */}
                         <div className="grid gap-1.5 text-sm">
                           <span className="font-medium text-slate-700 dark:text-slate-200">
                             {t(
                               "client:propertyDetail.calendar.selectStartTime",
-                              {
-                                defaultValue: "Hora de inicio",
-                              },
+                              { defaultValue: "Hora de inicio" },
                             )}
                           </span>
-                          <div className="max-h-56 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50/50 p-2 dark:border-slate-700 dark:bg-slate-800/40">
-                            {(() => {
-                              const am = hourRangeConfig.startOptions.filter(
-                                (o) => o.period === "AM",
-                              );
-                              const pm = hourRangeConfig.startOptions.filter(
-                                (o) => o.period === "PM",
-                              );
-                              const renderChips = (opts) => (
-                                <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
-                                  {opts.map((opt) => (
-                                    <button
-                                      key={opt.value}
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedHourStart(opt.value);
-                                        setSelectedHourCount(0);
-                                      }}
-                                      className={`min-h-10 rounded-lg border px-2 py-1.5 text-sm font-medium transition ${
-                                        selectedHourStart === opt.value
-                                          ? "border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
-                                          : "border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
-                                      }`}
-                                    >
-                                      {opt.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              );
-                              return (
-                                <div className="flex flex-col gap-2">
-                                  {am.length > 0 && (
-                                    <>
-                                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                                        AM
-                                      </span>
-                                      {renderChips(am)}
-                                    </>
-                                  )}
-                                  {pm.length > 0 && (
-                                    <>
-                                      <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                                        PM
-                                      </span>
-                                      {renderChips(pm)}
-                                    </>
-                                  )}
-                                </div>
-                              );
-                            })()}
+                          <div className="grid grid-cols-3 gap-2">
+                            {/* Hour */}
+                            <Select
+                              label={t("client:propertyDetail.calendar.hour", { defaultValue: "Hora" })}
+                              size="md"
+                              value={String(startHour12)}
+                              options={Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))}
+                              onChange={(v) => {
+                                const h = Number(v);
+                                setStartHour12(h);
+                                const next = computeHourStart(h, startMinute, startPeriod);
+                                setSelectedHourStart(next);
+                                setSelectedHourCount(0);
+                              }}
+                            />
+                            {/* Minutes */}
+                            <Select
+                              label={t("client:propertyDetail.calendar.minutes", { defaultValue: "Min" })}
+                              size="md"
+                              value={startMinute}
+                              options={[
+                                { value: "00", label: ":00" },
+                                { value: "30", label: ":30" },
+                              ]}
+                              onChange={(m) => {
+                                setStartMinute(m);
+                                const next = computeHourStart(startHour12, m, startPeriod);
+                                setSelectedHourStart(next);
+                                setSelectedHourCount(0);
+                              }}
+                            />
+                            {/* AM / PM */}
+                            <Select
+                              label={t("client:propertyDetail.calendar.period", { defaultValue: "AM/PM" })}
+                              size="md"
+                              value={startPeriod}
+                              options={[
+                                { value: "AM", label: "AM" },
+                                { value: "PM", label: "PM" },
+                              ]}
+                              onChange={(p) => {
+                                setStartPeriod(p);
+                                const next = computeHourStart(startHour12, startMinute, p);
+                                setSelectedHourStart(next);
+                                setSelectedHourCount(0);
+                              }}
+                            />
                           </div>
                         </div>
 
+                        {/* How many hours — number input + blur validation */}
                         {selectedHourStart && hourCountOptions.length > 0 ? (
                           <label className="grid gap-1 text-sm">
                             <span className="font-medium text-slate-700 dark:text-slate-200">
@@ -2889,22 +2905,25 @@ const PropertyDetail = () => {
                                 defaultValue: "¿Cuántas horas?",
                               })}
                             </span>
-                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                              {hourCountOptions.map((h) => (
-                                <button
-                                  key={h}
-                                  type="button"
-                                  onClick={() => setSelectedHourCount(h)}
-                                  className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                                    selectedHourCount === h
-                                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
-                                      : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
-                                  }`}
-                                >
-                                  {h}h
-                                </button>
-                              ))}
-                            </div>
+                            <input
+                              type="number"
+                              min={hourRangeConfig.minHours}
+                              max={hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours}
+                              value={selectedHourCount === 0 ? "" : selectedHourCount}
+                              placeholder={`${hourRangeConfig.minHours}–${hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours} h`}
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10);
+                                setSelectedHourCount(isNaN(v) ? 0 : v);
+                              }}
+                              onBlur={(e) => {
+                                const min = hourRangeConfig.minHours;
+                                const max = hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours;
+                                const v = parseInt(e.target.value, 10);
+                                if (isNaN(v) || v < min) setSelectedHourCount(min);
+                                else if (v > max) setSelectedHourCount(max);
+                              }}
+                              className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                            />
                           </label>
                         ) : selectedHourStart ? (
                           <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
@@ -2923,6 +2942,34 @@ const PropertyDetail = () => {
                             {hourRangeSlot.label}
                           </div>
                         ) : null}
+
+                        {/* Guest count for hour-range mode */}
+                        <label className="grid gap-1 text-sm">
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {t("client:propertyDetail.calendar.guestCount", {
+                              defaultValue: "Cantidad de personas",
+                            })}
+                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500}
+                            value={guestCountDraft}
+                            onChange={(e) => {
+                              setGuestCountDraft(e.target.value);
+                              const parsed = parseInt(e.target.value, 10);
+                              if (!isNaN(parsed) && parsed >= 1) setSelectedGuestCount(parsed);
+                            }}
+                            onBlur={(e) => {
+                              const v = parseInt(e.target.value, 10);
+                              const max = Number(attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500);
+                              const clamped = isNaN(v) || v < 1 ? 1 : v > max ? max : v;
+                              setGuestCountDraft(String(clamped));
+                              setSelectedGuestCount(clamped);
+                            }}
+                            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                          />
+                        </label>
 
                         {hourRangeSlot ? (
                           isManualContactBooking ? (
@@ -2963,6 +3010,33 @@ const PropertyDetail = () => {
                     ) : (
                       /* ── Predefined slots: grid ──────────── */
                       <>
+                        {/* Guest count input */}
+                        <label className="grid gap-1 text-sm">
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {t("client:propertyDetail.calendar.guestCount", {
+                              defaultValue: "Cantidad de personas",
+                            })}
+                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500}
+                            value={guestCountDraft}
+                            onChange={(e) => {
+                              setGuestCountDraft(e.target.value);
+                              const parsed = parseInt(e.target.value, 10);
+                              if (!isNaN(parsed) && parsed >= 1) setSelectedGuestCount(parsed);
+                            }}
+                            onBlur={(e) => {
+                              const v = parseInt(e.target.value, 10);
+                              const max = Number(attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500);
+                              const clamped = isNaN(v) || v < 1 ? 1 : v > max ? max : v;
+                              setGuestCountDraft(String(clamped));
+                              setSelectedGuestCount(clamped);
+                            }}
+                            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                          />
+                        </label>
                         <div className="grid gap-2 sm:grid-cols-2">
                           {availableTimeSlots.map((slot) => {
                             const isSelected =
@@ -3112,7 +3186,7 @@ const PropertyDetail = () => {
               <AnimatePresence mode="wait">
                 {chatOpened ? (
                   /* Success state after chat opened */
-                  <motion.div
+                  <m.div
                     key="chat-success"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -3121,8 +3195,8 @@ const PropertyDetail = () => {
                     className="border-t border-emerald-200 bg-emerald-50 px-5 py-4 dark:border-emerald-900/50 dark:bg-emerald-950/30"
                   >
                     <div className="flex items-center gap-3">
-                      <motion.div
-                        initial={{ scale: 0 }}
+                      <m.div
+                        initial={{ scale: 0.95 }}
                         animate={{ scale: 1 }}
                         transition={{
                           type: "spring",
@@ -3133,8 +3207,8 @@ const PropertyDetail = () => {
                         className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white"
                       >
                         <MessageCircle size={18} />
-                      </motion.div>
-                      <motion.div
+                      </m.div>
+                      <m.div
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.25 }}
@@ -3145,15 +3219,15 @@ const PropertyDetail = () => {
                         <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
                           {t("client:propertyDetail.agent.chatOpenedHint")}
                         </p>
-                      </motion.div>
+                      </m.div>
                     </div>
-                  </motion.div>
+                  </m.div>
                 ) : isChatAuth &&
                   user?.role === "client" &&
                   user?.emailVerified &&
                   user?.$id !== property.ownerUserId ? (
                   /* Chat button for verified clients */
-                  <motion.div
+                  <m.div
                     key="chat-button"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -3169,17 +3243,17 @@ const PropertyDetail = () => {
                       {chatLoading ? (
                         <Spinner size="xs" />
                       ) : (
-                        <motion.span
+                        <m.span
                           className="inline-flex"
                           whileHover={{ scale: 1.15, rotate: -8 }}
                           transition={{ type: "spring", stiffness: 400 }}
                         >
                           <MessageCircle size={16} />
-                        </motion.span>
+                        </m.span>
                       )}
                       {t("client:propertyDetail.agent.startChat")}
                     </button>
-                  </motion.div>
+                  </m.div>
                 ) : !isChatAuth ? (
                   /* Not logged in */
                   <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
@@ -3336,6 +3410,7 @@ function PriceCard({
   bookingTypeLabel,
   isCtaBlocked,
   onContactAgent,
+  onScrollToCalendar,
   canChat,
   chatLoading,
 }) {
@@ -3429,12 +3504,17 @@ function PriceCard({
       {/* CTA Button */}
       {!isCtaBlocked &&
         (scheduleType === "time_slot" ? (
-          <p className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 px-4 py-3 text-center text-sm font-medium text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300">
+          <button
+            type="button"
+            onClick={onScrollToCalendar}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-cyan-600 px-4 py-3 text-sm font-bold text-white transition hover:from-indigo-400 hover:to-cyan-500"
+          >
+            <Calendar size={16} />
             {t("client:propertyDetail.cta.hourly.selectSlotHint", {
-              defaultValue:
-                "Selecciona una fecha y horario en el calendario de abajo para continuar.",
+              defaultValue: "Ver disponibilidad de horarios",
             })}
-          </p>
+            <ArrowRight size={16} />
+          </button>
         ) : isBookFlow ? (
           <Link
             to={`/reservar/${property.slug}`}

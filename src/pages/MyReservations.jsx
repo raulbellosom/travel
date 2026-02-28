@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import {
   CalendarDays,
   CreditCard,
@@ -112,12 +112,12 @@ const ReservationCard = ({
   const payStyle = PAYMENT_STYLE[paymentStatus] || PAYMENT_STYLE.pending;
 
   const hasVoucher = !!voucherCode;
-  const isPast =
+  const _isPast =
     reservation.checkOutDate &&
     dayjs(reservation.checkOutDate).isBefore(dayjs());
 
   return (
-    <motion.article
+    <m.article
       layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -254,7 +254,7 @@ const ReservationCard = ({
             )}
         </div>
       </div>
-    </motion.article>
+    </m.article>
   );
 };
 

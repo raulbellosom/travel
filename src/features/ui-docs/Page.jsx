@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useUI } from "../../contexts/UIContext";
 import { Select } from "../../components/common";
 import { AtomsSection, MoleculesSection, OrganismsSection } from "./sections";
@@ -18,7 +18,7 @@ import {
 
 export default function Page() {
   const { theme } = useUI();
-  const { t, interpolate, tHtml } = useUIDocsTranslation();
+  const { t, tHtml } = useUIDocsTranslation();
 
   const [selectedSize, setSelectedSize] = React.useState("md");
   const [selectedVariant, setSelectedVariant] = React.useState("primary");
@@ -32,14 +32,14 @@ export default function Page() {
       <div className="lg:ml-64">
         <div className="container mx-auto px-4 py-8 lg:px-8">
           {/* Header Elegante y Profesional */}
-          <motion.div
+          <m.div
             id="overview"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16 scroll-mt-8"
           >
             {/* Título principal */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2, duration: 0.6 }}
@@ -63,10 +63,10 @@ export default function Page() {
                   themes: t("header.themes"),
                 })}
               />
-            </motion.div>
+            </m.div>
 
             {/* Badges de tecnologías */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
@@ -79,7 +79,7 @@ export default function Page() {
                 { name: t("header.technologies.lucideIcons"), icon: Settings },
                 { name: t("header.technologies.i18nReady"), icon: Monitor },
               ].map(({ name, icon: Icon }, index) => (
-                <motion.div
+                <m.div
                   key={name}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -93,12 +93,12 @@ export default function Page() {
                     />
                     {name}
                   </div>
-                </motion.div>
+                </m.div>
               ))}
-            </motion.div>
+            </m.div>
 
             {/* Controles Globales */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.6 }}
@@ -213,7 +213,7 @@ export default function Page() {
                     { label: t("header.sizes"), value: "5" },
                     { label: t("header.themes"), value: "3" },
                   ].map((stat, index) => (
-                    <motion.div
+                    <m.div
                       key={stat.label}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -226,12 +226,12 @@ export default function Page() {
                       <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">
                         {stat.label}
                       </div>
-                    </motion.div>
+                    </m.div>
                   ))}
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
 
           <div className="max-w-4xl mx-auto mb-8">
             <TechNotice />

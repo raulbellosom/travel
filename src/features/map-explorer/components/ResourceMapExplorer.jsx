@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LocateFixed, Loader2, MapPin, Search } from "lucide-react";
@@ -549,10 +549,11 @@ const SidebarResourceCard = ({
   );
 };
 
+const EMPTY_OBJECT = {};
 const ResourceMapExplorer = ({
   mode = "landing",
   className = "",
-  initialFilters = {},
+  initialFilters = EMPTY_OBJECT,
 }) => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -624,11 +625,6 @@ const ResourceMapExplorer = ({
     minLength: 2,
   });
 
-  useEffect(() => {
-    setResourceType(initialResourceType);
-    setCommercialMode(initialCommercialMode);
-    setMaxPrice(initialMaxPrice);
-  }, [initialCommercialMode, initialMaxPrice, initialResourceType]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {

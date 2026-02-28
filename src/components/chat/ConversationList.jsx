@@ -230,11 +230,14 @@ const ConversationList = () => {
                   <img
                     src={avatarUrl}
                     alt={contactName || ""}
+                    role="button"
+                    tabIndex={0}
                     className="h-10 w-10 cursor-pointer rounded-full object-cover transition hover:opacity-80"
                     onClick={(e) => {
                       e.stopPropagation();
                       setViewerImage({ src: avatarUrl, alt: contactName });
                     }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setViewerImage({ src: avatarUrl, alt: contactName }); } }}
                   />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">

@@ -47,6 +47,7 @@ const getLeadSchedulePayload = (lead) => {
     .trim()
     .toLowerCase();
 
+  // date_range: uses checkInDate + checkOutDate
   if (scheduleType === "date_range") {
     const checkInDate = String(
       schedule.checkInDate || meta.checkInDate || "",
@@ -62,7 +63,15 @@ const getLeadSchedulePayload = (lead) => {
     };
   }
 
-  if (scheduleType === "time_slot") {
+  // time_slot, hour_range (manual hour picker) and fixed_event all share the
+  // same structure: startDateTime + endDateTime.
+  // Backend SUPPORTED_SCHEDULE_TYPES only accepts "date_range" | "time_slot",
+  // so we normalize all three to "time_slot".
+  if (
+    scheduleType === "time_slot" ||
+    scheduleType === "hour_range" ||
+    scheduleType === "fixed_event"
+  ) {
     const startDateTime = String(
       schedule.startDateTime || meta.startDateTime || "",
     ).trim();
@@ -77,6 +86,7 @@ const getLeadSchedulePayload = (lead) => {
     };
   }
 
+  // manual_contact without explicit schedule dates cannot be auto-converted.
   return null;
 };
 
@@ -103,6 +113,7 @@ const Leads = () => {
   useEffect(() => {
     const nextSearch = String(searchParams.get("search") || "").trim();
     setQueryFilter((prev) => (prev === nextSearch ? prev : nextSearch));
+    setPage(1);
   }, [searchParams]);
 
   const loadData = useCallback(async () => {
@@ -158,10 +169,6 @@ const Leads = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [queryFilter, statusFilter]);
 
   const normalizedFilter = String(queryFilter || "")
     .trim()
@@ -383,7 +390,10 @@ const Leads = () => {
           </span>
           <input
             value={queryFilter}
-            onChange={(event) => setQueryFilter(event.target.value)}
+            onChange={(event) => {
+              setQueryFilter(event.target.value);
+              setPage(1);
+            }}
             placeholder={t("leadsPage.filters.searchPlaceholder", {
               defaultValue: "Nombre, email, propiedad o mensaje",
             })}
@@ -395,7 +405,10 @@ const Leads = () => {
           <span>{t("leadsPage.filters.status")}</span>
           <Select
             value={statusFilter}
-            onChange={(value) => setStatusFilter(value)}
+            onChange={(value) => {
+              setStatusFilter(value);
+              setPage(1);
+            }}
             options={statusFilterOptions}
             size="md"
           />

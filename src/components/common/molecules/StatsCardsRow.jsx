@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 const CARD_TONE_CLASS = {
   neutral:
@@ -26,7 +26,8 @@ const transition = {
   damping: 30,
 };
 
-const StatsCardsRow = ({ items = [], className = "" }) => {
+const EMPTY_ARRAY = [];
+const StatsCardsRow = ({ items = EMPTY_ARRAY, className = "" }) => {
   if (!Array.isArray(items) || items.length === 0) return null;
 
   return (
@@ -40,7 +41,7 @@ const StatsCardsRow = ({ items = [], className = "" }) => {
         const Icon = item.icon;
 
         return (
-          <motion.article
+          <m.article
             key={key}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -56,14 +57,14 @@ const StatsCardsRow = ({ items = [], className = "" }) => {
                 <p className="truncate text-xs font-semibold uppercase tracking-wider text-slate-500/80 dark:text-slate-400">
                   {item.label}
                 </p>
-                <motion.p
+                <m.p
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 + 0.1, duration: 0.4 }}
                   className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
                 >
                   {item.value}
-                </motion.p>
+                </m.p>
               </div>
               {Icon ? (
                 <span
@@ -78,7 +79,7 @@ const StatsCardsRow = ({ items = [], className = "" }) => {
                 {item.caption}
               </p>
             ) : null}
-          </motion.article>
+          </m.article>
         );
       })}
     </div>

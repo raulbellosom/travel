@@ -113,8 +113,8 @@ const Avatar = ({
     <div className="relative inline-block">
       <div
         className={avatarStyles}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
+        onClick={onClick ? handleClick : undefined}
+        onKeyDown={onClick ? handleKeyDown : undefined}
         tabIndex={onClick ? 0 : undefined}
         role={onClick ? "button" : undefined}
         aria-label={alt || `Avatar for ${name}`}

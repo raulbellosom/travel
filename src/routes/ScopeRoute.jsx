@@ -9,14 +9,24 @@ import { isScopeAllowedByModules } from "../utils/moduleAccess";
 const ScopeRoute = ({ children, scope }) => {
   const { t } = useTranslation();
   const { user, loading } = useAuth();
-  const { loading: modulesLoading, isEnabled } = useInstanceModules();
+  const { isEnabled, loading: modulesLoading } = useInstanceModules();
   const location = useLocation();
 
-  // Only block on the cold-start auth check (user is still unknown).
-  // If the user is already resolved, don't re-show the full-screen overlay
-  // while modules reload on each navigation — they default safely.
+  // Block on cold-start auth check (user still unknown) OR while module
+  // settings haven't loaded yet. Without this second guard, ScopeRoute
+  // evaluates isScopeAllowedByModules against the in-memory defaults
+  // (which omit modules like module.payments.online), causing a false 403
+  // even though the real Appwrite settings have the module enabled.
   if (loading && !user) {
-    return <LoadingScreen transparent title={t("routeGuards.validatingSession")} />;
+    return (
+      <LoadingScreen transparent title={t("routeGuards.validatingSession")} />
+    );
+  }
+
+  if (modulesLoading) {
+    return (
+      <LoadingScreen transparent title={t("routeGuards.validatingSession")} />
+    );
   }
 
   if (!user) {

@@ -32,6 +32,7 @@ const RESOURCE_TYPES = [
  * @param {Function} onShowAllChange - Callback when "show all" changes
  * @param {boolean} canViewAll - Whether current user has permission to toggle showAll
  */
+const EMPTY_ARRAY = [];
 const ResourceListFilters = ({
   searchText,
   onSearchChange,
@@ -39,7 +40,7 @@ const ResourceListFilters = ({
   onResourceTypeChange,
   responsibleFilter = "all",
   onResponsibleChange,
-  staffUsers = [],
+  staffUsers = EMPTY_ARRAY,
   loadingStaff = false,
   featuredFilter = "all",
   onFeaturedChange,

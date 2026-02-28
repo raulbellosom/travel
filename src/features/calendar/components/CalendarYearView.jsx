@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   getYearMonths,
   getMonthGridDays,
@@ -19,14 +19,15 @@ import {
  * @param {Object} props.eventsByDate
  * @param {Function} props.onMonthClick – click a month to switch to month view
  */
+const EMPTY_OBJECT = {};
 export default function CalendarYearView({
   currentDate,
-  eventsByDate = {},
+  eventsByDate = EMPTY_OBJECT,
   onMonthClick,
 }) {
   const { i18n } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
 
   const months = useMemo(
     () => getYearMonths(currentDate.getFullYear()),
@@ -86,9 +87,9 @@ export default function CalendarYearView({
 
             {/* Mini day headers */}
             <div className="grid grid-cols-7 mb-0.5">
-              {dayNarrow.map((d, i) => (
+              {dayNarrow.map((d) => (
                 <div
-                  key={i}
+                  key={d}
                   className="text-center text-[9px] text-gray-400 dark:text-gray-500 font-medium"
                 >
                   {d}

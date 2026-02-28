@@ -2,7 +2,7 @@ import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion as Motion, AnimatePresence } from "framer-motion";
+import { m as Motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   X,
@@ -335,6 +335,255 @@ const FilterSelect = ({ label, value, options, onChange, icon: Icon }) => (
 );
 
 /* ═════════════════════════ MAIN COMPONENT ═════════════════════════ */
+const FiltersContent = ({
+  onClose,
+  filters,
+  tResourceTypes,
+  tOperations,
+  tCategories,
+  tFurnished,
+  updateFilters,
+  updateFilter,
+  clearAllFilters,
+  showPropertyFilters,
+  activeFilterCount,
+  t,
+}) => (
+  <div className="space-y-6">
+    <FilterSelect
+      label={t("client:search.resourceType")}
+      value={filters.resourceType}
+      options={tResourceTypes}
+      onChange={(v) => {
+        updateFilters({
+          resourceType: v,
+          category: "",
+          propertyType: "",
+          commercialMode: "",
+          operationType: "",
+        });
+      }}
+      icon={LayoutGrid}
+    />
+    <FilterSelect
+      label={t("client:search.operationType")}
+      value={filters.commercialMode}
+      options={tOperations}
+      onChange={(v) => {
+        updateFilters({ commercialMode: v, operationType: "" });
+      }}
+    />
+    <FilterSelect
+      label={t("client:search.category")}
+      value={filters.category}
+      options={tCategories}
+      onChange={(v) => {
+        const allowedModes = buildCommercialModeOptions(
+          filters.resourceType,
+          v,
+          t,
+        )
+          .map((option) => option.value)
+          .filter(Boolean);
+        const nextCommercialMode = allowedModes.includes(filters.commercialMode)
+          ? filters.commercialMode
+          : "";
+        updateFilters({
+          category: v,
+          propertyType: "",
+          commercialMode: nextCommercialMode,
+          operationType: "",
+        });
+      }}
+      icon={Home}
+    />
+    <div className="space-y-2">
+      <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        {t("client:search.priceRange")}
+      </label>
+      <div className="flex gap-2">
+        <input
+          type="number"
+          placeholder={t("client:search.minPricePlaceholder")}
+          value={filters.minPrice}
+          onChange={(e) => updateFilter("minPrice", e.target.value)}
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+        />
+        <span className="self-center text-slate-400">—</span>
+        <input
+          type="number"
+          placeholder={t("client:search.maxPricePlaceholder")}
+          value={filters.maxPrice}
+          onChange={(e) => updateFilter("maxPrice", e.target.value)}
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+        />
+      </div>
+      <div className="flex flex-wrap gap-1.5 pt-1">
+        {PRICE_PRESETS.map((p) => {
+          const isActive =
+            filters.minPrice === p.min && filters.maxPrice === p.max;
+          return (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() =>
+                updateFilters({
+                  minPrice: isActive ? "" : p.min,
+                  maxPrice: isActive ? "" : p.max,
+                })
+              }
+              className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                isActive
+                  ? "bg-cyan-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
+              }`}
+            >
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+    {showPropertyFilters && (
+      <div className="space-y-2">
+        <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <BedDouble size={13} className="mr-1 inline" />
+          {t("client:search.bedrooms")}
+        </label>
+        <div className="flex gap-1.5">
+          {BEDROOM_OPTIONS.map((o) => {
+            const isActive = filters.bedrooms === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() =>
+                  updateFilter("bedrooms", isActive ? "" : o.value)
+                }
+                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+                  isActive
+                    ? "bg-cyan-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
+                }`}
+              >
+                {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    )}
+    {showPropertyFilters && (
+      <div className="space-y-2">
+        <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <Bath size={13} className="mr-1 inline" />
+          {t("client:search.bathrooms")}
+        </label>
+        <div className="flex gap-1.5">
+          {BATHROOM_OPTIONS.map((o) => {
+            const isActive = filters.bathrooms === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() =>
+                  updateFilter("bathrooms", isActive ? "" : o.value)
+                }
+                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+                  isActive
+                    ? "bg-cyan-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
+                }`}
+              >
+                {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    )}
+    {(showPropertyFilters || filters.resourceType === "venue") && (
+      <div className="space-y-2">
+        <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <Car size={13} className="mr-1 inline" />
+          {t("client:search.parking")}
+        </label>
+        <div className="flex gap-1.5">
+          {PARKING_OPTIONS.map((o) => {
+            const isActive = filters.parkingSpaces === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() =>
+                  updateFilter("parkingSpaces", isActive ? "" : o.value)
+                }
+                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
+                  isActive
+                    ? "bg-cyan-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
+                }`}
+              >
+                {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    )}
+    {showPropertyFilters && (
+      <FilterSelect
+        label={t("client:search.furnished")}
+        value={filters.furnished}
+        options={tFurnished}
+        onChange={(v) => updateFilter("furnished", v)}
+        icon={Armchair}
+      />
+    )}
+    <div className="space-y-3">
+      <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-500">
+        <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <PawPrint size={16} className="text-amber-500" />
+          {t("client:search.petsAllowed")}
+        </span>
+        <input
+          type="checkbox"
+          checked={filters.petsAllowed}
+          onChange={(e) =>
+            updateFilter("petsAllowed", e.target.checked ? "true" : "")
+          }
+          className="h-5 w-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+        />
+      </label>
+      <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-500">
+        <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <Sparkles size={16} className="text-yellow-500" />
+          {t("client:search.featured")}
+        </span>
+        <input
+          type="checkbox"
+          checked={filters.featured}
+          onChange={(e) =>
+            updateFilter("featured", e.target.checked ? "true" : "")
+          }
+          className="h-5 w-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+        />
+      </label>
+    </div>
+    {activeFilterCount > 0 && (
+      <button
+        type="button"
+        onClick={() => {
+          clearAllFilters();
+          onClose?.();
+        }}
+        className="w-full rounded-xl border border-red-200 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
+      >
+        {t("client:search.clearAll")}
+      </button>
+    )}
+  </div>
+);
 
 const SearchPage = () => {
   const { t } = useTranslation();
@@ -592,271 +841,6 @@ const SearchPage = () => {
   const showPropertyFilters =
     !filters.resourceType || filters.resourceType === "property";
 
-  /* ──────────────────── FILTER SIDEBAR (shared) ──────────────────── */
-
-  const FiltersContent = ({ onClose }) => (
-    <div className="space-y-6">
-      {/* Tipo de recurso */}
-      <FilterSelect
-        label={t("client:search.resourceType")}
-        value={filters.resourceType}
-        options={tResourceTypes}
-        onChange={(v) => {
-          // When resource type changes, clear category filter
-          updateFilters({
-            resourceType: v,
-            category: "",
-            propertyType: "",
-            commercialMode: "",
-            operationType: "",
-          });
-        }}
-        icon={LayoutGrid}
-      />
-
-      {/* Tipo de operación */}
-      <FilterSelect
-        label={t("client:search.operationType")}
-        value={filters.commercialMode}
-        options={tOperations}
-        onChange={(v) => {
-          updateFilters({ commercialMode: v, operationType: "" });
-        }}
-      />
-
-      {/* Categoría (dynamic based on resource type) */}
-      <FilterSelect
-        label={t("client:search.category")}
-        value={filters.category}
-        options={tCategories}
-        onChange={(v) => {
-          const allowedModes = buildCommercialModeOptions(
-            filters.resourceType,
-            v,
-            t,
-          )
-            .map((option) => option.value)
-            .filter(Boolean);
-          const nextCommercialMode = allowedModes.includes(
-            filters.commercialMode,
-          )
-            ? filters.commercialMode
-            : "";
-          updateFilters({
-            category: v,
-            propertyType: "",
-            commercialMode: nextCommercialMode,
-            operationType: "",
-          });
-        }}
-        icon={Home}
-      />
-
-      {/* Rango de precio */}
-      <div className="space-y-2">
-        <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          {t("client:search.priceRange")}
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            placeholder={t("client:search.minPricePlaceholder")}
-            value={filters.minPrice}
-            onChange={(e) => updateFilter("minPrice", e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          />
-          <span className="self-center text-slate-400">—</span>
-          <input
-            type="number"
-            placeholder={t("client:search.maxPricePlaceholder")}
-            value={filters.maxPrice}
-            onChange={(e) => updateFilter("maxPrice", e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          />
-        </div>
-        {/* Quick price presets */}
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {PRICE_PRESETS.map((p) => {
-            const isActive =
-              filters.minPrice === p.min && filters.maxPrice === p.max;
-            return (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() =>
-                  updateFilters({
-                    minPrice: isActive ? "" : p.min,
-                    maxPrice: isActive ? "" : p.max,
-                  })
-                }
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
-                  isActive
-                    ? "bg-cyan-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
-                }`}
-              >
-                {p.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recámaras — only for properties */}
-      {showPropertyFilters && (
-        <div className="space-y-2">
-          <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <BedDouble size={13} className="mr-1 inline" />
-            {t("client:search.bedrooms")}
-          </label>
-          <div className="flex gap-1.5">
-            {BEDROOM_OPTIONS.map((o) => {
-              const isActive = filters.bedrooms === o.value;
-              return (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() =>
-                    updateFilter("bedrooms", isActive ? "" : o.value)
-                  }
-                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                    isActive
-                      ? "bg-cyan-600 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
-                  }`}
-                >
-                  {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Baños — only for properties */}
-      {showPropertyFilters && (
-        <div className="space-y-2">
-          <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <Bath size={13} className="mr-1 inline" />
-            {t("client:search.bathrooms")}
-          </label>
-          <div className="flex gap-1.5">
-            {BATHROOM_OPTIONS.map((o) => {
-              const isActive = filters.bathrooms === o.value;
-              return (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() =>
-                    updateFilter("bathrooms", isActive ? "" : o.value)
-                  }
-                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                    isActive
-                      ? "bg-cyan-600 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
-                  }`}
-                >
-                  {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Estacionamiento — only for properties/venues */}
-      {(showPropertyFilters || filters.resourceType === "venue") && (
-        <div className="space-y-2">
-          <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <Car size={13} className="mr-1 inline" />
-            {t("client:search.parking")}
-          </label>
-          <div className="flex gap-1.5">
-            {PARKING_OPTIONS.map((o) => {
-              const isActive = filters.parkingSpaces === o.value;
-              return (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() =>
-                    updateFilter("parkingSpaces", isActive ? "" : o.value)
-                  }
-                  className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${
-                    isActive
-                      ? "bg-cyan-600 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-white"
-                  }`}
-                >
-                  {o.labelKey ? t(`client:${o.labelKey}`) : o.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Amueblado — only for properties */}
-      {showPropertyFilters && (
-        <FilterSelect
-          label={t("client:search.furnished")}
-          value={filters.furnished}
-          options={tFurnished}
-          onChange={(v) => updateFilter("furnished", v)}
-          icon={Armchair}
-        />
-      )}
-
-      {/* Toggles */}
-      <div className="space-y-3">
-        {/* Mascotas */}
-        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-500">
-          <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-            <PawPrint size={16} className="text-amber-500" />
-            {t("client:search.petsAllowed")}
-          </span>
-          <input
-            type="checkbox"
-            checked={filters.petsAllowed}
-            onChange={(e) =>
-              updateFilter("petsAllowed", e.target.checked ? "true" : "")
-            }
-            className="h-5 w-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-          />
-        </label>
-
-        {/* Destacadas */}
-        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-cyan-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-500">
-          <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-            <Sparkles size={16} className="text-yellow-500" />
-            {t("client:search.featured")}
-          </span>
-          <input
-            type="checkbox"
-            checked={filters.featured}
-            onChange={(e) =>
-              updateFilter("featured", e.target.checked ? "true" : "")
-            }
-            className="h-5 w-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-          />
-        </label>
-      </div>
-
-      {/* Clear all */}
-      {activeFilterCount > 0 && (
-        <button
-          type="button"
-          onClick={() => {
-            clearAllFilters();
-            onClose?.();
-          }}
-          className="w-full rounded-xl border border-red-200 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
-        >
-          {t("client:search.clearAll")}
-        </button>
-      )}
-    </div>
-  );
-
   /* ═══════════════════════════ RENDER ═══════════════════════════ */
 
   return (
@@ -978,7 +962,19 @@ const SearchPage = () => {
                   </span>
                 )}
               </h3>
-              <FiltersContent />
+              <FiltersContent
+                filters={filters}
+                tResourceTypes={tResourceTypes}
+                tOperations={tOperations}
+                tCategories={tCategories}
+                tFurnished={tFurnished}
+                updateFilters={updateFilters}
+                updateFilter={updateFilter}
+                clearAllFilters={clearAllFilters}
+                showPropertyFilters={showPropertyFilters}
+                activeFilterCount={activeFilterCount}
+                t={t}
+              />
             </div>
           </aside>
 
@@ -1037,9 +1033,10 @@ const SearchPage = () => {
             <AnimatePresence>
               {activeChips.length > 0 && (
                 <Motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
+                  initial={{ opacity: 0, scaleY: 0.95 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  exit={{ opacity: 0, scaleY: 0.95 }}
+                  style={{ transformOrigin: "top" }}
                   className="mb-4 flex flex-wrap items-center gap-2"
                 >
                   <Tag size={14} className="text-slate-400" />
@@ -1252,7 +1249,20 @@ const SearchPage = () => {
 
               {/* Scrollable content */}
               <div className="flex-1 overflow-y-auto px-5 py-5">
-                <FiltersContent onClose={() => setIsMobileFiltersOpen(false)} />
+                <FiltersContent
+                  onClose={() => setIsMobileFiltersOpen(false)}
+                  filters={filters}
+                  tResourceTypes={tResourceTypes}
+                  tOperations={tOperations}
+                  tCategories={tCategories}
+                  tFurnished={tFurnished}
+                  updateFilters={updateFilters}
+                  updateFilter={updateFilter}
+                  clearAllFilters={clearAllFilters}
+                  showPropertyFilters={showPropertyFilters}
+                  activeFilterCount={activeFilterCount}
+                  t={t}
+                />
               </div>
 
               {/* Footer */}

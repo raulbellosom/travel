@@ -520,6 +520,10 @@ const InfiniteRow = ({ items, direction = "left", speed = 0.4 }) => {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label="Category carousel"
+      onKeyDown={(e)=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();setPaused(p=>!p);}}}
       className="overflow-hidden cursor-grab select-none active:cursor-grabbing"
       style={{
         maskImage: EDGE_FADE,

@@ -1,4 +1,4 @@
-﻿import { useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 
 import ResourceMapExplorer from "../features/map-explorer/components/ResourceMapExplorer";
@@ -28,7 +28,11 @@ const MapExplorePage = () => {
 
   return (
     <div className="pt-20 sm:pt-24">
-      <ResourceMapExplorer mode="page" initialFilters={initialFilters} />
+      <ResourceMapExplorer
+        key={`${initialFilters.resourceType}-${initialFilters.commercialMode}-${initialFilters.maxPrice}`}
+        mode="page"
+        initialFilters={initialFilters}
+      />
     </div>
   );
 };

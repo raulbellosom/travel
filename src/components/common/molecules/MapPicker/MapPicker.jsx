@@ -93,6 +93,7 @@ const MapPicker = ({
     () => ({
       center: position,
       zoom,
+      gestureHandling: "greedy",
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: true,
@@ -117,6 +118,7 @@ const MapPicker = ({
   // Intentionally excludes `center` and `zoom` so existing camera state is preserved.
   const updateMapOptions = useMemo(
     () => ({
+      gestureHandling: "greedy",
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: true,

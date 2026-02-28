@@ -31,7 +31,7 @@ import {
   Armchair,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { cn } from "../../../utils/cn";
 import PropertyImagePlaceholder from "../atoms/PropertyImagePlaceholder";
 import ProgressiveImage from "../atoms/ProgressiveImage";
@@ -86,7 +86,6 @@ const PropertyCard = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFavorite, user?.$id, property?.$id]);
-  const _MOTION = motion;
   const resource = useMemo(() => getResourceBehavior(property), [property]);
 
   const handleFavoriteClick = useCallback(
@@ -290,7 +289,7 @@ const PropertyCard = ({
   const isVenue = resourceType === "venue";
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -322,7 +321,9 @@ const PropertyCard = ({
 
                   return (
                     <div
-                      key={imgItem.fileId || String(imgItem.url || idx)}
+                      key={
+                        imgItem.fileId ? String(imgItem.fileId) : `url-${idx}`
+                      }
                       className="h-full w-full shrink-0"
                     >
                       {isNearVisible ? (
@@ -420,9 +421,9 @@ const PropertyCard = ({
 
             {/* Dots */}
             <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-              {images.slice(0, 5).map((_, idx) => (
+              {images.slice(0, 5).map((img, idx) => (
                 <div
-                  key={idx}
+                  key={img.fileId ? String(img.fileId) : `dot-${idx}`}
                   className={cn(
                     "h-1.5 rounded-full transition-all shadow-sm",
                     idx === currentImageIndex
@@ -699,7 +700,7 @@ const PropertyCard = ({
           </Link>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 };
 

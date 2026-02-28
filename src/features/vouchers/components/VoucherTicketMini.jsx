@@ -5,7 +5,7 @@
  */
 import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Calendar, ChevronRight, Ticket } from "lucide-react";
 import { ReservationStatusBadge } from "../../reservations/components/ReservationStatusBadge";
 import { formatMoney } from "../../reservations/utils";
@@ -23,7 +23,7 @@ const VoucherTicketMini = ({ voucher, onClick }) => {
     : "";
 
   return (
-    <motion.button
+    <m.button
       type="button"
       onClick={() => onClick?.(voucher)}
       whileTap={{ scale: 0.98 }}
@@ -91,7 +91,7 @@ const VoucherTicketMini = ({ voucher, onClick }) => {
       <div className="absolute -right-1.5 top-1/2 z-10 -translate-y-1/2">
         <div className="h-4 w-4 rounded-full bg-slate-100 dark:bg-slate-950" />
       </div>
-    </motion.button>
+    </m.button>
   );
 };
 

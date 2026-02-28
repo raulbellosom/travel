@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "../../atoms";
@@ -22,7 +22,7 @@ const Modal = ({
 }) => {
   const { t } = useTranslation();
 
-  const MotionDiv = motion.div;
+  const MotionDiv = m.div;
 
   // Tamaños según design system (04_design_system_mobile_first.md)
   const sizeStyles = {

@@ -31,9 +31,10 @@ const FIELD_CLASS =
   "focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 " +
   "dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
 
+const EMPTY_ARRAY = [];
 const ReservationFilters = ({
   filters,
-  resources = [],
+  resources = EMPTY_ARRAY,
   canSeeAll,
   onChange,
   onReset,
@@ -81,7 +82,7 @@ const ReservationFilters = ({
   const filterFieldsContent = (
     <div className="space-y-4">
       {/* Status */}
-      <label className="block space-y-1.5 text-sm">
+      <div className="block space-y-1.5 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-300">
           Estado de reserva
         </span>
@@ -91,10 +92,10 @@ const ReservationFilters = ({
           options={statusOptions}
           size="md"
         />
-      </label>
+      </div>
 
       {/* Payment status */}
-      <label className="block space-y-1.5 text-sm">
+      <div className="block space-y-1.5 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-300">
           Estado de pago
         </span>
@@ -104,11 +105,11 @@ const ReservationFilters = ({
           options={paymentOptions}
           size="md"
         />
-      </label>
+      </div>
 
       {/* Resource (only if canSeeAll or has >1 resource) */}
       {(canSeeAll || resources.length > 1) && (
-        <label className="block space-y-1.5 text-sm">
+        <div className="block space-y-1.5 text-sm">
           <span className="font-medium text-slate-700 dark:text-slate-300">
             Recurso
           </span>
@@ -118,7 +119,7 @@ const ReservationFilters = ({
             options={resourceOptions}
             size="md"
           />
-        </label>
+        </div>
       )}
 
       {/* Date range */}

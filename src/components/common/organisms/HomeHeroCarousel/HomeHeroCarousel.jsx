@@ -1,6 +1,6 @@
-﻿import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -306,7 +306,7 @@ const HomeHeroCarousel = () => {
 
       <div className="absolute inset-0">
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key={activeResource?.$id || safeCurrent}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -334,7 +334,7 @@ const HomeHeroCarousel = () => {
               }}
               onLoad={() => setBgImgLoaded(true)}
             />
-          </motion.div>
+          </m.div>
         </AnimatePresence>
 
         {hasFeaturedResources ? (
@@ -437,7 +437,7 @@ const HomeHeroCarousel = () => {
 
         <div className="mt-4 space-y-3">
           <AnimatePresence mode="wait">
-            <motion.article
+            <m.article
               key={activeResource?.$id || safeCurrent}
               initial={{ opacity: 0, y: 10, scale: 0.99 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -525,7 +525,7 @@ const HomeHeroCarousel = () => {
                   </Link>
                 )}
               </div>
-            </motion.article>
+            </m.article>
           </AnimatePresence>
 
           {hasMultipleFeatured && (

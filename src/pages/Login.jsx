@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   useLocation,
@@ -36,18 +36,11 @@ const Login = () => {
   const [info, setInfo] = useState("");
   const [emailNotVerified, setEmailNotVerified] = useState(false);
 
-  const authRedirectTarget = useMemo(
-    () => resolveAuthRedirectPath({ location, searchParams }),
-    [location, searchParams],
-  );
+  const authRedirectTarget = resolveAuthRedirectPath({ location, searchParams });
 
-  const authRedirectQuery = useMemo(
-    () =>
-      authRedirectTarget
-        ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
-        : "",
-    [authRedirectTarget],
-  );
+  const authRedirectQuery = authRedirectTarget
+    ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
+    : "";
 
   useEffect(() => {
     rememberAuthRedirect({ location, searchParams });

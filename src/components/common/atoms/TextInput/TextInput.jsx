@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 /**
  * TextInput component with label, helper text, error states, and prefix/suffix support.
@@ -31,16 +31,16 @@ const TextInput = React.forwardRef(
       id,
       name,
       autoComplete,
-      autoFocus = false,
+      autoFocus: _autoFocus = false,
       maxLength,
       minLength,
       pattern,
       "aria-describedby": ariaDescribedBy,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const [focused, setFocused] = useState(false);
+    const [_focused, setFocused] = useState(false);
     const [internalValue, setInternalValue] = useState(value || "");
 
     // Generate unique ID if not provided
@@ -51,7 +51,7 @@ const TextInput = React.forwardRef(
     // Determine state
     const hasError = Boolean(error);
     const hasSuccess = Boolean(success) && !hasError;
-    const hasValue = Boolean(internalValue || value);
+    const _hasValue = Boolean(internalValue || value);
 
     // Base styles
     const baseInputStyles = [
@@ -99,8 +99,8 @@ const TextInput = React.forwardRef(
     const stateStyles = hasError
       ? "border-red-500 focus:border-red-500 focus:ring-red-500"
       : hasSuccess
-      ? "border-green-500 focus:border-green-500 focus:ring-green-500"
-      : "";
+        ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+        : "";
 
     // Icon sizes
     const iconSizes = {
@@ -126,8 +126,8 @@ const TextInput = React.forwardRef(
       hasError
         ? "text-red-600 dark:text-red-400"
         : hasSuccess
-        ? "text-green-600 dark:text-green-400"
-        : "text-gray-500 dark:text-gray-400",
+          ? "text-green-600 dark:text-green-400"
+          : "text-gray-500 dark:text-gray-400",
     ].join(" ");
 
     // Combine input styles
@@ -186,7 +186,7 @@ const TextInput = React.forwardRef(
             </div>
           )}
 
-          <motion.input
+          <m.input
             ref={ref}
             id={inputId}
             name={name}
@@ -200,7 +200,6 @@ const TextInput = React.forwardRef(
             readOnly={readOnly}
             required={required}
             autoComplete={autoComplete}
-            autoFocus={autoFocus}
             maxLength={maxLength}
             minLength={minLength}
             pattern={pattern}
@@ -286,7 +285,7 @@ const TextInput = React.forwardRef(
         )}
       </div>
     );
-  }
+  },
 );
 
 TextInput.displayName = "TextInput";

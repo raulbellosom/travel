@@ -302,7 +302,7 @@ export const CrmMockup = () => {
 };
 
 // 3. Website Mockup
-export const WebsiteMockup = ({ hideUI = false }) => {
+export const WebsiteMockup = ({ hideUI: _hideUI = false }) => {
   const { t } = useTranslation();
   return (
     <div className="w-full h-full bg-white dark:bg-slate-900 flex flex-col overflow-hidden">

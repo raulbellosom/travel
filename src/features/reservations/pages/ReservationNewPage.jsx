@@ -13,7 +13,7 @@ import { resourcesService } from "../../../services/resourcesService";
 import { useAuth } from "../../../hooks/useAuth";
 
 const ReservationNewPage = () => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const { user } = useAuth();
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(true);

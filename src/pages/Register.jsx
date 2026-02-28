@@ -56,17 +56,10 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const authRedirectTarget = useMemo(
-    () => resolveAuthRedirectPath({ location, searchParams }),
-    [location, searchParams]
-  );
-  const authRedirectQuery = useMemo(
-    () =>
-      authRedirectTarget
-        ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
-        : "",
-    [authRedirectTarget]
-  );
+  const authRedirectTarget = resolveAuthRedirectPath({ location, searchParams });
+  const authRedirectQuery = authRedirectTarget
+    ? `?redirect=${encodeURIComponent(authRedirectTarget)}`
+    : "";
 
   useEffect(() => {
     rememberAuthRedirect({ location, searchParams });

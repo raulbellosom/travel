@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -17,7 +17,7 @@ import {
 import env from "../../env";
 
 const themes = {
-  "400": {
+  400: {
     icon: AlertTriangle,
     pageGradient:
       "from-amber-50 via-orange-50 to-slate-100 dark:from-[#1f1205] dark:via-[#261606] dark:to-[#16171a]",
@@ -38,7 +38,7 @@ const themes = {
     codeGradient: "from-amber-500 to-orange-500",
     iconAnimation: "animate-shake-soft",
   },
-  "403": {
+  403: {
     icon: Ban,
     pageGradient:
       "from-rose-50 via-red-50 to-slate-100 dark:from-[#210810] dark:via-[#2a0a14] dark:to-[#14141b]",
@@ -59,7 +59,7 @@ const themes = {
     codeGradient: "from-rose-600 to-red-600",
     iconAnimation: "animate-wiggle",
   },
-  "404": {
+  404: {
     icon: SearchX,
     pageGradient:
       "from-cyan-50 via-sky-50 to-slate-100 dark:from-[#041723] dark:via-[#082233] dark:to-[#0a1a2a]",
@@ -80,7 +80,7 @@ const themes = {
     codeGradient: "from-cyan-500 to-sky-500",
     iconAnimation: "animate-pulse-soft",
   },
-  "500": {
+  500: {
     icon: ServerCrash,
     pageGradient:
       "from-red-50 via-orange-50 to-slate-100 dark:from-[#210708] dark:via-[#2a0e0f] dark:to-[#16131a]",
@@ -101,7 +101,7 @@ const themes = {
     codeGradient: "from-red-600 to-orange-600",
     iconAnimation: "animate-glitch-soft",
   },
-  "503": {
+  503: {
     icon: Wrench,
     pageGradient:
       "from-teal-50 via-cyan-50 to-slate-100 dark:from-[#041d1c] dark:via-[#062627] dark:to-[#111a21]",
@@ -153,11 +153,7 @@ const ErrorPage = ({
   showActions = true,
 }) => {
   const { t } = useTranslation();
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
+  const [isVisible] = useState(true);
 
   const errorType = ["400", "403", "404", "500", "503"].includes(errorCode)
     ? errorCode
@@ -172,7 +168,7 @@ const ErrorPage = ({
     tips: t(`errors.${errorType}.tips`, { returnObjects: true }),
   };
 
-  const Icon = useMemo(() => theme.icon, [theme.icon]);
+  const Icon = theme.icon;
   const goHome = () => {
     window.location.assign("/");
   };
@@ -191,8 +187,14 @@ const ErrorPage = ({
       className={`relative min-h-dvh overflow-hidden bg-gradient-to-br ${theme.pageGradient} text-slate-900 dark:text-slate-50`}
     >
       <div className="error-page-grid absolute inset-0" aria-hidden />
-      <div className={`error-orb error-orb-a ${theme.orbPrimary}`} aria-hidden />
-      <div className={`error-orb error-orb-b ${theme.orbSecondary}`} aria-hidden />
+      <div
+        className={`error-orb error-orb-a ${theme.orbPrimary}`}
+        aria-hidden
+      />
+      <div
+        className={`error-orb error-orb-b ${theme.orbSecondary}`}
+        aria-hidden
+      />
 
       <div className="relative mx-auto flex min-h-dvh w-full max-w-6xl items-center p-4 sm:p-6 lg:p-10">
         <section
@@ -226,15 +228,19 @@ const ErrorPage = ({
                 {errorData.message}
               </p>
 
-              {showTips && Array.isArray(errorData.tips) && errorData.tips.length > 0 ? (
-                <div className={`mt-6 rounded-2xl border p-4 ${theme.tipsPanel}`}>
+              {showTips &&
+              Array.isArray(errorData.tips) &&
+              errorData.tips.length > 0 ? (
+                <div
+                  className={`mt-6 rounded-2xl border p-4 ${theme.tipsPanel}`}
+                >
                   <h3 className="mb-3 flex items-center gap-2 text-base font-semibold">
                     <HelpCircle className="h-5 w-5" aria-hidden />
                     {t("errors.helpfulTips")}
                   </h3>
                   <ul className="space-y-2 text-sm sm:text-base">
-                    {errorData.tips.map((tip, index) => (
-                      <li key={index} className="flex items-start gap-2">
+                    {errorData.tips.map((tip) => (
+                      <li key={tip} className="flex items-start gap-2">
                         <CheckCircle2
                           className={`mt-0.5 h-4 w-4 shrink-0 ${theme.tipIcon}`}
                           aria-hidden

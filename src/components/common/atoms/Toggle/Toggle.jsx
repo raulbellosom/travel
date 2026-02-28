@@ -100,19 +100,19 @@ const Toggle = ({
     <div className="flex flex-col gap-1">
       <div className="flex items-start gap-3">
         <div className="relative">
-          <input
-            type="checkbox"
-            id={inputId}
-            name={name ?? inputId}
-            checked={checked}
-            disabled={disabled}
-            onChange={handleChange}
-            className="sr-only"
-            role="switch"
-            aria-checked={checked}
-            {...props}
-          />
-          <label htmlFor={inputId} className={trackStyles} aria-hidden>
+          <label htmlFor={inputId} className={trackStyles}>
+            <input
+              type="checkbox"
+              id={inputId}
+              name={name ?? inputId}
+              checked={checked}
+              disabled={disabled}
+              onChange={handleChange}
+              className="sr-only"
+              role="switch"
+              aria-checked={checked}
+              {...props}
+            />
             <span className={thumbStyles} />
           </label>
         </div>

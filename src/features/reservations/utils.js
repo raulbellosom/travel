@@ -4,7 +4,7 @@ import { RESERVATION_STATUS_COLORS, PAYMENT_STATUS_COLORS } from "./constants";
 /**
  * Returns a human-readable schedule label for a reservation.
  */
-export const formatScheduleLabel = (reservation, locale = "es-MX") => {
+export const formatScheduleLabel = (reservation, _locale = "es-MX") => {
   const isTimeSlot =
     reservation.bookingType === "time_slot" ||
     reservation.bookingType === "fixed_event";

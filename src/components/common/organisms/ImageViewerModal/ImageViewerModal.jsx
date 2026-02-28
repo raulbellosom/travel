@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useTransform,
-} from "motion/react";
+import { m, AnimatePresence, useMotionValue } from "motion/react";
 import {
   X,
   ZoomIn,
@@ -25,11 +20,12 @@ import { cn } from "../../../../utils/cn";
  * A fullscreen image viewer modal with zoom, pan, rotate and mobile gestures support.
  * Refactored to use MotionValues for high-performance 60fps animations.
  */
+const EMPTY_ARRAY = [];
 export function ImageViewerModal({
   isOpen,
   onClose,
   src,
-  images = [],
+  images = EMPTY_ARRAY,
   initialIndex = 0,
   alt = "Image",
   showDownload = true,
@@ -208,7 +204,7 @@ export function ImageViewerModal({
 
   const handleTouchMove = useCallback(
     (e) => {
-      const isDragging = stateRef.current.isDragging;
+      const _isDragging = stateRef.current.isDragging;
       const touchStartDist = stateRef.current.touchStartDist;
 
       if (e.touches.length === 2 && touchStartDist) {
@@ -353,7 +349,7 @@ export function ImageViewerModal({
 
   return createPortal(
     <AnimatePresence mode="wait">
-      <motion.div
+      <m.div
         key="image-viewer-root"
         className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden touch-none w-screen h-[100dvh]"
         initial={{ opacity: 0 }}
@@ -362,11 +358,11 @@ export function ImageViewerModal({
         transition={{ duration: 0.3 }}
       >
         {/* Fondo ultra transparente con efecto glass */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-black/30 via-slate-900/40 to-cyan-950/35 backdrop-blur-2xl"
+        <m.div
+          className="absolute inset-0 bg-gradient-to-br from-black/30 via-slate-900/40 to-cyan-950/35 backdrop-blur-md"
           onClick={handleClose}
           initial={{ backdropFilter: "blur(0px)" }}
-          animate={{ backdropFilter: "blur(24px)" }}
+          animate={{ backdropFilter: "blur(8px)" }}
           exit={{ backdropFilter: "blur(0px)" }}
           transition={{ duration: 0.4 }}
         />
@@ -384,7 +380,7 @@ export function ImageViewerModal({
           {/* Header */}
           <div className="flex justify-between items-center pointer-events-auto">
             {isGalleryMode && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="relative bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-2xl px-5 py-2.5 rounded-3xl text-sm font-semibold border border-white/30 shadow-2xl shadow-black/20"
@@ -393,16 +389,20 @@ export function ImageViewerModal({
                     "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}
               >
-                <span className="text-white drop-shadow-lg">{currentIndex + 1}</span>
+                <span className="text-white drop-shadow-lg">
+                  {currentIndex + 1}
+                </span>
                 <span className="text-white/50 mx-1.5">/</span>
-                <span className="text-white/90 drop-shadow-lg">{imageList.length}</span>
-              </motion.div>
+                <span className="text-white/90 drop-shadow-lg">
+                  {imageList.length}
+                </span>
+              </m.div>
             )}
             {!isGalleryMode && <div />}
 
             <div className="flex items-center gap-2">
               {scaleDisplay > 1.01 && (
-                <motion.button
+                <m.button
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
@@ -416,11 +416,14 @@ export function ImageViewerModal({
                       "0 8px 32px rgba(6,182,212,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
                   }}
                 >
-                  <RotateCcw size={16} className="sm:w-[18px] sm:h-[18px] drop-shadow" />
+                  <RotateCcw
+                    size={16}
+                    className="sm:w-[18px] sm:h-[18px] drop-shadow"
+                  />
                   <span className="drop-shadow">Restablecer Vista</span>
-                </motion.button>
+                </m.button>
               )}
-              <motion.button
+              <m.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleClose}
@@ -432,14 +435,14 @@ export function ImageViewerModal({
                 title="Cerrar (ESC)"
               >
                 <X size={20} className="sm:w-6 sm:h-6 drop-shadow" />
-              </motion.button>
+              </m.button>
             </div>
           </div>
 
           {/* Navigation */}
           {isGalleryMode && (
             <div className="flex-1 flex items-center justify-between pointer-events-none px-2 sm:px-4 md:px-8">
-              <motion.button
+              <m.button
                 whileHover={{ scale: 1.1, x: -5 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={(e) => {
@@ -453,9 +456,12 @@ export function ImageViewerModal({
                 }}
                 title="Anterior (←)"
               >
-                <ChevronLeft size={24} className="sm:w-8 sm:h-8 drop-shadow-lg" />
-              </motion.button>
-              <motion.button
+                <ChevronLeft
+                  size={24}
+                  className="sm:w-8 sm:h-8 drop-shadow-lg"
+                />
+              </m.button>
+              <m.button
                 whileHover={{ scale: 1.1, x: 5 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={(e) => {
@@ -469,15 +475,18 @@ export function ImageViewerModal({
                 }}
                 title="Siguiente (→)"
               >
-                <ChevronRight size={24} className="sm:w-8 sm:h-8 drop-shadow-lg" />
-              </motion.button>
+                <ChevronRight
+                  size={24}
+                  className="sm:w-8 sm:h-8 drop-shadow-lg"
+                />
+              </m.button>
             </div>
           )}
 
           {/* Toolbar */}
           <div className="flex flex-col items-center gap-3 pointer-events-auto">
             {isGalleryMode && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -488,8 +497,8 @@ export function ImageViewerModal({
                 }}
               >
                 {imageList.map((img, idx) => (
-                  <motion.button
-                    key={idx}
+                  <m.button
+                    key={img}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={(e) => {
@@ -520,12 +529,12 @@ export function ImageViewerModal({
                     {currentIndex === idx && (
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 pointer-events-none" />
                     )}
-                  </motion.button>
+                  </m.button>
                 ))}
-              </motion.div>
+              </m.div>
             )}
 
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -578,13 +587,22 @@ export function ImageViewerModal({
                   />
                 </>
               )}
-            </motion.div>
+            </m.div>
           </div>
         </div>
 
         {/* Image Container */}
         <div
           ref={combinedContainerRef}
+          role="button"
+          tabIndex={0}
+          aria-label="Image viewer"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleDoubleTap(e);
+            }
+          }}
           className="absolute inset-0 flex items-center justify-center px-2 py-4 pb-32 sm:px-6 sm:pb-36 md:p-12 md:pb-40 pointer-events-auto select-none touch-none cursor-grab active:cursor-grabbing"
           style={{
             paddingBottom:
@@ -604,7 +622,7 @@ export function ImageViewerModal({
 
           {/* Zoom Indicator */}
           {!loading && scaleDisplay > 1.01 && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -622,11 +640,11 @@ export function ImageViewerModal({
                   Zoom activo - Arrastra para mover
                 </p>
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {imageList[currentIndex] || src ? (
-            <motion.img
+            <m.img
               key={currentIndex} // Fuerza recreación al cambiar de imagen
               ref={imageRef}
               src={imageList[currentIndex] || src}
@@ -672,7 +690,7 @@ export function ImageViewerModal({
             )
           )}
         </div>
-      </motion.div>
+      </m.div>
     </AnimatePresence>,
     document.body,
   );
@@ -680,7 +698,7 @@ export function ImageViewerModal({
 
 function ToolButton({ icon: Icon, onClick, label, className }) {
   return (
-    <motion.button
+    <m.button
       whileHover={{ scale: 1.15, y: -2 }}
       whileTap={{ scale: 0.9 }}
       onClick={(e) => {
@@ -700,13 +718,13 @@ function ToolButton({ icon: Icon, onClick, label, className }) {
         className="sm:w-5 sm:h-5 md:w-6 md:h-6 transition-transform group-hover:scale-110 drop-shadow-lg"
       />
       {/* Efecto de brillo en hover */}
-      <motion.div
+      <m.div
         className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
         style={{
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3)",
         }}
       />
-    </motion.button>
+    </m.button>
   );
 }
 

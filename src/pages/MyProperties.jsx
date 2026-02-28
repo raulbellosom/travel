@@ -183,14 +183,14 @@ const useRowActionMenu = (paginatedItems) => {
     const onViewport = () => close();
 
     document.addEventListener("mousedown", onOutsideClick);
-    document.addEventListener("touchstart", onOutsideClick);
+    document.addEventListener("touchstart", onOutsideClick, { passive: true });
     document.addEventListener("keydown", onEscape);
     window.addEventListener("resize", onViewport);
     window.addEventListener("scroll", onViewport, true);
 
     return () => {
       document.removeEventListener("mousedown", onOutsideClick);
-      document.removeEventListener("touchstart", onOutsideClick);
+      document.removeEventListener("touchstart", onOutsideClick, { passive: true });
       document.removeEventListener("keydown", onEscape);
       window.removeEventListener("resize", onViewport);
       window.removeEventListener("scroll", onViewport, true);
@@ -316,6 +316,7 @@ const MyProperties = () => {
   useEffect(() => {
     const next = String(searchParams.get("search") || "").trim();
     setSearchText((prev) => (prev === next ? prev : next));
+    setPage(1);
   }, [searchParams]);
 
   // ─── Search & pagination ────────────────────────────────────
@@ -387,9 +388,6 @@ const MyProperties = () => {
     paginatedItems,
   } = usePagination(sortedItems);
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchText, resourceTypeFilter, setPage]);
 
   // ─── Thumbnail resolution ───────────────────────────────────
   const getResourceThumbnail = useCallback(
@@ -694,9 +692,9 @@ const MyProperties = () => {
       {/* Filters */}
       <ResourceListFilters
         searchText={searchText}
-        onSearchChange={setSearchText}
+        onSearchChange={(v) => { setSearchText(v); setPage(1); }}
         resourceTypeFilter={resourceTypeFilter}
-        onResourceTypeChange={setResourceTypeFilter}
+        onResourceTypeChange={(v) => { setResourceTypeFilter(v); setPage(1); }}
         responsibleFilter={responsibleFilter}
         onResponsibleChange={setResponsibleFilter}
         staffUsers={staffUsers}

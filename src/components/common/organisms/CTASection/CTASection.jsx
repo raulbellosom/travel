@@ -1,7 +1,7 @@
 import { ArrowRight, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import Button from "../../atoms/Button";
 
 /**
@@ -55,7 +55,7 @@ const CTASection = ({ className = "" }) => {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Left Column - Main CTA */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -149,10 +149,10 @@ const CTASection = ({ className = "" }) => {
                 </span>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Right Column - Contact Info */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -212,7 +212,7 @@ const CTASection = ({ className = "" }) => {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </div>
     </section>

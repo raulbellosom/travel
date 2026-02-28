@@ -38,7 +38,8 @@ const ICON_MAP = {
  *
  * @param {Array<{icon: string, label: string, value: string|number}>} details
  */
-const ResourceDetailsCell = ({ details = [] }) => {
+const EMPTY_ARRAY = [];
+const ResourceDetailsCell = ({ details = EMPTY_ARRAY }) => {
   if (details.length === 0) {
     return (
       <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
@@ -47,12 +48,12 @@ const ResourceDetailsCell = ({ details = [] }) => {
 
   return (
     <div className="grid gap-1 text-slate-600 dark:text-slate-300">
-      {details.map((detail, index) => {
+      {details.map((detail) => {
         const IconComponent = ICON_MAP[detail.icon] || null;
 
         return (
           <span
-            key={`${detail.label}-${index}`}
+            key={detail.label}
             className="inline-flex items-center gap-1.5 text-xs"
             title={detail.label}
           >

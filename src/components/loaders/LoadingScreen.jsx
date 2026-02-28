@@ -68,7 +68,7 @@ const LoadingScreen = ({ title, message, transparent = true }) => {
             "0 32px 64px -12px rgba(0,0,0,0.45), " +
             "0 0 0 1px rgba(255,255,255,0.05), " +
             "inset 0 1px 0 rgba(255,255,255,0.12)",
-          backdropFilter: "blur(24px) saturate(1.4)",
+          backdropFilter: "blur(8px) saturate(1.4)",
         }}
       >
         {/* Card inner glow */}
