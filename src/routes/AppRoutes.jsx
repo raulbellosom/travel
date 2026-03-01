@@ -26,13 +26,13 @@ import {
   getInternalPropertyDetailRoute,
   getInternalEditPropertyRoute,
 } from "../utils/internalRoutes";
-import env from "../env";
 import LoadingScreen from "../components/loaders/LoadingScreen";
 import ScrollToTop from "../components/routing/ScrollToTop";
 import { useAuth } from "../hooks/useAuth";
 import { useInstanceModules } from "../hooks/useInstanceModules";
 import { useTranslation } from "react-i18next";
 import { ChatProvider } from "../contexts/ChatContext";
+import { resolveUiMode } from "../utils/uiMode";
 
 const Home = lazy(() => import("../pages/Home"));
 const SearchPage = lazy(() => import("../pages/SearchPage"));
@@ -137,15 +137,56 @@ const MarketingEntryRoute = () => {
     return <ServiceUnavailable />;
   }
 
-  if (env.features.marketingSite) {
+  if (resolveUiMode(settings) === "marketing") {
     return <Home />;
   }
 
   // Marketing site disabled → let it fall through to MainLayout's index route
-  return null;
+  return <Navigate to="/" replace />;
 };
 
 const RoutesFallback = () => <LoadingScreen transparent={false} />;
+
+const MARKETING_BLOCKED_PUBLIC_ROUTES = Object.freeze([
+  "buscar",
+  "search",
+  "explorar-mapa",
+  "map-explore",
+  "recursos/*",
+  "resources/*",
+  "propiedades/*",
+  "properties/*",
+  "reservar/*",
+  "reserve/*",
+  "voucher/*",
+  "recibo/*",
+  "perfil",
+  "profile",
+  "mis-reservas",
+  "my-reservations",
+  "mis-resenas",
+  "my-reviews",
+  "mis-conversaciones",
+  "my-conversations",
+  "mis-favoritos",
+  "my-favorites",
+  "aviso-privacidad",
+  "privacy-notice",
+  "terminos-condiciones",
+  "terms-conditions",
+  "ui-docs",
+  "errors-demo",
+]);
+
+const InstanceUiModeGate = ({ children }) => {
+  const { settings, loading } = useInstanceModules();
+
+  if (loading) {
+    return <RoutesFallback />;
+  }
+
+  return children(resolveUiMode(settings) === "marketing");
+};
 
 const AppRoutes = () => {
   return (
@@ -156,20 +197,25 @@ const AppRoutes = () => {
           <UIProvider>
             <ToastProvider>
               <ChatProvider>
+                <InstanceUiModeGate>
+                  {(isMarketingMode) => (
+                    <>
                 <Suspense fallback={<RoutesFallback />}>
-                  {env.features.marketingSite ? (
                     <Routes>
-                      {/* Marketing Mode: Only Landing + Redirects */}
-                      <Route path="/" element={<MarketingEntryRoute />} />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  ) : (
-                    <Routes>
-                      {/* Client Mode: Full Application */}
-                      <Route element={<MainLayout />}>
-                        {!env.features.marketingSite && (
-                          <Route index element={<Home />} />
-                        )}
+                      {isMarketingMode ? (
+                        <>
+                          <Route path="/" element={<MarketingEntryRoute />} />
+                          {MARKETING_BLOCKED_PUBLIC_ROUTES.map((path) => (
+                            <Route
+                              key={path}
+                              path={path}
+                              element={<Navigate to="/" replace />}
+                            />
+                          ))}
+                        </>
+                      ) : (
+                        <Route element={<MainLayout />}>
+                        <Route index element={<Home />} />
                         <Route path="buscar" element={<SearchPage />} />
                         <Route path="search" element={<SearchPage />} />
                         <Route
@@ -309,6 +355,7 @@ const AppRoutes = () => {
                         <Route path="ui-docs" element={<UIDocsPage />} />
                         <Route path="errors-demo" element={<ErrorsDemo />} />
                       </Route>
+                      )}
 
                       {/* Public Routes */}
                       <Route element={<AuthLayout />}>
@@ -666,11 +713,23 @@ const AppRoutes = () => {
                       />
                       <Route
                         path="/properties/:id"
-                        element={<LegacyPropertyDetailRedirect />}
+                        element={
+                          isMarketingMode ? (
+                            <Navigate to="/" replace />
+                          ) : (
+                            <LegacyPropertyDetailRedirect />
+                          )
+                        }
                       />
                       <Route
                         path="/resources/:id"
-                        element={<LegacyPropertyDetailRedirect />}
+                        element={
+                          isMarketingMode ? (
+                            <Navigate to="/" replace />
+                          ) : (
+                            <LegacyPropertyDetailRedirect />
+                          )
+                        }
                       />
                       <Route
                         path="/crear-propiedad"
@@ -811,13 +870,26 @@ const AppRoutes = () => {
                         element={<ServiceUnavailable />}
                       />
 
-                      <Route path="*" element={<NotFound />} />
+                      <Route
+                        path="*"
+                        element={
+                          isMarketingMode ? (
+                            <Navigate to="/" replace />
+                          ) : (
+                            <NotFound />
+                          )
+                        }
+                      />
                     </Routes>
+                </Suspense>
+                {!isMarketingMode && (
+                  <Suspense fallback={null}>
+                    <ChatBubble />
+                  </Suspense>
+                )}
+                    </>
                   )}
-                </Suspense>
-                <Suspense fallback={null}>
-                  <ChatBubble />
-                </Suspense>
+                </InstanceUiModeGate>
               </ChatProvider>
             </ToastProvider>
           </UIProvider>
@@ -828,3 +900,4 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
+

@@ -1056,5 +1056,98 @@
         "body": "You have the right to Access, Rectify, Cancel, or Object to the processing of your personal data. You can exercise these rights by contacting us via our support email."
       }
     }
+  },
+  "homeNew": {
+    "hero": {
+      "headline": "What are you planning today?",
+      "subheadline": "Find places, experiences, and services near you.",
+      "featuredNow": "Featured now",
+      "viewDetails": "View details"
+    },
+    "verticals": {
+      "all": "All",
+      "vacation": "Vacation"
+    },
+    "search": {
+      "placeholder": "City, area, or what are you looking for...",
+      "ariaLabel": "Search resources",
+      "microcopy": "See results instantly · No sign-up required",
+      "recentSearches": "Recent searches"
+    },
+    "categories": {
+      "title": "Explore by category",
+      "subtitle": "Find exactly what you need.",
+      "viewAll": "View all"
+    },
+    "featured": {
+      "badge": "Exclusive selection",
+      "title": "Featured for you",
+      "subtitle": "A curated selection of the best available resources.",
+      "error": "We couldn't load featured items.",
+      "empty": "No featured resources yet.",
+      "exploreAll": "Explore everything"
+    },
+    "categoryRows": {
+      "title": "Explore by category",
+      "viewAll": "View all",
+      "property": {
+        "title": "Properties for Sale & Rent",
+        "description": "Houses, apartments, land, and commercial spaces to buy or rent."
+      },
+      "vehicle": {
+        "title": "Available Vehicles",
+        "description": "Cars, SUVs, motorcycles, and more for sale or daily rental."
+      },
+      "service": {
+        "title": "Professional Services",
+        "description": "Private chef, photography, cleaning, catering, and maintenance for your events."
+      },
+      "music": {
+        "title": "Live Music & DJ",
+        "description": "Bands, mariachi, corridos, versatile groups, and DJs for your events."
+      },
+      "experience": {
+        "title": "Unique Experiences",
+        "description": "Tours, workshops, adventures, wellness, and gastronomy for something different."
+      },
+      "venue": {
+        "title": "Venues & Spaces",
+        "description": "Event halls, studios, coworking, and meeting rooms."
+      }
+    },
+    "quickIdeas": {
+      "title": "Quick ideas",
+      "subtitle": "One tap and you're searching. What do you need?",
+      "items": {
+        "mariachi": "Mariachi for events",
+        "djQuinceanera": "DJ for quinceañera",
+        "housePool": "House with pool",
+        "carRental": "Car rental for a day",
+        "chefPrivate": "Private chef at home",
+        "tourAdventure": "Adventure tour",
+        "eventVenue": "Wedding venue",
+        "oceanView": "Ocean view",
+        "photographyService": "Professional photographer",
+        "bandaParty": "Live band for party"
+      }
+    },
+    "trust": {
+      "verified": "Verified",
+      "verifiedDesc": "Resources reviewed and validated.",
+      "securePayments": "Secure payments",
+      "securePaymentsDesc": "Transactions protected with Stripe.",
+      "support": "Support",
+      "supportDesc": "Help available when you need it."
+    },
+    "loggedIn": {
+      "recentSearches": "Recent searches",
+      "favoritesTitle": "Your favorites",
+      "favoritesDesc": "Quick access to resources you saved.",
+      "viewFavorites": "View favorites",
+      "clearSearches": "Clear"
+    },
+    "common": {
+      "retry": "Retry"
+    }
   }
 }

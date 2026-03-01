@@ -189,6 +189,20 @@ const ReserveProperty = () => {
       !behavior.canUsePayments,
     [behavior.bookingType, behavior.canUsePayments, behavior.requiresPayments],
   );
+  const browserTimeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const leadIntent = useMemo(() => {
+    if (
+      behavior.commercialMode === "sale" ||
+      behavior.commercialMode === "rent_long_term"
+    ) {
+      return "visit_request";
+    }
+    if (behavior.bookingType === "manual_contact") {
+      return "booking_request_manual";
+    }
+    return "booking_request";
+  }, [behavior.bookingType, behavior.commercialMode]);
   usePageSeo({
     title: property?.title
       ? `${property.title} | ${t("reservePropertyPage.title")}`
@@ -362,21 +376,54 @@ const ReserveProperty = () => {
           },
         );
 
+        const booking = {
+          guests: Number(form.guestCount) || 1,
+          adults: Number(form.guestCount) || 1,
+          startDate: startIso || undefined,
+          endDate: endIso || undefined,
+          nights: nights > 0 ? nights : undefined,
+        };
+
+        const visit = {
+          preferredSlots:
+            leadIntent === "visit_request" && startIso && endIso
+              ? [
+                  {
+                    startDateTime: startIso,
+                    endDateTime: endIso,
+                    timezone: browserTimeZone,
+                  },
+                ]
+              : [],
+        };
+
+        if (leadIntent === "visit_request" && visit.preferredSlots.length < 1) {
+          throw new Error(
+            t("reservePropertyPage.errors.invalidDates", {
+              defaultValue:
+                "Para solicitar una visita debes indicar un rango de fechas valido.",
+            }),
+          );
+        }
+
         await leadsService.createLead({
           resourceId: property.$id,
           message: leadMessage,
+          intent: leadIntent,
+          contactChannel: "resource_cta_form",
           meta: {
-            source: "reserve_page",
-            resourceTitle: property.title || "",
-            resourceType: behavior.resourceType,
-            category: behavior.category,
-            bookingType: behavior.bookingType,
-            commercialMode: behavior.commercialMode,
-            guestCount: Number(form.guestCount) || 1,
-            preferredStartDate: startIso,
-            preferredEndDate: endIso,
-            guestName: form.guestName || "",
-            specialRequests: form.specialRequests || "",
+            resourceSnapshot: {
+              resourceType: behavior.resourceType,
+              category: behavior.category,
+              commercialMode: behavior.commercialMode,
+              bookingType: behavior.bookingType,
+            },
+            booking,
+            visit,
+            contactPrefs: {
+              preferredLanguage: i18n.language || undefined,
+              phone: user?.phone || undefined,
+            },
           },
         });
 

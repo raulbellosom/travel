@@ -42,6 +42,7 @@ Regla principal:
 
 - Tipos permitidos: `idx` (key), `uq` (unique), `full` (fulltext).
 - Direccion: `↑` asc, `↓` desc.
+- ID tecnico del indice (Index Name): maximo 36 caracteres (limite Appwrite).
 
 | Index Name | Type | Attributes | Notes |
 | ---------- | ---- | ---------- | ----- |
@@ -96,8 +97,8 @@ Regla:
 | `rate_plans`             | Reglas de pricing y booking                              | 0     |
 | `amenities`              | Catalogo de amenidades                                   | 0     |
 | `leads`                  | Pipeline de intenciones autenticadas por recurso         | 0     |
-| `marketing_contacts`     | Contactos del CRM landing                                | 0     |
-| `newsletter_subscribers` | Suscriptores de newsletter landing                       | 0     |
+| `marketing_contact_requests` | Contactos del CRM landing                            | 0     |
+| `marketing_newsletter_subscribers` | Suscriptores de newsletter landing             | 0     |
 | `reservations`           | Reservaciones                                            | 0     |
 | `reservation_payments`   | Intentos/confirmaciones de pago                          | 0     |
 | `reservation_vouchers`   | Voucher emitido por reserva pagada                       | 0     |
@@ -496,103 +497,144 @@ Purpose: pipeline CRM de intenciones de usuarios autenticados por recurso.
 
 ### Attributes
 
-| Attribute             | Type    | Size | Required | Default              | Constraint                                   |
-| --------------------- | ------- | ---- | -------- | -------------------- | -------------------------------------------- |
-| `resourceId`          | string  | 64   | yes      | -                    | FK logical `resources.$id`                   |
-| `resourceOwnerUserId` | string  | 64   | yes      | -                    | FK logical `users.$id` (denormalizado)       |
-| `userId`              | string  | 64   | yes      | -                    | FK logical `users.$id` del cliente           |
-| `lastMessage`         | string  | 2000 | yes      | -                    | mensaje inicial/resumen                      |
-| `conversationId`      | string  | 64   | no       | -                    | FK logical `conversations.$id`               |
-| `source`              | enum    | -    | no       | `authenticated_chat` | `authenticated_chat`,`authenticated_form`    |
-| `isArchived`          | boolean | -    | no       | false                | ocultar en inbox sin cerrar pipeline         |
-| `metaJson`            | string  | 8000 | no       | -                    | JSON serializado (presupuesto/fechas/etc.)   |
-| `status`              | enum    | -    | no       | `new`                | `new`,`contacted`,`closed_won`,`closed_lost` |
-| `notes`               | string  | 4000 | no       | -                    | notas internas                               |
-| `enabled`             | boolean | -    | no       | true                 | -                                            |
+| Attribute             | Type    | Size | Required | Default         | Constraint                                              |
+| --------------------- | ------- | ---- | -------- | --------------- | ------------------------------------------------------- |
+| `resourceId`          | string  | 64   | yes      | -               | FK logical `resources.$id`                              |
+| `resourceOwnerUserId` | string  | 64   | yes      | -               | FK logical `users.$id` (denormalizado)                  |
+| `userId`              | string  | 64   | yes      | -               | FK logical `users.$id` del cliente                      |
+| `lastMessage`         | string  | 2000 | yes      | -               | mensaje inicial/resumen                                 |
+| `conversationId`      | string  | 64   | no       | -               | FK logical `conversations.$id`                          |
+| `contactChannel`      | enum    | -    | no       | `resource_chat` | `resource_chat`,`resource_cta_form`                     |
+| `source`              | enum    | -    | no       | `resource_chat` | alias legacy de `contactChannel`                        |
+| `intent`              | enum    | -    | no       | `info_request`  | `booking_request`,`booking_request_manual`,`visit_request`,`info_request` |
+| `isArchived`          | boolean | -    | no       | false           | ocultar en inbox sin cerrar pipeline                    |
+| `metaJson`            | string  | 8000 | no       | -               | JSON serializado canonico (`resourceSnapshot/booking/visit/contactPrefs`) |
+| `status`              | enum    | -    | no       | `new`           | `new`,`contacted`,`closed_won`,`closed_lost`            |
+| `notes`               | string  | 4000 | no       | -               | notas internas                                          |
+| `enabled`             | boolean | -    | no       | true            | -                                                       |
 
 ### Indexes
 
-| Index Name             | Type | Attributes                            | Notes             |
-| ---------------------- | ---- | ------------------------------------- | ----------------- |
-| `idx_leads_resourceid` | idx  | `resourceId ↑`                        | Leads por recurso |
-| `idx_leads_ownerid`    | idx  | `resourceOwnerUserId ↑`               | Inbox por owner   |
-| `idx_leads_userid`     | idx  | `userId ↑`                            | Leads por cliente |
-| `idx_leads_status`     | idx  | `status ↑`                            | Filtro pipeline   |
-| `idx_leads_createdat`  | idx  | `$createdAt ↓`                        | Recientes         |
-| `idx_leads_ownerdate`  | idx  | `resourceOwnerUserId ↑, $createdAt ↓` | Dashboard rapido  |
+| Index Name             | Type | Attributes                            | Notes                     |
+| ---------------------- | ---- | ------------------------------------- | ------------------------- |
+| `idx_leads_resourceid` | idx  | `resourceId ↑`                        | Leads por recurso         |
+| `idx_leads_ownerid`    | idx  | `resourceOwnerUserId ↑`               | Inbox por owner           |
+| `idx_leads_userid`     | idx  | `userId ↑`                            | Leads por cliente         |
+| `idx_leads_status`     | idx  | `status ↑`                            | Filtro pipeline           |
+| `idx_leads_intent`     | idx  | `intent ↑`                            | Filtro por tipo de intento |
+| `idx_leads_channel`    | idx  | `contactChannel ↑`                    | Filtro por canal de entrada |
+| `idx_leads_createdat`  | idx  | `$createdAt ↓`                        | Recientes                 |
+| `idx_leads_ownerdate`  | idx  | `resourceOwnerUserId ↑, $createdAt ↓` | Dashboard rapido          |
 
 ### Permissions
 
 - Creacion autenticada via Function `create-lead`.
 - Lectura/escritura interna por owner/staff con scope de leads.
 
-Contrato recomendado para `metaJson` (chat/contacto manual asistido):
+Contrato canonico de `metaJson`:
 
-- `requestSchedule.scheduleType`: `date_range` o `time_slot`.
-- `requestSchedule.checkInDate` + `requestSchedule.checkOutDate` para `date_range`.
-- `requestSchedule.startDateTime` + `requestSchedule.endDateTime` para `time_slot`.
-- Este payload permite convertir lead -> reserva manual sin recapturar fechas.
+```json
+{
+  "resourceSnapshot": {
+    "resourceType": "property",
+    "category": "apartment",
+    "commercialMode": "rent_short_term",
+    "bookingType": "manual_contact"
+  },
+  "booking": {
+    "guests": 2,
+    "adults": 2,
+    "children": 0,
+    "pets": 0,
+    "startDate": "2026-04-15T00:00:00.000Z",
+    "endDate": "2026-04-18T00:00:00.000Z",
+    "nights": 3,
+    "checkInTime": "15:00",
+    "checkOutTime": "11:00"
+  },
+  "visit": {
+    "meetingType": "on_site",
+    "preferredSlots": [
+      {
+        "startDateTime": "2026-04-15T16:00:00.000Z",
+        "endDateTime": "2026-04-15T16:30:00.000Z",
+        "timezone": "America/Mexico_City"
+      }
+    ],
+    "notes": "Prefiero por la tarde"
+  },
+  "contactPrefs": {
+    "preferredLanguage": "es",
+    "phone": "+52 5512345678"
+  }
+}
+```
+
+Reglas de validacion:
+
+- `visit_request` => `visit.preferredSlots` debe existir con al menos un slot valido.
+- `booking_request_manual` => `booking.guests >= 1` y rango de fechas valido (`startDate < endDate`).
+- `booking_request` => si hay fechas, tambien deben formar un rango valido.
+- `info_request` => puede omitir `booking`/`visit`.
 
 ---
 
-## Collection: marketing_contacts
+## Collection: marketing_contact_requests
 
-Purpose: contactos generales generados desde el CRM landing (sitio de marketing de la plataforma).
+Purpose: contactos generales generados desde el landing de marketing (separado de leads de plataforma).
 
 ### Attributes
 
-| Attribute  | Type    | Size | Required | Default               | Constraint                   |
-| ---------- | ------- | ---- | -------- | --------------------- | ---------------------------- |
-| `name`     | string  | 120  | yes      | -                     | min 2                        |
-| `lastName` | string  | 120  | no       | -                     | -                            |
-| `email`    | email   | 254  | yes      | -                     | email valido                 |
-| `phone`    | string  | 25   | no       | -                     | regex telefono internacional |
-| `message`  | string  | 4000 | yes      | -                     | min 5                        |
-| `locale`   | enum    | -    | no       | `es`                  | `es`,`en`                    |
-| `source`   | string  | 80   | no       | `crm_landing_contact` | origen del formulario        |
-| `status`   | enum    | -    | no       | `new`                 | `new`,`contacted`,`closed`   |
-| `enabled`  | boolean | -    | no       | true                  | -                            |
+| Attribute | Type    | Size | Required | Default           | Constraint            |
+| --------- | ------- | ---- | -------- | ----------------- | --------------------- |
+| `firstName` | string  | 60   | yes      | -                 | min 2                 |
+| `lastName`  | string  | 60   | yes      | -                 | min 2                 |
+| `email`   | email   | 254  | yes      | -                 | email valido          |
+| `phone`   | string  | 16   | no       | -                 | regex `^\\+52 \\d{3} \\d{3} \\d{4}$` |
+| `message` | string  | 4000 | yes      | -                 | min 5                 |
+| `source`  | string  | 80   | no       | `landing_contact` | canal/origen          |
+| `utmJson` | string  | 4000 | no       | `{}`              | JSON serializado UTM  |
+| `enabled` | boolean | -    | no       | true              | -                     |
 
 ### Indexes
 
-| Index Name                            | Type | Attributes               | Notes                 |
-| ------------------------------------- | ---- | ------------------------ | --------------------- |
-| `idx_marketing_contacts_email`        | idx  | `email ↑`                | Filtro por email      |
-| `idx_marketing_contacts_status`       | idx  | `status ↑`               | Seguimiento comercial |
-| `idx_marketing_contacts_source`       | idx  | `source ↑`               | Analitica por origen  |
-| `idx_marketing_contacts_createdat`    | idx  | `$createdAt ↓`           | Recientes             |
-| `idx_marketing_contacts_stat_created` | idx  | `status ↑, $createdAt ↓` | Bandeja operativa     |
+| Index Name                                   | Type | Attributes       | Notes                |
+| -------------------------------------------- | ---- | ---------------- | -------------------- |
+| `idx_mkt_contact_email`                      | idx  | `email ↑`        | filtro por email     |
+| `idx_mkt_contact_source`                     | idx  | `source ↑`       | analitica por origen |
+| `idx_mkt_contact_createdat`                  | idx  | `$createdAt ↓`   | recientes            |
+| `idx_mkt_contact_enabled`                    | idx  | `enabled ↑`      | activos/inactivos    |
 
 ### Permissions
 
 - Creacion publica via Function (`create-marketing-contact-public`).
 - Lectura/escritura interna solo por owner/root/staff autorizado.
+- `phone` opcional: cuando se envia desde frontend se autoformatea y valida como `+52 123 123 1234`.
 
 ---
 
-## Collection: newsletter_subscribers
+## Collection: marketing_newsletter_subscribers
 
-Purpose: suscriptores de newsletter capturados desde el footer del CRM landing.
+Purpose: suscriptores newsletter del landing de marketing (separado de leads de plataforma).
 
 ### Attributes
 
-| Attribute | Type    | Size | Required | Default              | Constraint                  |
-| --------- | ------- | ---- | -------- | -------------------- | --------------------------- |
-| `email`   | email   | 254  | yes      | -                    | email valido                |
-| `locale`  | enum    | -    | no       | `es`                 | `es`,`en`                   |
-| `source`  | string  | 80   | no       | `crm_landing_footer` | origen del alta             |
-| `status`  | enum    | -    | no       | `subscribed`         | `subscribed`,`unsubscribed` |
-| `enabled` | boolean | -    | no       | true                 | -                           |
+| Attribute | Type    | Size | Required | Default              | Constraint          |
+| --------- | ------- | ---- | -------- | -------------------- | ------------------- |
+| `email`   | email   | 254  | yes      | -                    | email valido        |
+| `name`    | string  | 120  | no       | -                    | nombre opcional     |
+| `source`  | string  | 80   | no       | `landing_newsletter` | origen del alta     |
+| `utmJson` | string  | 4000 | no       | `{}`                 | JSON serializado UTM|
+| `enabled` | boolean | -    | no       | true                 | -                   |
 
 ### Indexes
 
-| Index Name                                  | Type | Attributes               | Notes                  |
-| ------------------------------------------- | ---- | ------------------------ | ---------------------- |
-| `uq_newsletter_subscribers_email`           | uq   | `email ↑`                | Unico por correo       |
-| `idx_newsletter_subscribers_status`         | idx  | `status ↑`               | Segmentacion           |
-| `idx_newsletter_subscribers_source`         | idx  | `source ↑`               | Canal de adquisicion   |
-| `idx_newsletter_subscribers_createdat`      | idx  | `$createdAt ↓`           | Recientes              |
-| `idx_newsletter_subscribers_status_created` | idx  | `status ↑, $createdAt ↓` | Exportes y seguimiento |
+| Index Name                                               | Type | Attributes     | Notes                |
+| -------------------------------------------------------- | ---- | -------------- | -------------------- |
+| `uq_mkt_newsletter_email`                                | uq   | `email ↑`      | unico por correo     |
+| `idx_mkt_newsletter_source`                              | idx  | `source ↑`     | canal de adquisicion |
+| `idx_mkt_newsletter_createdat`                           | idx  | `$createdAt ↓` | recientes            |
+| `idx_mkt_newsletter_enabled`                             | idx  | `enabled ↑`    | activos/inactivos    |
 
 ### Permissions
 
@@ -661,7 +703,7 @@ Purpose: reservaciones por recurso.
 Flujos manuales vigentes:
 
 - Staff/owner puede crear reserva manual desde panel de reservas (sin Stripe) con `paymentProvider=manual`.
-- Un lead con agenda (`metaJson.requestSchedule`) puede convertirse en reserva manual.
+- Un lead con agenda (`metaJson.booking` y/o `metaJson.visit.preferredSlots`) puede convertirse en reserva manual.
 - En conversiones manuales, `bookingType` puede quedar como `manual_contact`; la agenda efectiva se infiere por campos de fecha:
   - `date_range`: `checkInDate`/`checkOutDate`.
   - `time_slot`: `startDateTime`/`endDateTime` (ademas de `checkInDate`/`checkOutDate` denormalizados).
@@ -905,15 +947,26 @@ Purpose: hilos de chat en tiempo real entre clientes y propietarios/staff.
 ### Estado de conversacion (operativo)
 
 - No se requiere un campo extra para "estado de conversacion": se usa `conversations.status`.
-  Transiciones sugeridas en UI admin:
-- `active -> archived` (ocultar/sacar de seguimiento activo)
-- `active -> closed` (finalizar conversacion)
-- `archived -> active` (reactivar)
-- `closed -> active` (reabrir)
+- `active -> archived` (archivo de bandeja/UI, sin cierre de pipeline)
+- `active -> closed` (finalizacion con resultado de pipeline)
+- `archived -> active` (reactivacion)
 
-Comportamiento recomendado en producto:
+Semantica Archive vs Finalize:
 
-- Si el cliente intenta iniciar chat de nuevo sobre el mismo recurso y existe un hilo `archived` o `closed`, el sistema debe reabrir ese hilo cambiandolo a `active` (sin crear un hilo duplicado).
+- Archive:
+  - `conversations.status = archived`
+  - `leads.isArchived = true`
+  - no fuerza cambio en `leads.status`.
+- Finalize:
+  - `conversations.status = closed`
+  - lead asociado debe quedar en `closed_won` o `closed_lost`
+  - opcion de registrar `metaJson.closureReason`.
+
+Politica de reapertura:
+
+- Nuevo mensaje de cliente en conversacion archivada => reabrir a `active` y limpiar `leads.isArchived`.
+- Conversacion/lead cerrados: para nueva solicitud se recomienda crear una nueva instancia de lead por analitica limpia.
+  Implementacion actual: se puede reactivar la conversacion existente y crear nuevo lead cuando no exista lead abierto (`new/contacted`).
 
 ### Indexes
 
@@ -951,6 +1004,9 @@ Purpose: mensajes individuales dentro de una conversacion.
 | `senderName`      | string  | 120  | yes      | -       | Denormalizado                   |
 | `senderRole`      | enum    | -    | yes      | -       | `client`,`owner`,`staff`,`root` |
 | `body`            | string  | 4000 | yes      | -       | Contenido mensaje               |
+| `kind`            | enum    | -    | no       | `text`  | `text`,`system`,`proposal`,`proposal_response` |
+| `payloadJson`     | string  | 8000 | no       | -       | JSON serializado estructurado por `kind` |
+| `relatedLeadId`   | string  | 64   | no       | -       | FK logical opcional `leads.$id` |
 | `readBySender`    | boolean | -    | no       | true    | -                               |
 | `readByRecipient` | boolean | -    | no       | false   | -                               |
 | `enabled`         | boolean | -    | no       | true    | Soft delete                     |
@@ -969,6 +1025,12 @@ Purpose: mensajes individuales dentro de una conversacion.
 - `Role.users("verified")`: create, read, update
 - `Role.label("root")`: create, read, update, delete
 
+Payloads estructurados por `kind`:
+
+- `proposal`: tarjeta accionable con `proposalType`, horario, estado y metadata de origen.
+- `proposal_response`: respuesta de cliente (`accept|reject|request_change`) y slots sugeridos opcionales.
+- Detalle completo del contrato: `13_chat_messaging_schema.md`.
+
 ---
 
 ## Collection: instance_settings
@@ -977,13 +1039,15 @@ Purpose: configuracion de la instancia para plan, modulos y limites.
 
 ### Attributes
 
-| Attribute        | Type     | Size  | Required | Default | Constraint                        |
-| ---------------- | -------- | ----- | -------- | ------- | --------------------------------- |
-| `key`            | string   | 40    | yes      | -       | unico; documento principal `main` |
-| `planKey`        | string   | 40    | yes      | -       | `starter`,`pro`,`elite`,`custom`  |
-| `enabledModules` | string[] | 120   | no       | -       | lista de module keys              |
-| `limits`         | string   | 20000 | no       | -       | JSON serializado                  |
-| `enabled`        | boolean  | -     | no       | true    | -                                 |
+| Attribute          | Type     | Size  | Required | Default    | Constraint                        |
+| ------------------ | -------- | ----- | -------- | ---------- | --------------------------------- |
+| `key`              | string   | 40    | yes      | -          | unico; documento principal `main` |
+| `planKey`          | string   | 40    | yes      | -          | `starter`,`pro`,`elite`,`custom`  |
+| `uiMode`           | enum     | -     | no       | `platform` | `marketing`,`platform`            |
+| `marketingEnabled` | boolean  | -     | no       | false      | alias legacy; derivado de `uiMode` |
+| `enabledModules`   | string[] | 120   | no       | -          | lista de module keys              |
+| `limits`           | string   | 20000 | no       | -          | JSON serializado                  |
+| `enabled`          | boolean  | -     | no       | true       | -                                 |
 
 ### Indexes
 
@@ -1156,5 +1220,5 @@ Formato obligatorio:
 
 ---
 
-Ultima actualizacion: 2026-02-26
+Ultima actualizacion: 2026-03-01
 Schema Mode: resource-only

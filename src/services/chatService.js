@@ -41,6 +41,26 @@ const sortByLastMessageAtDesc = (docs) =>
     return bTime - aTime;
   });
 
+const parsePayloadJson = (value) => {
+  if (!value) return null;
+  if (typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value !== "string") return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const normalizeMessage = (message) => ({
+  ...message,
+  kind: String(message?.kind || "text").trim().toLowerCase() || "text",
+  payload: parsePayloadJson(message?.payloadJson),
+});
+
 /* ─── Conversations ────────────────────────────────────── */
 
 export const chatService = {
@@ -283,9 +303,16 @@ export const chatService = {
     senderName,
     senderRole,
     body,
+    kind = "text",
+    payload = null,
   }) {
     ensureAppwriteConfigured();
     const docId = ID.unique();
+    const normalizedKind = String(kind || "text").trim().toLowerCase() || "text";
+    const serializedPayload =
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? JSON.stringify(payload)
+        : undefined;
 
     // Create the message document
     const message = await databases.createDocument({
@@ -298,6 +325,8 @@ export const chatService = {
         senderName,
         senderRole, // "client" | "owner" | "staff" | "root"
         body,
+        kind: normalizedKind,
+        payloadJson: serializedPayload,
         readBySender: true,
         readByRecipient: false,
         enabled: true,
@@ -314,8 +343,11 @@ export const chatService = {
     const senderId = normalizeId(senderUserId);
     const isSenderClient = normalizeId(conversation.clientUserId) === senderId;
     const isSenderOwner = normalizeId(conversation.ownerUserId) === senderId;
+    const previewText = String(body || "").trim() || "[Action message]";
     const patch = {
-      lastMessage: body.length > 120 ? `${body.slice(0, 120)}...` : body,
+      status: "active",
+      lastMessage:
+        previewText.length > 120 ? `${previewText.slice(0, 120)}...` : previewText,
       lastMessageAt: new Date().toISOString(),
     };
 
@@ -333,7 +365,7 @@ export const chatService = {
 
     await this.updateConversation(conversationId, patch);
 
-    return message;
+    return normalizeMessage(message);
   },
 
   /**
@@ -351,11 +383,16 @@ export const chatService = {
       queries.push(Query.cursorAfter(cursor));
     }
 
-    return databases.listDocuments({
+    const response = await databases.listDocuments({
       databaseId: DB(),
       collectionId: COL_MESSAGES(),
       queries,
     });
+
+    return {
+      ...response,
+      documents: (response.documents || []).map(normalizeMessage),
+    };
   },
 
   /**
@@ -431,6 +468,22 @@ export const chatService = {
     });
   },
 
+  async sendProposal(payload) {
+    const functionId = env.appwrite.functions.sendProposal;
+    if (!functionId) {
+      throw new Error("APPWRITE_FUNCTION_SEND_PROPOSAL_ID is not configured");
+    }
+    return executeJsonFunction(functionId, payload);
+  },
+
+  async respondProposal(payload) {
+    const functionId = env.appwrite.functions.respondProposal;
+    if (!functionId) {
+      throw new Error("APPWRITE_FUNCTION_RESPOND_PROPOSAL_ID is not configured");
+    }
+    return executeJsonFunction(functionId, payload);
+  },
+
   /* ─── Real-time subscriptions ──────────────────────── */
 
   /**
@@ -446,7 +499,10 @@ export const chatService = {
           payload?.conversationId === conversationId &&
           payload?.enabled !== false
         ) {
-          callback(response);
+          callback({
+            ...response,
+            payload: normalizeMessage(payload),
+          });
         }
       });
     } catch (err) {

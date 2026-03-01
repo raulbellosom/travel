@@ -26,6 +26,7 @@ Catalogo oficial de Functions para arquitectura v3:
 4. Logs estructurados con `requestId`.
 5. Toda mutacion critica registra `activity_logs`.
 6. Gating por modulo/limite en backend (obligatorio).
+7. `functionId` de Appwrite tiene maximo 36 caracteres (puede diferir del nombre visible de la function).
 
 ---
 
@@ -57,11 +58,67 @@ Errores estandar:
 
 ## 4.2 `create-lead`
 
-- HTTP POST autenticado.
-- Canonico: recibe `resourceId`.
-- Valida modulo: `module.resources`, `module.leads`, `module.messaging.realtime`.
+- HTTP POST autenticado (`users` execute).
+- Solo actor `client` con correo verificado.
+- Canonico: recibe `resourceId` + `message`.
+- Valida modulos: `module.resources`, `module.leads`, `module.messaging.realtime`.
+- Rechaza la mutacion cuando `instance_settings.uiMode = marketing` (`PLATFORM_MODE_REQUIRED`).
 - Upsert de lead abierto por `resourceId + userId` (`status in new/contacted`).
-- Crea/reusa conversacion y agrega primer mensaje en `messages`.
+- Crea o reusa conversacion, la reabre a `active` si estaba `archived/closed`, y agrega mensaje inicial.
+- Escribe `lead.create` o `lead.update` en `activity_logs`.
+
+Contrato de payload:
+
+```json
+{
+  "resourceId": "RESOURCE_ID",
+  "message": "Hola, me interesa este recurso.",
+  "contactChannel": "resource_chat",
+  "intent": "visit_request",
+  "meta": {
+    "booking": {
+      "guests": 2,
+      "adults": 2,
+      "children": 0,
+      "pets": 0,
+      "startDate": "2026-04-15T00:00:00.000Z",
+      "endDate": "2026-04-18T00:00:00.000Z",
+      "nights": 3,
+      "checkInTime": "15:00",
+      "checkOutTime": "11:00"
+    },
+    "visit": {
+      "meetingType": "on_site",
+      "preferredSlots": [
+        {
+          "startDateTime": "2026-04-15T16:00:00.000Z",
+          "endDateTime": "2026-04-15T16:30:00.000Z",
+          "timezone": "America/Mexico_City"
+        }
+      ],
+      "notes": "Prefiero por la tarde"
+    },
+    "contactPrefs": {
+      "preferredLanguage": "es",
+      "phone": "+52 5512345678"
+    }
+  }
+}
+```
+
+Reglas de contrato:
+
+- `contactChannel`: `resource_chat | resource_cta_form` (default `resource_chat`).
+- `intent`: `booking_request | booking_request_manual | visit_request | info_request`.
+- `intent` final se valida/deriva desde `resourceSnapshot`:
+  - `sale` y `rent_long_term` => `visit_request`.
+  - `rent_short_term + manual_contact` => `booking_request_manual`.
+- `metaJson` canonico siempre guarda nodos: `resourceSnapshot`, `booking`, `visit`, `contactPrefs`.
+- Limite de `metaJson`: `8000` caracteres.
+- Validaciones:
+  - `visit_request` exige `visit.preferredSlots` con al menos 1 slot valido.
+  - `booking_request_manual` exige `booking.guests` >= 1 y rango valido (`startDate < endDate`).
+  - `booking_request` valida rango si se envian fechas.
 
 ## 4.3 `send-lead-notification`
 
@@ -164,7 +221,70 @@ Errores estandar:
 
 - Notificacion email para chat offline.
 
-## 4.21 `send-password-reset`
+## 4.21 `send-proposal`
+
+- HTTP POST autenticado (`users` execute).
+- Requiere actor interno: `owner`, `root`, `staff_*` con `messaging.write`.
+- Valida modulo `module.messaging.realtime`.
+- Rechaza en `uiMode=marketing` (`PLATFORM_MODE_REQUIRED`).
+- Requiere `conversationId`; `leadId` opcional para vinculo explicito.
+- Crea mensaje `messages.kind = proposal` y `payloadJson` estructurado.
+- Actualiza `conversations.lastMessage`, `lastMessageAt`, unread counters y fuerza `status=active`.
+- Registra `proposal.send` en `activity_logs`.
+
+Contrato de payload:
+
+```json
+{
+  "conversationId": "CONVERSATION_ID",
+  "leadId": "LEAD_ID_OPTIONAL",
+  "proposalType": "visit",
+  "timeStart": "2026-04-15T16:00:00.000Z",
+  "timeEnd": "2026-04-15T16:30:00.000Z",
+  "timezone": "America/Mexico_City",
+  "meetingType": "on_site",
+  "location": "Address or call link",
+  "fromResourceAddress": true,
+  "expiresAt": "2026-04-14T00:00:00.000Z",
+  "body": "Nueva propuesta de visita"
+}
+```
+
+## 4.22 `respond-proposal`
+
+- HTTP POST autenticado (`users` execute).
+- Requiere actor `client` participante de la conversacion.
+- Valida modulo `module.messaging.realtime`.
+- Rechaza en `uiMode=marketing` (`PLATFORM_MODE_REQUIRED`).
+- Requiere: `conversationId`, `proposalMessageId`, `response`.
+- Crea mensaje `messages.kind = proposal_response`.
+- Actualiza el `payloadJson.status` del mensaje propuesta original:
+  - `accept` -> `accepted`
+  - `reject` -> `rejected`
+  - `request_change` -> `reschedule_requested`
+- Actualiza metadata de conversacion (preview, unread, `status=active`).
+- Si `response=accept`, actualiza lead abierto a `status=contacted` cuando estaba en `new`.
+- Registra `proposal.respond` en `activity_logs`.
+
+Contrato de payload:
+
+```json
+{
+  "conversationId": "CONVERSATION_ID",
+  "proposalMessageId": "MESSAGE_ID",
+  "response": "request_change",
+  "comment": "Can we move it to tomorrow?",
+  "suggestedSlots": [
+    {
+      "startDateTime": "2026-04-16T16:00:00.000Z",
+      "endDateTime": "2026-04-16T16:30:00.000Z",
+      "timezone": "America/Mexico_City"
+    }
+  ]
+}
+```
+
+## 4.23 `send-password-reset`
 
 - HTTP POST publico (acceso anonimo necesario para el flujo de olvide contrasena).
 - Actions: `send` (genera token y envia correo SMTP propio) | `reset` (valida token y actualiza contrasena).
@@ -174,41 +294,65 @@ Errores estandar:
 - No expone el token en la URL de forma rastreable por Appwrite.
 - ENV requeridas: `APPWRITE_COLLECTION_PASSWORD_RESETS_ID`, `APP_BASE_URL`, `APP_NAME`, `EMAIL_SMTP_*`.
 
-## 4.22 `stripe-create-connected-account`
+## 4.24 `stripe-create-connected-account`
 
 - HTTP POST autenticado (`owner/root`).
 - Crea connected account Express y guarda `stripeAccountId` + `stripeOnboardingStatus=pending`.
 - Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
 
-## 4.23 `stripe-create-account-link`
+## 4.25 `stripe-create-account-link`
 
 - HTTP POST autenticado (`owner/root`).
 - Genera account link de onboarding y devuelve URL temporal.
 - Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
 
-## 4.24 `stripe-refresh-account-link`
+## 4.26 `stripe-refresh-account-link`
 
 - HTTP POST autenticado (`owner/root`).
 - Regenera account link vencido.
 - Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
 
-## 4.25 `stripe-get-account-status`
+## 4.27 `stripe-get-account-status`
 
 - HTTP POST autenticado (`owner/root`).
 - Consulta capabilities/requirements en Stripe y sincroniza `stripeOnboardingStatus`.
 - Soporta delegacion para usuario interno con `stripePayoutsEnabled=true` (self-service).
 
-## 4.26 `create-reservation-manual`
+## 4.28 `create-reservation-manual`
 
 - HTTP POST autenticado para operacion interna.
 - Crea reservas manuales sin checkout online (`paymentProvider=manual`).
 - Soporta conversion de lead a reserva (`leadId`) con preservacion de datos comerciales.
 
-## 4.27 `get-resource-availability`
+## 4.29 `get-resource-availability`
 
 - HTTP POST para consulta de disponibilidad por `resourceId`.
 - Devuelve `blockedDateKeys` y `occupiedSlotsByDate` para calendario de detalle y agenda asistida.
 - Considera reservas activas y solapamientos de horario.
+
+## 4.30 `create-marketing-contact-public`
+
+- HTTP POST publico (`any` execute).
+- Crea contacto solo en `marketing_contact_requests`.
+- No toca `leads`, `conversations` ni `messages`.
+- Soporta `utmJson` para analitica y notificacion SMTP opcional a `PLATFORM_OWNER_EMAIL`.
+- Payload esperado:
+  - `firstName` (string, requerido, max 60)
+  - `lastName` (string, requerido, max 60)
+  - `email` (email, requerido)
+  - `phone` (string, opcional, formato `+52 123 123 1234`)
+  - `message` (string, requerido)
+  - `source`, `utmJson` (opcionales)
+- Si `phone` llega sin formato, la function intenta normalizarlo a `+52 123 123 1234` y valida regex `^\\+52 \\d{3} \\d{3} \\d{4}$`.
+
+## 4.31 `create-newsletter-subscription-public`
+
+- HTTP POST publico (`any` execute).
+- Crea/actualiza suscriptor solo en `marketing_newsletter_subscribers`.
+- Si el email ya existe, reactiva `enabled=true`.
+- No toca `leads`, `conversations` ni `messages`.
+- Name en consola: `create-newsletter-subscription-public`.
+- Function ID real (ENV/SDK): `create-newsletter-subscription-publi` (ajustado por limite de 36 caracteres).
 
 ---
 
@@ -217,6 +361,8 @@ Errores estandar:
 | Function                     | Execute             |
 | ---------------------------- | ------------------- |
 | `create-lead`                | `users`             |
+| `send-proposal`              | `users`             |
+| `respond-proposal`           | `users`             |
 | `create-reservation-public`  | `users`             |
 | `create-reservation-manual`  | `users`             |
 | `get-resource-availability`  | `users`             |
@@ -231,6 +377,8 @@ Errores estandar:
 | `stripe-create-account-link` | `users`             |
 | `stripe-refresh-account-link`| `users`             |
 | `stripe-get-account-status`  | `users`             |
+| `create-marketing-contact-public` | `any`         |
+| `create-newsletter-subscription-publi` | `any`   |
 | webhooks                     | `any`               |
 | triggers/cron                | `[]`                |
 
@@ -243,10 +391,14 @@ Nuevas/actualizadas:
 - `APPWRITE_COLLECTION_RESOURCES_ID`
 - `APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID`
 - `APPWRITE_COLLECTION_RATE_PLANS_ID` (si aplica)
+- `APPWRITE_COLLECTION_MARKETING_CONTACT_REQUESTS_ID`
+- `APPWRITE_COLLECTION_MARKETING_NEWSLETTER_SUBSCRIBERS_ID`
 - `APPWRITE_COLLECTION_PASSWORD_RESETS_ID` (send-password-reset)
 - `APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID` (frontend)
 - `APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID` (frontend/internal tools)
 - `APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID` (frontend calendario)
+- `APPWRITE_FUNCTION_SEND_PROPOSAL_ID` (frontend/internal chat actions)
+- `APPWRITE_FUNCTION_RESPOND_PROPOSAL_ID` (frontend/client chat actions)
 - `PASSWORD_RESET_TTL_MINUTES` / `PASSWORD_RESET_COOLDOWN_SECONDS`
 
 Nota:
@@ -277,5 +429,5 @@ Nota:
 
 ---
 
-Ultima actualizacion: 2026-02-24
-Version: 3.1.1
+Ultima actualizacion: 2026-03-01
+Version: 3.2.1

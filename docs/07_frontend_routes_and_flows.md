@@ -1,4 +1,4 @@
-﻿# 07_FRONTEND_ROUTES_AND_FLOWS - RESOURCE PLATFORM
+# 07_FRONTEND_ROUTES_AND_FLOWS - RESOURCE PLATFORM
 
 ## Referencia
 
@@ -11,13 +11,33 @@
 ## 1. Principios
 
 1. Mobile-first.
-2. Frontend guardas = UX, no seguridad final.
-3. Backend decide permisos/modulos/limites.
-4. Rutas publicas existentes se preservan.
+2. Frontend guards are UX only; backend is the final authority.
+3. Backend validates permissions/modules/limits for every mutation.
+4. Strict separation between marketing landing and platform operations.
 
 ---
 
-## 2. Guardas globales
+## 2. Global UI Mode (instance settings)
+
+Frontend source of truth: `instance_settings.uiMode`.
+
+- `uiMode = marketing`:
+  - show only marketing landing for public surface (`/`).
+  - hide marketplace public routes (search, detail, reserve, voucher, etc.).
+  - keep auth routes and `/app/*` panel routes available.
+  - platform mutations (`create-lead`, proposal actions) are blocked server-side.
+- `uiMode = platform`:
+  - show full marketplace + admin platform routes.
+  - `/` renders platform catalog.
+
+Fallbacks:
+
+- If `uiMode` is missing, fallback to `marketingEnabled`.
+- If `instance_settings` is unavailable, fallback local env `FEATURE_MARKETING_SITE`.
+
+---
+
+## 3. Global Guards
 
 - `ProtectedRoute`
 - `InternalRoute`
@@ -27,167 +47,171 @@
 
 ---
 
-## 3. Rutas publicas
+## 4. Public Route Surface
 
-| Ruta                 | Descripcion                                 |
-| -------------------- | ------------------------------------------- |
-| `/`                  | home/catalogo                               |
-| `/propiedades/:slug` | detalle publico de resource (slug canonico) |
-| `/reservar/:slug`    | checkout/reserva                            |
-| `/voucher/:code`     | lookup de voucher                           |
-| `/login`             | auth                                        |
-| `/register`          | auth                                        |
-| `/mis-favoritos`     | lista de recursos favoritos del usuario     |
+### 4.1 Platform mode (`uiMode=platform`)
 
-Compatibilidad:
+| Route                | Description                               |
+| -------------------- | ----------------------------------------- |
+| `/`                  | platform home/catalog                     |
+| `/recursos/:slug`    | public resource detail                    |
+| `/resources/:slug`   | public resource detail (alias)            |
+| `/propiedades/:slug` | legacy redirect to `/recursos/:slug`      |
+| `/properties/:slug`  | legacy redirect to `/resources/:slug`     |
+| `/reservar/:slug`    | reserve/request page                      |
+| `/reserve/:slug`     | reserve/request page (alias)              |
+| `/voucher/:code`     | voucher lookup                            |
+| `/login`             | auth                                      |
+| `/register`          | auth                                      |
 
-- No se rompe `/propiedades/:slug`.
-- Internamente se carga `resource` y se mapea comportamiento por `commercialMode/bookingType`.
+### 4.2 Marketing mode (`uiMode=marketing`)
+
+| Route | Description |
+| ----- | ----------- |
+| `/`   | SaaS marketing landing |
+
+Marketplace public routes redirect to `/` while marketing mode is active.
+Auth routes and `/app/*` remain available.
+
+### 4.3 Marketing contact form (public landing)
+
+- Form fields:
+  - `firstName` (required, max 60)
+  - `lastName` (required, max 60)
+  - `email` (required)
+  - `phone` (optional, pattern `+52 123 123 1234`)
+  - `message` (required)
+- Frontend auto-formats phone while typing to `+52 123 123 1234`.
+- Submit target: `create-marketing-contact-public` only (never platform `leads`).
 
 ---
 
-## 4. Rutas privadas de operacion
+## 5. Private Route Surface
 
-| Ruta                       | Guard            | Scope/Rol                        |
+| Route                       | Guard            | Scope/Role                       |
 | -------------------------- | ---------------- | -------------------------------- |
-| `/app/dashboard`           | `InternalRoute`  | interno                          |
-| `/app/my-properties`       | `ScopeRoute`     | `resources.read` (compat alias)  |
-| `/app/properties/new`      | `ScopeRoute`     | `resources.write` (compat alias) |
-| `/app/properties/:id/edit` | `ScopeRoute`     | `resources.write` (compat alias) |
+| `/app/dashboard`           | `InternalRoute`  | internal                         |
+| `/app/my-properties`       | `ScopeRoute`     | `resources.read`                 |
+| `/app/properties/new`      | `ScopeRoute`     | `resources.write`                |
+| `/app/properties/:id/edit` | `ScopeRoute`     | `resources.write`                |
 | `/app/leads`               | `ScopeRoute`     | `leads.read`                     |
+| `/app/conversations`       | `ScopeRoute`     | `messaging.read`                 |
 | `/app/reservations`        | `ScopeRoute`     | `reservations.read`              |
 | `/app/calendar`            | `ScopeRoute`     | `reservations.read`              |
 | `/app/payments`            | `ScopeRoute`     | `payments.read`                  |
 | `/app/reviews`             | `ScopeRoute`     | `reviews.moderate`               |
 | `/app/team`                | `ScopeRoute`     | `staff.manage`                   |
-| `/perfil`                  | `ProtectedRoute` | cualquier auth                   |
-| `/mis-favoritos`           | `ProtectedRoute` | cualquier auth                   |
-| `/mis-resenas`             | `ProtectedRoute` | cualquier auth (client)          |
-| `/my-reviews`              | `ProtectedRoute` | cualquier auth (client)          |
-| `/mis-reservas`            | `ProtectedRoute` | cualquier auth (client)          |
-| `/my-reservations`         | `ProtectedRoute` | cualquier auth (client)          |
+| `/app/activity`            | `RootRoute`      | root only                        |
+| `/app/amenities`           | `RootRoute`      | root only                        |
+| `/app/root/instance`       | `RootRoute`      | root only                        |
+| `/perfil`                  | `ProtectedRoute` | authenticated user               |
+| `/mis-favoritos`           | `ProtectedRoute` | authenticated user               |
+| `/mis-reservas`            | `ProtectedRoute` | authenticated client             |
+| `/mis-conversaciones`      | `ProtectedRoute` | authenticated user               |
 
 ---
 
-## 5. Rutas root (modulos/instancia)
+## 6. Auth-Gated Resource Interactions
 
-| Ruta                 | Guard       | Uso                                 |
-| -------------------- | ----------- | ----------------------------------- |
-| `/app/activity`      | `RootRoute` | auditoria                           |
-| `/app/amenities`     | `RootRoute` | catalogo amenidades                 |
-| `/app/root/instance` | `RootRoute` | settings generales de instancia     |
-| `/app/root/modules`  | `RootRoute` | toggles de modulos + limites + plan |
+On `PropertyDetail` and resource CTAs:
 
-Estas rutas no deben mostrarse a owner/staff/client.
+- Not authenticated:
+  - hide contact/chat actions.
+  - show login CTA (`/login?redirect=<current-route>`).
+- Authenticated but not eligible (`!client`, owner of resource, or unverified email):
+  - block chat/contact creation and show validation guidance.
+- Authenticated + verified `client`:
+  - can create lead/chat through `create-lead` only.
 
----
+Non-negotiable behavior:
 
-## 6. Flujo canonico por comportamiento
-
-## 6.1 Venta
-
-- `commercialMode = sale`
-- `bookingType = manual_contact`
-- CTA: contacto/agendar visita
-- Sin checkout online
-
-## 6.2 Renta largo plazo
-
-- `commercialMode = rent_long_term`
-- `bookingType = manual_contact`
-- CTA: contacto
-
-## 6.3 Renta vacacional
-
-- `commercialMode = rent_short_term`
-- `bookingType = date_range`
-- requiere modulo `module.booking.short_term`
-- si cobra online: `module.payments.online`
-
-## 6.4 Renta por horas
-
-- `commercialMode = rent_hourly`
-- `bookingType = time_slot` o `fixed_event`
-- requiere modulo `module.booking.hourly`
-- si cobra online: `module.payments.online`
-- Modo de agenda controlado por `attributes.slotMode`:
-  - `predefined` (default): aside de detalle muestra grid de slots fijos generados por `slotDurationMinutes`/`slotBufferMinutes` entre `availabilityStartTime`/`availabilityEndTime`.
-  - `hour_range`: aside muestra dropdown de hora de inicio + grid de botones para cantidad de horas (acotado por `bookingMinUnits`/`bookingMaxUnits`).
-
-## 6.5 Calendario publico en detalle
-
-- Para `bookingType = date_range` en `PropertyDetail`, el calendario embebido del aside usa vista de **1 mes**.
-- Se expone accion secundaria para abrir modal de calendario extendido con **2 meses**.
-- En modal:
-  - desktop: 2 meses en paralelo.
-  - mobile: 2 meses apilados en vertical.
-- El calendario publico del aside solo se habilita para usuario autenticado con rol `client`.
-- Visitantes anonimos y roles internos (`root`, `owner`, `staff_*`) no deben ver este bloque.
-
-## 6.6 Agenda asistida para contacto manual
-
-- Recursos con `bookingType = manual_contact` pueden habilitar agenda sugerida en UI mediante `attributes.manualContactScheduleType`.
-- Valores: `none` (sin agenda), `date_range` (calendario de fechas), `time_slot` (selector de slots o hour-range).
-- Si el atributo no existe, el frontend infiere desde `commercialMode`: `rent_hourly` -> `time_slot`, `rent_short_term` -> `date_range`, otros -> `none`.
-- CTA sigue siendo contacto/chat; la agenda no genera checkout online.
+- No platform lead/chat/contact creation without authentication.
+- Marketing forms remain separate and do not write to platform leads/conversations/messages.
 
 ---
 
-## 7. Helper unico de comportamiento
+## 7. Resource Behavior -> Lead Intent + Channel + Structured Meta
 
-`getResourceBehavior(resourceDraftOrDoc)` debe centralizar:
+Frontend derives interaction mode from resource behavior:
 
-- `requiresCalendar`
-- `requiresPayments`
-- `allowedPricingModels`
-- `ctaType`
-- `priceLabel`
+- `sale` or `rent_long_term` -> `visit_request`
+- `rent_short_term + manual_contact` -> `booking_request_manual`
+- normal short-term booking/contact -> `booking_request` or `info_request`
 
-Uso obligatorio en:
+Create-lead submit contract from UI:
 
-- detalle publico
-- wizard/editor
-- cards/listados
-- checkout
+- `intent`: one of `booking_request | booking_request_manual | visit_request | info_request`
+- `contactChannel`: `resource_chat` or `resource_cta_form`
+- `meta` canonical nodes:
+  - `resourceSnapshot`
+  - `booking`
+  - `visit`
+  - `contactPrefs`
 
----
+Validation by UX before submit:
 
-## 8. Gating UI por modulo
-
-- Si `module.booking.short_term` esta OFF: ocultar opcion vacacional.
-- Si `module.booking.hourly` esta OFF: ocultar opcion por horas.
-- Si `module.payments.online` esta OFF: deshabilitar checkout online.
-- Wizard/editor debe filtrar `category` y `commercialMode` por `resourceType` usando taxonomia canonica.
-- Wizard/editor debe filtrar `pricingModel` por combinacion `resourceType + category + commercialMode`.
-- Wizard/editor debe resolver campos dinamicos por perfil `resourceType + category + commercialMode` (sin set fijo inmobiliario).
-- Pasos `features` y `commercialConditions` deben ocultarse automaticamente cuando el perfil activo no tenga campos aplicables.
-- No se permiten combinaciones cruzadas invalidadas por matriz (ejemplo: `resourceType=vehicle` con `category=house`).
-- `resourceType=music` es de primera clase y concentra `dj` + generos musicales; `dj` no debe aparecer bajo `service`.
-
-Nota: backend vuelve a validar siempre.
+- `visit_request` requires at least one preferred slot.
+- `booking_request_manual` requires guests and date range.
 
 ---
 
-## 9. Errores esperados
+## 8. Actionable Chat Proposals
 
+`ChatMessage` renders by `message.kind`:
+
+- `text`: default bubble
+- `proposal`: proposal card with schedule + meeting data + actions
+- `proposal_response`: response bubble with action metadata
+
+Proposal actions:
+
+- Internal users (`owner/root/staff`) send proposal -> `send-proposal`.
+- Client responds with `accept | reject | request_change` -> `respond-proposal`.
+
+---
+
+## 9. Archive vs Finalize UX Semantics
+
+Archive:
+
+- UI/inbox state only.
+- conversation status -> `archived`
+- lead -> `isArchived=true`
+- lead pipeline status unchanged.
+
+Finalize:
+
+- resolved outcome.
+- conversation status -> `closed`
+- lead status required -> `closed_won` or `closed_lost`
+- optional closure reason stored in `metaJson.closureReason`.
+
+Reopen policy:
+
+- Archived conversation + new client message -> reopen `active`, clear lead archive flag.
+- Closed flow should create a new lead instance for new requests (clean analytics).
+
+---
+
+## 10. Expected Errors
+
+- `401 AUTH_REQUIRED`
 - `403 MODULE_DISABLED`
+- `403 PLATFORM_MODE_REQUIRED`
 - `403 LIMIT_EXCEEDED`
 - `422 VALIDATION_ERROR`
 - `409 CONFLICT`
 
 ---
 
-## 10. Favoritos y compartir (detalle publico)
+## 11. Favorites and Sharing (public detail)
 
-- Vista `PropertyDetail` incluye accion `Compartir`:
-  - usa `navigator.share` cuando existe;
-  - fallback a copiar URL al portapapeles.
-- Vista `PropertyDetail` incluye accion `Favoritos`:
-  - usuario autenticado: toggle persistente en coleccion `favorites`;
-  - usuario anonimo: redireccion a `/register?redirect=<ruta-actual>`.
-- Al quitar favorito, el documento se elimina fisicamente (hard delete).
+- `Share` action: uses `navigator.share`, fallback to clipboard URL copy.
+- `Favorites` action:
+  - authenticated user: persistent toggle in `favorites` collection.
+  - unauthenticated user: redirect to `/register?redirect=<current-route>`.
 
 ---
 
-Ultima actualizacion: 2026-02-26
-Version: 3.6.0
+Last update: 2026-03-01
+Version: 3.7.1

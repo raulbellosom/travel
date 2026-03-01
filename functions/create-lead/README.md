@@ -1,16 +1,15 @@
-﻿# create-lead
+# create-lead
 
-Crea o reusa un lead autenticado por `resourceId + userId`, enlaza/reusa la conversacion y registra el primer mensaje.
+Create or upsert an authenticated lead (`resourceId + userId`) for platform resources, reuse/reopen the conversation, and write the first chat message.
 
-## Contrato de ejecucion
+## Runtime contract
 
-- Tipo: HTTP Function autenticada.
-- Trigger Appwrite: invocacion directa de la function `create-lead`.
-- Metodo: `POST`.
-- Permiso `execute`: `users`.
-- Scope/rol de actor: usuario autenticado.
+- Type: authenticated HTTP function.
+- Method: `POST`.
+- Execute permission: `users`.
+- Actor role: authenticated `client` only.
 
-## Scopes minimos de API key
+## API key scopes
 
 - `databases.read`
 - `databases.write`
@@ -21,20 +20,49 @@ Crea o reusa un lead autenticado por `resourceId + userId`, enlaza/reusa la conv
 ```json
 {
   "resourceId": "RESOURCE_ID",
-  "message": "Me interesa este recurso. Quiero cotizar.",
+  "message": "Hola, me interesa este recurso.",
+  "contactChannel": "resource_chat",
+  "intent": "visit_request",
   "meta": {
-    "budget": 25000,
-    "preferredDate": "2026-03-10"
+    "booking": {
+      "guests": 2,
+      "startDate": "2026-04-15T00:00:00.000Z",
+      "endDate": "2026-04-18T00:00:00.000Z"
+    },
+    "visit": {
+      "meetingType": "on_site",
+      "preferredSlots": [
+        {
+          "startDateTime": "2026-04-15T16:00:00.000Z",
+          "endDateTime": "2026-04-15T16:30:00.000Z",
+          "timezone": "America/Mexico_City"
+        }
+      ]
+    },
+    "contactPrefs": {
+      "preferredLanguage": "es",
+      "phone": "+52 5512345678"
+    }
   }
 }
 ```
 
-## Output
+Notes:
+
+- `contactChannel`: `resource_chat | resource_cta_form` (defaults to `resource_chat`).
+- `intent`: `booking_request | booking_request_manual | visit_request | info_request`.
+- `metaJson` max length enforced: `8000`.
+- Canonical `metaJson` always stores: `resourceSnapshot`, `booking`, `visit`, `contactPrefs`.
+
+## Response
 
 ```json
 {
   "ok": true,
-  "leadId": "...",
-  "conversationId": "..."
+  "success": true,
+  "leadId": "lead_xxx",
+  "conversationId": "conv_xxx",
+  "intent": "visit_request",
+  "contactChannel": "resource_chat"
 }
 ```

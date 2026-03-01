@@ -15,6 +15,7 @@
 3. Nomenclatura unificada `APP_*` y `APPWRITE_*` para frontend y functions.
 4. Frontend lee estas llaves via `vite.config.js` (`globalThis.__TRAVEL_ENV__`).
 5. No duplicar con `VITE_*` como canon (solo compatibilidad legacy).
+6. IDs de Appwrite Functions tienen limite maximo de 36 caracteres.
 
 ---
 
@@ -44,6 +45,8 @@ APPWRITE_COLLECTION_RATE_PLANS_ID=rate_plans
 APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID=instance_settings
 APPWRITE_COLLECTION_AMENITIES_ID=amenities
 APPWRITE_COLLECTION_LEADS_ID=leads
+APPWRITE_COLLECTION_MARKETING_CONTACT_REQUESTS_ID=marketing_contact_requests
+APPWRITE_COLLECTION_MARKETING_NEWSLETTER_SUBSCRIBERS_ID=marketing_newsletter_subscribers
 APPWRITE_COLLECTION_RESERVATIONS_ID=reservations
 APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID=reservation_payments
 APPWRITE_COLLECTION_RESERVATION_VOUCHERS_ID=reservation_vouchers
@@ -82,6 +85,8 @@ APPWRITE_FUNCTION_PAYMENT_WEBHOOK_STRIPE_ID=payment-webhook-stripe
 APPWRITE_FUNCTION_PAYMENT_WEBHOOK_MERCADOPAGO_ID=payment-webhook-mercadopago
 APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID=issue-reservation-voucher
 APPWRITE_FUNCTION_CREATE_REVIEW_ID=create-review-public
+APPWRITE_FUNCTION_CREATE_MARKETING_CONTACT_ID=create-marketing-contact-public
+APPWRITE_FUNCTION_CREATE_NEWSLETTER_SUBSCRIPTION_ID=create-newsletter-subscription-publi
 APPWRITE_FUNCTION_MODERATE_REVIEW_ID=moderate-review
 APPWRITE_FUNCTION_DASHBOARD_METRICS_ID=dashboard-metrics-aggregator
 APPWRITE_FUNCTION_STAFF_USER_MANAGEMENT_ID=staff-user-management
@@ -89,12 +94,20 @@ APPWRITE_FUNCTION_ACTIVITY_LOG_QUERY_ID=activity-log-query
 APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID=root-functions-diagnostics
 APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID=deep-search-query
 APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID=send-chat-notification
+APPWRITE_FUNCTION_SEND_PROPOSAL_ID=send-proposal
+APPWRITE_FUNCTION_RESPOND_PROPOSAL_ID=respond-proposal
 APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID=send-password-reset
 APPWRITE_FUNCTION_STRIPE_CREATE_CONNECTED_ACCOUNT_ID=stripe-create-connected-account
 APPWRITE_FUNCTION_STRIPE_CREATE_ACCOUNT_LINK_ID=stripe-create-account-link
 APPWRITE_FUNCTION_STRIPE_REFRESH_ACCOUNT_LINK_ID=stripe-refresh-account-link
 APPWRITE_FUNCTION_STRIPE_GET_ACCOUNT_STATUS_ID=stripe-get-account-status
 ```
+
+Nota importante (Name vs ID en Appwrite Functions):
+
+- `name` visible de function puede ser mas largo (ejemplo: `create-newsletter-subscription-public`).
+- `functionId` real usado por ENV/SDK debe respetar maximo 36 caracteres.
+- Por eso en ENV se usa `create-newsletter-subscription-publi`.
 
 ---
 
@@ -170,7 +183,7 @@ GA_MEASUREMENT_ID=
 | `FEATURE_DARK_MODE`      | Habilita selector de tema oscuro                                                         |
 | `FEATURE_I18N`           | Habilita selector de idioma                                                              |
 | `FEATURE_VERBOSE_LOGS`   | Activa logs detallados en consola                                                        |
-| `FEATURE_MARKETING_SITE` | `true` = landing CRM marketing en `/`, `false` = catálogo de recursos del cliente en `/` |
+| `FEATURE_MARKETING_SITE` | Fallback local de UI mode cuando `instance_settings` no esta disponible: `true` = landing CRM en `/`; `false` = catálogo de recursos en `/`. |
 
 ---
 
@@ -242,12 +255,13 @@ Buenas practicas:
 - Definitivo para nomenclatura unificada de variables.
 - Alineado con el catalogo de functions y esquema Appwrite actual.
 - Eliminadas variables obsoletas de instance/owner (se gestionan vía BD).
-- Agregadas variables de chat (`conversations`, `messages`, `send-chat-notification`, `PLATFORM_OWNER_EMAIL`).
+- Agregadas variables de chat (`conversations`, `messages`, `send-chat-notification`, `send-proposal`, `respond-proposal`, `PLATFORM_OWNER_EMAIL`).
+- Agregadas variables de colecciones de marketing separadas (`marketing_contact_requests`, `marketing_newsletter_subscribers`) sin aliases legacy.
 - Agregada function `deep-search-query`.
 - Agregada variable de coleccion de favoritos: `APPWRITE_COLLECTION_FAVORITES_ID`.
 - Agregadas functions de reserva manual y disponibilidad: `APPWRITE_FUNCTION_CREATE_MANUAL_RESERVATION_ID`, `APPWRITE_FUNCTION_GET_RESOURCE_AVAILABILITY_ID`.
 
 ---
 
-Ultima actualizacion: 2026-02-24
-Version: 2.4.1
+Ultima actualizacion: 2026-03-01
+Version: 2.5.2

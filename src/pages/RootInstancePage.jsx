@@ -24,7 +24,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+import { useOptionalAuth } from "../hooks/useAuth";
 import { useInstanceModules } from "../hooks/useInstanceModules";
 import { Badge, Button, Spinner } from "../components/common/atoms";
 import ModulesConfigModal from "../components/root/ModulesConfigModal";
@@ -115,7 +115,8 @@ const BACKEND_RULES = [
 
 const RootInstancePage = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const auth = useOptionalAuth();
+  const user = auth?.user || null;
   const { settings, moduleCatalog, loading, error, saving, saveSettings } =
     useInstanceModules();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -261,6 +262,29 @@ const RootInstancePage = () => {
                     size="sm"
                   >
                     {(settings.planKey || "starter").toUpperCase()}
+                  </Badge>
+                </div>
+
+                {/* UI mode */}
+                <div className="flex items-center justify-between px-5 py-3.5">
+                  <span className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <Globe size={13} className="opacity-60" />
+                    {t("rootInstancePage.info.uiMode", {
+                      defaultValue: "Modo UI",
+                    })}
+                  </span>
+                  <Badge
+                    variant={
+                      String(settings.uiMode || "platform").toLowerCase() ===
+                      "marketing"
+                        ? "warning"
+                        : "info"
+                    }
+                    size="sm"
+                  >
+                    {String(settings.uiMode || "platform")
+                      .trim()
+                      .toUpperCase()}
                   </Badge>
                 </div>
 

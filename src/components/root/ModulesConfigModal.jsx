@@ -128,6 +128,11 @@ const PLAN_OPTIONS = [
   { value: "custom", label: "Custom" },
 ];
 
+const UI_MODE_OPTIONS = [
+  { value: "platform", label: "Platform" },
+  { value: "marketing", label: "Marketing" },
+];
+
 // Module categories for better organization
 const MODULE_CATEGORIES = {
   core: {
@@ -268,6 +273,7 @@ const ModulesConfigModal = ({
     await onSave?.(
       {
         planKey: current.planKey,
+        uiMode: current.uiMode || "platform",
         enabledModules: current.enabledModules,
         limits: current.limits,
         enabled: current.enabled !== false,
@@ -338,7 +344,7 @@ const ModulesConfigModal = ({
           </h3>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
               <div className="flex-1 space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                   {t("modulesModal.plan.key", { defaultValue: "Tipo de plan" })}
@@ -347,6 +353,20 @@ const ModulesConfigModal = ({
                   value={current?.planKey || "starter"}
                   onChange={(value) => updateDraft({ planKey: value })}
                   options={PLAN_OPTIONS}
+                  size="md"
+                />
+              </div>
+
+              <div className="flex-1 space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  {t("modulesModal.plan.uiMode", {
+                    defaultValue: "Modo global de UI",
+                  })}
+                </label>
+                <Select
+                  value={current?.uiMode || "platform"}
+                  onChange={(value) => updateDraft({ uiMode: value })}
+                  options={UI_MODE_OPTIONS}
                   size="md"
                 />
               </div>

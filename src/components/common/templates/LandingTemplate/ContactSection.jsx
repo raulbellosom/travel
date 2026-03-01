@@ -4,6 +4,29 @@ import { Mail, Phone, Send, MessageSquare } from "lucide-react";
 import { m, useInView } from "framer-motion";
 import { marketingService } from "../../../../services/marketingService";
 
+const PHONE_MX_REGEX = /^\+52 \d{3} \d{3} \d{4}$/;
+
+const formatMxPhoneInput = (value) => {
+  let digits = String(value || "").replace(/\D/g, "");
+
+  if (digits.startsWith("52")) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    digits = digits.slice(1);
+  }
+
+  digits = digits.slice(0, 10);
+  if (!digits) return "";
+
+  const parts = [digits.slice(0, 3)];
+  if (digits.length > 3) parts.push(digits.slice(3, 6));
+  if (digits.length > 6) parts.push(digits.slice(6, 10));
+
+  return `+52 ${parts.join(" ")}`;
+};
+
 const Reveal = ({ children, delay = 0, className = "" }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
@@ -23,7 +46,7 @@ const Reveal = ({ children, delay = 0, className = "" }) => {
 const ContactSection = () => {
   const { t, i18n } = useTranslation();
   const [form, setForm] = useState({
-    name: "",
+    firstName: "",
     lastName: "",
     email: "",
     phone: "",
@@ -33,25 +56,39 @@ const ContactSection = () => {
   const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
 
   const handleChange = (field) => (event) => {
-    setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    const rawValue = event.target.value;
+    const nextValue =
+      field === "phone" ? formatMxPhoneInput(rawValue) : rawValue;
+    setForm((prev) => ({ ...prev, [field]: nextValue }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitMessage({ type: "", text: "" });
 
-    const name = String(form.name || "").trim();
+    const firstName = String(form.firstName || "").trim();
     const lastName = String(form.lastName || "").trim();
     const email = String(form.email || "").trim().toLowerCase();
     const phone = String(form.phone || "").trim();
     const message = String(form.message || "").trim();
 
-    if (!name || !email || !message) {
+    if (!firstName || !lastName || !email || !message) {
       setSubmitMessage({
         type: "error",
         text: t(
           "landing:contact.form.errors.required",
-          "Completa nombre, correo y mensaje para continuar.",
+          "Completa nombre, apellido, correo y mensaje para continuar.",
+        ),
+      });
+      return;
+    }
+
+    if (phone && !PHONE_MX_REGEX.test(phone)) {
+      setSubmitMessage({
+        type: "error",
+        text: t(
+          "landing:contact.form.errors.invalidPhone",
+          "El telefono debe tener formato +52 123 123 1234.",
         ),
       });
       return;
@@ -60,7 +97,7 @@ const ContactSection = () => {
     try {
       setIsSubmitting(true);
       await marketingService.submitContact({
-        name,
+        firstName,
         lastName,
         email,
         phone,
@@ -68,7 +105,13 @@ const ContactSection = () => {
         locale: i18n.resolvedLanguage || i18n.language || "es",
         source: "crm_landing_contact",
       });
-      setForm({ name: "", lastName: "", email: "", phone: "", message: "" });
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
       setSubmitMessage({
         type: "success",
         text: t(
@@ -123,7 +166,7 @@ const ContactSection = () => {
                 <p className="text-lg text-slate-600 dark:text-slate-300 mb-10 max-w-lg leading-relaxed">
                   {t(
                     "landing:contact.subtitle",
-                    "Déjanos tus datos y un experto te contactará en menos de 24 horas para mostrarte cómo Inmobo puede ayudarte a escalar.",
+                    "Dejanos tus datos y un experto te contactara en menos de 24 horas para mostrarte como Inmobo puede ayudarte a escalar.",
                   )}
                 </p>
 
@@ -134,7 +177,7 @@ const ContactSection = () => {
                     </div>
                     <div>
                       <h4 className="text-slate-900 dark:text-white font-bold mb-1">
-                        {t("landing:contact.emailLabel", "Correo Electrónico")}
+                        {t("landing:contact.emailLabel", "Correo Electronico")}
                       </h4>
                       <p className="text-slate-500 dark:text-slate-400">
                         {t("landing:contact.emailValue", "ventas@inmobo.com")}
@@ -147,7 +190,7 @@ const ContactSection = () => {
                     </div>
                     <div>
                       <h4 className="text-slate-900 dark:text-white font-bold mb-1">
-                        {t("landing:contact.phoneLabel", "Teléfono")}
+                        {t("landing:contact.phoneLabel", "Telefono")}
                       </h4>
                       <p className="text-slate-500 dark:text-slate-400">
                         {t("landing:contact.phoneValue", "+52 (55) 1234-5678")}
@@ -164,16 +207,17 @@ const ContactSection = () => {
                   <div className="grid sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
-                        {t("landing:contact.form.name", "Nombre")}
+                        {t("landing:contact.form.firstName", "Nombre")}
                       </label>
                       <input
                         type="text"
-                        value={form.name}
-                        onChange={handleChange("name")}
+                        value={form.firstName}
+                        onChange={handleChange("firstName")}
                         placeholder={t(
-                          "landing:contact.form.namePlaceholder",
+                          "landing:contact.form.firstNamePlaceholder",
                           "Tu nombre",
                         )}
+                        maxLength={60}
                         className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
                       />
                     </div>
@@ -189,6 +233,7 @@ const ContactSection = () => {
                           "landing:contact.form.lastNamePlaceholder",
                           "Tu apellido",
                         )}
+                        maxLength={60}
                         className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
                       />
                     </div>
@@ -196,7 +241,7 @@ const ContactSection = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
-                      {t("landing:contact.form.email", "Correo Electrónico")}
+                      {t("landing:contact.form.email", "Correo Electronico")}
                     </label>
                     <input
                       type="email"
@@ -212,7 +257,7 @@ const ContactSection = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
-                      {t("landing:contact.form.phone", "Teléfono")}
+                      {t("landing:contact.form.phone", "Telefono")}
                     </label>
                     <input
                       type="tel"
@@ -220,8 +265,10 @@ const ContactSection = () => {
                       onChange={handleChange("phone")}
                       placeholder={t(
                         "landing:contact.form.phonePlaceholder",
-                        "+52 123 456 7890",
+                        "+52 123 123 1234",
                       )}
+                      inputMode="numeric"
+                      maxLength={16}
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
                     />
                   </div>
@@ -236,7 +283,7 @@ const ContactSection = () => {
                       onChange={handleChange("message")}
                       placeholder={t(
                         "landing:contact.form.messagePlaceholder",
-                        "Cuéntanos sobre tus necesidades...",
+                        "Cuentanos sobre tus necesidades...",
                       )}
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium resize-none"
                     />
@@ -268,7 +315,7 @@ const ContactSection = () => {
                   <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-4">
                     {t(
                       "landing:contact.disclaimer",
-                      "Al enviar este formulario, aceptas nuestra Política de Privacidad.",
+                      "Al enviar este formulario, aceptas nuestra Politica de Privacidad.",
                     )}
                   </p>
                 </form>

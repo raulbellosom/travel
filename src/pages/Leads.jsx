@@ -15,6 +15,13 @@ import StatsCardsRow from "../components/common/molecules/StatsCardsRow";
 import { canViewGlobalLeads, canViewGlobalResources } from "../utils/roles";
 
 const LEAD_STATUSES = ["new", "contacted", "closed_won", "closed_lost"];
+const LEAD_INTENTS = [
+  "booking_request",
+  "booking_request_manual",
+  "visit_request",
+  "info_request",
+];
+const LEAD_CHANNELS = ["resource_chat", "resource_cta_form"];
 
 const safeParseJson = (value) => {
   try {
@@ -30,8 +37,89 @@ const safeParseJson = (value) => {
 const getLeadResourceId = (lead) =>
   String(lead?.resourceId || lead?.propertyId || "").trim();
 
-const getLeadSchedulePayload = (lead) => {
+const normalizeLeadIntent = (lead, meta = {}) => {
+  const normalized = String(lead?.intent || "")
+    .trim()
+    .toLowerCase();
+  if (LEAD_INTENTS.includes(normalized)) return normalized;
+
+  const visitSlots = Array.isArray(meta?.visit?.preferredSlots)
+    ? meta.visit.preferredSlots
+    : [];
+  const bookingNode =
+    meta?.booking && typeof meta.booking === "object" ? meta.booking : {};
+
+  if (visitSlots.length > 0) return "visit_request";
+  if (bookingNode.startDate || bookingNode.endDate || bookingNode.guests) {
+    return "booking_request";
+  }
+
+  return "info_request";
+};
+
+const normalizeLeadChannel = (lead) => {
+  const normalized = String(lead?.contactChannel || lead?.source || "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "authenticated_chat") return "resource_chat";
+  if (normalized === "authenticated_form") return "resource_cta_form";
+  if (LEAD_CHANNELS.includes(normalized)) return normalized;
+  return "resource_chat";
+};
+
+const extractLeadMetaDetails = (lead) => {
   const meta = safeParseJson(lead?.metaJson);
+  const booking =
+    meta?.booking && typeof meta.booking === "object" && !Array.isArray(meta.booking)
+      ? meta.booking
+      : {};
+  const visit =
+    meta?.visit && typeof meta.visit === "object" && !Array.isArray(meta.visit)
+      ? meta.visit
+      : {};
+  const preferredSlots = Array.isArray(visit.preferredSlots)
+    ? visit.preferredSlots.filter(
+        (slot) =>
+          slot &&
+          typeof slot === "object" &&
+          slot.startDateTime &&
+          slot.endDateTime,
+      )
+    : [];
+
+  const guests = Number(booking.guests);
+
+  return {
+    meta,
+    bookingGuests: Number.isFinite(guests) ? guests : 0,
+    bookingStartDate: String(booking.startDate || booking.checkInDate || "").trim(),
+    bookingEndDate: String(booking.endDate || booking.checkOutDate || "").trim(),
+    visitSlots: preferredSlots,
+  };
+};
+
+const getLeadSchedulePayload = (lead) => {
+  const { meta, bookingStartDate, bookingEndDate, visitSlots } =
+    extractLeadMetaDetails(lead);
+
+  if (visitSlots.length > 0) {
+    const firstSlot = visitSlots[0];
+    return {
+      scheduleType: "time_slot",
+      startDateTime: firstSlot.startDateTime,
+      endDateTime: firstSlot.endDateTime,
+    };
+  }
+
+  if (bookingStartDate && bookingEndDate) {
+    return {
+      scheduleType: "date_range",
+      checkInDate: bookingStartDate,
+      checkOutDate: bookingEndDate,
+    };
+  }
+
+  // Legacy fallback while migrating old lead payloads.
   const schedule =
     (meta.requestSchedule && typeof meta.requestSchedule === "object"
       ? meta.requestSchedule
@@ -100,6 +188,8 @@ const Leads = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [intentFilter, setIntentFilter] = useState("");
+  const [channelFilter, setChannelFilter] = useState("");
   const [busyId, setBusyId] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -164,7 +254,7 @@ const Leads = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, user?.$id, i18n]);
+  }, [statusFilter, user, i18n]);
 
   useEffect(() => {
     loadData();
@@ -185,10 +275,19 @@ const Leads = () => {
         : "";
       const leadResourceId = getLeadResourceId(item);
       const hasReservableSchedule = Boolean(getLeadSchedulePayload(item));
+      const metaDetails = extractLeadMetaDetails(item);
+      const normalizedIntent = normalizeLeadIntent(item, metaDetails.meta);
+      const normalizedChannel = normalizeLeadChannel(item);
       return {
         ...item,
         leadResourceId,
         hasReservableSchedule,
+        intent: normalizedIntent,
+        contactChannel: normalizedChannel,
+        bookingGuests: metaDetails.bookingGuests,
+        bookingStartDate: metaDetails.bookingStartDate,
+        bookingEndDate: metaDetails.bookingEndDate,
+        visitSlotsCount: metaDetails.visitSlots.length,
         mappedName: fullName,
         mappedEmail: u.email || "",
         mappedPhone: phoneNum,
@@ -197,9 +296,17 @@ const Leads = () => {
   }, [items, userMap, t]);
 
   const filteredLeads = useMemo(() => {
-    if (!normalizedFilter) return mappedLeads;
+    const byIntent =
+      intentFilter && LEAD_INTENTS.includes(intentFilter)
+        ? mappedLeads.filter((item) => item.intent === intentFilter)
+        : mappedLeads;
+    const byChannel =
+      channelFilter && LEAD_CHANNELS.includes(channelFilter)
+        ? byIntent.filter((item) => item.contactChannel === channelFilter)
+        : byIntent;
+    if (!normalizedFilter) return byChannel;
 
-    return mappedLeads.filter((item) => {
+    return byChannel.filter((item) => {
       const text = [
         item.$id,
         item.mappedName,
@@ -207,6 +314,12 @@ const Leads = () => {
         item.mappedPhone,
         item.lastMessage,
         item.status,
+        item.intent,
+        item.contactChannel,
+        item.bookingGuests,
+        item.bookingStartDate,
+        item.bookingEndDate,
+        item.visitSlotsCount,
         propertyMap[item.leadResourceId]?.title,
         item.leadResourceId,
       ]
@@ -214,7 +327,7 @@ const Leads = () => {
         .join(" ");
       return text.includes(normalizedFilter);
     });
-  }, [mappedLeads, normalizedFilter, propertyMap]);
+  }, [channelFilter, intentFilter, mappedLeads, normalizedFilter, propertyMap]);
 
   const effectivePageSize = useMemo(() => {
     if (pageSize === "all") return Math.max(1, filteredLeads.length);
@@ -302,6 +415,66 @@ const Leads = () => {
     [t],
   );
 
+  const intentFilterOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: t("leadsPage.filters.intentAll", {
+          defaultValue: "Todos los intentos",
+        }),
+      },
+      {
+        value: "booking_request",
+        label: t("leadsPage.filters.intent.bookingRequest", {
+          defaultValue: "Reserva",
+        }),
+      },
+      {
+        value: "booking_request_manual",
+        label: t("leadsPage.filters.intent.bookingRequestManual", {
+          defaultValue: "Reserva manual",
+        }),
+      },
+      {
+        value: "visit_request",
+        label: t("leadsPage.filters.intent.visitRequest", {
+          defaultValue: "Visita",
+        }),
+      },
+      {
+        value: "info_request",
+        label: t("leadsPage.filters.intent.infoRequest", {
+          defaultValue: "Informacion",
+        }),
+      },
+    ],
+    [t],
+  );
+
+  const channelFilterOptions = useMemo(
+    () => [
+      {
+        value: "",
+        label: t("leadsPage.filters.channelAll", {
+          defaultValue: "Todos los canales",
+        }),
+      },
+      {
+        value: "resource_chat",
+        label: t("leadsPage.filters.channel.resourceChat", {
+          defaultValue: "Chat",
+        }),
+      },
+      {
+        value: "resource_cta_form",
+        label: t("leadsPage.filters.channel.resourceCtaForm", {
+          defaultValue: "Formulario CTA",
+        }),
+      },
+    ],
+    [t],
+  );
+
   const rowStatusOptions = useMemo(
     () =>
       LEAD_STATUSES.map((status) => ({
@@ -382,7 +555,7 @@ const Leads = () => {
 
       <StatsCardsRow items={summaryCards} />
 
-      <div className="grid gap-3 sm:max-w-3xl sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="grid gap-1 text-sm">
           <span className="inline-flex items-center gap-2">
             <Search size={14} />
@@ -410,6 +583,34 @@ const Leads = () => {
               setPage(1);
             }}
             options={statusFilterOptions}
+            size="md"
+          />
+        </label>
+
+        <label className="grid gap-1 text-sm">
+          <span>
+            {t("leadsPage.filters.intent", { defaultValue: "Intento" })}
+          </span>
+          <Select
+            value={intentFilter}
+            onChange={(value) => {
+              setIntentFilter(value);
+              setPage(1);
+            }}
+            options={intentFilterOptions}
+            size="md"
+          />
+        </label>
+
+        <label className="grid gap-1 text-sm">
+          <span>{t("leadsPage.filters.channel", { defaultValue: "Canal" })}</span>
+          <Select
+            value={channelFilter}
+            onChange={(value) => {
+              setChannelFilter(value);
+              setPage(1);
+            }}
+            options={channelFilterOptions}
             size="md"
           />
         </label>
@@ -486,6 +687,24 @@ const Leads = () => {
                           {propertyMap[lead.leadResourceId]?.title ||
                             lead.leadResourceId}
                         </p>
+                        <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {lead.intent} • {lead.contactChannel}
+                        </p>
+                        {(lead.bookingGuests > 0 ||
+                          (lead.bookingStartDate && lead.bookingEndDate) ||
+                          lead.visitSlotsCount > 0) && (
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            {lead.bookingGuests > 0
+                              ? `${lead.bookingGuests} guests`
+                              : ""}{" "}
+                            {lead.bookingStartDate && lead.bookingEndDate
+                              ? `${lead.bookingStartDate.slice(0, 10)} → ${lead.bookingEndDate.slice(0, 10)}`
+                              : ""}{" "}
+                            {lead.visitSlotsCount > 0
+                              ? `${lead.visitSlotsCount} slot(s)`
+                              : ""}
+                          </p>
+                        )}
                         {lead.lastMessage && (
                           <p
                             className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px] mt-1"

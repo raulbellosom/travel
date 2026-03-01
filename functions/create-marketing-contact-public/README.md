@@ -1,6 +1,7 @@
 # create-marketing-contact-public
 
-Recibe formularios de contacto del CRM Landing y guarda el registro en `marketing_contacts`.
+Recibe formularios de contacto del CRM landing y guarda el registro en
+`marketing_contact_requests`.
 
 ## Contrato de ejecucion
 
@@ -12,18 +13,27 @@ Recibe formularios de contacto del CRM Landing y guarda el registro en `marketin
 
 ```json
 {
-  "name": "Juan",
+  "firstName": "Juan",
   "lastName": "Perez",
   "email": "juan@example.com",
-  "phone": "+5215512345678",
+  "phone": "+52 123 123 1234",
   "message": "Quiero una demo",
-  "locale": "es",
-  "source": "crm_landing_contact"
+  "source": "landing_contact",
+  "utmJson": {
+    "utm_source": "google",
+    "utm_campaign": "brand"
+  }
 }
 ```
 
 ## Reglas
 
-- Campos obligatorios: `name`, `email`, `message`.
-- Crea documento en `marketing_contacts` con `status=new`.
+- Campos obligatorios: `firstName`, `lastName`, `email`, `message`.
+- `firstName` y `lastName`: maximo 60 caracteres cada uno.
+- `phone` es opcional, pero cuando se envia debe cumplir regex:
+  `^\+52 \d{3} \d{3} \d{4}$`.
+- Si `phone` llega sin formato, la function intenta normalizarlo a
+  `+52 123 123 1234` antes de validar.
+- Crea documento en `marketing_contact_requests`.
+- Guarda `utmJson` serializado para analitica de marketing.
 - Intenta enviar notificacion por SMTP a `PLATFORM_OWNER_EMAIL`.

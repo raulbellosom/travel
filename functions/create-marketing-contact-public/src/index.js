@@ -19,8 +19,8 @@ const cfg = () => ({
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
   contactsCollectionId:
-    getEnv("APPWRITE_COLLECTION_MARKETING_CONTACTS_ID") ||
-    "marketing_contacts",
+    getEnv("APPWRITE_COLLECTION_MARKETING_CONTACT_REQUESTS_ID") ||
+    "marketing_contact_requests",
   ownerEmail: getEnv("PLATFORM_OWNER_EMAIL"),
   appName: getEnv("APP_NAME") || "Inmobo",
   appUrl: getEnv("APP_BASE_URL") || "http://localhost:5173",
@@ -43,6 +43,50 @@ const normalizeText = (value, maxLength = 0) => {
 
 const isValidEmail = (email) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
+
+const PHONE_MX_REGEX = /^\+52 \d{3} \d{3} \d{4}$/;
+
+const formatMxPhone = (value) => {
+  let digits = String(value || "").replace(/\D/g, "");
+
+  if (digits.startsWith("52")) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    digits = digits.slice(1);
+  }
+
+  digits = digits.slice(0, 10);
+  if (!digits) return "";
+
+  const parts = [digits.slice(0, 3)];
+  if (digits.length > 3) parts.push(digits.slice(3, 6));
+  if (digits.length > 6) parts.push(digits.slice(6, 10));
+
+  return `+52 ${parts.join(" ")}`;
+};
+
+const parseUtmJson = (value) => {
+  if (!value) return "{}";
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return JSON.stringify(parsed).slice(0, 4000);
+      }
+    } catch {
+      return "{}";
+    }
+    return "{}";
+  }
+
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return JSON.stringify(value).slice(0, 4000);
+  }
+
+  return "{}";
+};
 
 const getTransporter = () => {
   const host = getEnv("EMAIL_SMTP_HOST");
@@ -80,14 +124,13 @@ const sendOwnerNotification = async ({ contact, config }) => {
   await transporter.sendMail({
     from: `"${fromName}" <${fromAddress}>`,
     to: config.ownerEmail,
-    subject: `[${config.appName}] Nuevo contacto desde CRM Landing`,
+    subject: `[${config.appName}] Nuevo contacto marketing`,
     html: `
-      <h2>Nuevo contacto</h2>
-      <p><strong>Nombre:</strong> ${contact.name} ${contact.lastName || ""}</p>
+      <h2>Nuevo contacto marketing</h2>
+      <p><strong>Nombre:</strong> ${contact.firstName} ${contact.lastName}</p>
       <p><strong>Email:</strong> ${contact.email}</p>
-      <p><strong>Telefono:</strong> ${contact.phone || "-"}</p>
-      <p><strong>Idioma:</strong> ${contact.locale || "-"}</p>
-      <p><strong>Origen:</strong> ${contact.source || "crm_landing_contact"}</p>
+      <p><strong>Telefono:</strong> ${contact.phone || "No proporcionado"}</p>
+      <p><strong>Origen:</strong> ${contact.source || "landing_contact"}</p>
       <p><strong>Mensaje:</strong></p>
       <p>${contact.message}</p>
       <p><a href="${config.appUrl}">${config.appUrl}</a></p>
@@ -104,20 +147,25 @@ export default async ({ req, res, error }) => {
   }
 
   const body = parseBody(req);
-  const name = normalizeText(body.name, 120);
-  const lastName = normalizeText(body.lastName, 120);
+  const firstName = normalizeText(body.firstName, 60);
+  const lastName = normalizeText(body.lastName, 60);
   const email = normalizeText(body.email, 254).toLowerCase();
-  const phone = normalizeText(body.phone, 25);
+  const rawPhone = normalizeText(body.phone, 40);
+  const phone = rawPhone ? formatMxPhone(rawPhone) : "";
   const message = normalizeText(body.message, 4000);
-  const locale = normalizeText(body.locale, 12);
-  const source = normalizeText(body.source, 80) || "crm_landing_contact";
+  const source = normalizeText(body.source, 80) || "landing_contact";
+  const utmJson = parseUtmJson(body.utmJson || body.utm || body.meta);
 
-  if (!name || !email || !message) {
+  if (!firstName || !lastName || !email || !message) {
     return res.json({ ok: false, error: "Missing required fields" }, 400);
   }
 
   if (!isValidEmail(email)) {
     return res.json({ ok: false, error: "Invalid email format" }, 400);
+  }
+
+  if (rawPhone && !PHONE_MX_REGEX.test(phone)) {
+    return res.json({ ok: false, error: "Invalid phone format" }, 400);
   }
 
   const client = new Client()
@@ -128,17 +176,15 @@ export default async ({ req, res, error }) => {
 
   try {
     const payload = {
-      name,
+      firstName,
+      lastName,
       email,
+      ...(phone ? { phone } : {}),
       message,
-      status: "new",
       source,
-      locale: locale || "es",
+      utmJson,
       enabled: true,
     };
-
-    if (lastName) payload.lastName = lastName;
-    if (phone) payload.phone = phone;
 
     const doc = await db.createDocument(
       config.databaseId,

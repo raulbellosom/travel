@@ -13,6 +13,7 @@ import { useAuth } from "../hooks/useAuth";
 const UIContext = createContext(null);
 const THEME_STORAGE_KEY = "ui.theme.mode";
 const LEGACY_THEME_STORAGE_KEY = "theme";
+let warnedMissingProvider = false;
 
 const readStoredTheme = () => {
   const nextStored = localStorage.getItem(THEME_STORAGE_KEY);
@@ -85,7 +86,7 @@ export function UIProvider({ children }) {
       i18n.changeLanguage(preferences.locale);
       document.documentElement.lang = preferences.locale;
     }
-  }, [preferences?.theme, preferences?.locale]);
+  }, [preferences?.theme, preferences?.locale, theme]);
 
   const changeLanguage = useCallback(
     async (lng) => {
@@ -241,6 +242,26 @@ export function UIProvider({ children }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export const useUI = () => {
   const ctx = useContext(UIContext);
-  if (!ctx) throw new Error("useUI must be used within a UIProvider");
+  if (!ctx) {
+    if (import.meta.env?.DEV && !warnedMissingProvider) {
+      warnedMissingProvider = true;
+      console.warn(
+        "[UIContext] useUI called without UIProvider. Falling back to safe defaults.",
+      );
+    }
+
+    return {
+      theme: "system",
+      effectiveTheme:
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light",
+      changeTheme: async () => {},
+      changeThemeAnimated: async () => {},
+      toggleTheme: async () => {},
+      changeLanguage: async () => {},
+    };
+  }
   return ctx;
 };

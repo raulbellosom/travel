@@ -197,21 +197,22 @@
     "phoneLabel": "Phone",
     "disclaimer": "By submitting this form you agree to our privacy policy.",
     "form": {
-      "name": "Name",
+      "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",
       "phone": "Phone",
       "message": "Message",
       "submit": "Send Message",
-      "namePlaceholder": "Your name",
+      "firstNamePlaceholder": "Your first name",
       "lastNamePlaceholder": "Your last name",
       "emailPlaceholder": "name@company.com",
-      "phonePlaceholder": "+1 555 123 4567",
+      "phonePlaceholder": "+52 123 123 1234",
       "messagePlaceholder": "Tell us about your needs...",
       "submitting": "Sending...",
       "success": "Thanks. We received your message and will contact you soon.",
       "errors": {
-        "required": "Complete name, email and message to continue.",
+        "required": "Complete first name, last name, email and message to continue.",
+        "invalidPhone": "Phone must match +52 123 123 1234.",
         "generic": "Could not send your message. Please try again."
       }
     },

@@ -18,8 +18,8 @@ const cfg = () => ({
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
   subscribersCollectionId:
-    getEnv("APPWRITE_COLLECTION_NEWSLETTER_SUBSCRIBERS_ID") ||
-    "newsletter_subscribers",
+    getEnv("APPWRITE_COLLECTION_MARKETING_NEWSLETTER_SUBSCRIBERS_ID") ||
+    "marketing_newsletter_subscribers",
 });
 
 const parseBody = (req) => {
@@ -40,6 +40,27 @@ const normalizeText = (value, maxLength = 0) => {
 const isValidEmail = (email) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
 
+const parseUtmJson = (value) => {
+  if (!value) return "{}";
+
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return JSON.stringify(value).slice(0, 4000);
+  }
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return JSON.stringify(parsed).slice(0, 4000);
+      }
+    } catch {
+      return "{}";
+    }
+  }
+
+  return "{}";
+};
+
 export default async ({ req, res, error }) => {
   const config = cfg();
   if (!config.endpoint || !config.projectId || !config.apiKey) {
@@ -48,8 +69,9 @@ export default async ({ req, res, error }) => {
 
   const body = parseBody(req);
   const email = normalizeText(body.email, 254).toLowerCase();
-  const locale = normalizeText(body.locale, 12) || "es";
-  const source = normalizeText(body.source, 80) || "crm_landing_footer";
+  const name = normalizeText(body.name, 120);
+  const source = normalizeText(body.source, 80) || "landing_newsletter";
+  const utmJson = parseUtmJson(body.utmJson || body.utm || body.meta);
 
   if (!email) {
     return res.json({ ok: false, error: "Missing email" }, 400);
@@ -79,9 +101,9 @@ export default async ({ req, res, error }) => {
         config.subscribersCollectionId,
         current.$id,
         {
-          status: "subscribed",
-          locale,
+          name: name || current.name || undefined,
           source,
+          utmJson,
           enabled: true,
         },
       );
@@ -102,9 +124,9 @@ export default async ({ req, res, error }) => {
       ID.unique(),
       {
         email,
-        locale,
+        name: name || undefined,
         source,
-        status: "subscribed",
+        utmJson,
         enabled: true,
       },
     );

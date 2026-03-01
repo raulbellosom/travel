@@ -56,6 +56,7 @@ const Conversations = () => {
     isRestoringConversation,
     isUserRecentlyActive,
     updateConversationStatus,
+    sendProposal,
     canWriteMessaging,
   } = useChat();
 
@@ -406,7 +407,7 @@ const Conversations = () => {
   );
 
   const handleConversationStatusChange = useCallback(
-    async (nextStatus) => {
+    async (nextStatus, options = {}) => {
       if (!canWriteMessaging) return;
       const conversationId = String(activeConversation?.$id || "").trim();
       const normalizedNextStatus = String(nextStatus || "").trim().toLowerCase();
@@ -424,7 +425,11 @@ const Conversations = () => {
       });
 
       try {
-        await updateConversationStatus(conversationId, normalizedNextStatus);
+        await updateConversationStatus(
+          conversationId,
+          normalizedNextStatus,
+          options,
+        );
       } catch (err) {
         console.error("Failed to update conversation status:", err);
       } finally {
@@ -442,6 +447,109 @@ const Conversations = () => {
       updateConversationStatus,
     ],
   );
+
+  const handleFinalizeConversation = useCallback(async () => {
+    if (!activeConversation?.$id || !canWriteMessaging) return;
+
+    const won = window.confirm(
+      t("conversationsPage.actions.finalizePrompt", {
+        defaultValue:
+          "Aceptar = cerrar como ganada. Cancelar = cerrar como perdida.",
+      }),
+    );
+
+    const closureReason = window.prompt(
+      t("conversationsPage.actions.closureReasonPrompt", {
+        defaultValue: "Motivo de cierre (opcional)",
+      }),
+      "",
+    );
+
+    await handleConversationStatusChange("closed", {
+      leadStatus: won ? "closed_won" : "closed_lost",
+      closureReason: closureReason || "",
+    });
+  }, [
+    activeConversation?.$id,
+    canWriteMessaging,
+    handleConversationStatusChange,
+    t,
+  ]);
+
+  const handleSendProposalPrompt = useCallback(async () => {
+    if (!activeConversation?.$id || !canWriteMessaging) return;
+
+    const proposalType = String(
+      window.prompt(
+        t("conversationsPage.actions.proposalTypePrompt", {
+          defaultValue: "Tipo de propuesta: visit | booking_manual",
+        }),
+        "visit",
+      ) || "",
+    )
+      .trim()
+      .toLowerCase();
+
+    if (!proposalType) return;
+
+    const timeStart = String(
+      window.prompt(
+        t("conversationsPage.actions.proposalStartPrompt", {
+          defaultValue: "Fecha/hora inicio (ISO)",
+        }),
+        "",
+      ) || "",
+    ).trim();
+    const timeEnd = String(
+      window.prompt(
+        t("conversationsPage.actions.proposalEndPrompt", {
+          defaultValue: "Fecha/hora fin (ISO)",
+        }),
+        "",
+      ) || "",
+    ).trim();
+    const timezone =
+      String(
+        window.prompt(
+          t("conversationsPage.actions.proposalTimezonePrompt", {
+            defaultValue: "Zona horaria",
+          }),
+          "America/Mexico_City",
+        ) || "",
+      ).trim() || "UTC";
+
+    const meetingType =
+      proposalType === "visit"
+        ? String(
+            window.prompt(
+              t("conversationsPage.actions.proposalMeetingTypePrompt", {
+                defaultValue: "Tipo de visita: on_site | video_call",
+              }),
+              "on_site",
+            ) || "",
+          )
+            .trim()
+            .toLowerCase()
+        : undefined;
+
+    const location = String(
+      window.prompt(
+        t("conversationsPage.actions.proposalLocationPrompt", {
+          defaultValue: "Ubicacion o enlace (opcional)",
+        }),
+        "",
+      ) || "",
+    ).trim();
+
+    await sendProposal({
+      proposalType,
+      timeStart,
+      timeEnd,
+      timezone,
+      meetingType: meetingType || undefined,
+      location: location || undefined,
+    });
+  }, [activeConversation?.$id, canWriteMessaging, sendProposal, t]);
 
   /* ── Summary stats ───────────────────────────────────── */
 
@@ -899,19 +1007,42 @@ const Conversations = () => {
                       {activeConversationStatus !== "closed" && (
                         <button
                           type="button"
-                          onClick={() => handleConversationStatusChange("closed")}
+                          onClick={handleSendProposalPrompt}
+                          disabled={
+                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                          }
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-cyan-200 bg-cyan-50 px-2 text-xs font-medium text-cyan-700 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-900/60 dark:bg-cyan-900/25 dark:text-cyan-300 dark:hover:bg-cyan-900/35"
+                          title={t("conversationsPage.actions.sendProposal", {
+                            defaultValue: "Enviar propuesta",
+                          })}
+                        >
+                          <MessageCircle size={12} />
+                          {t("conversationsPage.actions.sendProposal", {
+                            defaultValue: "Enviar propuesta",
+                          })}
+                        </button>
+                      )}
+
+                      {activeConversationStatus !== "closed" && (
+                        <button
+                          type="button"
+                          onClick={handleFinalizeConversation}
                           disabled={
                             !canWriteMessaging || isUpdatingActiveConversationStatus
                           }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:bg-red-900/25 dark:text-red-300 dark:hover:bg-red-900/35"
-                          title={t("conversationsPage.actions.closeConversation")}
+                          title={t("conversationsPage.actions.finalize", {
+                            defaultValue: "Finalizar",
+                          })}
                         >
                           {statusMutation.status === "closed" ? (
                             <Spinner size="xs" />
                           ) : (
                             <CheckCircle2 size={12} />
                           )}
-                          {t("conversationsPage.actions.closeConversation")}
+                          {t("conversationsPage.actions.finalize", {
+                            defaultValue: "Finalizar",
+                          })}
                         </button>
                       )}
                     </div>

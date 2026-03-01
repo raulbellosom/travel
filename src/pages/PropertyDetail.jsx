@@ -76,7 +76,7 @@ import { executeJsonFunction } from "../utils/functions";
 import { getErrorMessage } from "../utils/errors";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { useChat } from "../contexts/ChatContext";
+import { useOptionalChat } from "../contexts/ChatContext";
 import { Spinner, Modal, ModalFooter, Button, Select } from "../components/common";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
@@ -149,7 +149,9 @@ const PropertyDetail = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { showToast } = useToast();
-  const { startConversation, isAuthenticated: isChatAuth } = useChat();
+  const chat = useOptionalChat();
+  const startConversation = chat?.startConversation;
+  const isChatAuth = Boolean(chat?.isAuthenticated);
   const modulesApi = useInstanceModules();
   const [heroSlide, setHeroSlide] = useState(0);
 
@@ -657,6 +659,18 @@ const PropertyDetail = () => {
   const registerToChatPath = `/register${authRedirectQuery}`;
 
   const loginToChatPath = `/login${authRedirectQuery}`;
+  const browserTimeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const isVisitRequestMode =
+    resourceBehavior.commercialMode === "sale" ||
+    resourceBehavior.commercialMode === "rent_long_term";
+  const isManualBookingRequestMode =
+    !isVisitRequestMode && resourceBehavior.bookingType === "manual_contact";
+  const canContactAsClient =
+    isChatAuth &&
+    user?.role === "client" &&
+    Boolean(user?.emailVerified) &&
+    user?.$id !== property?.ownerUserId;
 
   const handleGoBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -678,7 +692,7 @@ const PropertyDetail = () => {
 
       if (isManualContactBooking) {
         if (!isChatAuth || !user?.$id) {
-          navigate(registerToChatPath, { state: { from: location } });
+          navigate(loginToChatPath, { state: { from: location } });
           return;
         }
         const isClient = user.role === "client";
@@ -747,7 +761,7 @@ const PropertyDetail = () => {
       location,
       navigate,
       property,
-      registerToChatPath,
+      loginToChatPath,
       selectedDateRange.endDate,
       selectedDateRange.startDate,
       selectedGuestCount,
@@ -982,64 +996,158 @@ const PropertyDetail = () => {
 
   /** Open chat with property agent — animated transition */
   const handleOpenChat = useCallback(() => {
-    if (!property || !isChatAuth || chatLoading) return;
-    const isClient = user?.role === "client";
-    const isVerified = Boolean(user?.emailVerified);
-    if (!isClient || !isVerified) return;
-    if (user?.$id === property.ownerUserId) return;
+    if (!property || chatLoading) return;
+    if (!isChatAuth || !user?.$id) {
+      navigate(loginToChatPath, { state: { from: location } });
+      return;
+    }
+    if (!canContactAsClient) return;
 
-    // Build contextual extras based on current selections
     const extras = [];
     const { startDate, endDate } = selectedDateRange;
+    const selectedSlot = selectedTimeSlot || hourRangeSlot || null;
+    let nextScheduleMeta = null;
+
+    if (selectedSlot?.startDateTime && selectedSlot?.endDateTime) {
+      nextScheduleMeta = {
+        scheduleType: hourRangeSlot ? "hour_range" : "time_slot",
+        startDateTime: selectedSlot.startDateTime,
+        endDateTime: selectedSlot.endDateTime,
+        timezone: browserTimeZone,
+        ...(selectedGuestCount > 0 ? { guestCount: selectedGuestCount } : {}),
+      };
+    }
+
     if (startDate && endDate) {
       const rangeLabel = `${startDate.toLocaleDateString(locale)} - ${endDate.toLocaleDateString(locale)}`;
       const nights = daysBetween(startDate, endDate);
       extras.push(rangeLabel);
-      if (nights > 0)
+      if (nights > 0) {
         extras.push(
           `${nights} ${nights === 1 ? t("calendar.booking.night", { defaultValue: "noche" }) : t("calendar.booking.nights", { defaultValue: "noches" })}`,
         );
+      }
+
+      if (!nextScheduleMeta) {
+        nextScheduleMeta = {
+          scheduleType: "date_range",
+          checkInDate: formatDateForQuery(startDate),
+          checkOutDate: formatDateForQuery(endDate),
+          ...(selectedGuestCount > 0 ? { guestCount: selectedGuestCount } : {}),
+          ...(nights > 0 ? { nights } : {}),
+        };
+      }
     }
-    if (selectedGuestCount > 1)
+
+    if (selectedGuestCount > 1) {
       extras.push(
-        `${selectedGuestCount} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
+        `${selectedGuestCount} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huespedes" })}`,
       );
+    }
     const extraLabel = extras.length ? `\n${extras.join(", ")}` : "";
 
-    // Set schedule meta if we have date selections
-    if (startDate && endDate) {
-      setChatScheduleMeta({
-        scheduleType: "date_range",
-        checkInDate: formatDateForQuery(startDate),
-        checkOutDate: formatDateForQuery(endDate),
-        ...(selectedGuestCount > 1 ? { guestCount: selectedGuestCount } : {}),
-      });
-    } else {
-      setChatScheduleMeta(null);
+    if (isVisitRequestMode && !nextScheduleMeta?.startDateTime) {
+      const slotStart = String(
+        window.prompt(
+          t("client:propertyDetail.agent.visitStartPrompt", {
+            defaultValue: "Ingresa fecha/hora de visita (ISO)",
+          }),
+          "",
+        ) || "",
+      ).trim();
+      const slotEnd = String(
+        window.prompt(
+          t("client:propertyDetail.agent.visitEndPrompt", {
+            defaultValue: "Ingresa fin de visita (ISO)",
+          }),
+          "",
+        ) || "",
+      ).trim();
+
+      const parsedStart = new Date(slotStart);
+      const parsedEnd = new Date(slotEnd);
+      if (
+        Number.isNaN(parsedStart.getTime()) ||
+        Number.isNaN(parsedEnd.getTime()) ||
+        parsedEnd <= parsedStart
+      ) {
+        showToast({
+          type: "error",
+          message: t("client:propertyDetail.agent.visitSlotRequired", {
+            defaultValue:
+              "Para solicitar una visita debes proporcionar un horario valido.",
+          }),
+        });
+        return;
+      }
+
+      nextScheduleMeta = {
+        scheduleType: "visit_slot",
+        startDateTime: parsedStart.toISOString(),
+        endDateTime: parsedEnd.toISOString(),
+        timezone: browserTimeZone,
+      };
     }
 
-    setChatInitialMessage(
-      t("client:propertyDetail.agent.defaultInitialMessage", {
-        defaultValue: `Hola, me interesa "${property.title}".${extraLabel ? " " + extraLabel.trim() + "." : ""} Quiero más información.`,
-      }),
-    );
+    if (
+      isManualBookingRequestMode &&
+      !(nextScheduleMeta?.checkInDate && nextScheduleMeta?.checkOutDate) &&
+      !(nextScheduleMeta?.startDateTime && nextScheduleMeta?.endDateTime)
+    ) {
+      showToast({
+        type: "error",
+        message: t("client:propertyDetail.agent.manualDataRequired", {
+          defaultValue:
+            "Selecciona fechas y huespedes para solicitar disponibilidad.",
+        }),
+      });
+      handleScrollToCalendar();
+      return;
+    }
+
+    setChatScheduleMeta(nextScheduleMeta);
+
+    const defaultInitialMessage = isVisitRequestMode
+      ? t("client:propertyDetail.agent.defaultVisitMessage", {
+          defaultValue: `Hola, me interesa "${property.title}". Quiero solicitar una visita.${extraLabel ? ` ${extraLabel.trim()}.` : ""}`,
+        })
+      : isManualBookingRequestMode
+        ? t("client:propertyDetail.agent.defaultAvailabilityMessage", {
+            defaultValue: `Hola, me interesa "${property.title}". Quiero confirmar disponibilidad y condiciones.${extraLabel ? ` ${extraLabel.trim()}.` : ""}`,
+          })
+        : t("client:propertyDetail.agent.defaultInitialMessage", {
+            defaultValue: `Hola, me interesa "${property.title}".${extraLabel ? ` ${extraLabel.trim()}.` : ""} Quiero mas informacion.`,
+          });
+
+    setChatInitialMessage(defaultInitialMessage);
     setIsChatModalOpen(true);
   }, [
-    property,
-    isChatAuth,
+    browserTimeZone,
+    canContactAsClient,
     chatLoading,
-    user,
-    t,
+    handleScrollToCalendar,
+    hourRangeSlot,
+    isChatAuth,
+    isManualBookingRequestMode,
+    isVisitRequestMode,
+    locale,
+    location,
+    loginToChatPath,
+    navigate,
+    property,
     selectedDateRange,
     selectedGuestCount,
-    locale,
+    selectedTimeSlot,
+    showToast,
+    t,
+    user?.$id,
   ]);
 
   const handleManualSlotContact = useCallback(() => {
     if (!property || !selectedTimeSlot) return;
 
     if (!isChatAuth || !user?.$id) {
-      navigate(registerToChatPath, { state: { from: location } });
+      navigate(loginToChatPath, { state: { from: location } });
       return;
     }
 
@@ -1101,7 +1209,7 @@ const PropertyDetail = () => {
     locale,
     navigate,
     property,
-    registerToChatPath,
+    loginToChatPath,
     selectedGuestCount,
     selectedTimeSlot,
     t,
@@ -1112,7 +1220,7 @@ const PropertyDetail = () => {
   const handleHourRangeContact = useCallback(() => {
     if (!property || !hourRangeSlot) return;
     if (!isChatAuth || !user?.$id) {
-      navigate(registerToChatPath, { state: { from: location } });
+      navigate(loginToChatPath, { state: { from: location } });
       return;
     }
     const isClient = user.role === "client";
@@ -1167,7 +1275,7 @@ const PropertyDetail = () => {
     locale,
     navigate,
     property,
-    registerToChatPath,
+    loginToChatPath,
     selectedGuestCount,
     selectedHourCount,
     t,
@@ -1186,10 +1294,140 @@ const PropertyDetail = () => {
     navigate(`/reservar/${property.slug}?${params.toString()}`);
   }, [navigate, property, selectedTimeSlot, hourRangeSlot]);
 
+  const getLeadIntentForResource = useCallback(() => {
+    if (isVisitRequestMode) return "visit_request";
+    if (isManualBookingRequestMode) return "booking_request_manual";
+    if (resourceBehavior.bookingType !== "manual_contact") {
+      return "booking_request";
+    }
+    return "info_request";
+  }, [
+    isManualBookingRequestMode,
+    isVisitRequestMode,
+    resourceBehavior.bookingType,
+  ]);
+
+  const buildLeadMetaPayload = useCallback(() => {
+    const booking = {};
+    const visit = { preferredSlots: [] };
+    const contactPrefs = {};
+    const schedule = chatScheduleMeta || {};
+
+    const guests = Math.max(1, Number(selectedGuestCount || 1));
+    booking.guests = guests;
+    booking.adults = guests;
+
+    if (schedule.checkInDate && schedule.checkOutDate) {
+      booking.startDate = schedule.checkInDate;
+      booking.endDate = schedule.checkOutDate;
+    } else if (schedule.startDateTime && schedule.endDateTime) {
+      booking.startDate = schedule.startDateTime;
+      booking.endDate = schedule.endDateTime;
+    } else if (selectedDateRange.startDate && selectedDateRange.endDate) {
+      booking.startDate = selectedDateRange.startDate.toISOString();
+      booking.endDate = selectedDateRange.endDate.toISOString();
+    }
+
+    const startMs = new Date(booking.startDate || "").getTime();
+    const endMs = new Date(booking.endDate || "").getTime();
+    if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
+      booking.nights = Math.ceil((endMs - startMs) / (24 * 60 * 60 * 1000));
+    }
+
+    if (schedule.startDateTime && schedule.endDateTime) {
+      visit.preferredSlots = [
+        {
+          startDateTime: schedule.startDateTime,
+          endDateTime: schedule.endDateTime,
+          timezone: schedule.timezone || browserTimeZone,
+        },
+      ];
+    } else if (
+      isVisitRequestMode &&
+      booking.startDate &&
+      booking.endDate
+    ) {
+      visit.preferredSlots = [
+        {
+          startDateTime: booking.startDate,
+          endDateTime: booking.endDate,
+          timezone: browserTimeZone,
+        },
+      ];
+    }
+
+    if (isVisitRequestMode) {
+      visit.meetingType = "on_site";
+    }
+
+    const normalizedLanguage = String(i18n.language || "").trim();
+    if (normalizedLanguage) {
+      contactPrefs.preferredLanguage = normalizedLanguage;
+    }
+    if (user?.phone) {
+      contactPrefs.phone = String(user.phone).trim();
+    }
+
+    return {
+      resourceSnapshot: {
+        resourceType: resourceBehavior.resourceType,
+        category: resourceBehavior.category,
+        commercialMode: resourceBehavior.commercialMode,
+        bookingType: resourceBehavior.bookingType,
+      },
+      booking,
+      visit,
+      contactPrefs,
+    };
+  }, [
+    browserTimeZone,
+    chatScheduleMeta,
+    i18n.language,
+    isVisitRequestMode,
+    resourceBehavior.bookingType,
+    resourceBehavior.category,
+    resourceBehavior.commercialMode,
+    resourceBehavior.resourceType,
+    selectedDateRange.endDate,
+    selectedDateRange.startDate,
+    selectedGuestCount,
+    user?.phone,
+  ]);
+
   const handleConfirmChat = useCallback(async () => {
     if (!property || !isChatAuth || chatLoading) return;
     setChatLoading(true);
     try {
+      const intent = getLeadIntentForResource();
+      const leadMeta = buildLeadMetaPayload();
+      const visitSlots = Array.isArray(leadMeta.visit?.preferredSlots)
+        ? leadMeta.visit.preferredSlots
+        : [];
+
+      if (intent === "visit_request" && visitSlots.length < 1) {
+        throw new Error(
+          t("client:propertyDetail.agent.visitSlotRequired", {
+            defaultValue:
+              "Para solicitar una visita debes proporcionar al menos un horario.",
+          }),
+        );
+      }
+
+      if (intent === "booking_request_manual") {
+        const guests = Number(leadMeta.booking?.guests || 0);
+        const hasDateRange =
+          Boolean(leadMeta.booking?.startDate) &&
+          Boolean(leadMeta.booking?.endDate);
+        if (!Number.isFinite(guests) || guests < 1 || !hasDateRange) {
+          throw new Error(
+            t("client:propertyDetail.agent.manualDataRequired", {
+              defaultValue:
+                "Selecciona fechas y huespedes para solicitar disponibilidad.",
+            }),
+          );
+        }
+      }
+
       await startConversation({
         resourceId: property.$id,
         resourceTitle: property.title,
@@ -1198,15 +1436,9 @@ const PropertyDetail = () => {
           ? `${owner.firstName} ${owner.lastName || ""}`.trim()
           : owner?.email || "",
         initialMessage: chatInitialMessage,
-        meta: {
-          bookingType: resourceBehavior.bookingType,
-          commercialMode: resourceBehavior.commercialMode,
-          ...(resourceBehavior.effectiveScheduleType &&
-          resourceBehavior.effectiveScheduleType !== "none"
-            ? { scheduleType: resourceBehavior.effectiveScheduleType }
-            : {}),
-          ...(chatScheduleMeta ? { requestSchedule: chatScheduleMeta } : {}),
-        },
+        intent,
+        contactChannel: "resource_chat",
+        meta: leadMeta,
       });
       setChatOpened(true);
       setChatScheduleMeta(null);
@@ -1226,16 +1458,14 @@ const PropertyDetail = () => {
       setChatLoading(false);
     }
   }, [
+    buildLeadMetaPayload,
     property,
     isChatAuth,
     chatLoading,
+    getLeadIntentForResource,
     startConversation,
     owner,
     chatInitialMessage,
-    chatScheduleMeta,
-    resourceBehavior.bookingType,
-    resourceBehavior.commercialMode,
-    resourceBehavior.effectiveScheduleType,
     showToast,
     t,
   ]);
@@ -1845,12 +2075,8 @@ const PropertyDetail = () => {
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
                 onScrollToCalendar={handleScrollToCalendar}
-                canChat={
-                  isChatAuth &&
-                  user?.role === "client" &&
-                  Boolean(user?.emailVerified) &&
-                  user?.$id !== property.ownerUserId
-                }
+                canChat={canContactAsClient}
+                loginToContactPath={loginToChatPath}
                 chatLoading={chatLoading}
               />
             </div>
@@ -2756,12 +2982,8 @@ const PropertyDetail = () => {
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={handleOpenChat}
                 onScrollToCalendar={handleScrollToCalendar}
-                canChat={
-                  isChatAuth &&
-                  user?.role === "client" &&
-                  Boolean(user?.emailVerified) &&
-                  user?.$id !== property.ownerUserId
-                }
+                canChat={canContactAsClient}
+                loginToContactPath={loginToChatPath}
                 chatLoading={chatLoading}
               />
             </div>
@@ -3222,10 +3444,7 @@ const PropertyDetail = () => {
                       </m.div>
                     </div>
                   </m.div>
-                ) : isChatAuth &&
-                  user?.role === "client" &&
-                  user?.emailVerified &&
-                  user?.$id !== property.ownerUserId ? (
+                ) : canContactAsClient ? (
                   /* Chat button for verified clients */
                   <m.div
                     key="chat-button"
@@ -3412,6 +3631,7 @@ function PriceCard({
   onContactAgent,
   onScrollToCalendar,
   canChat,
+  loginToContactPath,
   chatLoading,
 }) {
   const ctaKey = isSale(opType)
@@ -3524,18 +3744,32 @@ function PriceCard({
             <ArrowRight size={16} />
           </Link>
         ) : (
-          <button
-            type="button"
-            onClick={canChat ? onContactAgent : undefined}
-            disabled={chatLoading || !canChat}
-            className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
-          >
-            {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
-            {ctaLabel}
-          </button>
+          canChat ? (
+            <button
+              type="button"
+              onClick={onContactAgent}
+              disabled={chatLoading}
+              className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
+            >
+              {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
+              {ctaLabel}
+            </button>
+          ) : (
+            <Link
+              to={loginToContactPath || "/login"}
+              className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <MessageCircle size={16} />
+              {t("client:propertyDetail.agent.loginToChat", {
+                defaultValue: "Inicia sesion para contactar",
+              })}
+            </Link>
+          )
         ))}
     </article>
   );
 }
 
 export default PropertyDetail;
+
+

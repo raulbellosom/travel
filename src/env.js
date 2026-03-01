@@ -52,6 +52,14 @@ const env = {
       ),
       amenities: get("APPWRITE_COLLECTION_AMENITIES_ID"),
       leads: get("APPWRITE_COLLECTION_LEADS_ID"),
+      marketingContactRequests: get(
+        "APPWRITE_COLLECTION_MARKETING_CONTACT_REQUESTS_ID",
+        "marketing_contact_requests",
+      ),
+      marketingNewsletterSubscribers: get(
+        "APPWRITE_COLLECTION_MARKETING_NEWSLETTER_SUBSCRIBERS_ID",
+        "marketing_newsletter_subscribers",
+      ),
       reservations: get("APPWRITE_COLLECTION_RESERVATIONS_ID"),
       reservationPayments: get("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID"),
       reservationVouchers: get("APPWRITE_COLLECTION_RESERVATION_VOUCHERS_ID"),
@@ -115,6 +123,8 @@ const env = {
       rootDiagnostics: get("APPWRITE_FUNCTION_ROOT_DIAGNOSTICS_ID"),
       deepSearchQuery: get("APPWRITE_FUNCTION_DEEP_SEARCH_QUERY_ID"),
       sendChatNotification: get("APPWRITE_FUNCTION_SEND_CHAT_NOTIFICATION_ID"),
+      sendProposal: get("APPWRITE_FUNCTION_SEND_PROPOSAL_ID"),
+      respondProposal: get("APPWRITE_FUNCTION_RESPOND_PROPOSAL_ID"),
       sendPasswordReset: get("APPWRITE_FUNCTION_SEND_PASSWORD_RESET_ID"),
       stripeCreateConnectedAccount: get(
         "APPWRITE_FUNCTION_STRIPE_CREATE_CONNECTED_ACCOUNT_ID",

@@ -23,6 +23,125 @@ import BookingSummary from "./BookingSummary";
 import { formatMoneyWithDenomination } from "../../../utils/money";
 import { Modal } from "../../../components/common";
 
+const MonthGrid = ({
+  base,
+  showMonthLabel = false,
+  locale,
+  dayHeaders,
+  isDisabled,
+  startDate,
+  endDate,
+  inRange,
+  inHoverRange,
+  priceOf,
+  fmtCompactPrice,
+  fmtPrice,
+  getRangeHint,
+  pick,
+  setHoverDate,
+}) => {
+  const days = getMonthGridDays(base);
+  const monthTitle = base.toLocaleDateString(locale, {
+    month: "long",
+    year: "numeric",
+  });
+
+  return (
+    <div className="min-w-0">
+      {showMonthLabel && (
+        <h4 className="mb-3 text-center text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">
+          {monthTitle}
+        </h4>
+      )}
+
+      <div className="mb-2 grid grid-cols-7 gap-1">
+        {dayHeaders.map((h, i) => (
+          <div
+            key={i}
+            className="py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
+            <span className="hidden sm:inline">{h.short}</span>
+            <span className="sm:hidden">{h.narrow}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((d, idx) => {
+          const disabled = isDisabled(d);
+          const inThisMonth = isSameMonth(d, base);
+          const today = isToday(d);
+          const selected = sameDay(d, startDate) || sameDay(d, endDate);
+          const inSel = inRange(d) || inHoverRange(d);
+          const price = priceOf(d);
+          const compactPrice = fmtCompactPrice(price);
+          const rangeHint = inThisMonth && !disabled ? getRangeHint(d) : null;
+
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => pick(d)}
+              onMouseEnter={() => setHoverDate(d)}
+              onMouseLeave={() => setHoverDate(null)}
+              disabled={disabled || !inThisMonth}
+              aria-label={d.toLocaleDateString(locale)}
+              className={[
+                "group relative flex min-h-14 w-full flex-col items-center justify-center rounded-xl border text-center transition-all duration-150",
+                !inThisMonth ? "invisible pointer-events-none" : "",
+                selected
+                  ? "border-cyan-600 bg-cyan-600 text-white shadow-[0_8px_20px_-12px_rgba(8,145,178,0.95)]"
+                  : inSel
+                    ? "border-cyan-200 bg-cyan-50/90 text-cyan-800 dark:border-cyan-800/60 dark:bg-cyan-950/40 dark:text-cyan-100"
+                    : rangeHint === "valid"
+                      ? "border-emerald-200 bg-emerald-50/70 text-emerald-800 ring-1 ring-emerald-200/60 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-200 dark:ring-emerald-700/40"
+                      : rangeHint === "tooClose"
+                        ? "border-amber-200 bg-amber-50/50 text-amber-700 opacity-60 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300"
+                        : rangeHint === "tooFar"
+                          ? "border-red-200 bg-red-50/40 text-red-400 opacity-50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400"
+                          : disabled
+                            ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-75 line-through dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-500"
+                            : "border-slate-200 bg-white text-slate-800 hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-cyan-600 dark:hover:bg-cyan-950/30",
+              ].join(" ")}
+            >
+              <span
+                className={[
+                  "text-sm font-semibold",
+                  selected
+                    ? "text-white"
+                    : today
+                      ? "text-cyan-600 dark:text-cyan-400"
+                      : rangeHint === "valid"
+                        ? "text-emerald-700 dark:text-emerald-300"
+                        : rangeHint === "tooFar"
+                          ? "text-red-400 dark:text-red-500"
+                          : "text-slate-900 dark:text-slate-100",
+                ].join(" ")}
+              >
+                {d.getDate()}
+              </span>
+
+              {compactPrice && inThisMonth && !disabled && (
+                <span
+                  title={fmtPrice(price)}
+                  className={[
+                    "mt-0.5 max-w-[90%] truncate text-[10px] font-medium leading-tight",
+                    selected
+                      ? "text-cyan-100"
+                      : "text-slate-500 dark:text-slate-400",
+                  ].join(" ")}
+                >
+                  {compactPrice}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 /**
  * PropertyAvailabilityCalendar - Client-facing calendar for resource pages.
  * Shows pricing per unit, availability, and allows date selection.
@@ -191,109 +310,6 @@ export default function PropertyAvailabilityCalendar({
     return calculateRangePrice(startDate, endDate, basePricing);
   }, [startDate, endDate, pricing, property.price]);
 
-  const MonthGrid = ({ base, showMonthLabel = false }) => {
-    const days = getMonthGridDays(base);
-    const monthTitle = base.toLocaleDateString(locale, {
-      month: "long",
-      year: "numeric",
-    });
-
-    return (
-      <div className="min-w-0">
-        {showMonthLabel && (
-          <h4 className="mb-3 text-center text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">
-            {monthTitle}
-          </h4>
-        )}
-
-        <div className="mb-2 grid grid-cols-7 gap-1">
-          {dayHeaders.map((h, i) => (
-            <div
-              key={i}
-              className="py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
-            >
-              <span className="hidden sm:inline">{h.short}</span>
-              <span className="sm:hidden">{h.narrow}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((d, idx) => {
-            const disabled = isDisabled(d);
-            const inThisMonth = isSameMonth(d, base);
-            const today = isToday(d);
-            const selected = sameDay(d, startDate) || sameDay(d, endDate);
-            const inSel = inRange(d) || inHoverRange(d);
-            const price = priceOf(d);
-            const compactPrice = fmtCompactPrice(price);
-            const rangeHint = inThisMonth && !disabled ? getRangeHint(d) : null;
-
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => pick(d)}
-                onMouseEnter={() => setHoverDate(d)}
-                onMouseLeave={() => setHoverDate(null)}
-                disabled={disabled || !inThisMonth}
-                aria-label={d.toLocaleDateString(locale)}
-                className={[
-                  "group relative flex min-h-14 w-full flex-col items-center justify-center rounded-xl border text-center transition-all duration-150",
-                  !inThisMonth ? "invisible pointer-events-none" : "",
-                  selected
-                    ? "border-cyan-600 bg-cyan-600 text-white shadow-[0_8px_20px_-12px_rgba(8,145,178,0.95)]"
-                    : inSel
-                      ? "border-cyan-200 bg-cyan-50/90 text-cyan-800 dark:border-cyan-800/60 dark:bg-cyan-950/40 dark:text-cyan-100"
-                      : rangeHint === "valid"
-                        ? "border-emerald-200 bg-emerald-50/70 text-emerald-800 ring-1 ring-emerald-200/60 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-200 dark:ring-emerald-700/40"
-                        : rangeHint === "tooClose"
-                          ? "border-amber-200 bg-amber-50/50 text-amber-700 opacity-60 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-300"
-                          : rangeHint === "tooFar"
-                            ? "border-red-200 bg-red-50/40 text-red-400 opacity-50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400"
-                            : disabled
-                              ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 opacity-75 line-through dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-500"
-                              : "border-slate-200 bg-white text-slate-800 hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-cyan-600 dark:hover:bg-cyan-950/30",
-                ].join(" ")}
-              >
-                <span
-                  className={[
-                    "text-sm font-semibold",
-                    selected
-                      ? "text-white"
-                      : today
-                        ? "text-cyan-600 dark:text-cyan-400"
-                        : rangeHint === "valid"
-                          ? "text-emerald-700 dark:text-emerald-300"
-                          : rangeHint === "tooFar"
-                            ? "text-red-400 dark:text-red-500"
-                            : "text-slate-900 dark:text-slate-100",
-                  ].join(" ")}
-                >
-                  {d.getDate()}
-                </span>
-
-                {compactPrice && inThisMonth && !disabled && (
-                  <span
-                    title={fmtPrice(price)}
-                    className={[
-                      "mt-0.5 max-w-[90%] truncate text-[10px] font-medium leading-tight",
-                      selected
-                        ? "text-cyan-100"
-                        : "text-slate-500 dark:text-slate-400",
-                    ].join(" ")}
-                  >
-                    {compactPrice}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   const modalRangeLabel = `${month.toLocaleDateString(locale, {
     month: "long",
     year: "numeric",
@@ -301,6 +317,22 @@ export default function PropertyAvailabilityCalendar({
     month: "long",
     year: "numeric",
   })}`;
+
+  const monthGridCommonProps = {
+    locale,
+    dayHeaders,
+    isDisabled,
+    startDate,
+    endDate,
+    inRange,
+    inHoverRange,
+    priceOf,
+    fmtCompactPrice,
+    fmtPrice,
+    getRangeHint,
+    pick,
+    setHoverDate,
+  };
 
   // Resolve unit label for stay constraints
   const unitLabelSingular =
@@ -386,7 +418,7 @@ export default function PropertyAvailabilityCalendar({
         <div className="p-3 sm:p-4">
           {/* Mobile: single month */}
           <div className="lg:hidden">
-            <MonthGrid base={month} />
+            <MonthGrid base={month} {...monthGridCommonProps} />
           </div>
 
           {/* Desktop: first month always visible, second slides in on hover */}
@@ -402,6 +434,7 @@ export default function PropertyAvailabilityCalendar({
               <MonthGrid
                 base={month}
                 showMonthLabel={isDesktopSecondMonthVisible}
+                {...monthGridCommonProps}
               />
               {isDesktopSecondMonthVisible && (
                 <MotionDiv
@@ -409,7 +442,11 @@ export default function PropertyAvailabilityCalendar({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
                 >
-                  <MonthGrid base={addMonths(month, 1)} showMonthLabel />
+                  <MonthGrid
+                    base={addMonths(month, 1)}
+                    showMonthLabel
+                    {...monthGridCommonProps}
+                  />
                 </MotionDiv>
               )}
             </div>
@@ -521,10 +558,14 @@ export default function PropertyAvailabilityCalendar({
           {/* Dual month grids */}
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/30">
-              <MonthGrid base={month} showMonthLabel />
+              <MonthGrid base={month} showMonthLabel {...monthGridCommonProps} />
             </div>
             <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/30">
-              <MonthGrid base={addMonths(month, 1)} showMonthLabel />
+              <MonthGrid
+                base={addMonths(month, 1)}
+                showMonthLabel
+                {...monthGridCommonProps}
+              />
             </div>
           </div>
 

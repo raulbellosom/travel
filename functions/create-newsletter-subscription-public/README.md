@@ -1,6 +1,13 @@
 # create-newsletter-subscription-public
 
-Registra suscripciones del newsletter desde el footer del CRM Landing.
+Registra suscripciones de newsletter desde el landing y guarda en
+`marketing_newsletter_subscribers`.
+
+## Name vs ID en Appwrite
+
+- Nombre de function (display): `create-newsletter-subscription-public`.
+- ID real de Appwrite Function (usado en ENV/SDK): `create-newsletter-subscription-publi`.
+- Motivo: Appwrite limita `functionId` a maximo 36 caracteres.
 
 ## Contrato de ejecucion
 
@@ -13,13 +20,16 @@ Registra suscripciones del newsletter desde el footer del CRM Landing.
 ```json
 {
   "email": "juan@example.com",
-  "locale": "es",
-  "source": "crm_landing_footer"
+  "name": "Juan Perez",
+  "source": "landing_newsletter",
+  "utmJson": {
+    "utm_source": "footer"
+  }
 }
 ```
 
 ## Reglas
 
 - Campo obligatorio: `email`.
-- Si el email ya existe, reactiva suscripcion (`status=subscribed`).
-- Guarda en `newsletter_subscribers`.
+- Si el email ya existe, reactiva el registro (`enabled=true`).
+- Guarda `utmJson` serializado para analitica de marketing.

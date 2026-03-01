@@ -1,19 +1,39 @@
-﻿import { useTranslation } from "react-i18next";
+﻿import { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 
-import env from "../env";
 import { usePageSeo } from "../hooks/usePageSeo";
+import { useInstanceModules } from "../hooks/useInstanceModules";
+import { resolveUiMode } from "../utils/uiMode";
 
-// Components
-import HomeHeroCarousel from "../components/common/organisms/HomeHeroCarousel/HomeHeroCarousel";
-import FeaturedPropertiesSection from "../components/common/organisms/FeaturedPropertiesSection/FeaturedPropertiesSection";
-import CategoriesSection from "../components/common/organisms/CategoriesSection/CategoriesSection";
-import ArticlesSection from "../components/common/organisms/ArticlesSection/ArticlesSection";
-import PropertyGridSection from "../components/common/organisms/PropertyGridSection/PropertyGridSection";
-import LandingTemplate from "../components/common/templates/LandingTemplate/LandingTemplate";
-import ResourceMapExplorer from "../features/map-explorer/components/ResourceMapExplorer";
+// New Airbnb-style Home components
+import {
+  HomeHero,
+  HomeFeaturedCarousel,
+  HomeCategoryCarousels,
+  HomeQuickIdeas,
+  HomeTrustBar,
+  HomeLoggedInSection,
+} from "../components/home";
+
+// Lazy-loaded secondary sections for performance
+const ResourceMapExplorer = lazy(
+  () => import("../features/map-explorer/components/ResourceMapExplorer"),
+);
+const LandingTemplate = lazy(
+  () =>
+    import("../components/common/templates/LandingTemplate/LandingTemplate"),
+);
+
+const SectionFallback = () => (
+  <div className="flex h-32 items-center justify-center">
+    <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+  </div>
+);
 
 const Home = () => {
   const { t } = useTranslation();
+  const { settings } = useInstanceModules();
+  const isMarketingMode = resolveUiMode(settings) === "marketing";
 
   usePageSeo({
     title: t("client:home.seo.title", "Inmobo | Catálogo de Propiedades"),
@@ -25,147 +45,41 @@ const Home = () => {
   });
 
   // MARKETING SITE MODE - SaaS Landing
-  if (env.features.marketingSite) {
-    return <LandingTemplate />;
+  if (isMarketingMode) {
+    return (
+      <Suspense fallback={<SectionFallback />}>
+        <LandingTemplate />
+      </Suspense>
+    );
   }
 
-  // --- CLIENT PORTAL LANDING ---
+  // --- CLIENT PORTAL LANDING (Airbnb-style redesign) ---
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <HomeHeroCarousel />
-      <ResourceMapExplorer />
-      <CategoriesSection />
-      <FeaturedPropertiesSection />
+    <div className="min-h-screen bg-white dark:bg-slate-950">
+      {/* 1. Intent-driven Hero + Search Panel + Featured Deck */}
+      <HomeHero />
 
-      {/* Houses for Sale */}
-      <PropertyGridSection
-        title={t("client:home.houses.title", "Casas en Venta")}
-        subtitle={t(
-          "client:home.houses.subtitle",
-          "Descubre casas espaciosas perfectas para tu familia.",
-        )}
-        filters={{ resourceType: "property", category: "house", commercialMode: "sale" }}
-        viewAllLink="/buscar?resourceType=property&category=house&commercialMode=sale"
-        limit={3}
-        bgClass="bg-slate-50 dark:bg-slate-900/50"
-      />
+      {/* 2. Featured / Premium carousel (right after hero) */}
+      <HomeFeaturedCarousel />
 
-      {/* Apartments */}
-      <PropertyGridSection
-        title={t("client:home.apartments.title", "Departamentos")}
-        subtitle={t(
-          "client:home.apartments.subtitle",
-          "Espacios modernos y cómodos en las mejores ubicaciones.",
-        )}
-        filters={{ resourceType: "property", category: "apartment" }}
-        viewAllLink="/buscar?resourceType=property&category=apartment"
-        limit={3}
-        bgClass="bg-white dark:bg-slate-900/30"
-      />
+      {/* 3. Map Explorer (lazy loaded) */}
+      <Suspense fallback={<SectionFallback />}>
+        <ResourceMapExplorer />
+      </Suspense>
 
-      {/* Vehicles */}
-      <PropertyGridSection
-        title={t("client:home.vehicles.title", "Vehículos")}
-        subtitle={t(
-          "client:home.vehicles.subtitle",
-          "Autos, SUVs, motos y más disponibles para ti.",
-        )}
-        filters={{ resourceType: "vehicle" }}
-        viewAllLink="/buscar?resourceType=vehicle"
-        limit={3}
-        bgClass="bg-slate-50 dark:bg-slate-900/50"
-      />
+      {/* 4. Logged-in: favorites carousel + recent searches */}
+      <HomeLoggedInSection />
 
-      {/* Services */}
-      <PropertyGridSection
-        badge={t("client:home.servicesSection.badge", "SERVICIOS")}
-        title={t("client:home.servicesSection.title", "Servicios Profesionales")}
-        subtitle={t(
-          "client:home.servicesSection.subtitle",
-          "Limpieza, chef, fotografia, catering y mas a tu alcance.",
-        )}
-        filters={{ resourceType: "service" }}
-        viewAllLink="/buscar?resourceType=service"
-        limit={3}
-        bgClass="bg-white dark:bg-slate-900/30"
-      />
+      {/* 6. Category carousels: property, vehicle, service */}
+      <HomeCategoryCarousels />
 
-      {/* Music */}
-      <PropertyGridSection
-        badge={t("client:home.musicSection.badge", "MUSICA")}
-        title={t("client:home.musicSection.title", "Musica en Vivo y DJ")}
-        subtitle={t(
-          "client:home.musicSection.subtitle",
-          "Banda, mariachi, corridos tumbados, versatil y DJ para tus eventos.",
-        )}
-        filters={{ resourceType: "music" }}
-        viewAllLink="/buscar?resourceType=music"
-        limit={3}
-        bgClass="bg-slate-50 dark:bg-slate-900/50"
-      />
+      {/* 7. Quick Ideas chips */}
+      <HomeQuickIdeas />
 
-      {/* Experiences */}
-      <PropertyGridSection
-        badge={t("client:home.experiencesSection.badge", "EXPERIENCIAS")}
-        title={t("client:home.experiencesSection.title", "Experiencias Únicas")}
-        subtitle={t(
-          "client:home.experiencesSection.subtitle",
-          "Tours, talleres, aventuras, bienestar y gastronomía.",
-        )}
-        filters={{ resourceType: "experience" }}
-        viewAllLink="/buscar?resourceType=experience"
-        limit={3}
-        bgClass="bg-slate-50 dark:bg-slate-900/50"
-      />
-
-      {/* Venues */}
-      <PropertyGridSection
-        badge={t("client:home.venuesSection.badge", "SALONES")}
-        title={t("client:home.venuesSection.title", "Salones y Espacios")}
-        subtitle={t(
-          "client:home.venuesSection.subtitle",
-          "Salones de eventos, coworking, estudios y salas de juntas.",
-        )}
-        filters={{ resourceType: "venue" }}
-        viewAllLink="/buscar?resourceType=venue"
-        limit={3}
-        bgClass="bg-white dark:bg-slate-900/30"
-      />
-
-      {/* Properties with Pool */}
-      <PropertyGridSection
-        badge={t("client:home.amenities.badge", "AMENIDADES")}
-        title={t("client:home.pool.title", "Propiedades con Alberca")}
-        subtitle={t(
-          "client:home.pool.subtitle",
-          "Disfruta del lujo de tu propia alberca.",
-        )}
-        filters={{ amenities: ["pool"] }}
-        viewAllLink="/buscar?amenities=pool"
-        limit={3}
-        bgClass="bg-slate-50 dark:bg-slate-900/50"
-      />
-
-      {/* Ocean View Properties */}
-      <PropertyGridSection
-        badge={t("client:home.amenities.badge", "AMENIDADES")}
-        title={t("client:home.oceanView.title", "Vista al Mar")}
-        subtitle={t(
-          "client:home.oceanView.subtitle",
-          "Despierta con las mejores vistas panorámicas al océano.",
-        )}
-        filters={{ amenities: ["ocean-view"] }}
-        viewAllLink="/buscar?amenities=ocean-view"
-        limit={3}
-        bgClass="bg-white dark:bg-slate-900/30"
-      />
-
-      <ArticlesSection />
+      {/* 8. Trust bar (verified, secure payments, support) */}
+      <HomeTrustBar />
     </div>
   );
 };
 
 export default Home;
-
-
-

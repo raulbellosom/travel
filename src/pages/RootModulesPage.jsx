@@ -2,7 +2,7 @@ import SkeletonLoader from "../components/common/molecules/SkeletonLoader";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Save, SlidersHorizontal, ShieldCheck, X } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+import { useOptionalAuth } from "../hooks/useAuth";
 import { useInstanceModules } from "../hooks/useInstanceModules";
 import Select from "../components/common/atoms/Select";
 import { useToast } from "../hooks/useToast";
@@ -22,7 +22,8 @@ const toPositiveInt = (value, fallback = 0) => {
 
 const RootModulesPage = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const auth = useOptionalAuth();
+  const user = auth?.user || null;
   const { showToast } = useToast();
   const {
     settings,

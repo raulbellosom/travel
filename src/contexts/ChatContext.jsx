@@ -23,10 +23,28 @@ import { hasScope, isInternalRole } from "../utils/roles";
 /* ─── Context ──────────────────────────────────────────── */
 
 const ChatContext = createContext(null);
+const FINAL_LEAD_STATUSES = new Set(["closed_won", "closed_lost"]);
+
+const parseMetaJson = (value) => {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useOptionalChat = () => useContext(ChatContext);
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useChat = () => {
-  const ctx = useContext(ChatContext);
+  const ctx = useOptionalChat();
   if (!ctx) throw new Error("useChat must be used within a ChatProvider");
   return ctx;
 };
@@ -237,8 +255,45 @@ export const ChatProvider = ({ children }) => {
     }
   }, [canReadMessaging, isInternal, user?.$id]);
 
+  const syncLeadConversationState = useCallback(
+    async (conversationId, nextStatus, options = {}) => {
+      const lead = await leadsService.findLatestByConversation(conversationId);
+      if (!lead?.$id) return null;
+
+      const patch = {};
+
+      if (nextStatus === "archived") {
+        patch.isArchived = true;
+      } else if (nextStatus === "active") {
+        patch.isArchived = false;
+      } else if (nextStatus === "closed") {
+        const normalizedLeadStatus = String(options.leadStatus || "")
+          .trim()
+          .toLowerCase();
+        if (!FINAL_LEAD_STATUSES.has(normalizedLeadStatus)) {
+          throw new Error("Finalizing a conversation requires closed_won or closed_lost.");
+        }
+        patch.status = normalizedLeadStatus;
+        patch.isArchived = false;
+
+        const closureReason = String(options.closureReason || "").trim();
+        if (closureReason) {
+          const meta = parseMetaJson(lead.metaJson);
+          patch.metaJson = JSON.stringify({
+            ...meta,
+            closureReason: closureReason.slice(0, 500),
+          }).slice(0, 8000);
+        }
+      }
+
+      if (Object.keys(patch).length === 0) return lead;
+      return leadsService.updateLead(lead.$id, patch);
+    },
+    [],
+  );
+
   const updateConversationStatus = useCallback(
-    async (conversationId, nextStatus) => {
+    async (conversationId, nextStatus, options = {}) => {
       const normalizedConversationId = String(conversationId || "").trim();
       const normalizedStatus = String(nextStatus || "")
         .trim()
@@ -251,6 +306,23 @@ export const ChatProvider = ({ children }) => {
       if (!allowedStatuses.has(normalizedStatus)) {
         throw new Error("Invalid conversation status.");
       }
+
+      if (
+        normalizedStatus === "closed" &&
+        !FINAL_LEAD_STATUSES.has(
+          String(options.leadStatus || "")
+            .trim()
+            .toLowerCase(),
+        )
+      ) {
+        throw new Error("You must provide leadStatus: closed_won or closed_lost.");
+      }
+
+      await syncLeadConversationState(
+        normalizedConversationId,
+        normalizedStatus,
+        options,
+      );
 
       const updatedConversation = await chatService.updateConversation(
         normalizedConversationId,
@@ -271,7 +343,7 @@ export const ChatProvider = ({ children }) => {
 
       return updatedConversation;
     },
-    [],
+    [syncLeadConversationState],
   );
 
   /* ── Load messages for active conversation ───────────── */
@@ -358,7 +430,13 @@ export const ChatProvider = ({ children }) => {
      but don't create new ones from the public property page. */
 
   const startConversation = useCallback(
-    async ({ resourceId, resourceTitle, initialMessage, meta = {} }) => {
+    async ({
+      resourceId,
+      initialMessage,
+      intent = "info_request",
+      contactChannel = "resource_chat",
+      meta = {},
+    }) => {
       if (!canWriteMessaging) {
         throw new Error("Messaging is disabled for this user.");
       }
@@ -380,11 +458,9 @@ export const ChatProvider = ({ children }) => {
         message:
           String(initialMessage || "").trim() ||
           "Hola, me interesa este recurso. Quiero mas informacion.",
-        meta: {
-          source: "property_chat_button",
-          resourceTitle: resourceTitle || "",
-          ...normalizedMeta,
-        },
+        intent,
+        contactChannel,
+        meta: normalizedMeta,
       });
       const conversationId = String(
         leadResult?.body?.conversationId || "",
@@ -467,6 +543,9 @@ export const ChatProvider = ({ children }) => {
       if (normalizedConversationStatus === "closed") {
         throw new Error("Cannot send messages to a closed conversation.");
       }
+      if (normalizedConversationStatus === "archived") {
+        await updateConversationStatus(activeConversationId, "active");
+      }
 
       const trimmedBody = body.trim();
       const senderSide = getConversationSide(
@@ -484,6 +563,7 @@ export const ChatProvider = ({ children }) => {
         senderName: user.name || user.email || "Usuario",
         senderRole: senderSide || chatRole,
         body: trimmedBody,
+        kind: "text",
         $createdAt: new Date().toISOString(),
         status: "sending",
       };
@@ -551,10 +631,72 @@ export const ChatProvider = ({ children }) => {
       activeConversationId,
       user,
       chatRole,
+      updateConversationStatus,
     ],
   );
 
   /* ── Toggle chat ─────────────────────────────────────── */
+
+  const sendProposal = useCallback(
+    async (proposalInput = {}) => {
+      if (!canWriteMessaging) {
+        throw new Error("Messaging is disabled for this user.");
+      }
+      if (!activeConversationId || !user?.$id) {
+        throw new Error("No active conversation selected.");
+      }
+      if (!isInternalRole(user?.role)) {
+        throw new Error("Only internal users can send proposals.");
+      }
+
+      const result = await chatService.sendProposal({
+        ...proposalInput,
+        conversationId: activeConversationId,
+      });
+
+      await loadConversations();
+      return result?.body || null;
+    },
+    [
+      activeConversationId,
+      canWriteMessaging,
+      loadConversations,
+      user?.$id,
+      user?.role,
+    ],
+  );
+
+  const respondToProposal = useCallback(
+    async ({ proposalMessageId, response, comment, suggestedSlots = [] }) => {
+      if (!canWriteMessaging) {
+        throw new Error("Messaging is disabled for this user.");
+      }
+      if (!activeConversationId || !user?.$id) {
+        throw new Error("No active conversation selected.");
+      }
+      if (String(user?.role || "").trim().toLowerCase() !== "client") {
+        throw new Error("Only client users can respond to proposals.");
+      }
+
+      const result = await chatService.respondProposal({
+        conversationId: activeConversationId,
+        proposalMessageId,
+        response,
+        comment,
+        suggestedSlots,
+      });
+
+      await loadConversations();
+      return result?.body || null;
+    },
+    [
+      activeConversationId,
+      canWriteMessaging,
+      loadConversations,
+      user?.$id,
+      user?.role,
+    ],
+  );
 
   const toggleChat = useCallback(() => {
     if (!canReadMessaging) return;
@@ -827,6 +969,8 @@ export const ChatProvider = ({ children }) => {
       startDirectConversation,
       updateConversationStatus,
       sendMessage,
+      sendProposal,
+      respondToProposal,
       toggleChat,
       closeChat,
       goBackToList,
@@ -857,6 +1001,8 @@ export const ChatProvider = ({ children }) => {
       startDirectConversation,
       updateConversationStatus,
       sendMessage,
+      sendProposal,
+      respondToProposal,
       toggleChat,
       closeChat,
       goBackToList,
@@ -867,3 +1013,5 @@ export const ChatProvider = ({ children }) => {
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
+
+

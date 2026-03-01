@@ -37,9 +37,23 @@ const DEFAULT_MODULES = Object.freeze([
   "module.reviews",
 ]);
 
+const normalizeUiMode = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "marketing" || normalized === "platform") {
+    return normalized;
+  }
+  return "platform";
+};
+
+const DEFAULT_UI_MODE = "platform";
+
 const DEFAULT_INSTANCE_SETTINGS = Object.freeze({
   key: "main",
   planKey: "starter",
+  uiMode: DEFAULT_UI_MODE,
+  marketingEnabled: DEFAULT_UI_MODE === "marketing",
   enabledModules: DEFAULT_MODULES,
   limits: DEFAULT_LIMITS,
   enabled: true,
@@ -71,6 +85,14 @@ const normalizeSettingsDocument = (doc = {}) => {
     ...doc,
     key: String(doc.key || "main").trim() || "main",
     planKey: String(doc.planKey || DEFAULT_INSTANCE_SETTINGS.planKey).trim(),
+    uiMode: doc.uiMode
+      ? normalizeUiMode(doc.uiMode)
+      : doc.marketingEnabled === true
+        ? "marketing"
+        : "platform",
+    marketingEnabled: doc.uiMode
+      ? normalizeUiMode(doc.uiMode) === "marketing"
+      : doc.marketingEnabled === true,
     enabledModules: enabledModules.length > 0 ? enabledModules : [...DEFAULT_MODULES],
     limits: parseLimits(doc.limits),
     enabled: doc.enabled !== false,
@@ -164,6 +186,9 @@ export const instanceSettingsService = {
       data: {
         key: "main",
         planKey: current.planKey || DEFAULT_INSTANCE_SETTINGS.planKey,
+        uiMode: current.uiMode || "platform",
+        marketingEnabled:
+          normalizeUiMode(current.uiMode || "platform") === "marketing",
         enabledModules: current.enabledModules || [...DEFAULT_MODULES],
         limits: serializeLimits(current.limits || DEFAULT_LIMITS),
         enabled: true,
@@ -188,7 +213,7 @@ export const instanceSettingsService = {
   },
 
   async saveMain(
-    { planKey, enabledModules, limits, enabled } = {},
+    { planKey, uiMode, enabledModules, limits, enabled } = {},
     { actorUserId = "", actorRole = "" } = {},
   ) {
     assertRootActor(actorRole);
@@ -198,6 +223,7 @@ export const instanceSettingsService = {
 
     const next = {
       planKey: String(planKey || current.planKey || "starter").trim(),
+      uiMode: normalizeUiMode(uiMode || current.uiMode || "platform"),
       enabledModules: Array.isArray(enabledModules)
         ? enabledModules.map((moduleKey) => String(moduleKey || "").trim()).filter(Boolean)
         : current.enabledModules,
@@ -208,6 +234,8 @@ export const instanceSettingsService = {
     const payload = {
       key: "main",
       planKey: next.planKey,
+      uiMode: next.uiMode,
+      marketingEnabled: next.uiMode === "marketing",
       enabledModules: next.enabledModules,
       limits: serializeLimits(next.limits),
       enabled: next.enabled,
@@ -235,11 +263,13 @@ export const instanceSettingsService = {
       entityId: saved.$id,
       beforeData: JSON.stringify({
         planKey: current.planKey,
+        uiMode: current.uiMode,
         enabledModules: current.enabledModules,
         limits: current.limits,
       }).slice(0, 20000),
       afterData: JSON.stringify({
         planKey: next.planKey,
+        uiMode: next.uiMode,
         enabledModules: next.enabledModules,
         limits: next.limits,
       }).slice(0, 20000),
