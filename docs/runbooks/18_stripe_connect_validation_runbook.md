@@ -94,7 +94,7 @@ Importante:
 
 ## 4) Appwrite: schema obligatorio
 
-Aplica estos cambios en colecciones (segun `docs/03_appwrite_db_schema.md`):
+Aplica estos cambios en colecciones (segun `../core/03_appwrite_db_schema.md`):
 
 ### 4.1 `users`
 

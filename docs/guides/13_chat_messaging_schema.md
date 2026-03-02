@@ -1,4 +1,4 @@
-# 13_CHAT_MESSAGING_SCHEMA - RESOURCE-CENTRIC
+﻿# 13_CHAT_MESSAGING_SCHEMA - RESOURCE-CENTRIC
 
 ## Objective
 
@@ -133,6 +133,9 @@ Reopen policy:
 
 ## Permissions
 
+- Anonymous users cannot create conversations or messages.
+- Resource chat requires authenticated session.
+
 Collection-level:
 
 - `Role.users("verified")`: create/read/update
@@ -154,3 +157,4 @@ Document-level:
 
 Last update: 2026-03-01
 Version: 3.0.0
+

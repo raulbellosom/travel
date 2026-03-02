@@ -1,7 +1,7 @@
-# Migration: Simplificar Amenities a Array Simple
+﻿# Migration: Simplificar Amenities a Array Simple
 
 **Fecha:** 2026-02-15  
-**Versión Schema:** 2.5  
+**VersiÃ³n Schema:** 2.5  
 **Prioridad:** Alta - Requerido para filtros de amenidades en Home
 
 ---
@@ -10,16 +10,16 @@
 
 El frontend necesita filtrar propiedades por amenidades (ejemplo: "Propiedades con Alberca", "Vista al Mar").
 
-Anteriormente teníamos una tabla junction `property_amenities` (many-to-many). Como **Appwrite NO soporta JOINs**, no podíamos filtrar eficientemente con esta estructura.
+Anteriormente tenÃ­amos una tabla junction `property_amenities` (many-to-many). Como **Appwrite NO soporta JOINs**, no podÃ­amos filtrar eficientemente con esta estructura.
 
-**Decisión:** Simplificar eliminando `property_amenities` y usar solo un array `amenities: string[]` en la colección `properties`.
+**DecisiÃ³n:** Simplificar eliminando `property_amenities` y usar solo un array `amenities: string[]` en la colecciÃ³n `properties`.
 
 **Ventajas:**
 
-- ✅ Sin redundancia (una sola fuente de verdad)
-- ✅ Sin necesidad de sincronización
-- ✅ Filtros directos con `Query.contains()`
-- ✅ Código más simple
+- âœ… Sin redundancia (una sola fuente de verdad)
+- âœ… Sin necesidad de sincronizaciÃ³n
+- âœ… Filtros directos con `Query.contains()`
+- âœ… CÃ³digo mÃ¡s simple
 
 ---
 
@@ -31,13 +31,13 @@ Anteriormente teníamos una tabla junction `property_amenities` (many-to-many). 
 | ----------- | ---------- | ---- | --------- | ------- | ------------------------------------- |
 | `amenities` | `string[]` | 64   | No        | -       | Array de slugs: ["pool", "wifi", ...] |
 
-### Índice agregado
+### Ãndice agregado
 
 | Nombre                     | Tipo  | Atributos   | Notas                 |
 | -------------------------- | ----- | ----------- | --------------------- |
 | `idx_properties_amenities` | index | `amenities` | Filtro por amenidades |
 
-### Colección eliminada
+### ColecciÃ³n eliminada
 
 - `property_amenities` (eliminada completamente)
 
@@ -56,10 +56,10 @@ Ejecuta un script que:
 3. Extraiga los slugs desde la tabla `amenities`
 4. Actualice `properties.amenities` con el array de slugs
 
-**Ejemplo de código de migración:**
+**Ejemplo de cÃ³digo de migraciÃ³n:**
 
 ```javascript
-// Migración temporal - ejecutar una vez
+// MigraciÃ³n temporal - ejecutar una vez
 const properties = await databases.listDocuments("main_db", "properties");
 
 for (const property of properties.documents) {
@@ -90,21 +90,21 @@ for (const property of properties.documents) {
 
 ### 2. Agregar el atributo `amenities`
 
-1. Ir a **Appwrite Console** → Tu Proyecto → **Databases** → `main_db` → Colección `properties`
-2. Click en **"Attributes"** → **"Add Attribute"**
+1. Ir a **Appwrite Console** â†’ Tu Proyecto â†’ **Databases** â†’ `main_db` â†’ ColecciÃ³n `properties`
+2. Click en **"Attributes"** â†’ **"Add Attribute"**
 3. Seleccionar tipo **"String"**
 4. Configurar:
    - **Attribute Key:** `amenities`
    - **Size:** `64`
    - **Required:** `No` (dejar sin marcar)
-   - **Array:** `Yes` ✅ (IMPORTANTE: marcar esta opción)
-   - **Default:** dejar vacío
+   - **Array:** `Yes` âœ… (IMPORTANTE: marcar esta opciÃ³n)
+   - **Default:** dejar vacÃ­o
 5. Click **"Create"**
 6. Esperar a que el atributo se cree (puede tomar unos segundos)
 
-### 2. Crear el índice
+### 2. Crear el Ã­ndice
 
-1. En la misma colección `properties`, ir a tab **"Indexes"**
+1. En la misma colecciÃ³n `properties`, ir a tab **"Indexes"**
 2. Click **"Add Index"**
 3. Configurar:
    - **Index Key:** `idx_properties_amenities`
@@ -113,20 +113,20 @@ for (const property of properties.documents) {
    - **Order:** Puede dejarse por defecto
 4. Click **"Create"**
 
-### 3. Eliminar la colección `property_amenities`
+### 3. Eliminar la colecciÃ³n `property_amenities`
 
-**IMPORTANTE:** Solo después de migrar los datos existentes (paso 1)
+**IMPORTANTE:** Solo despuÃ©s de migrar los datos existentes (paso 1)
 
-1. En Appwrite Console → Databases → `main_db` → Colección `property_amenities`
+1. En Appwrite Console â†’ Databases â†’ `main_db` â†’ ColecciÃ³n `property_amenities`
 2. Click en **"Settings"** tab
-3. Scroll hasta abajo → **"Delete Collection"**
-4. Confirmar eliminación
+3. Scroll hasta abajo â†’ **"Delete Collection"**
+4. Confirmar eliminaciÃ³n
 
 ---
 
-## Cambios en el código del wizard/forms
+## Cambios en el cÃ³digo del wizard/forms
 
-Necesitarás actualizar el código que crea/edita propiedades para guardar directamente en el array:
+NecesitarÃ¡s actualizar el cÃ³digo que crea/edita propiedades para guardar directamente en el array:
 
 **Antes (con property_amenities):**
 
@@ -140,7 +140,7 @@ for (const amenityId of selectedAmenities) {
 }
 ```
 
-**Después (con array):**
+**DespuÃ©s (con array):**
 
 ```javascript
 // Guardar directamente slugs en el array
@@ -151,7 +151,7 @@ await databases.createDocument("main_db", "properties", ID.unique(), {
 });
 ```
 
-**Para edición:**
+**Para ediciÃ³n:**
 
 ```javascript
 // Actualizar simplemente el array completo
@@ -162,12 +162,12 @@ await databases.updateDocument("main_db", "properties", propertyId, {
 
 ---
 
-## Uso en el código (ya implementado)
+## Uso en el cÃ³digo (ya implementado)
 
-El código de filtros ya está listo en `propertiesService.js`:
+El cÃ³digo de filtros ya estÃ¡ listo en `propertiesService.js`:
 
 ```javascript
-// src/services/propertiesService.js (líneas 218-226)
+// src/services/propertiesService.js (lÃ­neas 218-226)
 if (filters.amenities && Array.isArray(filters.amenities)) {
   filters.amenities.forEach((amenity) => {
     queries.push(Query.contains("amenities", String(amenity).trim()));
@@ -186,26 +186,26 @@ if (filters.amenities && Array.isArray(filters.amenities)) {
 
 ---
 
-## Verificación
+## VerificaciÃ³n
 
 Para verificar que funciona:
 
-1. ✅ Agregar campo `amenities` en Appwrite Console
-2. ✅ Crear índice `idx_properties_amenities`
-3. ✅ Migrar datos existentes (si los hay)
-4. ✅ Eliminar colección `property_amenities`
-5. ✅ Actualizar wizard/forms para usar array
-6. ✅ Crear una propiedad de prueba con amenidades: `["pool", "wifi"]`
-7. ✅ Recargar Home - debe mostrar secciones sin errores 400
-8. ✅ Revisar Network tab - el request debe incluir los filtros correctamente
+1. âœ… Agregar campo `amenities` en Appwrite Console
+2. âœ… Crear Ã­ndice `idx_properties_amenities`
+3. âœ… Migrar datos existentes (si los hay)
+4. âœ… Eliminar colecciÃ³n `property_amenities`
+5. âœ… Actualizar wizard/forms para usar array
+6. âœ… Crear una propiedad de prueba con amenidades: `["pool", "wifi"]`
+7. âœ… Recargar Home - debe mostrar secciones sin errores 400
+8. âœ… Revisar Network tab - el request debe incluir los filtros correctamente
 
 ---
 
 ## Archivos a revisar para actualizar
 
-Busca referencias a `property_amenities` en el código:
+Busca referencias a `property_amenities` en el cÃ³digo:
 
-- `src/pages/dashboard/properties/**` - Forms de creación/edición
+- `src/pages/dashboard/properties/**` - Forms de creaciÃ³n/ediciÃ³n
 - `src/components/**` - Componentes relacionados con amenidades
 - `src/services/**` - Servicios que consulten property_amenities
 
@@ -215,14 +215,17 @@ Busca referencias a `property_amenities` en el código:
 
 Si necesitas revertir:
 
-1. Recrear colección `property_amenities` en Appwrite
-2. Eliminar campo `amenities` y su índice de `properties`
+1. Recrear colecciÃ³n `property_amenities` en Appwrite
+2. Eliminar campo `amenities` y su Ã­ndice de `properties`
 3. Revertir cambios al wizard/forms
-4. Comentar líneas 218-226 en `src/services/propertiesService.js`
+4. Comentar lÃ­neas 218-226 en `src/services/propertiesService.js`
 5. Revertir secciones de amenidades en `src/pages/Home.jsx`
 
 ---
 
 **Siguiente paso:** Buscar y actualizar wizard/forms para usar el array directamente.
 
-Verifica en [03_appwrite_db_schema.md](./03_appwrite_db_schema.md) la migración completa.
+Verifica en [03_appwrite_db_schema.md](../core/03_appwrite_db_schema.md) la migracion completa.
+
+
+

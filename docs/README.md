@@ -1,65 +1,48 @@
-﻿# Real Estate SaaS Docs (Single-Tenant by Design)
+﻿# Project Documentation Index
 
-Este directorio documenta una plataforma inmobiliaria SaaS de tipo **productized service**:
+## Source of truth (read first)
 
-- La app de este repo es la **instancia demo/portafolio**.
-- Cada cliente recibe una **instancia dedicada y aislada** (frontend + Appwrite + base de datos + storage + functions).
-- **No** hay convivencia de clientes en la misma base de datos.
+Canonical documentation lives in `docs/core/`:
 
-## Objetivo de la documentacion
+1. `core/00_documentation_rules.md`
+2. `core/00_ai_project_context.md`
+3. `core/00_project_brief.md`
+4. `core/01_frontend_requirements.md`
+5. `core/02_backend_appwrite_requirements.md`
+6. `core/03_appwrite_db_schema.md`
+7. `core/04_design_system_mobile_first.md`
+8. `core/05_permissions_and_roles.md`
+9. `core/06_appwrite_functions_catalog.md`
+10. `core/07_frontend_routes_and_flows.md`
+11. `core/08_env_reference.md`
+12. `core/09_appwrite_platform_limits.md`
+13. `core/10_master_plan_checklist.md`
 
-1. Estandarizar como se provisiona una nueva instancia para un cliente.
-2. Mantener seguridad, permisos y trazabilidad (auditoria completa).
-3. Preparar reservas, pagos (Stripe/Mercado Pago), vouchers y metricas.
+## AI quick start
 
-## Orden recomendado de lectura
+1. Read `core/00_documentation_rules.md`.
+2. Read `core/00_ai_project_context.md`.
+3. Read the owning core doc for your change domain.
+4. Use guides/runbooks/migrations only as support material.
 
-1. `00_project_brief.md`
-2. `01_frontend_requirements.md`
-3. `02_backend_appwrite_requirements.md`
-4. `03_appwrite_db_schema.md`
-5. `05_permissions_and_roles.md`
-6. `06_appwrite_functions_catalog.md`
-7. `07_frontend_routes_and_flows.md`
-8. `08_env_reference.md`
-9. `10_master_plan_checklist.md`
-10. `11_schema_mapping_matrix.md`
-11. `12_env_traceability_matrix.md`
+## Supporting docs
 
-## Flujos clave del producto
+- Guides: `guides/`
+- Runbooks: `runbooks/`
+- Migrations: `migrations/`
 
-- Catalogo publico por cliente.
-- Contacto y mensajeria de leads.
-- Reservas por propiedad con estado y disponibilidad.
-- Pagos online (Stripe/Mercado Pago) con webhooks.
-- Emision de voucher de reservacion.
-- Reviews post-estadia.
-- Dashboard con estadisticas.
-- Panel oculto root para auditoria (`ActivityLog`).
+## Skills (AI helpers)
 
-## Provisioning por cliente (resumen)
+- `skills/project/00_skills_index.md`
 
-1. Clonar plantilla de frontend.
-2. Crear proyecto Appwrite dedicado.
-3. Crear `database main`, colecciones e indices.
-4. Crear buckets y functions.
-5. Configurar variables `.env` de instancia.
-6. Crear usuario `owner` del cliente.
-7. Crear usuario `root` interno (no visible en UI publica).
-8. Ejecutar smoke test de reservas, pagos y logs.
+Skills are helper playbooks and are not canonical.
 
-## Criterio no negociable
+## Historical material (non-authoritative)
 
-Todo cambio funcional debe mantener consistencia entre:
+- `_archive/`
 
-- Requerimientos (`02`)
-- Esquema (`03`)
-- Permisos (`05`)
-- Functions (`06`)
-- Rutas/UX (`07`)
-- Variables (`08`)
+Includes prompts, drafts, and old versions.
 
 ---
 
-Ultima actualizacion: 2026-02-12
-Version: 2.1.0
+Last update: 2026-03-02

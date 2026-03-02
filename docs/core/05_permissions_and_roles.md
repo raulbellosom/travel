@@ -162,5 +162,12 @@ Eventos criticos:
 
 ---
 
-Ultima actualizacion: 2026-02-18
-Version: 3.0.0
+## 10. Regla adicional
+
+- Visitor never creates platform leads/messages/reservations; authentication is mandatory for all platform interactions.
+
+---
+
+Ultima actualizacion: 2026-03-02
+Version: 3.0.1
+

@@ -50,8 +50,8 @@ Fecha de corte: 2026-02-18
 | `src/contexts/ChatContext.jsx` | contexto de chat ligado a propiedad | adapt -> resource-centric | en migracion |
 | `src/components/chat/PropertyChatButton.jsx` | `propertyId` | adapt -> aceptar `resourceId` | en migracion |
 | `src/utils/internalRoutes.js` | rutas de detalle/publicas | mantener `/propiedades/:slug` por SEO | vigente |
-| `docs/03_appwrite_db_schema.md` | schema `properties` | update -> `resources` canonico + deprecate legacy | migrado |
-| `docs/11_schema_mapping_matrix.md` | mapeos legacy | update -> matrices v3 | migrado |
+| `../core/03_appwrite_db_schema.md` | schema `properties` | update -> `resources` canonico + deprecate legacy | migrado |
+| `../guides/11_schema_mapping_matrix.md` | mapeos legacy | update -> matrices v3 | migrado |
 
 ---
 
