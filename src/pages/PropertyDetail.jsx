@@ -77,7 +77,7 @@ import { getErrorMessage } from "../utils/errors";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { useOptionalChat } from "../contexts/ChatContext";
-import { Spinner, Modal, ModalFooter, Button, Select } from "../components/common";
+import { Spinner, Select } from "../components/common";
 import Carousel from "../components/common/molecules/Carousel/Carousel";
 import ImageViewerModal from "../components/common/organisms/ImageViewerModal";
 import ProgressiveImage from "../components/common/atoms/ProgressiveImage";
@@ -96,6 +96,7 @@ import {
 } from "../features/calendar";
 import { getFileViewUrl } from "../utils/imageOptimization"; // HD fallback for viewer modal
 import { getBookingTypeLabel } from "../utils/resourceLabels";
+import { BookingContactBlock } from "../components/booking";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -163,8 +164,6 @@ const PropertyDetail = () => {
   const [error, setError] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [chatOpened, setChatOpened] = useState(false);
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [chatInitialMessage, setChatInitialMessage] = useState("");
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageViewer, setImageViewer] = useState({
@@ -188,6 +187,11 @@ const PropertyDetail = () => {
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState("");
   const [chatScheduleMeta, setChatScheduleMeta] = useState(null);
+  // Booking contact block state
+  const [bookingBlockLoading, setBookingBlockLoading] = useState(false);
+  const [bookingBlockSuccess, setBookingBlockSuccess] = useState(false);
+  const [bookingBlockConversationId, setBookingBlockConversationId] =
+    useState(null);
   // Hour-range input state (splits selectedHourStart into 3 editable parts)
   const [startHour12, setStartHour12] = useState(9);
   const [startMinute, setStartMinute] = useState("00");
@@ -197,7 +201,19 @@ const PropertyDetail = () => {
   // Ref for scroll-to-calendar action from PriceCard
   const calendarSectionRef = useRef(null);
   const handleScrollToCalendar = useCallback(() => {
-    calendarSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    calendarSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, []);
+
+  // Ref for scroll-to-booking-block action (replaces chat modal)
+  const bookingBlockRef = useRef(null);
+  const handleScrollToBookingBlock = useCallback(() => {
+    bookingBlockRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }, []);
 
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
@@ -226,7 +242,7 @@ const PropertyDetail = () => {
   const computeHourStart = useCallback((h12, min, period) => {
     const h = Number(h12);
     if (!h || h < 1 || h > 12) return "";
-    const h24 = period === "AM" ? (h === 12 ? 0 : h) : (h === 12 ? 12 : h + 12);
+    const h24 = period === "AM" ? (h === 12 ? 0 : h) : h === 12 ? 12 : h + 12;
     return `${String(h24).padStart(2, "0")}:${min}`;
   }, []);
 
@@ -732,16 +748,7 @@ const PropertyDetail = () => {
           );
         const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
 
-        setChatInitialMessage(
-          t("client:propertyDetail.calendar.manualDateRangeMessage", {
-            defaultValue:
-              'Hola, me interesa "{{title}}" para las fechas {{dates}}{{extras}}. ¿Podemos confirmar disponibilidad y condiciones?',
-            title: property.title,
-            dates: rangeLabel,
-            extras: extraLabel,
-          }),
-        );
-        setIsChatModalOpen(true);
+        handleScrollToBookingBlock();
         return;
       }
 
@@ -1047,46 +1054,10 @@ const PropertyDetail = () => {
     const extraLabel = extras.length ? `\n${extras.join(", ")}` : "";
 
     if (isVisitRequestMode && !nextScheduleMeta?.startDateTime) {
-      const slotStart = String(
-        window.prompt(
-          t("client:propertyDetail.agent.visitStartPrompt", {
-            defaultValue: "Ingresa fecha/hora de visita (ISO)",
-          }),
-          "",
-        ) || "",
-      ).trim();
-      const slotEnd = String(
-        window.prompt(
-          t("client:propertyDetail.agent.visitEndPrompt", {
-            defaultValue: "Ingresa fin de visita (ISO)",
-          }),
-          "",
-        ) || "",
-      ).trim();
-
-      const parsedStart = new Date(slotStart);
-      const parsedEnd = new Date(slotEnd);
-      if (
-        Number.isNaN(parsedStart.getTime()) ||
-        Number.isNaN(parsedEnd.getTime()) ||
-        parsedEnd <= parsedStart
-      ) {
-        showToast({
-          type: "error",
-          message: t("client:propertyDetail.agent.visitSlotRequired", {
-            defaultValue:
-              "Para solicitar una visita debes proporcionar un horario valido.",
-          }),
-        });
-        return;
-      }
-
-      nextScheduleMeta = {
-        scheduleType: "visit_slot",
-        startDateTime: parsedStart.toISOString(),
-        endDateTime: parsedEnd.toISOString(),
-        timezone: browserTimeZone,
-      };
+      // Visit scheduling is handled inline by BookingContactBlock
+      setChatScheduleMeta(nextScheduleMeta);
+      handleScrollToBookingBlock();
+      return;
     }
 
     if (
@@ -1107,24 +1078,13 @@ const PropertyDetail = () => {
 
     setChatScheduleMeta(nextScheduleMeta);
 
-    const defaultInitialMessage = isVisitRequestMode
-      ? t("client:propertyDetail.agent.defaultVisitMessage", {
-          defaultValue: `Hola, me interesa "${property.title}". Quiero solicitar una visita.${extraLabel ? ` ${extraLabel.trim()}.` : ""}`,
-        })
-      : isManualBookingRequestMode
-        ? t("client:propertyDetail.agent.defaultAvailabilityMessage", {
-            defaultValue: `Hola, me interesa "${property.title}". Quiero confirmar disponibilidad y condiciones.${extraLabel ? ` ${extraLabel.trim()}.` : ""}`,
-          })
-        : t("client:propertyDetail.agent.defaultInitialMessage", {
-            defaultValue: `Hola, me interesa "${property.title}".${extraLabel ? ` ${extraLabel.trim()}.` : ""} Quiero mas informacion.`,
-          });
-
-    setChatInitialMessage(defaultInitialMessage);
-    setIsChatModalOpen(true);
+    // Scroll to inline BookingContactBlock instead of opening modal
+    handleScrollToBookingBlock();
   }, [
     browserTimeZone,
     canContactAsClient,
     chatLoading,
+    handleScrollToBookingBlock,
     handleScrollToCalendar,
     hourRangeSlot,
     isChatAuth,
@@ -1192,18 +1152,9 @@ const PropertyDetail = () => {
       );
     const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
 
-    setChatInitialMessage(
-      t("client:propertyDetail.calendar.manualTimeSlotMessage", {
-        defaultValue:
-          'Hola, me interesa "{{title}}" el {{date}} en el horario {{time}}{{extras}}. ¿Podemos confirmar disponibilidad?',
-        title: property.title,
-        date: dateLabel,
-        time: timeLabel,
-        extras: extraLabel,
-      }),
-    );
-    setIsChatModalOpen(true);
+    handleScrollToBookingBlock();
   }, [
+    handleScrollToBookingBlock,
     isChatAuth,
     location,
     locale,
@@ -1257,18 +1208,9 @@ const PropertyDetail = () => {
       );
     const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
 
-    setChatInitialMessage(
-      t("client:propertyDetail.calendar.manualTimeSlotMessage", {
-        defaultValue:
-          'Hola, me interesa "{{title}}" el {{date}} en el horario {{time}}{{extras}}. ¿Podemos confirmar disponibilidad?',
-        title: property.title,
-        date: dateLabel,
-        time: timeLabel,
-        extras: extraLabel,
-      }),
-    );
-    setIsChatModalOpen(true);
+    handleScrollToBookingBlock();
   }, [
+    handleScrollToBookingBlock,
     hourRangeSlot,
     isChatAuth,
     location,
@@ -1342,11 +1284,7 @@ const PropertyDetail = () => {
           timezone: schedule.timezone || browserTimeZone,
         },
       ];
-    } else if (
-      isVisitRequestMode &&
-      booking.startDate &&
-      booking.endDate
-    ) {
+    } else if (isVisitRequestMode && booking.startDate && booking.endDate) {
       visit.preferredSlots = [
         {
           startDateTime: booking.startDate,
@@ -1394,81 +1332,53 @@ const PropertyDetail = () => {
     user?.phone,
   ]);
 
-  const handleConfirmChat = useCallback(async () => {
-    if (!property || !isChatAuth || chatLoading) return;
-    setChatLoading(true);
-    try {
-      const intent = getLeadIntentForResource();
-      const leadMeta = buildLeadMetaPayload();
-      const visitSlots = Array.isArray(leadMeta.visit?.preferredSlots)
-        ? leadMeta.visit.preferredSlots
-        : [];
+  /** Handler for the inline BookingContactBlock submit */
+  const handleBookingBlockSubmit = useCallback(
+    async (payload) => {
+      if (!property || !startConversation) return;
+      setBookingBlockLoading(true);
+      try {
+        const leadMeta = buildLeadMetaPayload();
+        // Map new intent values to legacy for compatibility
+        const intentMap = {
+          SCHEDULE_MEETING: "visit_request",
+          AVAILABILITY_INQUIRY: "booking_request_manual",
+          GENERAL_INQUIRY: "info_request",
+        };
+        const legacyIntent =
+          intentMap[payload.intent] || payload.intent || "info_request";
 
-      if (intent === "visit_request" && visitSlots.length < 1) {
-        throw new Error(
-          t("client:propertyDetail.agent.visitSlotRequired", {
-            defaultValue:
-              "Para solicitar una visita debes proporcionar al menos un horario.",
-          }),
-        );
-      }
-
-      if (intent === "booking_request_manual") {
-        const guests = Number(leadMeta.booking?.guests || 0);
-        const hasDateRange =
-          Boolean(leadMeta.booking?.startDate) &&
-          Boolean(leadMeta.booking?.endDate);
-        if (!Number.isFinite(guests) || guests < 1 || !hasDateRange) {
-          throw new Error(
-            t("client:propertyDetail.agent.manualDataRequired", {
-              defaultValue:
-                "Selecciona fechas y huespedes para solicitar disponibilidad.",
+        const conversation = await startConversation({
+          resourceId: property.$id,
+          initialMessage: payload.message,
+          intent: legacyIntent,
+          contactChannel: payload.channel || "IN_PLATFORM",
+          channel: payload.channel || "IN_PLATFORM",
+          meta: leadMeta,
+          contact: payload.contact,
+          dateRange: payload.dateRange,
+          meetingRequest: payload.meetingRequest,
+        });
+        setBookingBlockSuccess(true);
+        setBookingBlockConversationId(conversation?.$id || null);
+        setChatOpened(true);
+      } catch (err) {
+        console.error("BookingContactBlock submit failed:", err);
+        showToast({
+          type: "error",
+          message: getErrorMessage(
+            err,
+            t("bookingBlock.error", {
+              defaultValue: "No se pudo enviar el mensaje. Intenta de nuevo.",
             }),
-          );
-        }
+          ),
+        });
+      } finally {
+        setBookingBlockLoading(false);
       }
-
-      await startConversation({
-        resourceId: property.$id,
-        resourceTitle: property.title,
-        ownerUserId: property.ownerUserId,
-        ownerName: owner?.firstName
-          ? `${owner.firstName} ${owner.lastName || ""}`.trim()
-          : owner?.email || "",
-        initialMessage: chatInitialMessage,
-        intent,
-        contactChannel: "resource_chat",
-        meta: leadMeta,
-      });
-      setChatOpened(true);
-      setChatScheduleMeta(null);
-      setIsChatModalOpen(false);
-    } catch (err) {
-      console.error("Failed to start conversation:", err);
-      showToast({
-        type: "error",
-        message: getErrorMessage(
-          err,
-          t("chat.errors.startFailed", {
-            defaultValue: "No se pudo iniciar la conversación.",
-          }),
-        ),
-      });
-    } finally {
-      setChatLoading(false);
-    }
-  }, [
-    buildLeadMetaPayload,
-    property,
-    isChatAuth,
-    chatLoading,
-    getLeadIntentForResource,
-    startConversation,
-    owner,
-    chatInitialMessage,
-    showToast,
-    t,
-  ]);
+    },
+    [buildLeadMetaPayload, property, startConversation, showToast, t],
+  );
 
   /* ─── Loading / Error states ─────────────────────────── */
 
@@ -2079,6 +1989,25 @@ const PropertyDetail = () => {
                 loginToContactPath={loginToChatPath}
                 chatLoading={chatLoading}
               />
+              {/* ── Inline Booking/Contact Block (mobile) ── */}
+              <div ref={bookingBlockRef} className="mt-4">
+                <BookingContactBlock
+                  property={property}
+                  isVisitRequestMode={isVisitRequestMode}
+                  isManualBookingRequestMode={isManualBookingRequestMode}
+                  isAuthenticated={Boolean(user?.$id)}
+                  canContact={canContactAsClient}
+                  loginPath={loginToChatPath}
+                  registerPath={registerToChatPath}
+                  selectedDateRange={selectedDateRange}
+                  selectedGuestCount={selectedGuestCount}
+                  onSubmit={handleBookingBlockSubmit}
+                  loading={bookingBlockLoading}
+                  success={bookingBlockSuccess}
+                  conversationId={bookingBlockConversationId}
+                  locale={locale}
+                />
+              </div>
             </div>
 
             {/* ── Quick Stats Grid ──────────────────────── */}
@@ -2988,9 +2917,30 @@ const PropertyDetail = () => {
               />
             </div>
 
+            {/* ── Inline Booking/Contact Block (desktop) ── */}
+            <BookingContactBlock
+              property={property}
+              isVisitRequestMode={isVisitRequestMode}
+              isManualBookingRequestMode={isManualBookingRequestMode}
+              isAuthenticated={Boolean(user?.$id)}
+              canContact={canContactAsClient}
+              loginPath={loginToChatPath}
+              registerPath={registerToChatPath}
+              selectedDateRange={selectedDateRange}
+              selectedGuestCount={selectedGuestCount}
+              onSubmit={handleBookingBlockSubmit}
+              loading={bookingBlockLoading}
+              success={bookingBlockSuccess}
+              conversationId={bookingBlockConversationId}
+              locale={locale}
+            />
+
             {/* ── Calendar placeholder ───────────────── */}
             {canRenderScheduleAside && (
-              <div ref={calendarSectionRef} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div
+                ref={calendarSectionRef}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+              >
                 <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
                   <Calendar
                     size={18}
@@ -3072,21 +3022,33 @@ const PropertyDetail = () => {
                           <div className="grid grid-cols-3 gap-2">
                             {/* Hour */}
                             <Select
-                              label={t("client:propertyDetail.calendar.hour", { defaultValue: "Hora" })}
+                              label={t("client:propertyDetail.calendar.hour", {
+                                defaultValue: "Hora",
+                              })}
                               size="md"
                               value={String(startHour12)}
-                              options={Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))}
+                              options={Array.from({ length: 12 }, (_, i) => ({
+                                value: String(i + 1),
+                                label: String(i + 1),
+                              }))}
                               onChange={(v) => {
                                 const h = Number(v);
                                 setStartHour12(h);
-                                const next = computeHourStart(h, startMinute, startPeriod);
+                                const next = computeHourStart(
+                                  h,
+                                  startMinute,
+                                  startPeriod,
+                                );
                                 setSelectedHourStart(next);
                                 setSelectedHourCount(0);
                               }}
                             />
                             {/* Minutes */}
                             <Select
-                              label={t("client:propertyDetail.calendar.minutes", { defaultValue: "Min" })}
+                              label={t(
+                                "client:propertyDetail.calendar.minutes",
+                                { defaultValue: "Min" },
+                              )}
                               size="md"
                               value={startMinute}
                               options={[
@@ -3095,14 +3057,21 @@ const PropertyDetail = () => {
                               ]}
                               onChange={(m) => {
                                 setStartMinute(m);
-                                const next = computeHourStart(startHour12, m, startPeriod);
+                                const next = computeHourStart(
+                                  startHour12,
+                                  m,
+                                  startPeriod,
+                                );
                                 setSelectedHourStart(next);
                                 setSelectedHourCount(0);
                               }}
                             />
                             {/* AM / PM */}
                             <Select
-                              label={t("client:propertyDetail.calendar.period", { defaultValue: "AM/PM" })}
+                              label={t(
+                                "client:propertyDetail.calendar.period",
+                                { defaultValue: "AM/PM" },
+                              )}
                               size="md"
                               value={startPeriod}
                               options={[
@@ -3111,7 +3080,11 @@ const PropertyDetail = () => {
                               ]}
                               onChange={(p) => {
                                 setStartPeriod(p);
-                                const next = computeHourStart(startHour12, startMinute, p);
+                                const next = computeHourStart(
+                                  startHour12,
+                                  startMinute,
+                                  p,
+                                );
                                 setSelectedHourStart(next);
                                 setSelectedHourCount(0);
                               }}
@@ -3130,8 +3103,13 @@ const PropertyDetail = () => {
                             <input
                               type="number"
                               min={hourRangeConfig.minHours}
-                              max={hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours}
-                              value={selectedHourCount === 0 ? "" : selectedHourCount}
+                              max={
+                                hourCountOptions[hourCountOptions.length - 1] ??
+                                hourRangeConfig.maxHours
+                              }
+                              value={
+                                selectedHourCount === 0 ? "" : selectedHourCount
+                              }
                               placeholder={`${hourRangeConfig.minHours}–${hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours} h`}
                               onChange={(e) => {
                                 const v = parseInt(e.target.value, 10);
@@ -3139,9 +3117,13 @@ const PropertyDetail = () => {
                               }}
                               onBlur={(e) => {
                                 const min = hourRangeConfig.minHours;
-                                const max = hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours;
+                                const max =
+                                  hourCountOptions[
+                                    hourCountOptions.length - 1
+                                  ] ?? hourRangeConfig.maxHours;
                                 const v = parseInt(e.target.value, 10);
-                                if (isNaN(v) || v < min) setSelectedHourCount(min);
+                                if (isNaN(v) || v < min)
+                                  setSelectedHourCount(min);
                                 else if (v > max) setSelectedHourCount(max);
                               }}
                               className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
@@ -3175,17 +3157,27 @@ const PropertyDetail = () => {
                           <input
                             type="number"
                             min={1}
-                            max={attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500}
+                            max={
+                              attrs?.bookingMaxUnits ||
+                              attrs?.venueCapacitySeated ||
+                              500
+                            }
                             value={guestCountDraft}
                             onChange={(e) => {
                               setGuestCountDraft(e.target.value);
                               const parsed = parseInt(e.target.value, 10);
-                              if (!isNaN(parsed) && parsed >= 1) setSelectedGuestCount(parsed);
+                              if (!isNaN(parsed) && parsed >= 1)
+                                setSelectedGuestCount(parsed);
                             }}
                             onBlur={(e) => {
                               const v = parseInt(e.target.value, 10);
-                              const max = Number(attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500);
-                              const clamped = isNaN(v) || v < 1 ? 1 : v > max ? max : v;
+                              const max = Number(
+                                attrs?.bookingMaxUnits ||
+                                  attrs?.venueCapacitySeated ||
+                                  500,
+                              );
+                              const clamped =
+                                isNaN(v) || v < 1 ? 1 : v > max ? max : v;
                               setGuestCountDraft(String(clamped));
                               setSelectedGuestCount(clamped);
                             }}
@@ -3242,17 +3234,27 @@ const PropertyDetail = () => {
                           <input
                             type="number"
                             min={1}
-                            max={attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500}
+                            max={
+                              attrs?.bookingMaxUnits ||
+                              attrs?.venueCapacitySeated ||
+                              500
+                            }
                             value={guestCountDraft}
                             onChange={(e) => {
                               setGuestCountDraft(e.target.value);
                               const parsed = parseInt(e.target.value, 10);
-                              if (!isNaN(parsed) && parsed >= 1) setSelectedGuestCount(parsed);
+                              if (!isNaN(parsed) && parsed >= 1)
+                                setSelectedGuestCount(parsed);
                             }}
                             onBlur={(e) => {
                               const v = parseInt(e.target.value, 10);
-                              const max = Number(attrs?.bookingMaxUnits || attrs?.venueCapacitySeated || 500);
-                              const clamped = isNaN(v) || v < 1 ? 1 : v > max ? max : v;
+                              const max = Number(
+                                attrs?.bookingMaxUnits ||
+                                  attrs?.venueCapacitySeated ||
+                                  500,
+                              );
+                              const clamped =
+                                isNaN(v) || v < 1 ? 1 : v > max ? max : v;
                               setGuestCountDraft(String(clamped));
                               setSelectedGuestCount(clamped);
                             }}
@@ -3510,57 +3512,6 @@ const PropertyDetail = () => {
         alt={property.title}
         showDownload
       />
-
-      {/* ── Start Chat Modal ────────────────────────────── */}
-      <Modal
-        isOpen={isChatModalOpen}
-        onClose={() => {
-          if (chatLoading) return;
-          setIsChatModalOpen(false);
-          setChatScheduleMeta(null);
-        }}
-        title={t("chat.modal.title", { defaultValue: "Nuevo Mensaje" })}
-        description={t("chat.modal.description", {
-          defaultValue:
-            "Escribe un mensaje para iniciar la conversación con el agente.",
-        })}
-        size="md"
-        footer={
-          <ModalFooter>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsChatModalOpen(false);
-                setChatScheduleMeta(null);
-              }}
-              disabled={chatLoading}
-            >
-              {t("common.actions.cancel", { defaultValue: "Cancelar" })}
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleConfirmChat}
-              disabled={chatLoading || !chatInitialMessage.trim()}
-              loading={chatLoading}
-            >
-              {t("chat.modal.send", { defaultValue: "Enviar Mensaje" })}
-            </Button>
-          </ModalFooter>
-        }
-      >
-        <div className="py-2">
-          <textarea
-            className="w-full resize-y rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-400"
-            rows={4}
-            placeholder={t("chat.modal.placeholder", {
-              defaultValue: "Escribe tu mensaje aquí...",
-            })}
-            value={chatInitialMessage}
-            onChange={(e) => setChatInitialMessage(e.target.value)}
-            disabled={chatLoading}
-          />
-        </div>
-      </Modal>
     </div>
   );
 };
@@ -3743,33 +3694,29 @@ function PriceCard({
             {ctaLabel}
             <ArrowRight size={16} />
           </Link>
+        ) : canChat ? (
+          <button
+            type="button"
+            onClick={onContactAgent}
+            disabled={chatLoading}
+            className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
+          >
+            {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
+            {ctaLabel}
+          </button>
         ) : (
-          canChat ? (
-            <button
-              type="button"
-              onClick={onContactAgent}
-              disabled={chatLoading}
-              className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
-            >
-              {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
-              {ctaLabel}
-            </button>
-          ) : (
-            <Link
-              to={loginToContactPath || "/login"}
-              className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              <MessageCircle size={16} />
-              {t("client:propertyDetail.agent.loginToChat", {
-                defaultValue: "Inicia sesion para contactar",
-              })}
-            </Link>
-          )
+          <Link
+            to={loginToContactPath || "/login"}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <MessageCircle size={16} />
+            {t("client:propertyDetail.agent.loginToChat", {
+              defaultValue: "Inicia sesion para contactar",
+            })}
+          </Link>
         ))}
     </article>
   );
 }
 
 export default PropertyDetail;
-
-

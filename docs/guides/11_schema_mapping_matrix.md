@@ -46,13 +46,13 @@ Nota de alcance para `propertyType -> category`:
 
 ## Mapeo por coleccion
 
-| Coleccion              | Antes                         | Ahora                          | Compat                      |
-| ---------------------- | ----------------------------- | ------------------------------ | --------------------------- |
-| `leads`                | `propertyId`                  | `resourceId`                   | guardar ambos temporalmente |
-| `reservations`         | `propertyId`                  | `resourceId`                   | aceptar ambos en API        |
-| `reservation_payments` | referencia indirecta property | referencia canonica a resource | mantener alias legacy       |
-| `conversations`        | `propertyId`,`propertyTitle`  | `resourceId`,`resourceTitle`   | mantener aliases            |
-| `messages`             | sin campo property            | sin cambio (via conversation)  | no aplica                   |
+| Coleccion              | Antes                         | Ahora                          | Compat                                    |
+| ---------------------- | ----------------------------- | ------------------------------ | ----------------------------------------- |
+| `leads`                | `propertyId`                  | `resourceId`                   | guardar ambos temporalmente               |
+| `reservations`         | `propertyId`                  | `resourceId`                   | **migrado** — solo `resourceId` (2025-07) |
+| `reservation_payments` | referencia indirecta property | referencia canonica a resource | mantener alias legacy                     |
+| `conversations`        | `propertyId`,`propertyTitle`  | `resourceId`,`resourceTitle`   | mantener aliases                          |
+| `messages`             | sin campo property            | sin cambio (via conversation)  | no aplica                                 |
 
 ---
 

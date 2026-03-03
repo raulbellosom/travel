@@ -17,7 +17,8 @@ const cfg = () => ({
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
   usersCollectionId: getEnv("APPWRITE_COLLECTION_USERS_ID") || "users",
   reviewsCollectionId: getEnv("APPWRITE_COLLECTION_REVIEWS_ID") || "reviews",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
 });
 
 const parseBody = (req) => {
@@ -54,12 +55,17 @@ const hasScope = (profile, scope) => {
   const scopes = parseScopes(profile?.scopesJson).map((item) =>
     normalize(item, 80).toLowerCase(),
   );
-  return scopes.includes("*") || scopes.includes(String(scope || "").toLowerCase());
+  return (
+    scopes.includes("*") || scopes.includes(String(scope || "").toLowerCase())
+  );
 };
 
 const getActorUserId = (req) => {
   const headers = req.headers || {};
-  return normalize(headers["x-appwrite-user-id"] || headers["x-appwrite-userid"], 64);
+  return normalize(
+    headers["x-appwrite-user-id"] || headers["x-appwrite-userid"],
+    64,
+  );
 };
 
 const safeJson = (value, max = 20000) => {
@@ -139,7 +145,10 @@ export default async ({ req, res, log, error }) => {
       actorUserId,
     );
 
-    if (actorProfile.enabled === false || !hasScope(actorProfile, "reviews.moderate")) {
+    if (
+      actorProfile.enabled === false ||
+      !hasScope(actorProfile, "reviews.moderate")
+    ) {
       return json(res, 403, {
         ok: false,
         success: false,
@@ -178,9 +187,16 @@ export default async ({ req, res, log, error }) => {
         action: "review.moderate",
         entityType: "reviews",
         entityId: reviewId,
-        beforeData: safeJson({ status: review.status, publishedAt: review.publishedAt }),
+        beforeData: safeJson({
+          status: review.status,
+          publishedAt: review.publishedAt,
+        }),
         afterData: safeJson({ status, publishedAt: patch.publishedAt || null }),
-        changedFields: ["status", ...(patch.publishedAt ? ["publishedAt"] : [])],
+        changedFields: [
+          "status",
+          ...(patch.publishedAt ? ["publishedAt"] : []),
+        ],
+        changeSummary: `Review ${reviewId} moderated: ${review.status} → ${status}`,
         severity: "info",
       },
     });

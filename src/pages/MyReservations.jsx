@@ -314,7 +314,7 @@ const MyReservations = () => {
 
         // Fetch property names
         const propertyIds = [
-          ...new Set(docs.map((r) => r.propertyId).filter(Boolean)),
+          ...new Set(docs.map((r) => r.resourceId).filter(Boolean)),
         ];
         const nameEntries = await Promise.all(
           propertyIds.map(async (pid) => {
@@ -393,7 +393,7 @@ const MyReservations = () => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter((r) => {
-        const name = propertyNames[r.propertyId] || "";
+        const name = propertyNames[r.resourceId] || "";
         return (
           name.toLowerCase().includes(q) ||
           (r.guestName || "").toLowerCase().includes(q) ||
@@ -581,8 +581,8 @@ const MyReservations = () => {
                   key={reservation.$id}
                   reservation={reservation}
                   propertyName={
-                    propertyNames[reservation.propertyId] ||
-                    reservation.propertyId
+                    propertyNames[reservation.resourceId] ||
+                    reservation.resourceId
                   }
                   locale={locale}
                   t={t}

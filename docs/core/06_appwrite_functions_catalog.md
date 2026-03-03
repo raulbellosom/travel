@@ -38,40 +38,40 @@ Regla clave:
 
 ## 3. Function scopes and auth matrix
 
-| Function ID | Trigger | Auth mode | Execute | Required roles | Min API key scopes | Module gate | Collections touched |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `user-create-profile` | event `users.*.create` | `api_key_only` | `[]` | n/a | `databases.read`, `databases.write` | no | `users`, `user_preferences` |
-| `create-lead` | HTTP POST | `authenticated_session` | `users` | `client` (verified) | `users.read`, `databases.read`, `databases.write` | `module.resources`, `module.leads`, `module.messaging.realtime` | `leads`, `conversations`, `messages`, `activity_logs` |
-| `send-lead-notification` | event lead create | `api_key_only` | `[]` | n/a | `databases.read` | no | `leads` |
-| `property-view-counter` | HTTP POST | `public` | `any` | n/a | `databases.read`, `databases.write` | optional by instance policy | `resources` |
-| `create-reservation-public` | HTTP POST | `authenticated_session` | `users` | `client` (verified) | `users.read`, `databases.read`, `databases.write` | booking/payment modules | `reservations`, `resources`, `activity_logs` |
-| `reservation-created-notification` | event reservation create | `api_key_only` | `[]` | n/a | `databases.read`, `databases.write` | no | `reservations` |
-| `create-payment-session` | HTTP POST | `authenticated_session` | `users` | reservation guest | `users.read`, `databases.read`, `databases.write` | booking/payment modules | `reservations`, `reservation_payments`, `resources`, `users`, `activity_logs` |
-| `payment-webhook-stripe` | HTTP webhook | `public` | `any` | n/a (signature validated) | `databases.read`, `databases.write`, `functions.write` | payment modules | `reservation_payments`, `reservations`, `activity_logs` |
-| `expire-pending-reservations` | cron / internal HTTP | `api_key_only` | `[]` | n/a | `databases.read`, `databases.write` | booking modules | `reservations`, `activity_logs` |
-| `payment-webhook-mercadopago` | HTTP webhook | `public` | `any` | n/a (signature/verification) | `databases.read`, `databases.write`, `functions.write` | payment modules | `reservation_payments`, `reservations`, `activity_logs` |
-| `issue-reservation-voucher` | internal execution | `api_key_only` | `[]` | n/a | `databases.read`, `databases.write` | booking modules | `reservation_vouchers`, `reservations` |
-| `create-review-public` | HTTP POST | `authenticated_session` | `users` | `client` (eligible reservation) | `users.read`, `databases.read`, `databases.write` | `module.reviews` | `reviews`, `reservations`, `resources` |
-| `moderate-review` | HTTP POST | `authenticated_session` | `users` | `root`/`owner`/scope `reviews.moderate` | `databases.read`, `databases.write` | `module.reviews` | `reviews`, `activity_logs` |
-| `staff-user-management` | HTTP POST | `authenticated_session` | `users` | `owner`/`root`/scope `staff.manage` | `users.read`, `users.write`, `databases.read`, `databases.write` | `module.staff` | `users`, `activity_logs` |
-| `email-verification` | HTTP POST | `public` | `any` | context dependent (`send/resend/verify`) | `users.read`, `users.write`, `databases.read`, `databases.write` | no | `email_verifications`, `users` |
-| `sync-user-profile` | HTTP POST | `authenticated_session` | `users` | self user | `users.read`, `users.write`, `databases.read`, `databases.write` | no | `users` |
-| `activity-log-query` | HTTP POST | `authenticated_session` | `users` | `root` only | `databases.read`, `databases.write` | no | `activity_logs` |
-| `dashboard-metrics-aggregator` | cron | `api_key_only` | `[]` | n/a | `databases.read`, `databases.write` | `module.analytics.basic` | `analytics_daily`, `reservations`, `leads`, `resources` |
-| `root-functions-diagnostics` | HTTP POST | `authenticated_session` | `users` | `root` only | `functions.read`, `databases.read`, `functions.write` (optional smoke) | no | diagnostics only |
-| `send-chat-notification` | HTTP POST | `public` | `any` | authenticated caller expected by app flow | `databases.read` | `module.messaging.realtime` | `conversations`, `messages` |
-| `send-proposal` | HTTP POST | `authenticated_session` | `users` | `owner`, `root`, `staff_*` + `messaging.write` | `databases.read`, `databases.write` | `module.messaging.realtime` | `conversations`, `messages`, `leads`, `activity_logs` |
-| `respond-proposal` | HTTP POST | `authenticated_session` | `users` | `client` participant | `databases.read`, `databases.write` | `module.messaging.realtime` | `conversations`, `messages`, `leads`, `activity_logs` |
-| `send-password-reset` | HTTP POST | `public` | `any` | none | `users.read`, `users.write`, `databases.read`, `databases.write` | no | `password_resets`, `users` |
-| `stripe-create-connected-account` | HTTP POST | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts) | `users.read`, `databases.read`, `databases.write` | `module.payments.online` | `users`, `activity_logs` |
-| `stripe-create-account-link` | HTTP POST | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts) | `users.read`, `databases.read`, `databases.write` | `module.payments.online` | `users`, `activity_logs` |
-| `stripe-refresh-account-link` | HTTP POST | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts) | `users.read`, `databases.read`, `databases.write` | `module.payments.online` | `users`, `activity_logs` |
-| `stripe-get-account-status` | HTTP POST | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts) | `users.read`, `databases.read`, `databases.write` | `module.payments.online` | `users`, `activity_logs` |
-| `create-reservation-manual` | HTTP POST | `authenticated_session` | `users` | internal (`owner/root/staff_*`) + `reservations.write` | `databases.read`, `databases.write` | booking modules | `reservations`, `leads`, `resources`, `activity_logs` |
-| `get-resource-availability` | HTTP POST | `public` | `any` | n/a | `databases.read` | `module.resources` | `reservations`, `resources` |
-| `create-marketing-contact-public` | HTTP POST | `public` | `any` | n/a | `databases.write` | no | `marketing_contact_requests` |
-| `create-newsletter-subscription-publi` | HTTP POST | `public` | `any` | n/a | `databases.read`, `databases.write` | no | `marketing_newsletter_subscribers` |
-| `deep-search-query` | HTTP POST | `authenticated_session` | `users` | internal (`root/owner/staff_*`) | `databases.read` | optional by plan | search views |
+| Function ID                            | Trigger                  | Auth mode               | Execute | Required roles                                         | Min API key scopes                                                     | Module gate                                                     | Collections touched                                                           |
+| -------------------------------------- | ------------------------ | ----------------------- | ------- | ------------------------------------------------------ | ---------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `user-create-profile`                  | event `users.*.create`   | `api_key_only`          | `[]`    | n/a                                                    | `databases.read`, `databases.write`                                    | no                                                              | `users`, `user_preferences`                                                   |
+| `create-lead`                          | HTTP POST                | `authenticated_session` | `users` | `client` (verified)                                    | `users.read`, `databases.read`, `databases.write`                      | `module.resources`, `module.leads`, `module.messaging.realtime` | `leads`, `conversations`, `messages`, `meeting_requests`, `activity_logs`     |
+| `send-lead-notification`               | event lead create        | `api_key_only`          | `[]`    | n/a                                                    | `databases.read`                                                       | no                                                              | `leads`                                                                       |
+| `property-view-counter`                | HTTP POST                | `public`                | `any`   | n/a                                                    | `databases.read`, `databases.write`                                    | optional by instance policy                                     | `resources`                                                                   |
+| `create-reservation-public`            | HTTP POST                | `authenticated_session` | `users` | `client` (verified)                                    | `users.read`, `databases.read`, `databases.write`                      | booking/payment modules                                         | `reservations`, `resources`, `activity_logs`                                  |
+| `reservation-created-notification`     | event reservation create | `api_key_only`          | `[]`    | n/a                                                    | `databases.read`, `databases.write`                                    | no                                                              | `reservations`                                                                |
+| `create-payment-session`               | HTTP POST                | `authenticated_session` | `users` | reservation guest                                      | `users.read`, `databases.read`, `databases.write`                      | booking/payment modules                                         | `reservations`, `reservation_payments`, `resources`, `users`, `activity_logs` |
+| `payment-webhook-stripe`               | HTTP webhook             | `public`                | `any`   | n/a (signature validated)                              | `databases.read`, `databases.write`, `functions.write`                 | payment modules                                                 | `reservation_payments`, `reservations`, `activity_logs`                       |
+| `expire-pending-reservations`          | cron / internal HTTP     | `api_key_only`          | `[]`    | n/a                                                    | `databases.read`, `databases.write`                                    | booking modules                                                 | `reservations`, `activity_logs`                                               |
+| `payment-webhook-mercadopago`          | HTTP webhook             | `public`                | `any`   | n/a (signature/verification)                           | `databases.read`, `databases.write`, `functions.write`                 | payment modules                                                 | `reservation_payments`, `reservations`, `activity_logs`                       |
+| `issue-reservation-voucher`            | internal execution       | `api_key_only`          | `[]`    | n/a                                                    | `databases.read`, `databases.write`                                    | booking modules                                                 | `reservation_vouchers`, `reservations`                                        |
+| `create-review-public`                 | HTTP POST                | `authenticated_session` | `users` | `client` (eligible reservation)                        | `users.read`, `databases.read`, `databases.write`                      | `module.reviews`                                                | `reviews`, `reservations`, `resources`                                        |
+| `moderate-review`                      | HTTP POST                | `authenticated_session` | `users` | `root`/`owner`/scope `reviews.moderate`                | `databases.read`, `databases.write`                                    | `module.reviews`                                                | `reviews`, `activity_logs`                                                    |
+| `staff-user-management`                | HTTP POST                | `authenticated_session` | `users` | `owner`/`root`/scope `staff.manage`                    | `users.read`, `users.write`, `databases.read`, `databases.write`       | `module.staff`                                                  | `users`, `activity_logs`                                                      |
+| `email-verification`                   | HTTP POST                | `public`                | `any`   | context dependent (`send/resend/verify`)               | `users.read`, `users.write`, `databases.read`, `databases.write`       | no                                                              | `email_verifications`, `users`                                                |
+| `sync-user-profile`                    | HTTP POST                | `authenticated_session` | `users` | self user                                              | `users.read`, `users.write`, `databases.read`, `databases.write`       | no                                                              | `users`                                                                       |
+| `activity-log-query`                   | HTTP POST                | `authenticated_session` | `users` | `root` only                                            | `databases.read`, `databases.write`                                    | no                                                              | `activity_logs`                                                               |
+| `dashboard-metrics-aggregator`         | cron                     | `api_key_only`          | `[]`    | n/a                                                    | `databases.read`, `databases.write`                                    | `module.analytics.basic`                                        | `analytics_daily`, `reservations`, `leads`, `resources`                       |
+| `root-functions-diagnostics`           | HTTP POST                | `authenticated_session` | `users` | `root` only                                            | `functions.read`, `databases.read`, `functions.write` (optional smoke) | no                                                              | diagnostics only                                                              |
+| `send-chat-notification`               | HTTP POST                | `public`                | `any`   | authenticated caller expected by app flow              | `databases.read`                                                       | `module.messaging.realtime`                                     | `conversations`, `messages`                                                   |
+| `send-proposal`                        | HTTP POST                | `authenticated_session` | `users` | `owner`, `root`, `staff_*` + `messaging.write`         | `databases.read`, `databases.write`                                    | `module.messaging.realtime`                                     | `conversations`, `messages`, `leads`, `activity_logs`                         |
+| `respond-proposal`                     | HTTP POST                | `authenticated_session` | `users` | `client` participant                                   | `databases.read`, `databases.write`                                    | `module.messaging.realtime`                                     | `conversations`, `messages`, `leads`, `activity_logs`                         |
+| `send-password-reset`                  | HTTP POST                | `public`                | `any`   | none                                                   | `users.read`, `users.write`, `databases.read`, `databases.write`       | no                                                              | `password_resets`, `users`                                                    |
+| `stripe-create-connected-account`      | HTTP POST                | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts)                  | `users.read`, `databases.read`, `databases.write`                      | `module.payments.online`                                        | `users`, `activity_logs`                                                      |
+| `stripe-create-account-link`           | HTTP POST                | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts)                  | `users.read`, `databases.read`, `databases.write`                      | `module.payments.online`                                        | `users`, `activity_logs`                                                      |
+| `stripe-refresh-account-link`          | HTTP POST                | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts)                  | `users.read`, `databases.read`, `databases.write`                      | `module.payments.online`                                        | `users`, `activity_logs`                                                      |
+| `stripe-get-account-status`            | HTTP POST                | `authenticated_session` | `users` | `owner`/`root` (or delegated payouts)                  | `users.read`, `databases.read`, `databases.write`                      | `module.payments.online`                                        | `users`, `activity_logs`                                                      |
+| `create-reservation-manual`            | HTTP POST                | `authenticated_session` | `users` | internal (`owner/root/staff_*`) + `reservations.write` | `databases.read`, `databases.write`                                    | booking modules                                                 | `reservations`, `leads`, `resources`, `activity_logs`                         |
+| `get-resource-availability`            | HTTP POST                | `public`                | `any`   | n/a                                                    | `databases.read`                                                       | `module.resources`                                              | `reservations`, `resources`                                                   |
+| `create-marketing-contact-public`      | HTTP POST                | `public`                | `any`   | n/a                                                    | `databases.write`                                                      | no                                                              | `marketing_contact_requests`                                                  |
+| `create-newsletter-subscription-publi` | HTTP POST                | `public`                | `any`   | n/a                                                    | `databases.read`, `databases.write`                                    | no                                                              | `marketing_newsletter_subscribers`                                            |
+| `deep-search-query`                    | HTTP POST                | `authenticated_session` | `users` | internal (`root/owner/staff_*`)                        | `databases.read`                                                       | optional by plan                                                | search views                                                                  |
 
 ---
 
@@ -80,7 +80,9 @@ Regla clave:
 ### Platform mode (`uiMode=platform`)
 
 - Resource lead/chat/reservation/payment/review mutations are allowed only for authenticated and eligible actors.
-- `create-lead` source in platform mode should be `authenticated_chat` or `authenticated_form`.
+- `create-lead` source in platform mode should be `authenticated_chat`, `authenticated_form`, `IN_PLATFORM`, `WHATSAPP`, or `EMAIL`. v2 channels (`IN_PLATFORM`, `WHATSAPP`, `EMAIL`) are the preferred values; legacy channels are still accepted for backward compatibility.
+- `create-lead` v2 intents: `GENERAL_INQUIRY`, `SCHEDULE_MEETING`, `AVAILABILITY_INQUIRY` (uppercase). Legacy intents remain supported.
+- When intent is `SCHEDULE_MEETING` and a `meetingRequest` payload is provided, the function also creates a document in `meeting_requests`.
 
 ### Marketing mode (`uiMode=marketing`)
 
@@ -89,7 +91,79 @@ Regla clave:
 
 ---
 
-## 5. Error contract (shared)
+## 5. Reservation function payload contracts
+
+### `create-reservation-public` (POST, authenticated)
+
+Request body:
+
+| field             | type     | required                          | notes                                          |
+| ----------------- | -------- | --------------------------------- | ---------------------------------------------- |
+| `resourceId`      | `string` | yes                               | resource to book                               |
+| `checkInDate`     | `string` | yes for `date_range`              | ISO 8601 datetime                              |
+| `checkOutDate`    | `string` | yes for `date_range`              | ISO 8601 datetime                              |
+| `startDateTime`   | `string` | yes for `time_slot`/`fixed_event` | ISO 8601 datetime                              |
+| `endDateTime`     | `string` | yes for `time_slot`/`fixed_event` | ISO 8601 datetime                              |
+| `guestCount`      | `number` | yes                               | 1–500                                          |
+| `guestName`       | `string` | no                                | fallback to auth user name                     |
+| `guestEmail`      | `string` | no                                | must match authenticated user                  |
+| `guestPhone`      | `string` | no                                | max 20 chars                                   |
+| `specialRequests` | `string` | no                                | max 2000 chars                                 |
+| `currency`        | `string` | no                                | MXN/USD/EUR                                    |
+| `clientRequestId` | `string` | no                                | idempotency (stored as externalRef `client:…`) |
+| `feesAmount`      | `number` | no                                | default 0                                      |
+| `taxAmount`       | `number` | no                                | default 0                                      |
+
+Server-side resolution: `resourceOwnerUserId`, `commercialMode`, `bookingType`, `baseAmount`, `nights`, `totalAmount`, `holdExpiresAt`.
+
+Response: `201 RESERVATION_CREATED` with `{ reservationId, holdExpiresAt, totalAmount, currency, nextStep: "create-payment-session" }`.
+
+### `create-reservation-manual` (POST, authenticated internal)
+
+Request body:
+
+| field             | type      | required                          | notes                              |
+| ----------------- | --------- | --------------------------------- | ---------------------------------- |
+| `resourceId`      | `string`  | yes (or inferred from lead)       | resource to book                   |
+| `leadId`          | `string`  | no                                | source lead FK                     |
+| `scheduleType`    | `string`  | yes for `manual_contact`          | `date_range` or `time_slot`        |
+| `bookingType`     | `string`  | no                                | override resource bookingType      |
+| `checkInDate`     | `string`  | yes for `date_range`              | ISO 8601                           |
+| `checkOutDate`    | `string`  | yes for `date_range`              | ISO 8601                           |
+| `startDateTime`   | `string`  | yes for `time_slot`/`fixed_event` | ISO 8601                           |
+| `endDateTime`     | `string`  | yes for `time_slot`/`fixed_event` | ISO 8601                           |
+| `guestUserId`     | `string`  | no                                | fallback to lead user or actor     |
+| `guestName`       | `string`  | no                                | fallback chain: lead → profile     |
+| `guestEmail`      | `string`  | no                                | fallback chain: lead → profile     |
+| `guestPhone`      | `string`  | no                                | max 20 chars                       |
+| `guestCount`      | `number`  | no                                | 1–500, default 1                   |
+| `units`           | `number`  | no                                | 1–9999, default 1                  |
+| `baseAmount`      | `number`  | no                                | computed from resource if omitted  |
+| `feesAmount`      | `number`  | no                                | default 0                          |
+| `taxAmount`       | `number`  | no                                | default 0                          |
+| `totalAmount`     | `number`  | no                                | computed from amounts if omitted   |
+| `currency`        | `string`  | no                                | MXN/USD/EUR, default from resource |
+| `status`          | `string`  | no                                | default `pending`                  |
+| `paymentStatus`   | `string`  | no                                | default `pending`                  |
+| `externalRef`     | `string`  | no                                | max 120 chars                      |
+| `specialRequests` | `string`  | no                                | max 2000 chars                     |
+| `closeLead`       | `boolean` | no                                | close linked lead as `closed_won`  |
+
+Server-side resolution: `resourceOwnerUserId`, `commercialMode`, `nights`, `paymentProvider` (`manual`).
+
+Response: `201 RESERVATION_CREATED_MANUAL` with `{ reservationId, bookingType, scheduleType, status, paymentStatus, totalAmount, currency }`.
+
+### `expire-pending-reservations` (POST, api_key_only / cron)
+
+No body. Finds reservations with `status=pending`, `paymentStatus=unpaid`, `holdExpiresAt <= now`. Sets `status=expired`.
+
+### `get-resource-availability` (POST, public)
+
+Request: `{ resourceId, from?, to? }`. Returns `{ blockedDateKeys[], occupiedSlotsByDate{}, reservations[] }`.
+
+---
+
+## 6. Error contract (shared)
 
 ```json
 {
@@ -117,5 +191,5 @@ Regla clave:
 
 ---
 
-Last update: 2026-03-02
-Version: 4.0.0
+Last update: 2025-07-17
+Version: 4.1.0

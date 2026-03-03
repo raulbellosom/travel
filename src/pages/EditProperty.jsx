@@ -85,7 +85,7 @@ const EditProperty = () => {
         const nextSortOrder =
           existingImages.reduce(
             (maxOrder, image) =>
-              Math.max(maxOrder, Number(image?.sortOrder || 0)),
+              Math.max(maxOrder, Number(image?.position || 0)),
             -1,
           ) + 1;
 

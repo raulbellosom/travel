@@ -111,6 +111,7 @@ export default async ({ req, res, log, error }) => {
       config.messagesCollectionId,
       [
         Query.equal("conversationId", conversationId),
+        Query.equal("enabled", true),
         Query.limit(2), // We only need to know if there's more than 1
       ],
     );
@@ -163,7 +164,7 @@ export default async ({ req, res, log, error }) => {
 
     const recipientFirstName =
       recipient.firstName || recipientEmail.split("@")[0];
-    const propertyTitle = conversation.propertyTitle || "una propiedad";
+    const resourceTitle = conversation.resourceTitle || "una propiedad";
 
     const ccList = [];
     if (config.platformOwnerEmail) {
@@ -175,12 +176,12 @@ export default async ({ req, res, log, error }) => {
       from: `"${fromName}" <${fromAddress}>`,
       to: recipientEmail,
       cc: ccList.length ? ccList.join(", ") : undefined,
-      subject: `Nuevo mensaje de ${senderName} sobre ${propertyTitle}`,
+      subject: `Nuevo mensaje de ${senderName} sobre ${resourceTitle}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #0f172a;">Nuevo mensaje recibido</h2>
           <p>Hola <strong>${recipientFirstName}</strong>,</p>
-          <p><strong>${senderName}</strong> te ha enviado un mensaje sobre <strong>${propertyTitle}</strong>:</p>
+          <p><strong>${senderName}</strong> te ha enviado un mensaje sobre <strong>${resourceTitle}</strong>:</p>
           <blockquote style="margin: 16px 0; padding: 12px 16px; border-left: 4px solid #0ea5e9; background: #f0f9ff; border-radius: 4px; color: #334155;">
             ${messageBody}
           </blockquote>

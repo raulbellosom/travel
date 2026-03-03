@@ -70,7 +70,14 @@ const SEARCHABLE_MODULES = Object.freeze({
     "customer",
     "customers",
   ],
-  profile: ["profile", "perfil", "cuenta", "account", "preferences", "preferencias"],
+  profile: [
+    "profile",
+    "perfil",
+    "cuenta",
+    "account",
+    "preferences",
+    "preferencias",
+  ],
 });
 
 const hasValue = (value) =>
@@ -94,7 +101,8 @@ const cfg = () => ({
       getEnv("APPWRITE_COLLECTION_USER_PREFERENCES_ID") || "user_preferences",
     properties: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
     leads: getEnv("APPWRITE_COLLECTION_LEADS_ID") || "leads",
-    reservations: getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
+    reservations:
+      getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
     payments:
       getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") ||
       "reservation_payments",
@@ -145,7 +153,9 @@ const parseScopesJson = (value) => {
 };
 
 const getEffectiveScopes = (userDoc) => {
-  const role = String(userDoc?.role || "").trim().toLowerCase();
+  const role = String(userDoc?.role || "")
+    .trim()
+    .toLowerCase();
   if (role === "root" || role === "owner") return ["*"];
   return parseScopesJson(userDoc?.scopesJson);
 };
@@ -165,7 +175,11 @@ const hasScope = (scopes, required) => {
 
 const isInternalRole = (role) => {
   const normalized = String(role || "").toLowerCase();
-  return normalized === "root" || normalized === "owner" || STAFF_ROLES.includes(normalized);
+  return (
+    normalized === "root" ||
+    normalized === "owner" ||
+    STAFF_ROLES.includes(normalized)
+  );
 };
 
 const getScore = (query, values = []) => {
@@ -207,7 +221,11 @@ const rankDocuments = (documents, query, valuesSelector, limit) =>
 const listDocumentsSafe = async ({ db, config, collectionId, queries }) => {
   if (!collectionId) return [];
   try {
-    const response = await db.listDocuments(config.databaseId, collectionId, queries || []);
+    const response = await db.listDocuments(
+      config.databaseId,
+      collectionId,
+      queries || [],
+    );
     return response?.documents || [];
   } catch {
     return [];
@@ -251,7 +269,9 @@ export default async ({ req, res }) => {
   }
 
   const actorUserId =
-    req.headers?.["x-appwrite-user-id"] || req.headers?.["x-appwrite-userid"] || "";
+    req.headers?.["x-appwrite-user-id"] ||
+    req.headers?.["x-appwrite-userid"] ||
+    "";
   if (!actorUserId) {
     return json(res, 401, {
       ok: false,
@@ -314,7 +334,11 @@ export default async ({ req, res }) => {
 
     const scopes = getEffectiveScopes(actorDoc);
     const plan = detectSearchPlan(rawQuery);
-    const baseQuery = [Query.equal("enabled", true), Query.orderDesc("$createdAt"), Query.limit(SCAN_LIMIT)];
+    const baseQuery = [
+      Query.equal("enabled", true),
+      Query.orderDesc("$createdAt"),
+      Query.limit(SCAN_LIMIT),
+    ];
 
     const tasks = [
       hasScope(scopes, "resources.read") && canFetchModule(plan, "properties")
@@ -333,7 +357,8 @@ export default async ({ req, res }) => {
             queries: baseQuery,
           })
         : Promise.resolve([]),
-      hasScope(scopes, "reservations.read") && canFetchModule(plan, "reservations")
+      hasScope(scopes, "reservations.read") &&
+      canFetchModule(plan, "reservations")
         ? listDocumentsSafe({
             db,
             config,
@@ -369,7 +394,8 @@ export default async ({ req, res }) => {
             ],
           })
         : Promise.resolve([]),
-      (actorRole === "owner" || actorRole === "root") && canFetchModule(plan, "clients")
+      (actorRole === "owner" || actorRole === "root") &&
+      canFetchModule(plan, "clients")
         ? listDocumentsSafe({
             db,
             config,
@@ -389,7 +415,10 @@ export default async ({ req, res }) => {
             db,
             config,
             collectionId: config.collections.userPreferences,
-            queries: [Query.equal("userId", String(actorUserId)), Query.limit(1)],
+            queries: [
+              Query.equal("userId", String(actorUserId)),
+              Query.limit(1),
+            ],
           })
         : Promise.resolve([]),
       actorRole === "root"
@@ -419,13 +448,28 @@ export default async ({ req, res }) => {
       properties: rankDocuments(
         propertiesPool,
         rawQuery,
-        (item) => [item.$id, item.title, item.slug, item.city, item.state, item.description],
+        (item) => [
+          item.$id,
+          item.title,
+          item.slug,
+          item.city,
+          item.state,
+          item.description,
+        ],
         limitPerModule,
       ),
       leads: rankDocuments(
         leadsPool,
         rawQuery,
-        (item) => [item.$id, item.name, item.email, item.phone, item.message, item.status, item.propertyId],
+        (item) => [
+          item.$id,
+          item.name,
+          item.email,
+          item.phone,
+          item.message,
+          item.status,
+          item.propertyId,
+        ],
         limitPerModule,
       ),
       reservations: rankDocuments(
@@ -445,29 +489,55 @@ export default async ({ req, res }) => {
       payments: rankDocuments(
         paymentsPool,
         rawQuery,
-        (item) => [item.$id, item.provider, item.status, item.reservationId, item.providerPaymentId],
+        (item) => [
+          item.$id,
+          item.provider,
+          item.status,
+          item.reservationId,
+          item.providerPaymentId,
+        ],
         limitPerModule,
       ),
       reviews: rankDocuments(
         reviewsPool,
         rawQuery,
-        (item) => [item.$id, item.propertyId, item.authorName, item.title, item.comment, item.status],
+        (item) => [
+          item.$id,
+          item.resourceId,
+          item.authorName,
+          item.title,
+          item.comment,
+          item.status,
+        ],
         limitPerModule,
       ),
       team: rankDocuments(
         teamPool,
         rawQuery,
-        (item) => [item.$id, item.firstName, item.lastName, item.email, item.role],
+        (item) => [
+          item.$id,
+          item.firstName,
+          item.lastName,
+          item.email,
+          item.role,
+        ],
         limitPerModule,
       ),
       clients: rankDocuments(
         clientsPool,
         rawQuery,
-        (item) => [item.$id, item.firstName, item.lastName, item.email, item.phone],
+        (item) => [
+          item.$id,
+          item.firstName,
+          item.lastName,
+          item.email,
+          item.phone,
+        ],
         limitPerModule,
       ),
       profile:
-        profileDoc && getScore(rawQuery, [
+        profileDoc &&
+        getScore(rawQuery, [
           profileDoc.firstName,
           profileDoc.lastName,
           profileDoc.email,
@@ -480,14 +550,19 @@ export default async ({ req, res }) => {
       preferences: (() => {
         const pref = preferencesPool?.[0] || null;
         if (!pref) return null;
-        return getScore(rawQuery, [pref.theme, pref.locale]) > 0
-          ? pref
-          : null;
+        return getScore(rawQuery, [pref.theme, pref.locale]) > 0 ? pref : null;
       })(),
       activityLogs: rankDocuments(
         activityLogsPool,
         rawQuery,
-        (item) => [item.$id, item.action, item.entityType, item.entityId, item.actorUserId, item.changeSummary],
+        (item) => [
+          item.$id,
+          item.action,
+          item.entityType,
+          item.entityId,
+          item.actorUserId,
+          item.changeSummary,
+        ],
         limitPerModule,
       ),
       loadedAt: Date.now(),

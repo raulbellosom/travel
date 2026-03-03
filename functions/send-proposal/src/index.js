@@ -146,7 +146,10 @@ const safeJson = (value, maxLength = 20000) => {
 
 const getAuthenticatedUserId = (req) => {
   const headers = req.headers || {};
-  return normalizeText(headers["x-appwrite-user-id"] || headers["x-appwrite-userid"], 64);
+  return normalizeText(
+    headers["x-appwrite-user-id"] || headers["x-appwrite-userid"],
+    64,
+  );
 };
 
 const getRequestId = (req) => {
@@ -181,7 +184,11 @@ const buildSenderName = (profile) => {
   );
 };
 
-const buildMessagePermissions = ({ ownerUserId, clientUserId, actorUserId }) => [
+const buildMessagePermissions = ({
+  ownerUserId,
+  clientUserId,
+  actorUserId,
+}) => [
   ...new Set([
     Permission.read(Role.user(ownerUserId)),
     Permission.update(Role.user(ownerUserId)),
@@ -207,18 +214,31 @@ const safeActivityLog = async ({ db, config, logger, data }) => {
   }
 };
 
-const findLeadByConversation = async ({ db, config, conversationId, leadId }) => {
+const findLeadByConversation = async ({
+  db,
+  config,
+  conversationId,
+  leadId,
+}) => {
   if (leadId) {
-    const lead = await db.getDocument(config.databaseId, config.leadsCollectionId, leadId);
+    const lead = await db.getDocument(
+      config.databaseId,
+      config.leadsCollectionId,
+      leadId,
+    );
     return lead;
   }
 
-  const response = await db.listDocuments(config.databaseId, config.leadsCollectionId, [
-    Query.equal("conversationId", conversationId),
-    Query.equal("enabled", true),
-    Query.orderDesc("$createdAt"),
-    Query.limit(1),
-  ]);
+  const response = await db.listDocuments(
+    config.databaseId,
+    config.leadsCollectionId,
+    [
+      Query.equal("conversationId", conversationId),
+      Query.equal("enabled", true),
+      Query.orderDesc("$createdAt"),
+      Query.limit(1),
+    ],
+  );
 
   return response.documents?.[0] || null;
 };
@@ -232,17 +252,28 @@ const buildProposalPayload = (payload, senderRole) => {
   const timeStart = toIso(payload.timeStart);
   const timeEnd = toIso(payload.timeEnd);
   if (!timeStart || !timeEnd) {
-    throw createHttpError(422, "VALIDATION_ERROR", "timeStart and timeEnd are required");
+    throw createHttpError(
+      422,
+      "VALIDATION_ERROR",
+      "timeStart and timeEnd are required",
+    );
   }
 
   const start = new Date(timeStart).getTime();
   const end = new Date(timeEnd).getTime();
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
-    throw createHttpError(422, "VALIDATION_ERROR", "timeEnd must be greater than timeStart");
+    throw createHttpError(
+      422,
+      "VALIDATION_ERROR",
+      "timeEnd must be greater than timeStart",
+    );
   }
 
   const meetingType = normalizeText(payload.meetingType, 20).toLowerCase();
-  if (proposalType === "visit" && !["on_site", "video_call"].includes(meetingType)) {
+  if (
+    proposalType === "visit" &&
+    !["on_site", "video_call"].includes(meetingType)
+  ) {
     throw createHttpError(
       422,
       "VALIDATION_ERROR",
@@ -252,7 +283,11 @@ const buildProposalPayload = (payload, senderRole) => {
 
   const expiresAt = toIso(payload.expiresAt);
   if (payload.expiresAt && !expiresAt) {
-    throw createHttpError(422, "VALIDATION_ERROR", "expiresAt must be a valid ISO date");
+    throw createHttpError(
+      422,
+      "VALIDATION_ERROR",
+      "expiresAt must be a valid ISO date",
+    );
   }
 
   return stripUndefined({
@@ -355,7 +390,11 @@ export default async ({ req, res, log, error }) => {
 
     const actorRole = normalizeText(actorProfile.role, 40).toLowerCase();
     if (actorProfile.enabled === false || !INTERNAL_ROLES.has(actorRole)) {
-      throw createHttpError(403, "FORBIDDEN", "Only internal users can send proposals");
+      throw createHttpError(
+        403,
+        "FORBIDDEN",
+        "Only internal users can send proposals",
+      );
     }
 
     if (!hasScope(actorProfile, "messaging.write")) {
@@ -369,7 +408,11 @@ export default async ({ req, res, log, error }) => {
     );
 
     if (conversation.enabled === false) {
-      throw createHttpError(404, "CONVERSATION_NOT_AVAILABLE", "Conversation not available");
+      throw createHttpError(
+        404,
+        "CONVERSATION_NOT_AVAILABLE",
+        "Conversation not available",
+      );
     }
 
     const senderRole = resolveSenderRole(actorRole);
@@ -383,7 +426,11 @@ export default async ({ req, res, log, error }) => {
     });
 
     if (lead?.conversationId && lead.conversationId !== conversationId) {
-      throw createHttpError(422, "VALIDATION_ERROR", "leadId does not belong to conversationId");
+      throw createHttpError(
+        422,
+        "VALIDATION_ERROR",
+        "leadId does not belong to conversationId",
+      );
     }
 
     const summaryText =
@@ -405,7 +452,6 @@ export default async ({ req, res, log, error }) => {
         kind: "proposal",
         payloadJson: JSON.stringify(proposalPayload),
         relatedLeadId: lead?.$id || undefined,
-        readBySender: true,
         readByRecipient: false,
         enabled: true,
       },
@@ -416,11 +462,14 @@ export default async ({ req, res, log, error }) => {
       }),
     );
 
-    const isSenderClient = normalizeText(conversation.clientUserId, 64) === actorUserId;
+    const isSenderClient =
+      normalizeText(conversation.clientUserId, 64) === actorUserId;
     const patch = {
       status: "active",
       lastMessage:
-        summaryText.length > 120 ? `${summaryText.slice(0, 120)}...` : summaryText,
+        summaryText.length > 120
+          ? `${summaryText.slice(0, 120)}...`
+          : summaryText,
       lastMessageAt: new Date().toISOString(),
       ownerUnread: Number(conversation.ownerUnread || 0),
       clientUnread: Number(conversation.clientUnread || 0),

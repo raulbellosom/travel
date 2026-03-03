@@ -271,7 +271,9 @@ const AppReservations = () => {
       closeLead: false,
       guestName: String(manualForm.guestName || "").trim() || undefined,
       guestEmail:
-        String(manualForm.guestEmail || "").trim().toLowerCase() || undefined,
+        String(manualForm.guestEmail || "")
+          .trim()
+          .toLowerCase() || undefined,
       guestPhone: String(manualForm.guestPhone || "").trim() || undefined,
       guestCount: Number(manualForm.guestCount || 1),
       externalRef: String(manualForm.externalRef || "").trim() || undefined,
@@ -406,7 +408,9 @@ const AppReservations = () => {
               onChange={(event) =>
                 updateManualField(
                   "currency",
-                  String(event.target.value || "").toUpperCase().slice(0, 3),
+                  String(event.target.value || "")
+                    .toUpperCase()
+                    .slice(0, 3),
                 )
               }
               className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800"
@@ -416,7 +420,9 @@ const AppReservations = () => {
           {manualForm.scheduleType === "date_range" ? (
             <>
               <label className="grid gap-1 text-sm">
-                <span>{t("appReservationsPage.manual.fields.checkInDate")}</span>
+                <span>
+                  {t("appReservationsPage.manual.fields.checkInDate")}
+                </span>
                 <input
                   type="date"
                   value={manualForm.checkInDate}
@@ -427,7 +433,9 @@ const AppReservations = () => {
                 />
               </label>
               <label className="grid gap-1 text-sm">
-                <span>{t("appReservationsPage.manual.fields.checkOutDate")}</span>
+                <span>
+                  {t("appReservationsPage.manual.fields.checkOutDate")}
+                </span>
                 <input
                   type="date"
                   value={manualForm.checkOutDate}
@@ -441,7 +449,9 @@ const AppReservations = () => {
           ) : (
             <>
               <label className="grid gap-1 text-sm">
-                <span>{t("appReservationsPage.manual.fields.startDateTime")}</span>
+                <span>
+                  {t("appReservationsPage.manual.fields.startDateTime")}
+                </span>
                 <input
                   type="datetime-local"
                   value={manualForm.startDateTime}
@@ -452,7 +462,9 @@ const AppReservations = () => {
                 />
               </label>
               <label className="grid gap-1 text-sm">
-                <span>{t("appReservationsPage.manual.fields.endDateTime")}</span>
+                <span>
+                  {t("appReservationsPage.manual.fields.endDateTime")}
+                </span>
                 <input
                   type="datetime-local"
                   value={manualForm.endDateTime}
@@ -564,7 +576,9 @@ const AppReservations = () => {
             />
           </label>
           <label className="grid gap-1 text-sm md:col-span-2 xl:col-span-4">
-            <span>{t("appReservationsPage.manual.fields.specialRequests")}</span>
+            <span>
+              {t("appReservationsPage.manual.fields.specialRequests")}
+            </span>
             <textarea
               rows={2}
               value={manualForm.specialRequests}
@@ -661,10 +675,10 @@ const AppReservations = () => {
         <div className="grid gap-4">
           {filteredReservations.map((reservation) => {
             const isFocused = Boolean(focusId) && reservation.$id === focusId;
-            const reservationResourceId =
-              reservation.resourceId || reservation.propertyId;
+            const reservationResourceId = reservation.resourceId;
             const reservationResourceTitle =
-              resourceMap[reservationResourceId]?.title || reservationResourceId;
+              resourceMap[reservationResourceId]?.title ||
+              reservationResourceId;
             const isTimeSlotReservation =
               reservation.bookingType === "time_slot" ||
               reservation.bookingType === "fixed_event";
@@ -736,12 +750,15 @@ const AppReservations = () => {
                   </p>
                   <p className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <CreditCard size={14} />
-                    {formatMoneyWithDenomination(Number(reservation.totalAmount || 0), {
-                      locale,
-                      currency: reservation.currency || "MXN",
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatMoneyWithDenomination(
+                      Number(reservation.totalAmount || 0),
+                      {
+                        locale,
+                        currency: reservation.currency || "MXN",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      },
+                    )}
                   </p>
                 </div>
 

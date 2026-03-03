@@ -33,8 +33,10 @@ const cfg = () => ({
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   reservationPaymentsCollectionId:
-    getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") || "reservation_payments",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+    getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") ||
+    "reservation_payments",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
   instanceSettingsCollectionId:
     getEnv("APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID") || "instance_settings",
   paymentDefaultProvider: getEnv("PAYMENT_DEFAULT_PROVIDER") || "stripe",
@@ -58,7 +60,9 @@ const parseBody = (req) => {
 const json = (res, status, body) => res.json(body, status);
 
 const normalizeText = (value, maxLength = 0) => {
-  const normalized = String(value ?? "").trim().replace(/\s+/g, " ");
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
   if (!maxLength) return normalized;
   return normalized.slice(0, maxLength);
 };
@@ -137,7 +141,10 @@ const buildReturnUrl = ({ cfg, reservation, provider, status }) => {
   if (candidate) return candidate;
 
   const resourceId = resolveReservationResourceId(reservation);
-  const base = String(cfg.appBaseUrl || "http://localhost:5173").replace(/\/$/, "");
+  const base = String(cfg.appBaseUrl || "http://localhost:5173").replace(
+    /\/$/,
+    "",
+  );
   const params = new URLSearchParams({
     reservationId: reservation.$id,
     provider,
@@ -208,7 +215,7 @@ const createStripeSession = async ({
     "payment_intent_data[transfer_data][destination]": stripeAccountId,
     "payment_intent_data[application_fee_amount]": String(applicationFeeAmount),
     "payment_intent_data[on_behalf_of]": stripeAccountId,
-      });
+  });
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -249,7 +256,12 @@ const currencyToMercadoPago = (currency) => {
   return "MXN";
 };
 
-const createMercadoPagoPreference = async ({ cfg, reservation, amount, currency }) => {
+const createMercadoPagoPreference = async ({
+  cfg,
+  reservation,
+  amount,
+  currency,
+}) => {
   if (!cfg.mercadopagoAccessToken) {
     return buildMockSession({ cfg, reservation, provider: "mercadopago" });
   }
@@ -268,35 +280,38 @@ const createMercadoPagoPreference = async ({ cfg, reservation, amount, currency 
     status: "cancel",
   });
 
-  const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${cfg.mercadopagoAccessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      external_reference: reservation.$id,
-      back_urls: {
-        success: successUrl,
-        failure: cancelUrl,
-        pending: cancelUrl,
+  const response = await fetch(
+    "https://api.mercadopago.com/checkout/preferences",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${cfg.mercadopagoAccessToken}`,
+        "Content-Type": "application/json",
       },
-      auto_return: "approved",
-      items: [
-        {
-          id: reservation.$id,
-          title: `Reservation ${reservation.$id}`,
-          quantity: 1,
-          currency_id: currencyToMercadoPago(currency),
-          unit_price: amount,
+      body: JSON.stringify({
+        external_reference: reservation.$id,
+        back_urls: {
+          success: successUrl,
+          failure: cancelUrl,
+          pending: cancelUrl,
         },
-      ],
-      metadata: {
-        reservationId: reservation.$id,
-        resourceId,
-              },
-    }),
-  });
+        auto_return: "approved",
+        items: [
+          {
+            id: reservation.$id,
+            title: `Reservation ${reservation.$id}`,
+            quantity: 1,
+            currency_id: currencyToMercadoPago(currency),
+            unit_price: amount,
+          },
+        ],
+        metadata: {
+          reservationId: reservation.$id,
+          resourceId,
+        },
+      }),
+    },
+  );
 
   const text = await response.text();
   let data = {};
@@ -317,7 +332,10 @@ const createMercadoPagoPreference = async ({ cfg, reservation, amount, currency 
   return {
     mode: "live",
     providerPaymentId: String(data.id).slice(0, 120),
-    checkoutUrl: String(data.init_point || data.sandbox_init_point || "").slice(0, 750),
+    checkoutUrl: String(data.init_point || data.sandbox_init_point || "").slice(
+      0,
+      750,
+    ),
     raw: data,
   };
 };
@@ -487,7 +505,10 @@ export default async ({ req, res, log, error }) => {
     }
 
     const reservationGuestUserId = normalizeText(reservation.guestUserId, 64);
-    const reservationGuestEmail = normalizeText(reservation.guestEmail, 254).toLowerCase();
+    const reservationGuestEmail = normalizeText(
+      reservation.guestEmail,
+      254,
+    ).toLowerCase();
     const hasLegacyGuest = !reservationGuestUserId && reservationGuestEmail;
 
     if (!reservationGuestUserId && !reservationGuestEmail) {
@@ -499,7 +520,10 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (reservationGuestUserId && reservationGuestUserId !== authenticatedUserId) {
+    if (
+      reservationGuestUserId &&
+      reservationGuestUserId !== authenticatedUserId
+    ) {
       return json(res, 403, {
         ok: false,
         success: false,
@@ -517,7 +541,10 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    if (reservation.status === "cancelled" || reservation.status === "expired") {
+    if (
+      reservation.status === "cancelled" ||
+      reservation.status === "expired"
+    ) {
       return json(res, 409, {
         ok: false,
         success: false,
@@ -592,7 +619,8 @@ export default async ({ req, res, log, error }) => {
         ok: false,
         success: false,
         code: "MANUAL_CONTACT_ONLY",
-        message: "This resource uses manual contact flow and does not support checkout",
+        message:
+          "This resource uses manual contact flow and does not support checkout",
       });
     }
 
@@ -606,7 +634,7 @@ export default async ({ req, res, log, error }) => {
     }
 
     const reservationOwnerUserId = normalizeText(
-      reservation.resourceOwnerUserId || reservation.propertyOwnerId,
+      reservation.resourceOwnerUserId,
       64,
     );
     if (!reservationOwnerUserId) {
@@ -644,7 +672,8 @@ export default async ({ req, res, log, error }) => {
           ok: false,
           success: false,
           code: "OWNER_STRIPE_ACCOUNT_REQUIRED",
-          message: "Owner Stripe account is missing. Online payments are blocked.",
+          message:
+            "Owner Stripe account is missing. Online payments are blocked.",
         });
       }
       if (stripeOnboardingStatus !== "complete") {
@@ -652,7 +681,8 @@ export default async ({ req, res, log, error }) => {
           ok: false,
           success: false,
           code: "OWNER_STRIPE_ONBOARDING_INCOMPLETE",
-          message: "Owner Stripe onboarding is incomplete. Online payments are blocked.",
+          message:
+            "Owner Stripe onboarding is incomplete. Online payments are blocked.",
         });
       }
     }
@@ -704,7 +734,7 @@ export default async ({ req, res, log, error }) => {
           paymentId: existingPending.$id,
           reservationId,
           resourceId,
-                    provider: providerRaw,
+          provider: providerRaw,
           providerPaymentId: existingPending.providerPaymentId,
           checkoutUrl: existingCheckoutUrl,
           mode: parseRawPayload(existingPending.rawPayload).mode || "unknown",
@@ -801,7 +831,7 @@ export default async ({ req, res, log, error }) => {
         paymentId: paymentDocument.$id,
         reservationId,
         resourceId,
-                provider: providerRaw,
+        provider: providerRaw,
         providerPaymentId: session.providerPaymentId,
         checkoutUrl: session.checkoutUrl,
         mode: session.mode,
@@ -823,4 +853,3 @@ export default async ({ req, res, log, error }) => {
     });
   }
 };
-

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -27,7 +34,12 @@ import {
 import { isInternalRole } from "../utils/roles";
 import { isUserOnline, getLastSeenText } from "../utils/presence";
 import { cn } from "../utils/cn";
-import { Badge, Spinner, StatsCardsRow, ImageViewerModal } from "../components/common";
+import {
+  Badge,
+  Spinner,
+  StatsCardsRow,
+  ImageViewerModal,
+} from "../components/common";
 import ChatMessage from "../components/chat/ChatMessage";
 
 /**
@@ -65,15 +77,32 @@ const Conversations = () => {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showNewConversationModal, setShowNewConversationModal] = useState(false);
+  const [showNewConversationModal, setShowNewConversationModal] =
+    useState(false);
   const [newConversationSearch, setNewConversationSearch] = useState("");
-  const [startingDirectConversationFor, setStartingDirectConversationFor] = useState("");
+  const [startingDirectConversationFor, setStartingDirectConversationFor] =
+    useState("");
   const [statusMutation, setStatusMutation] = useState({
     conversationId: "",
     status: "",
   });
   const [isScrollReady, setIsScrollReady] = useState(false);
   const [viewerImage, setViewerImage] = useState(null);
+
+  // Inline finalize panel state (replaces window.confirm/prompt)
+  const [showFinalizePanel, setShowFinalizePanel] = useState(false);
+  const [finalizeClosureReason, setFinalizeClosureReason] = useState("");
+
+  // Inline proposal form state (replaces window.prompt chain)
+  const [showProposalForm, setShowProposalForm] = useState(false);
+  const [proposalFormData, setProposalFormData] = useState({
+    proposalType: "visit",
+    timeStart: "",
+    timeEnd: "",
+    timezone: "America/Mexico_City",
+    meetingType: "on_site",
+    location: "",
+  });
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -115,7 +144,8 @@ const Conversations = () => {
 
   const getInternalUserDisplayName = useCallback(
     (staffUser) => {
-      const fullName = `${staffUser?.firstName || ""} ${staffUser?.lastName || ""}`.trim();
+      const fullName =
+        `${staffUser?.firstName || ""} ${staffUser?.lastName || ""}`.trim();
       return (
         fullName ||
         String(staffUser?.name || "").trim() ||
@@ -351,7 +381,7 @@ const Conversations = () => {
         (c.resourceTitle || "").toLowerCase().includes(q) ||
         (c.clientName || "").toLowerCase().includes(q) ||
         (c.ownerName || "").toLowerCase().includes(q) ||
-      (c.lastMessage || "").toLowerCase().includes(q),
+        (c.lastMessage || "").toLowerCase().includes(q),
     );
   }, [conversations, search]);
 
@@ -410,7 +440,9 @@ const Conversations = () => {
     async (nextStatus, options = {}) => {
       if (!canWriteMessaging) return;
       const conversationId = String(activeConversation?.$id || "").trim();
-      const normalizedNextStatus = String(nextStatus || "").trim().toLowerCase();
+      const normalizedNextStatus = String(nextStatus || "")
+        .trim()
+        .toLowerCase();
       const currentStatus = String(activeConversation?.status || "active")
         .trim()
         .toLowerCase();
@@ -448,108 +480,62 @@ const Conversations = () => {
     ],
   );
 
-  const handleFinalizeConversation = useCallback(async () => {
+  const handleFinalizeConversation = useCallback(
+    async (outcome) => {
+      if (!activeConversation?.$id || !canWriteMessaging) return;
+      const won = outcome === "won";
+      await handleConversationStatusChange("closed", {
+        leadStatus: won ? "closed_won" : "closed_lost",
+        closureReason: finalizeClosureReason || "",
+      });
+      setShowFinalizePanel(false);
+      setFinalizeClosureReason("");
+    },
+    [
+      activeConversation?.$id,
+      canWriteMessaging,
+      finalizeClosureReason,
+      handleConversationStatusChange,
+    ],
+  );
+
+  const handleSendProposalSubmit = useCallback(async () => {
     if (!activeConversation?.$id || !canWriteMessaging) return;
 
-    const won = window.confirm(
-      t("conversationsPage.actions.finalizePrompt", {
-        defaultValue:
-          "Aceptar = cerrar como ganada. Cancelar = cerrar como perdida.",
-      }),
-    );
-
-    const closureReason = window.prompt(
-      t("conversationsPage.actions.closureReasonPrompt", {
-        defaultValue: "Motivo de cierre (opcional)",
-      }),
-      "",
-    );
-
-    await handleConversationStatusChange("closed", {
-      leadStatus: won ? "closed_won" : "closed_lost",
-      closureReason: closureReason || "",
-    });
-  }, [
-    activeConversation?.$id,
-    canWriteMessaging,
-    handleConversationStatusChange,
-    t,
-  ]);
-
-  const handleSendProposalPrompt = useCallback(async () => {
-    if (!activeConversation?.$id || !canWriteMessaging) return;
-
-    const proposalType = String(
-      window.prompt(
-        t("conversationsPage.actions.proposalTypePrompt", {
-          defaultValue: "Tipo de propuesta: visit | booking_manual",
-        }),
-        "visit",
-      ) || "",
-    )
-      .trim()
-      .toLowerCase();
-
-    if (!proposalType) return;
-
-    const timeStart = String(
-      window.prompt(
-        t("conversationsPage.actions.proposalStartPrompt", {
-          defaultValue: "Fecha/hora inicio (ISO)",
-        }),
-        "",
-      ) || "",
-    ).trim();
-    const timeEnd = String(
-      window.prompt(
-        t("conversationsPage.actions.proposalEndPrompt", {
-          defaultValue: "Fecha/hora fin (ISO)",
-        }),
-        "",
-      ) || "",
-    ).trim();
-    const timezone =
-      String(
-        window.prompt(
-          t("conversationsPage.actions.proposalTimezonePrompt", {
-            defaultValue: "Zona horaria",
-          }),
-          "America/Mexico_City",
-        ) || "",
-      ).trim() || "UTC";
-
-    const meetingType =
-      proposalType === "visit"
-        ? String(
-            window.prompt(
-              t("conversationsPage.actions.proposalMeetingTypePrompt", {
-                defaultValue: "Tipo de visita: on_site | video_call",
-              }),
-              "on_site",
-            ) || "",
-          )
-            .trim()
-            .toLowerCase()
-        : undefined;
-
-    const location = String(
-      window.prompt(
-        t("conversationsPage.actions.proposalLocationPrompt", {
-          defaultValue: "Ubicacion o enlace (opcional)",
-        }),
-        "",
-      ) || "",
-    ).trim();
+    const {
+      proposalType,
+      timeStart,
+      timeEnd,
+      timezone,
+      meetingType,
+      location,
+    } = proposalFormData;
+    if (!proposalType || !timeStart || !timeEnd) return;
 
     await sendProposal({
       proposalType,
       timeStart,
       timeEnd,
-      timezone,
-      meetingType: meetingType || undefined,
+      timezone: timezone || "UTC",
+      meetingType:
+        proposalType === "visit" ? meetingType || undefined : undefined,
       location: location || undefined,
     });
-  }, [activeConversation?.$id, canWriteMessaging, sendProposal, t]);
+    setShowProposalForm(false);
+    setProposalFormData({
+      proposalType: "visit",
+      timeStart: "",
+      timeEnd: "",
+      timezone: "America/Mexico_City",
+      meetingType: "on_site",
+      location: "",
+    });
+  }, [
+    activeConversation?.$id,
+    canWriteMessaging,
+    proposalFormData,
+    sendProposal,
+  ]);
 
   /* ── Summary stats ───────────────────────────────────── */
 
@@ -706,7 +692,10 @@ const Conversations = () => {
   /* ── Render ──────────────────────────────────────────── */
 
   // Show loading while restoring conversation from localStorage
-  if (isRestoringConversation || (loadingConversations && conversations.length === 0)) {
+  if (
+    isRestoringConversation ||
+    (loadingConversations && conversations.length === 0)
+  ) {
     return (
       <section className="flex h-[50vh] items-center justify-center">
         <Spinner size="lg" />
@@ -822,9 +811,20 @@ const Conversations = () => {
                         className="h-10 w-10 cursor-pointer rounded-full object-cover transition hover:opacity-80"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setViewerImage({ src: avatarUrl, alt: contactName(conv) });
+                          setViewerImage({
+                            src: avatarUrl,
+                            alt: contactName(conv),
+                          });
                         }}
-                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setViewerImage({ src: avatarUrl, alt: contactName(conv) }); } }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            setViewerImage({
+                              src: avatarUrl,
+                              alt: contactName(conv),
+                            });
+                          }
+                        }}
                       />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white">
@@ -921,8 +921,19 @@ const Conversations = () => {
                       role="button"
                       tabIndex={0}
                       className="h-8 w-8 cursor-pointer rounded-full object-cover transition hover:opacity-80"
-                      onClick={() => setViewerImage({ src: contactAvatarUrl, alt: contactName(activeConversation || {}) })}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setViewerImage({ src: contactAvatarUrl, alt: contactName(activeConversation || {}) }); }}
+                      onClick={() =>
+                        setViewerImage({
+                          src: contactAvatarUrl,
+                          alt: contactName(activeConversation || {}),
+                        })
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          setViewerImage({
+                            src: contactAvatarUrl,
+                            alt: contactName(activeConversation || {}),
+                          });
+                      }}
                     />
                   ) : (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-500 to-blue-600 text-xs font-bold text-white">
@@ -949,7 +960,7 @@ const Conversations = () => {
                       className={cn(
                         contactPresence.isOnline
                           ? "text-green-600 dark:text-green-400"
-                          : "text-slate-500 dark:text-slate-400"
+                          : "text-slate-500 dark:text-slate-400",
                       )}
                     >
                       {contactPresence.text}
@@ -958,10 +969,16 @@ const Conversations = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge
-                    variant={getConversationStatusConfig(activeConversation?.status).variant}
+                    variant={
+                      getConversationStatusConfig(activeConversation?.status)
+                        .variant
+                    }
                     size="sm"
                   >
-                    {getConversationStatusConfig(activeConversation?.status).label}
+                    {
+                      getConversationStatusConfig(activeConversation?.status)
+                        .label
+                    }
                   </Badge>
 
                   {canManageConversationStatus && activeConversation?.$id && (
@@ -969,9 +986,12 @@ const Conversations = () => {
                       {activeConversationStatus !== "active" && (
                         <button
                           type="button"
-                          onClick={() => handleConversationStatusChange("active")}
+                          onClick={() =>
+                            handleConversationStatusChange("active")
+                          }
                           disabled={
-                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                            !canWriteMessaging ||
+                            isUpdatingActiveConversationStatus
                           }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-2 text-xs font-medium text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900/60 dark:bg-green-900/25 dark:text-green-300 dark:hover:bg-green-900/35"
                           title={t("conversationsPage.actions.markActive")}
@@ -988,9 +1008,12 @@ const Conversations = () => {
                       {activeConversationStatus !== "archived" && (
                         <button
                           type="button"
-                          onClick={() => handleConversationStatusChange("archived")}
+                          onClick={() =>
+                            handleConversationStatusChange("archived")
+                          }
                           disabled={
-                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                            !canWriteMessaging ||
+                            isUpdatingActiveConversationStatus
                           }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900/60 dark:bg-amber-900/25 dark:text-amber-300 dark:hover:bg-amber-900/35"
                           title={t("conversationsPage.actions.archive")}
@@ -1007,9 +1030,10 @@ const Conversations = () => {
                       {activeConversationStatus !== "closed" && (
                         <button
                           type="button"
-                          onClick={handleSendProposalPrompt}
+                          onClick={() => setShowProposalForm((v) => !v)}
                           disabled={
-                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                            !canWriteMessaging ||
+                            isUpdatingActiveConversationStatus
                           }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-cyan-200 bg-cyan-50 px-2 text-xs font-medium text-cyan-700 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-900/60 dark:bg-cyan-900/25 dark:text-cyan-300 dark:hover:bg-cyan-900/35"
                           title={t("conversationsPage.actions.sendProposal", {
@@ -1026,9 +1050,10 @@ const Conversations = () => {
                       {activeConversationStatus !== "closed" && (
                         <button
                           type="button"
-                          onClick={handleFinalizeConversation}
+                          onClick={() => setShowFinalizePanel((v) => !v)}
                           disabled={
-                            !canWriteMessaging || isUpdatingActiveConversationStatus
+                            !canWriteMessaging ||
+                            isUpdatingActiveConversationStatus
                           }
                           className="inline-flex h-8 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:bg-red-900/25 dark:text-red-300 dark:hover:bg-red-900/35"
                           title={t("conversationsPage.actions.finalize", {
@@ -1059,6 +1084,231 @@ const Conversations = () => {
                 </div>
               </header>
 
+              {/* ── Inline Finalize Panel ──────────────── */}
+              {showFinalizePanel && (
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
+                  <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {t("conversationsPage.actions.finalizeTitle", {
+                      defaultValue: "Finalizar conversación",
+                    })}
+                  </p>
+                  <textarea
+                    value={finalizeClosureReason}
+                    onChange={(e) => setFinalizeClosureReason(e.target.value)}
+                    placeholder={t(
+                      "conversationsPage.actions.closureReasonPrompt",
+                      {
+                        defaultValue: "Motivo de cierre (opcional)",
+                      },
+                    )}
+                    rows={2}
+                    className="mb-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleFinalizeConversation("won")}
+                      disabled={isUpdatingActiveConversationStatus}
+                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                    >
+                      {t("conversationsPage.actions.closeWon", {
+                        defaultValue: "Cerrar ganada",
+                      })}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFinalizeConversation("lost")}
+                      disabled={isUpdatingActiveConversationStatus}
+                      className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                    >
+                      {t("conversationsPage.actions.closeLost", {
+                        defaultValue: "Cerrar perdida",
+                      })}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFinalizePanel(false);
+                        setFinalizeClosureReason("");
+                      }}
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {t("common.actions.cancel", { defaultValue: "Cancelar" })}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Inline Proposal Form ───────────────── */}
+              {showProposalForm && (
+                <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
+                  <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {t("conversationsPage.actions.proposalFormTitle", {
+                      defaultValue: "Nueva propuesta",
+                    })}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <label className="grid gap-0.5">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {t("conversationsPage.proposal.type", {
+                          defaultValue: "Tipo",
+                        })}
+                      </span>
+                      <select
+                        value={proposalFormData.proposalType}
+                        onChange={(e) =>
+                          setProposalFormData((d) => ({
+                            ...d,
+                            proposalType: e.target.value,
+                          }))
+                        }
+                        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 outline-none focus:border-cyan-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      >
+                        <option value="visit">
+                          {t("conversationsPage.proposal.visit", {
+                            defaultValue: "Visita",
+                          })}
+                        </option>
+                        <option value="booking_manual">
+                          {t("conversationsPage.proposal.booking", {
+                            defaultValue: "Reserva manual",
+                          })}
+                        </option>
+                      </select>
+                    </label>
+                    <label className="grid gap-0.5">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {t("conversationsPage.proposal.timezone", {
+                          defaultValue: "Zona horaria",
+                        })}
+                      </span>
+                      <input
+                        type="text"
+                        value={proposalFormData.timezone}
+                        onChange={(e) =>
+                          setProposalFormData((d) => ({
+                            ...d,
+                            timezone: e.target.value,
+                          }))
+                        }
+                        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 outline-none focus:border-cyan-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                    </label>
+                    <label className="grid gap-0.5">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {t("conversationsPage.proposal.start", {
+                          defaultValue: "Inicio",
+                        })}
+                      </span>
+                      <input
+                        type="datetime-local"
+                        value={proposalFormData.timeStart}
+                        onChange={(e) =>
+                          setProposalFormData((d) => ({
+                            ...d,
+                            timeStart: e.target.value,
+                          }))
+                        }
+                        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 outline-none focus:border-cyan-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                    </label>
+                    <label className="grid gap-0.5">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {t("conversationsPage.proposal.end", {
+                          defaultValue: "Fin",
+                        })}
+                      </span>
+                      <input
+                        type="datetime-local"
+                        value={proposalFormData.timeEnd}
+                        onChange={(e) =>
+                          setProposalFormData((d) => ({
+                            ...d,
+                            timeEnd: e.target.value,
+                          }))
+                        }
+                        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 outline-none focus:border-cyan-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                    </label>
+                    {proposalFormData.proposalType === "visit" && (
+                      <label className="grid gap-0.5">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {t("conversationsPage.proposal.meetingType", {
+                            defaultValue: "Tipo visita",
+                          })}
+                        </span>
+                        <select
+                          value={proposalFormData.meetingType}
+                          onChange={(e) =>
+                            setProposalFormData((d) => ({
+                              ...d,
+                              meetingType: e.target.value,
+                            }))
+                          }
+                          className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 outline-none focus:border-cyan-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                        >
+                          <option value="on_site">
+                            {t("conversationsPage.proposal.onSite", {
+                              defaultValue: "Presencial",
+                            })}
+                          </option>
+                          <option value="video_call">
+                            {t("conversationsPage.proposal.videoCall", {
+                              defaultValue: "Videollamada",
+                            })}
+                          </option>
+                        </select>
+                      </label>
+                    )}
+                    <label className="grid gap-0.5">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {t("conversationsPage.proposal.location", {
+                          defaultValue: "Ubicación / enlace",
+                        })}
+                      </span>
+                      <input
+                        type="text"
+                        value={proposalFormData.location}
+                        onChange={(e) =>
+                          setProposalFormData((d) => ({
+                            ...d,
+                            location: e.target.value,
+                          }))
+                        }
+                        placeholder={t(
+                          "conversationsPage.proposal.locationPlaceholder",
+                          { defaultValue: "Opcional" },
+                        )}
+                        className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 outline-none focus:border-cyan-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSendProposalSubmit}
+                      disabled={
+                        !proposalFormData.timeStart ||
+                        !proposalFormData.timeEnd ||
+                        isUpdatingActiveConversationStatus
+                      }
+                      className="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-50"
+                    >
+                      {t("conversationsPage.actions.sendProposal", {
+                        defaultValue: "Enviar propuesta",
+                      })}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowProposalForm(false)}
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {t("common.actions.cancel", { defaultValue: "Cancelar" })}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Messages */}
               <div
                 ref={messagesContainerRef}
@@ -1078,7 +1328,13 @@ const Conversations = () => {
                   </div>
                 )}
 
-                <div className={!isScrollReady && messages.length > 0 ? "opacity-0" : "opacity-100"}>
+                <div
+                  className={
+                    !isScrollReady && messages.length > 0
+                      ? "opacity-0"
+                      : "opacity-100"
+                  }
+                >
                   {messages.map((msg) => (
                     <ChatMessage
                       key={msg.$id}
@@ -1097,23 +1353,25 @@ const Conversations = () => {
               {/* Input */}
               <div className="relative border-t border-slate-200 dark:border-slate-700">
                 {/* Emoji Picker */}
-                {!isConversationClosed && canWriteMessaging && showEmojiPicker && (
-                  <div
-                    ref={emojiPickerRef}
-                    className="absolute bottom-full left-3 mb-2 z-50"
-                  >
-                    <EmojiPicker
-                      onEmojiClick={handleEmojiClick}
-                      theme="auto"
-                      searchDisabled={false}
-                      autoFocusSearch={false}
-                      skinTonesDisabled
-                      previewConfig={{ showPreview: false }}
-                      height={350}
-                      width={320}
-                    />
-                  </div>
-                )}
+                {!isConversationClosed &&
+                  canWriteMessaging &&
+                  showEmojiPicker && (
+                    <div
+                      ref={emojiPickerRef}
+                      className="absolute bottom-full left-3 mb-2 z-50"
+                    >
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiClick}
+                        theme="auto"
+                        searchDisabled={false}
+                        autoFocusSearch={false}
+                        skinTonesDisabled
+                        previewConfig={{ showPreview: false }}
+                        height={350}
+                        width={320}
+                      />
+                    </div>
+                  )}
 
                 <form
                   onSubmit={handleSend}
@@ -1213,7 +1471,9 @@ const Conversations = () => {
                   type="text"
                   value={newConversationSearch}
                   onChange={(e) => setNewConversationSearch(e.target.value)}
-                  placeholder={t("conversationsPage.newConversation.searchPlaceholder")}
+                  placeholder={t(
+                    "conversationsPage.newConversation.searchPlaceholder",
+                  )}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>

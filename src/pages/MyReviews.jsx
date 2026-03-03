@@ -271,10 +271,7 @@ const WriteReviewForm = ({
     });
 
     return eligible.map((r) => {
-      const propName =
-        propertyNames[r.resourceId || r.propertyId] ||
-        r.resourceId ||
-        r.propertyId;
+      const propName = propertyNames[r.resourceId] || r.resourceId;
       const dateStr = formatDate(r.checkInDate, locale);
       const reviewed = reviewedReservationIds.has(r.$id);
 
@@ -301,7 +298,7 @@ const WriteReviewForm = ({
     e.preventDefault();
     if (!canSubmit) return;
     onSubmit({
-      resourceId: selected?.resourceId || selected?.propertyId,
+      resourceId: selected?.resourceId,
       reservationId: selectedReservation,
       rating,
       title: title.trim() || undefined,
@@ -506,25 +503,21 @@ const MyReviews = () => {
       setReviewedReservationIds(reviewedIds);
 
       // Collect all property IDs from reviews + reservations
-      const allPropertyIds = [
+      const allResourceIds = [
         ...new Set([
-          ...docs
-            .map((item) => item.resourceId || item.propertyId)
-            .filter(Boolean),
-          ...fetchedReservations
-            .map((r) => r.resourceId || r.propertyId)
-            .filter(Boolean),
+          ...docs.map((item) => item.resourceId).filter(Boolean),
+          ...fetchedReservations.map((r) => r.resourceId).filter(Boolean),
         ]),
       ];
 
-      if (allPropertyIds.length > 0) {
+      if (allResourceIds.length > 0) {
         const entries = await Promise.all(
-          allPropertyIds.map(async (propertyId) => {
+          allResourceIds.map(async (resourceId) => {
             try {
-              const property = await resourcesService.getById(propertyId);
-              return [propertyId, property?.title || propertyId];
+              const resource = await resourcesService.getById(resourceId);
+              return [resourceId, resource?.title || resourceId];
             } catch {
-              return [propertyId, propertyId];
+              return [resourceId, resourceId];
             }
           }),
         );
@@ -608,7 +601,7 @@ const MyReviews = () => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter((r) => {
-        const name = propertyNames[r.resourceId || r.propertyId] || "";
+        const name = propertyNames[r.resourceId] || "";
         return (
           name.toLowerCase().includes(q) ||
           (r.title || "").toLowerCase().includes(q) ||
@@ -868,9 +861,7 @@ const MyReviews = () => {
                   key={review.$id}
                   review={review}
                   propertyName={
-                    propertyNames[review.resourceId || review.propertyId] ||
-                    review.resourceId ||
-                    review.propertyId
+                    propertyNames[review.resourceId] || review.resourceId
                   }
                   locale={locale}
                   t={t}

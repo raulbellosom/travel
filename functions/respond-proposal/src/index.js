@@ -121,7 +121,10 @@ const safeJson = (value, maxLength = 20000) => {
 
 const getAuthenticatedUserId = (req) => {
   const headers = req.headers || {};
-  return normalizeText(headers["x-appwrite-user-id"] || headers["x-appwrite-userid"], 64);
+  return normalizeText(
+    headers["x-appwrite-user-id"] || headers["x-appwrite-userid"],
+    64,
+  );
 };
 
 const getRequestId = (req) => {
@@ -134,7 +137,11 @@ const getRequestId = (req) => {
   );
 };
 
-const buildMessagePermissions = ({ ownerUserId, clientUserId, actorUserId }) => [
+const buildMessagePermissions = ({
+  ownerUserId,
+  clientUserId,
+  actorUserId,
+}) => [
   ...new Set([
     Permission.read(Role.user(ownerUserId)),
     Permission.update(Role.user(ownerUserId)),
@@ -190,12 +197,16 @@ const normalizeSuggestedSlots = (slots = []) => {
 };
 
 const findLeadByConversation = async ({ db, config, conversationId }) => {
-  const response = await db.listDocuments(config.databaseId, config.leadsCollectionId, [
-    Query.equal("conversationId", conversationId),
-    Query.equal("enabled", true),
-    Query.orderDesc("$createdAt"),
-    Query.limit(1),
-  ]);
+  const response = await db.listDocuments(
+    config.databaseId,
+    config.leadsCollectionId,
+    [
+      Query.equal("conversationId", conversationId),
+      Query.equal("enabled", true),
+      Query.orderDesc("$createdAt"),
+      Query.limit(1),
+    ],
+  );
 
   return response.documents?.[0] || null;
 };
@@ -311,7 +322,11 @@ export default async ({ req, res, log, error }) => {
 
     const actorRole = normalizeText(actorProfile.role, 40).toLowerCase();
     if (actorProfile.enabled === false || actorRole !== "client") {
-      throw createHttpError(403, "FORBIDDEN", "Only client users can respond to proposals");
+      throw createHttpError(
+        403,
+        "FORBIDDEN",
+        "Only client users can respond to proposals",
+      );
     }
 
     const conversation = await db.getDocument(
@@ -321,14 +336,25 @@ export default async ({ req, res, log, error }) => {
     );
 
     if (conversation.enabled === false) {
-      throw createHttpError(404, "CONVERSATION_NOT_AVAILABLE", "Conversation not available");
+      throw createHttpError(
+        404,
+        "CONVERSATION_NOT_AVAILABLE",
+        "Conversation not available",
+      );
     }
 
     if (normalizeText(conversation.clientUserId, 64) !== actorUserId) {
-      throw createHttpError(403, "FORBIDDEN", "You are not a participant in this conversation");
+      throw createHttpError(
+        403,
+        "FORBIDDEN",
+        "You are not a participant in this conversation",
+      );
     }
 
-    const conversationStatus = normalizeText(conversation.status, 20).toLowerCase();
+    const conversationStatus = normalizeText(
+      conversation.status,
+      20,
+    ).toLowerCase();
     if (conversationStatus === "closed") {
       throw createHttpError(
         409,
@@ -348,13 +374,24 @@ export default async ({ req, res, log, error }) => {
       normalizeText(proposalMessage.kind, 30).toLowerCase() !== "proposal" ||
       proposalMessage.enabled === false
     ) {
-      throw createHttpError(404, "PROPOSAL_NOT_FOUND", "Proposal message not found");
+      throw createHttpError(
+        404,
+        "PROPOSAL_NOT_FOUND",
+        "Proposal message not found",
+      );
     }
 
     const proposalPayload = parseObject(proposalMessage.payloadJson);
-    const proposalStatus = normalizeText(proposalPayload.status, 30).toLowerCase();
+    const proposalStatus = normalizeText(
+      proposalPayload.status,
+      30,
+    ).toLowerCase();
     if (proposalStatus && proposalStatus !== "pending") {
-      throw createHttpError(409, "PROPOSAL_NOT_PENDING", "Proposal already resolved");
+      throw createHttpError(
+        409,
+        "PROPOSAL_NOT_PENDING",
+        "Proposal already resolved",
+      );
     }
 
     const responsePayload = stripUndefined({
@@ -384,7 +421,6 @@ export default async ({ req, res, log, error }) => {
         kind: "proposal_response",
         payloadJson: JSON.stringify(responsePayload),
         relatedLeadId: normalizeNullableText(payload.relatedLeadId, 64),
-        readBySender: true,
         readByRecipient: false,
         enabled: true,
       },
@@ -415,7 +451,9 @@ export default async ({ req, res, log, error }) => {
     const patch = {
       status: "active",
       lastMessage:
-        summaryText.length > 120 ? `${summaryText.slice(0, 120)}...` : summaryText,
+        summaryText.length > 120
+          ? `${summaryText.slice(0, 120)}...`
+          : summaryText,
       lastMessageAt: new Date().toISOString(),
       ownerUnread: Number(conversation.ownerUnread || 0) + 1,
       clientUnread: Number(conversation.clientUnread || 0),
@@ -428,9 +466,11 @@ export default async ({ req, res, log, error }) => {
       patch,
     );
 
-    const lead = await findLeadByConversation({ db, config, conversationId }).catch(
-      () => null,
-    );
+    const lead = await findLeadByConversation({
+      db,
+      config,
+      conversationId,
+    }).catch(() => null);
 
     if (lead?.$id) {
       const leadPatch = {
@@ -445,7 +485,12 @@ export default async ({ req, res, log, error }) => {
       }
 
       await db
-        .updateDocument(config.databaseId, config.leadsCollectionId, lead.$id, leadPatch)
+        .updateDocument(
+          config.databaseId,
+          config.leadsCollectionId,
+          lead.$id,
+          leadPatch,
+        )
         .catch(() => {});
     }
 

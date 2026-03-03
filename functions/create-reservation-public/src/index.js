@@ -1,4 +1,12 @@
-﻿import { Client, Databases, ID, Permission, Query, Role, Users } from "node-appwrite";
+﻿import {
+  Client,
+  Databases,
+  ID,
+  Permission,
+  Query,
+  Role,
+  Users,
+} from "node-appwrite";
 import {
   createModulesService,
   getBookingType,
@@ -27,10 +35,12 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  resourcesCollectionId: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
+  resourcesCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
   instanceSettingsCollectionId:
     getEnv("APPWRITE_COLLECTION_INSTANCE_SETTINGS_ID") || "instance_settings",
 });
@@ -47,7 +57,9 @@ const parseBody = (req) => {
 const json = (res, status, body) => res.json(body, status);
 
 const normalizeText = (value, maxLength = 0) => {
-  const normalized = String(value ?? "").trim().replace(/\s+/g, " ");
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
   if (!maxLength) return normalized;
   return normalized.slice(0, maxLength);
 };
@@ -106,13 +118,14 @@ const safeActivityLog = async ({ db, config, data, logger }) => {
   }
 };
 
-const buildReservationPermissions = (ownerUserId, guestUserId) =>
-  [...new Set([
+const buildReservationPermissions = (ownerUserId, guestUserId) => [
+  ...new Set([
     Permission.read(Role.user(ownerUserId)),
     Permission.update(Role.user(ownerUserId)),
     Permission.delete(Role.user(ownerUserId)),
     Permission.read(Role.user(guestUserId)),
-  ])];
+  ]),
+];
 
 const resolveBaseAmount = ({ resource, bookingType, nights }) => {
   const unitAmount = toMoney(resource.price || 0);
@@ -120,14 +133,20 @@ const resolveBaseAmount = ({ resource, bookingType, nights }) => {
 
   const pricingModel = normalizeText(resource.pricingModel).toLowerCase();
   const multiplier =
-    bookingType === "date_range" && ["per_night", "per_day"].includes(pricingModel)
+    bookingType === "date_range" &&
+    ["per_night", "per_day"].includes(pricingModel)
       ? Math.max(1, nights)
       : 1;
   return toMoney(unitAmount * multiplier);
 };
 
 const getHoldMinutes = async (modulesService) => {
-  const configured = Number(await modulesService.getLimit("reservationHoldMinutes", DEFAULT_HOLD_MINUTES));
+  const configured = Number(
+    await modulesService.getLimit(
+      "reservationHoldMinutes",
+      DEFAULT_HOLD_MINUTES,
+    ),
+  );
   if (!Number.isFinite(configured) || configured < 1 || configured > 240) {
     return DEFAULT_HOLD_MINUTES;
   }
@@ -156,7 +175,14 @@ const toWindow = ({ startMs, endMs, bufferMinutes }) => {
   };
 };
 
-const resolveIncomingWindow = ({ bookingType, checkIn, checkOut, startDateTime, endDateTime, slotBufferMinutes }) => {
+const resolveIncomingWindow = ({
+  bookingType,
+  checkIn,
+  checkOut,
+  startDateTime,
+  endDateTime,
+  slotBufferMinutes,
+}) => {
   if (bookingType === "date_range") {
     return toWindow({
       startMs: checkIn.getTime(),
@@ -173,38 +199,63 @@ const resolveIncomingWindow = ({ bookingType, checkIn, checkOut, startDateTime, 
 };
 
 const resolveExistingWindow = (reservation, slotBufferMinutes) => {
-  const existingBookingType = normalizeText(reservation.bookingType).toLowerCase();
+  const existingBookingType = normalizeText(
+    reservation.bookingType,
+  ).toLowerCase();
   if (existingBookingType === "date_range") {
     const start = new Date(reservation.checkInDate).getTime();
     const end = new Date(reservation.checkOutDate).getTime();
     if (Number.isNaN(start) || Number.isNaN(end)) return null;
-    return toWindow({ startMs: start, endMs: end, bufferMinutes: slotBufferMinutes });
+    return toWindow({
+      startMs: start,
+      endMs: end,
+      bufferMinutes: slotBufferMinutes,
+    });
   }
 
-  const start = new Date(reservation.startDateTime || reservation.checkInDate).getTime();
-  const end = new Date(reservation.endDateTime || reservation.checkOutDate).getTime();
+  const start = new Date(
+    reservation.startDateTime || reservation.checkInDate,
+  ).getTime();
+  const end = new Date(
+    reservation.endDateTime || reservation.checkOutDate,
+  ).getTime();
   if (Number.isNaN(start) || Number.isNaN(end)) return null;
-  return toWindow({ startMs: start, endMs: end, bufferMinutes: slotBufferMinutes });
+  return toWindow({
+    startMs: start,
+    endMs: end,
+    bufferMinutes: slotBufferMinutes,
+  });
 };
 
 const listCandidateReservations = async ({ db, config, resourceId }) => {
   try {
-    return await db.listDocuments(config.databaseId, config.reservationsCollectionId, [
-      Query.equal("resourceId", resourceId),
-      Query.equal("enabled", true),
-      Query.equal("status", ["pending", "confirmed"]),
-      Query.limit(100),
-    ]);
+    return await db.listDocuments(
+      config.databaseId,
+      config.reservationsCollectionId,
+      [
+        Query.equal("resourceId", resourceId),
+        Query.equal("enabled", true),
+        Query.equal("status", ["pending", "confirmed"]),
+        Query.limit(100),
+      ],
+    );
   } catch {
     return { total: 0, documents: [] };
   }
 };
 
-const hasOverlapConflict = ({ existingReservations, incomingWindow, slotBufferMinutes }) => {
+const hasOverlapConflict = ({
+  existingReservations,
+  incomingWindow,
+  slotBufferMinutes,
+}) => {
   const nowMs = Date.now();
   for (const reservation of existingReservations) {
     if (!isPendingStillBlocking(reservation, nowMs)) continue;
-    const existingWindow = resolveExistingWindow(reservation, slotBufferMinutes);
+    const existingWindow = resolveExistingWindow(
+      reservation,
+      slotBufferMinutes,
+    );
     if (!existingWindow) continue;
     if (dateRangeOverlap(existingWindow, incomingWindow)) return true;
   }
@@ -214,7 +265,9 @@ const hasOverlapConflict = ({ existingReservations, incomingWindow, slotBufferMi
 const countActiveReservationsThisMonth = async ({ db, config }) => {
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  const end = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+  );
 
   try {
     const response = await db.listDocuments(
@@ -244,16 +297,20 @@ const findByClientRequestId = async ({
   if (!clientRequestId) return null;
 
   try {
-    const response = await db.listDocuments(config.databaseId, config.reservationsCollectionId, [
-      Query.equal("resourceId", resourceId),
-      Query.equal("guestUserId", guestUserId),
-      Query.equal("status", "pending"),
-      Query.equal("paymentStatus", "unpaid"),
-      Query.equal("externalRef", `client:${clientRequestId}`),
-      Query.equal("enabled", true),
-      Query.orderDesc("$createdAt"),
-      Query.limit(1),
-    ]);
+    const response = await db.listDocuments(
+      config.databaseId,
+      config.reservationsCollectionId,
+      [
+        Query.equal("resourceId", resourceId),
+        Query.equal("guestUserId", guestUserId),
+        Query.equal("status", "pending"),
+        Query.equal("paymentStatus", "unpaid"),
+        Query.equal("externalRef", `client:${clientRequestId}`),
+        Query.equal("enabled", true),
+        Query.orderDesc("$createdAt"),
+        Query.limit(1),
+      ],
+    );
 
     const reservation = response.documents?.[0] || null;
     if (!reservation) return null;
@@ -364,7 +421,7 @@ export default async ({ req, res, log, error }) => {
   }
 
   const payload = parseBody(req);
-  const resourceId = normalizeText(payload.resourceId || payload.propertyId, 64);
+  const resourceId = normalizeText(payload.resourceId, 64);
   const guestCount = toPositiveInt(payload.guestCount);
   const clientRequestId = normalizeText(payload.clientRequestId, 120);
 
@@ -398,7 +455,10 @@ export default async ({ req, res, log, error }) => {
 
   try {
     const authUser = await users.get(authenticatedUserId);
-    const normalizedAuthEmail = normalizeText(authUser.email, 254).toLowerCase();
+    const normalizedAuthEmail = normalizeText(
+      authUser.email,
+      254,
+    ).toLowerCase();
     if (!normalizedAuthEmail) {
       return json(res, 422, {
         ok: false,
@@ -417,7 +477,10 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const payloadGuestEmail = normalizeText(payload.guestEmail, 254).toLowerCase();
+    const payloadGuestEmail = normalizeText(
+      payload.guestEmail,
+      254,
+    ).toLowerCase();
     if (payloadGuestEmail && payloadGuestEmail !== normalizedAuthEmail) {
       return json(res, 422, {
         ok: false,
@@ -466,7 +529,8 @@ export default async ({ req, res, log, error }) => {
         ok: false,
         success: false,
         code: "MANUAL_CONTACT_ONLY",
-        message: "This resource uses manual contact flow. Use create-lead instead.",
+        message:
+          "This resource uses manual contact flow. Use create-lead instead.",
       });
     }
 
@@ -518,7 +582,9 @@ export default async ({ req, res, log, error }) => {
 
     const checkIn = parseDate(payload.checkInDate);
     const checkOut = parseDate(payload.checkOutDate);
-    const startDateTime = parseDate(payload.startDateTime || payload.checkInDate);
+    const startDateTime = parseDate(
+      payload.startDateTime || payload.checkInDate,
+    );
     const endDateTime = parseDate(payload.endDateTime || payload.checkOutDate);
 
     if (bookingType === "date_range" && (!checkIn || !checkOut)) {
@@ -526,7 +592,8 @@ export default async ({ req, res, log, error }) => {
         ok: false,
         success: false,
         code: "DATE_RANGE_REQUIRED",
-        message: "checkInDate and checkOutDate are required for date_range bookings",
+        message:
+          "checkInDate and checkOutDate are required for date_range bookings",
       });
     }
 
@@ -535,11 +602,13 @@ export default async ({ req, res, log, error }) => {
         ok: false,
         success: false,
         code: "TIME_SLOT_REQUIRED",
-        message: "startDateTime and endDateTime are required for slot/event bookings",
+        message:
+          "startDateTime and endDateTime are required for slot/event bookings",
       });
     }
 
-    const incomingStart = bookingType === "date_range" ? checkIn : startDateTime;
+    const incomingStart =
+      bookingType === "date_range" ? checkIn : startDateTime;
     const incomingEnd = bookingType === "date_range" ? checkOut : endDateTime;
 
     if (incomingEnd.getTime() <= incomingStart.getTime()) {
@@ -553,7 +622,9 @@ export default async ({ req, res, log, error }) => {
 
     const nights =
       bookingType === "date_range"
-        ? Math.ceil((incomingEnd.getTime() - incomingStart.getTime()) / DAY_IN_MS)
+        ? Math.ceil(
+            (incomingEnd.getTime() - incomingStart.getTime()) / DAY_IN_MS,
+          )
         : 0;
 
     if (bookingType === "date_range" && (nights < 1 || nights > 365)) {
@@ -575,7 +646,11 @@ export default async ({ req, res, log, error }) => {
       slotBufferMinutes,
     });
 
-    const candidates = await listCandidateReservations({ db, config, resourceId });
+    const candidates = await listCandidateReservations({
+      db,
+      config,
+      resourceId,
+    });
     const hasConflict = hasOverlapConflict({
       existingReservations: candidates.documents || [],
       incomingWindow,
@@ -623,7 +698,8 @@ export default async ({ req, res, log, error }) => {
       });
     }
 
-    const currency = currencyInput || String(resource.currency || "MXN").toUpperCase();
+    const currency =
+      currencyInput || String(resource.currency || "MXN").toUpperCase();
     if (!SUPPORTED_CURRENCIES.includes(currency)) {
       return json(res, 422, {
         ok: false,
@@ -634,7 +710,9 @@ export default async ({ req, res, log, error }) => {
     }
 
     const holdMinutes = await getHoldMinutes(modulesService);
-    const holdExpiresAt = new Date(Date.now() + holdMinutes * 60 * 1000).toISOString();
+    const holdExpiresAt = new Date(
+      Date.now() + holdMinutes * 60 * 1000,
+    ).toISOString();
 
     const reservationData = buildReservationData({
       resource,
@@ -644,8 +722,10 @@ export default async ({ req, res, log, error }) => {
       guestCount,
       bookingType,
       commercialMode,
-      checkInIso: bookingType === "date_range" ? checkIn.toISOString() : undefined,
-      checkOutIso: bookingType === "date_range" ? checkOut.toISOString() : undefined,
+      checkInIso:
+        bookingType === "date_range" ? checkIn.toISOString() : undefined,
+      checkOutIso:
+        bookingType === "date_range" ? checkOut.toISOString() : undefined,
       startDateTimeIso:
         bookingType !== "date_range" ? startDateTime.toISOString() : undefined,
       endDateTimeIso:

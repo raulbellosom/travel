@@ -12,9 +12,9 @@ import { usePresence } from "../hooks/usePresence";
 import { chatService } from "../services/chatService";
 import { leadsService } from "../services/leadsService";
 import {
-  getConversationSide,
   getConversationUnreadCount,
   getConversationUnreadResetPatch,
+  resolveMessageSenderRole,
 } from "../utils/chatParticipants";
 import { playNotificationSound } from "../utils/notificationSound";
 import { useInstanceModules } from "../hooks/useInstanceModules";
@@ -271,7 +271,9 @@ export const ChatProvider = ({ children }) => {
           .trim()
           .toLowerCase();
         if (!FINAL_LEAD_STATUSES.has(normalizedLeadStatus)) {
-          throw new Error("Finalizing a conversation requires closed_won or closed_lost.");
+          throw new Error(
+            "Finalizing a conversation requires closed_won or closed_lost.",
+          );
         }
         patch.status = normalizedLeadStatus;
         patch.isArchived = false;
@@ -315,7 +317,9 @@ export const ChatProvider = ({ children }) => {
             .toLowerCase(),
         )
       ) {
-        throw new Error("You must provide leadStatus: closed_won or closed_lost.");
+        throw new Error(
+          "You must provide leadStatus: closed_won or closed_lost.",
+        );
       }
 
       await syncLeadConversationState(
@@ -434,8 +438,12 @@ export const ChatProvider = ({ children }) => {
       resourceId,
       initialMessage,
       intent = "info_request",
-      contactChannel = "resource_chat",
+      contactChannel = "IN_PLATFORM",
       meta = {},
+      channel,
+      contact,
+      dateRange,
+      meetingRequest,
     }) => {
       if (!canWriteMessaging) {
         throw new Error("Messaging is disabled for this user.");
@@ -459,8 +467,12 @@ export const ChatProvider = ({ children }) => {
           String(initialMessage || "").trim() ||
           "Hola, me interesa este recurso. Quiero mas informacion.",
         intent,
-        contactChannel,
+        contactChannel: channel || contactChannel,
+        channel: channel || contactChannel,
         meta: normalizedMeta,
+        contact,
+        dateRange,
+        meetingRequest,
       });
       const conversationId = String(
         leadResult?.body?.conversationId || "",
@@ -548,12 +560,8 @@ export const ChatProvider = ({ children }) => {
       }
 
       const trimmedBody = body.trim();
-      const senderSide = getConversationSide(
-        activeConversation,
-        user.$id,
-        chatRole,
-      );
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const messageSenderRole = resolveMessageSenderRole(user.role);
 
       // Optimistic update: add message immediately with "sending" status
       const optimisticMessage = {
@@ -561,7 +569,7 @@ export const ChatProvider = ({ children }) => {
         conversationId: activeConversationId,
         senderUserId: user.$id,
         senderName: user.name || user.email || "Usuario",
-        senderRole: senderSide || chatRole,
+        senderRole: messageSenderRole,
         body: trimmedBody,
         kind: "text",
         $createdAt: new Date().toISOString(),
@@ -576,7 +584,7 @@ export const ChatProvider = ({ children }) => {
           conversationId: activeConversationId,
           senderUserId: user.$id,
           senderName: user.name || user.email || "Usuario",
-          senderRole: senderSide || chatRole,
+          senderRole: messageSenderRole,
           body: trimmedBody,
         });
 
@@ -674,7 +682,11 @@ export const ChatProvider = ({ children }) => {
       if (!activeConversationId || !user?.$id) {
         throw new Error("No active conversation selected.");
       }
-      if (String(user?.role || "").trim().toLowerCase() !== "client") {
+      if (
+        String(user?.role || "")
+          .trim()
+          .toLowerCase() !== "client"
+      ) {
         throw new Error("Only client users can respond to proposals.");
       }
 
@@ -1013,5 +1025,3 @@ export const ChatProvider = ({ children }) => {
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
-
-

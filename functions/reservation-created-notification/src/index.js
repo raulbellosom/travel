@@ -15,8 +15,10 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  reservationsCollectionId: getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  reservationsCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
 });
 
 const parseBody = (req) => {
@@ -43,13 +45,19 @@ const resolveReservationId = (payload) =>
 export default async ({ req, res, log, error }) => {
   const config = cfg();
   if (!config.endpoint || !config.projectId || !config.apiKey) {
-    return json(res, 500, { ok: false, message: "Missing Appwrite credentials" });
+    return json(res, 500, {
+      ok: false,
+      message: "Missing Appwrite credentials",
+    });
   }
 
   const payload = parseBody(req);
   const reservationId = resolveReservationId(payload);
   if (!reservationId) {
-    return json(res, 422, { ok: false, message: "reservationId not found in payload" });
+    return json(res, 422, {
+      ok: false,
+      message: "reservationId not found in payload",
+    });
   }
 
   const client = new Client()
@@ -67,28 +75,30 @@ export default async ({ req, res, log, error }) => {
 
     // TODO: integrate SMTP/email provider notification dispatch.
     log(
-      `reservation-created-notification reservationId=${reservationId} owner=${reservation.propertyOwnerId} guest=${reservation.guestEmail}`,
+      `reservation-created-notification reservationId=${reservationId} owner=${reservation.resourceOwnerUserId} guest=${reservation.guestEmail}`,
     );
 
     if (config.activityLogsCollectionId) {
-      await db.createDocument(
-        config.databaseId,
-        config.activityLogsCollectionId,
-        ID.unique(),
-        {
-          actorUserId: reservation.propertyOwnerId,
-          actorRole: "owner",
-          action: "reservation.notification_dispatched",
-          entityType: "reservations",
-          entityId: reservationId,
-          afterData: JSON.stringify({
-            reservationId,
-            guestEmail: reservation.guestEmail,
-            status: reservation.status,
-          }).slice(0, 20000),
-          severity: "info",
-        },
-      ).catch(() => {});
+      await db
+        .createDocument(
+          config.databaseId,
+          config.activityLogsCollectionId,
+          ID.unique(),
+          {
+            actorUserId: reservation.resourceOwnerUserId,
+            actorRole: "owner",
+            action: "reservation.notification_dispatched",
+            entityType: "reservations",
+            entityId: reservationId,
+            afterData: JSON.stringify({
+              reservationId,
+              guestEmail: reservation.guestEmail,
+              status: reservation.status,
+            }).slice(0, 20000),
+            severity: "info",
+          },
+        )
+        .catch(() => {});
     }
 
     return json(res, 200, {

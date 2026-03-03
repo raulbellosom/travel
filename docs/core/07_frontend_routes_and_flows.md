@@ -53,24 +53,24 @@ Fallback order:
 
 ### 4.1 Platform mode (`uiMode=platform`)
 
-| Route | Use |
-| --- | --- |
-| `/` | marketplace home/catalog |
-| `/recursos/:slug` | public resource detail |
-| `/resources/:slug` | public resource detail alias |
-| `/propiedades/:slug` | legacy alias |
-| `/properties/:slug` | legacy alias |
-| `/reservar/:slug` | reserve/intent entry |
-| `/reserve/:slug` | alias |
-| `/voucher/:code` | voucher lookup |
-| `/login` | login |
-| `/register` | register |
+| Route                | Use                          |
+| -------------------- | ---------------------------- |
+| `/`                  | marketplace home/catalog     |
+| `/recursos/:slug`    | public resource detail       |
+| `/resources/:slug`   | public resource detail alias |
+| `/propiedades/:slug` | legacy alias                 |
+| `/properties/:slug`  | legacy alias                 |
+| `/reservar/:slug`    | reserve/intent entry         |
+| `/reserve/:slug`     | alias                        |
+| `/voucher/:code`     | voucher lookup               |
+| `/login`             | login                        |
+| `/register`          | register                     |
 
 ### 4.2 Marketing mode (`uiMode=marketing`)
 
-| Route | Use |
-| --- | --- |
-| `/` | CRM marketing landing |
+| Route | Use                   |
+| ----- | --------------------- |
+| `/`   | CRM marketing landing |
 
 Marketing contact/newsletter are public and write only to marketing collections.
 
@@ -78,22 +78,22 @@ Marketing contact/newsletter are public and write only to marketing collections.
 
 ## 5. Private routes (examples)
 
-| Route | Guard | Access |
-| --- | --- | --- |
-| `/app/dashboard` | `InternalRoute` | internal roles |
-| `/app/my-properties` | `ScopeRoute` | `resources.read` |
-| `/app/properties/new` | `ScopeRoute` | `resources.write` |
-| `/app/leads` | `ScopeRoute` | `leads.read` |
-| `/app/conversations` | `ScopeRoute` | `messaging.read` |
-| `/app/reservations` | `ScopeRoute` | `reservations.read` |
-| `/app/payments` | `ScopeRoute` | `payments.read` |
-| `/app/reviews` | `ScopeRoute` | `reviews.moderate` |
-| `/app/team` | `ScopeRoute` | `staff.manage` |
-| `/app/activity` | `RootRoute` | root only |
-| `/perfil` | `ProtectedRoute` | authenticated user |
-| `/mis-favoritos` | `ProtectedRoute` | authenticated user |
-| `/mis-reservas` | `ProtectedRoute` | authenticated client |
-| `/mis-conversaciones` | `ProtectedRoute` | authenticated user |
+| Route                 | Guard            | Access               |
+| --------------------- | ---------------- | -------------------- |
+| `/app/dashboard`      | `InternalRoute`  | internal roles       |
+| `/app/my-properties`  | `ScopeRoute`     | `resources.read`     |
+| `/app/properties/new` | `ScopeRoute`     | `resources.write`    |
+| `/app/leads`          | `ScopeRoute`     | `leads.read`         |
+| `/app/conversations`  | `ScopeRoute`     | `messaging.read`     |
+| `/app/reservations`   | `ScopeRoute`     | `reservations.read`  |
+| `/app/payments`       | `ScopeRoute`     | `payments.read`      |
+| `/app/reviews`        | `ScopeRoute`     | `reviews.moderate`   |
+| `/app/team`           | `ScopeRoute`     | `staff.manage`       |
+| `/app/activity`       | `RootRoute`      | root only            |
+| `/perfil`             | `ProtectedRoute` | authenticated user   |
+| `/mis-favoritos`      | `ProtectedRoute` | authenticated user   |
+| `/mis-reservas`       | `ProtectedRoute` | authenticated client |
+| `/mis-conversaciones` | `ProtectedRoute` | authenticated user   |
 
 ---
 
@@ -101,13 +101,22 @@ Marketing contact/newsletter are public and write only to marketing collections.
 
 Resource detail pages are public to view, but interaction entry points are gated.
 
-| Entry point | Visitor behavior | Authenticated behavior |
-| --- | --- | --- |
-| Chat CTA | show CTA + redirect | open/create conversation |
-| Resource contact CTA/form | show CTA + redirect | create lead/contact intent |
-| Reserve intent | show CTA + redirect | continue reservation flow |
-| Favorite/save | show CTA + redirect | toggle favorite |
-| Any lead/message mutation | blocked client-side + backend 401/403 | allowed by role/module rules |
+| Entry point                              | Visitor behavior                      | Authenticated behavior        |
+| ---------------------------------------- | ------------------------------------- | ----------------------------- |
+| Inline BookingContactBlock               | show auth CTA                         | compose message + submit lead |
+| Calendar date selection (manual_contact) | show auth CTA                         | scroll to BookingContactBlock |
+| Reserve intent                           | show CTA + redirect                   | continue reservation flow     |
+| Favorite/save                            | show CTA + redirect                   | toggle favorite               |
+| Any lead/message mutation                | blocked client-side + backend 401/403 | allowed by role/module rules  |
+
+**BookingContactBlock** (v2) replaces the previous chat modal + `window.prompt` approach:
+
+- Rendered inline on resource detail pages (mobile + desktop).
+- Provides channel selector (`IN_PLATFORM`, `WHATSAPP`, `EMAIL`).
+- Supports `SCHEDULE_MEETING` intent with meeting proposal (date/time/mode/duration).
+- Supports `AVAILABILITY_INQUIRY` intent with date range picker.
+- Handles auth gating inline (shows login/register CTA for visitors).
+- No native browser dialogs (`window.prompt`, `window.confirm`, `window.alert`) anywhere in the flow.
 
 Redirect pattern:
 
@@ -117,6 +126,7 @@ Redirect pattern:
 Implementation expectation:
 
 - Interaction pages and mutation screens use `ProtectedRoute`.
+- All staff/admin dialogs in Conversations page use inline panels, not native browser dialogs.
 
 ---
 

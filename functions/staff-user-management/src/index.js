@@ -71,11 +71,7 @@ const splitName = (name) => {
 const parseScopes = (input) => {
   if (!Array.isArray(input)) return [];
   return Array.from(
-    new Set(
-      input
-        .map((scope) => normalize(scope, 80))
-        .filter(Boolean)
-    ),
+    new Set(input.map((scope) => normalize(scope, 80)).filter(Boolean)),
   ).slice(0, 100);
 };
 
@@ -104,7 +100,9 @@ const getPasswordChecks = (password) => {
   const hasUpper = /[A-Z]/.test(raw);
   const hasNumber = /[0-9]/.test(raw);
   const hasSymbol = /[^A-Za-z0-9]/.test(raw);
-  const categoryCount = [hasLower, hasUpper, hasNumber, hasSymbol].filter(Boolean).length;
+  const categoryCount = [hasLower, hasUpper, hasNumber, hasSymbol].filter(
+    Boolean,
+  ).length;
 
   return {
     hasMinLength,
@@ -117,7 +115,8 @@ const isStrongPassword = (password) => {
   return checks.hasMinLength && checks.categoryCount >= 3;
 };
 
-const ensureActionAllowed = (action) => ALLOWED_ACTIONS.has(String(action || "").trim());
+const ensureActionAllowed = (action) =>
+  ALLOWED_ACTIONS.has(String(action || "").trim());
 
 const safeJsonString = (value, maxLength = 20000) => {
   try {
@@ -231,7 +230,11 @@ const waitForProfileDocument = async ({
 }) => {
   for (let i = 0; i < attempts; i += 1) {
     try {
-      return await db.getDocument(config.databaseId, config.usersCollectionId, userId);
+      return await db.getDocument(
+        config.databaseId,
+        config.usersCollectionId,
+        userId,
+      );
     } catch (error) {
       const maybeNotFound = Number(error?.code) === 404;
       if (!maybeNotFound || i === attempts - 1) {
@@ -266,7 +269,8 @@ const ensurePreferences = async ({ db, config, userId }) => {
   );
 };
 
-const isProtectedRole = (role) => ["root", "owner"].includes(normalize(role, 40).toLowerCase());
+const isProtectedRole = (role) =>
+  ["root", "owner"].includes(normalize(role, 40).toLowerCase());
 
 const isQueryCompatibilityError = (error) => {
   const code = Number(error?.code);
@@ -345,7 +349,9 @@ const listStaff = async ({ db, users, config }) => {
 
   return Promise.all(
     visibleStaff.map(async (doc) => {
-      const authUser = await getUserCompat({ users, userId: doc.$id }).catch(() => null);
+      const authUser = await getUserCompat({ users, userId: doc.$id }).catch(
+        () => null,
+      );
       return {
         $id: doc.$id,
         email: doc.email || authUser?.email || "",
@@ -354,7 +360,9 @@ const listStaff = async ({ db, users, config }) => {
         role: doc.role,
         scopesJson: doc.scopesJson || "[]",
         enabled: doc.enabled !== false,
-        avatarFileId: normalizeFileId(doc.avatarFileId || authUser?.prefs?.avatarFileId),
+        avatarFileId: normalizeFileId(
+          doc.avatarFileId || authUser?.prefs?.avatarFileId,
+        ),
         avatarUpdatedAt: normalize(authUser?.prefs?.avatarUpdatedAt, 48),
         $createdAt: doc.$createdAt,
       };
@@ -374,11 +382,17 @@ const createStaff = async ({
 }) => {
   const requestedFirstName = normalize(body.firstName, 80).replace(/\s+/g, " ");
   const requestedLastName = normalize(body.lastName, 80).replace(/\s+/g, " ");
-  const legacyFullName = normalize(body.fullName || body.name, 160).replace(/\s+/g, " ");
+  const legacyFullName = normalize(body.fullName || body.name, 160).replace(
+    /\s+/g,
+    " ",
+  );
   const legacyNameParts = splitName(legacyFullName);
   const firstName = requestedFirstName || legacyNameParts.firstName;
   const lastName = requestedLastName || legacyNameParts.lastName;
-  const fullName = normalize(`${firstName} ${lastName}`, 160).replace(/\s+/g, " ");
+  const fullName = normalize(`${firstName} ${lastName}`, 160).replace(
+    /\s+/g,
+    " ",
+  );
   const email = normalizeEmail(body.email);
   const password = String(body.password || "");
   const role = normalize(body.role, 40).toLowerCase();
@@ -595,7 +609,9 @@ const createStaff = async ({
   } catch (createErr) {
     const alreadyExists =
       Number(createErr?.code) === 409 ||
-      String(createErr?.message || "").toLowerCase().includes("already exists");
+      String(createErr?.message || "")
+        .toLowerCase()
+        .includes("already exists");
     if (alreadyExists) {
       return {
         status: 409,
@@ -634,10 +650,22 @@ const updateStaff = async ({
   const targetUserId = normalize(body.targetUserId || body.userId, 64);
   const role = normalize(body.role, 40).toLowerCase();
   const scopes = parseScopes(body.scopes);
-  const hasFirstNamePatch = Object.prototype.hasOwnProperty.call(body || {}, "firstName");
-  const hasLastNamePatch = Object.prototype.hasOwnProperty.call(body || {}, "lastName");
-  const hasEmailPatch = Object.prototype.hasOwnProperty.call(body || {}, "email");
-  const hasAvatarPatch = Object.prototype.hasOwnProperty.call(body || {}, "avatarFileId");
+  const hasFirstNamePatch = Object.prototype.hasOwnProperty.call(
+    body || {},
+    "firstName",
+  );
+  const hasLastNamePatch = Object.prototype.hasOwnProperty.call(
+    body || {},
+    "lastName",
+  );
+  const hasEmailPatch = Object.prototype.hasOwnProperty.call(
+    body || {},
+    "email",
+  );
+  const hasAvatarPatch = Object.prototype.hasOwnProperty.call(
+    body || {},
+    "avatarFileId",
+  );
   const firstNameInput = normalize(body.firstName, 80).replace(/\s+/g, " ");
   const lastNameInput = normalize(body.lastName, 80).replace(/\s+/g, " ");
   const emailInput = normalizeEmail(body.email);
@@ -712,7 +740,9 @@ const updateStaff = async ({
   }
 
   const target = await getStaffProfile({ db, config, targetUserId });
-  const authUser = await getUserCompat({ users, userId: targetUserId }).catch(() => null);
+  const authUser = await getUserCompat({ users, userId: targetUserId }).catch(
+    () => null,
+  );
   const currentFirstName = normalize(target.firstName, 80).replace(/\s+/g, " ");
   const currentLastName = normalize(target.lastName, 80).replace(/\s+/g, " ");
   const currentEmail = normalizeEmail(target.email || authUser?.email);
@@ -720,7 +750,10 @@ const updateStaff = async ({
   const nextLastName = hasLastNamePatch ? lastNameInput : currentLastName;
   const nextEmail = hasEmailPatch ? emailInput : currentEmail;
 
-  if ((hasFirstNamePatch || hasLastNamePatch) && (!nextFirstName || !nextLastName)) {
+  if (
+    (hasFirstNamePatch || hasLastNamePatch) &&
+    (!nextFirstName || !nextLastName)
+  ) {
     return {
       status: 422,
       body: {
@@ -732,7 +765,10 @@ const updateStaff = async ({
     };
   }
 
-  if ((hasFirstNamePatch || hasLastNamePatch) && (nextFirstName.length < 2 || nextLastName.length < 2)) {
+  if (
+    (hasFirstNamePatch || hasLastNamePatch) &&
+    (nextFirstName.length < 2 || nextLastName.length < 2)
+  ) {
     return {
       status: 422,
       body: {
@@ -744,9 +780,16 @@ const updateStaff = async ({
     };
   }
 
-  const shouldUpdateAuthEmail = hasEmailPatch && nextEmail && nextEmail !== currentEmail;
-  const nextFullName = normalize(`${nextFirstName} ${nextLastName}`, 160).replace(/\s+/g, " ");
-  const currentFullName = normalize(authUser?.name || `${currentFirstName} ${currentLastName}`, 160).replace(/\s+/g, " ");
+  const shouldUpdateAuthEmail =
+    hasEmailPatch && nextEmail && nextEmail !== currentEmail;
+  const nextFullName = normalize(
+    `${nextFirstName} ${nextLastName}`,
+    160,
+  ).replace(/\s+/g, " ");
+  const currentFullName = normalize(
+    authUser?.name || `${currentFirstName} ${currentLastName}`,
+    160,
+  ).replace(/\s+/g, " ");
   const shouldUpdateAuthName =
     (hasFirstNamePatch || hasLastNamePatch) &&
     nextFullName &&
@@ -762,7 +805,9 @@ const updateStaff = async ({
     } catch (updateEmailErr) {
       const alreadyExists =
         Number(updateEmailErr?.code) === 409 ||
-        String(updateEmailErr?.message || "").toLowerCase().includes("already exists");
+        String(updateEmailErr?.message || "")
+          .toLowerCase()
+          .includes("already exists");
       if (alreadyExists) {
         return {
           status: 409,
@@ -876,6 +921,7 @@ const updateStaff = async ({
         "scopesJson",
         ...(hasAvatarPatch ? ["avatarFileId"] : []),
       ],
+      changeSummary: `Updated staff ${targetUserId}: role=${body.role || "unchanged"}`,
       severity: "info",
     },
   });
@@ -962,6 +1008,7 @@ const setStaffEnabled = async ({
       beforeData: safeJsonString(before),
       afterData: safeJsonString({ enabled: updated.enabled !== false }),
       changedFields: ["enabled"],
+      changeSummary: `Staff ${targetUserId} ${enabled ? "enabled" : "disabled"}`,
       severity: enabled ? "info" : "warning",
     },
   });
@@ -1042,14 +1089,17 @@ export default async ({ req, res, log, error }) => {
     const actorEnabled = actorProfile.enabled !== false;
     const isAllowedActor =
       actorEnabled &&
-      (actorRole === "owner" || actorRole === "root" || hasScope(actorScopes, "staff.manage"));
+      (actorRole === "owner" ||
+        actorRole === "root" ||
+        hasScope(actorScopes, "staff.manage"));
 
     if (!isAllowedActor) {
       return json(res, 403, {
         ok: false,
         success: false,
         code: "FORBIDDEN",
-        message: "Only owner, root, or staff with staff.manage can manage team users",
+        message:
+          "Only owner, root, or staff with staff.manage can manage team users",
       });
     }
 
@@ -1121,7 +1171,9 @@ export default async ({ req, res, log, error }) => {
         : 500;
 
     if (normalizedCode === 500) {
-      error(`staff-user-management requestId=${requestId} failed: ${err.message}`);
+      error(
+        `staff-user-management requestId=${requestId} failed: ${err.message}`,
+      );
       log(err.stack || "");
     }
 

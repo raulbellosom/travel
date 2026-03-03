@@ -57,7 +57,10 @@ const parsePayloadJson = (value) => {
 
 const normalizeMessage = (message) => ({
   ...message,
-  kind: String(message?.kind || "text").trim().toLowerCase() || "text",
+  kind:
+    String(message?.kind || "text")
+      .trim()
+      .toLowerCase() || "text",
   payload: parsePayloadJson(message?.payloadJson),
 });
 
@@ -216,7 +219,9 @@ export const chatService = {
 
     const excludedId = normalizeId(excludeUserId);
     return (response.documents || []).filter((doc) => {
-      const role = String(doc?.role || "").trim().toLowerCase();
+      const role = String(doc?.role || "")
+        .trim()
+        .toLowerCase();
       if (!INTERNAL_CHAT_ROLES.includes(role)) return false;
       if (doc?.enabled === false) return false;
       if (doc?.isHidden === true) return false;
@@ -242,20 +247,32 @@ export const chatService = {
         databases.listDocuments({
           databaseId: DB(),
           collectionId: COL_CONVERSATIONS(),
-          queries: [...baseQueries, Query.equal("ownerUserId", normalizedUserId)],
+          queries: [
+            ...baseQueries,
+            Query.equal("ownerUserId", normalizedUserId),
+          ],
         }),
         databases.listDocuments({
           databaseId: DB(),
           collectionId: COL_CONVERSATIONS(),
-          queries: [...baseQueries, Query.equal("clientUserId", normalizedUserId)],
+          queries: [
+            ...baseQueries,
+            Query.equal("clientUserId", normalizedUserId),
+          ],
         }),
       ]);
 
       const docs = [
-        ...(asOwner.status === "fulfilled" ? asOwner.value.documents || [] : []),
-        ...(asClient.status === "fulfilled" ? asClient.value.documents || [] : []),
+        ...(asOwner.status === "fulfilled"
+          ? asOwner.value.documents || []
+          : []),
+        ...(asClient.status === "fulfilled"
+          ? asClient.value.documents || []
+          : []),
       ];
-      const unique = Array.from(new Map(docs.map((doc) => [doc.$id, doc])).values());
+      const unique = Array.from(
+        new Map(docs.map((doc) => [doc.$id, doc])).values(),
+      );
       const documents = sortByLastMessageAtDesc(unique);
       return {
         total: documents.length,
@@ -308,7 +325,10 @@ export const chatService = {
   }) {
     ensureAppwriteConfigured();
     const docId = ID.unique();
-    const normalizedKind = String(kind || "text").trim().toLowerCase() || "text";
+    const normalizedKind =
+      String(kind || "text")
+        .trim()
+        .toLowerCase() || "text";
     const serializedPayload =
       payload && typeof payload === "object" && !Array.isArray(payload)
         ? JSON.stringify(payload)
@@ -327,7 +347,6 @@ export const chatService = {
         body,
         kind: normalizedKind,
         payloadJson: serializedPayload,
-        readBySender: true,
         readByRecipient: false,
         enabled: true,
       },
@@ -347,7 +366,9 @@ export const chatService = {
     const patch = {
       status: "active",
       lastMessage:
-        previewText.length > 120 ? `${previewText.slice(0, 120)}...` : previewText,
+        previewText.length > 120
+          ? `${previewText.slice(0, 120)}...`
+          : previewText,
       lastMessageAt: new Date().toISOString(),
     };
 
@@ -423,7 +444,8 @@ export const chatService = {
     }
 
     // Reset unread for the participant side opening this conversation.
-    const patch = mySide === "client" ? { clientUnread: 0 } : { ownerUnread: 0 };
+    const patch =
+      mySide === "client" ? { clientUnread: 0 } : { ownerUnread: 0 };
     await this.updateConversation(conversationId, patch);
 
     if (!normalizedMyUserId) return;
@@ -479,7 +501,9 @@ export const chatService = {
   async respondProposal(payload) {
     const functionId = env.appwrite.functions.respondProposal;
     if (!functionId) {
-      throw new Error("APPWRITE_FUNCTION_RESPOND_PROPOSAL_ID is not configured");
+      throw new Error(
+        "APPWRITE_FUNCTION_RESPOND_PROPOSAL_ID is not configured",
+      );
     }
     return executeJsonFunction(functionId, payload);
   },

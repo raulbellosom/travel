@@ -171,10 +171,7 @@ export default async ({ req, res, log, error }) => {
       ID.unique(),
       {
         reservationId,
-        resourceId: normalize(
-          reservation.resourceId || reservation.propertyId,
-          64,
-        ),
+        resourceId: normalize(reservation.resourceId, 64),
         resourceOwnerUserId: normalize(reservation.resourceOwnerUserId, 64),
         voucherCode,
         voucherUrl,

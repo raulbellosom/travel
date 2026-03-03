@@ -387,7 +387,7 @@ const PropertyForm = ({
       Array.isArray(existingImages)
         ? [...existingImages].sort(
             (left, right) =>
-              Number(left.sortOrder || 0) - Number(right.sortOrder || 0),
+              Number(left.position || 0) - Number(right.position || 0),
           )
         : [],
     [existingImages],
@@ -1475,8 +1475,7 @@ const PropertyForm = ({
                           <img
                             src={image.url}
                             alt={
-                              image.altText ||
-                              t("propertyForm.images.fallbackAlt")
+                              image.alt || t("propertyForm.images.fallbackAlt")
                             }
                             className="h-full w-full object-cover"
                             loading="lazy"

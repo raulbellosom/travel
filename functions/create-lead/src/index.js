@@ -17,13 +17,27 @@ import {
 const SUPPORTED_CONTACT_CHANNELS = new Set([
   "resource_chat",
   "resource_cta_form",
+  "IN_PLATFORM",
+  "WHATSAPP",
+  "EMAIL",
 ]);
 const SUPPORTED_INTENTS = new Set([
   "booking_request",
   "booking_request_manual",
   "visit_request",
   "info_request",
+  "GENERAL_INQUIRY",
+  "SCHEDULE_MEETING",
+  "AVAILABILITY_INQUIRY",
 ]);
+const MEETING_MODES = new Set(["ONSITE", "CALL", "VIDEO"]);
+const MEETING_STATUSES = [
+  "PROPOSED",
+  "ACCEPTED",
+  "COUNTERED",
+  "REJECTED",
+  "CANCELLED",
+];
 const META_JSON_MAX_LENGTH = 8000;
 const INTERNAL_ROLES = new Set([
   "root",
@@ -55,6 +69,8 @@ const cfg = () => ({
   conversationsCollectionId:
     getEnv("APPWRITE_COLLECTION_CONVERSATIONS_ID") || "conversations",
   messagesCollectionId: getEnv("APPWRITE_COLLECTION_MESSAGES_ID") || "messages",
+  meetingRequestsCollectionId:
+    getEnv("APPWRITE_COLLECTION_MEETING_REQUESTS_ID") || "meeting_requests",
   activityLogsCollectionId:
     getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
   instanceSettingsCollectionId:
@@ -105,7 +121,11 @@ const parseObject = (value) => {
 };
 
 const parseMetaPayload = (body) => {
-  if (body?.meta && typeof body.meta === "object" && !Array.isArray(body.meta)) {
+  if (
+    body?.meta &&
+    typeof body.meta === "object" &&
+    !Array.isArray(body.meta)
+  ) {
     return body.meta;
   }
   if (body?.metaJson && typeof body.metaJson === "string") {
@@ -115,19 +135,37 @@ const parseMetaPayload = (body) => {
 };
 
 const normalizeContactChannel = (value) => {
-  const normalized = normalizeText(value, 40).toLowerCase();
-  if (SUPPORTED_CONTACT_CHANNELS.has(normalized)) return normalized;
+  const raw = normalizeText(value, 40);
+  // Support new uppercase enum values
+  if (SUPPORTED_CONTACT_CHANNELS.has(raw)) return raw;
+  const lower = raw.toLowerCase();
+  if (SUPPORTED_CONTACT_CHANNELS.has(lower)) return lower;
 
-  if (normalized === "authenticated_chat") return "resource_chat";
-  if (normalized === "authenticated_form") return "resource_cta_form";
+  if (lower === "authenticated_chat") return "resource_chat";
+  if (lower === "authenticated_form") return "resource_cta_form";
+  if (lower === "in_platform") return "IN_PLATFORM";
+  if (lower === "whatsapp") return "WHATSAPP";
+  if (lower === "email") return "EMAIL";
 
-  return "resource_chat";
+  return "IN_PLATFORM";
 };
 
 const normalizeIntent = (value) => {
-  const normalized = normalizeText(value, 40).toLowerCase();
-  if (!SUPPORTED_INTENTS.has(normalized)) return "";
-  return normalized;
+  const raw = normalizeText(value, 40);
+  if (SUPPORTED_INTENTS.has(raw)) return raw;
+  const lower = raw.toLowerCase();
+  if (SUPPORTED_INTENTS.has(lower)) return lower;
+  // Map between old and new intent values
+  if (lower === "general_inquiry") return "GENERAL_INQUIRY";
+  if (lower === "schedule_meeting") return "SCHEDULE_MEETING";
+  if (lower === "availability_inquiry") return "AVAILABILITY_INQUIRY";
+  return "";
+};
+
+const normalizeMeetingMode = (value) => {
+  const raw = normalizeText(value, 20).toUpperCase();
+  if (MEETING_MODES.has(raw)) return raw;
+  return "ONSITE";
 };
 
 const normalizeMeetingType = (value) => {
@@ -190,7 +228,9 @@ const buildResourceSnapshot = (resource) => {
 
 const normalizeBookingPayload = (meta) => {
   const bookingNode =
-    meta?.booking && typeof meta.booking === "object" && !Array.isArray(meta.booking)
+    meta?.booking &&
+    typeof meta.booking === "object" &&
+    !Array.isArray(meta.booking)
       ? meta.booking
       : {};
 
@@ -290,9 +330,7 @@ const normalizeVisitPayload = (meta) => {
         visitNode.startDateTime,
     ),
     endDateTime: toIsoOrUndefined(
-      requestSchedule.endDateTime ||
-        meta.endDateTime ||
-        visitNode.endDateTime,
+      requestSchedule.endDateTime || meta.endDateTime || visitNode.endDateTime,
     ),
     timezone:
       normalizeNullableText(visitNode.timezone, 50) ||
@@ -311,7 +349,8 @@ const normalizeVisitPayload = (meta) => {
   }
 
   const meetingType =
-    normalizeMeetingType(visitNode.meetingType || meta.meetingType) || undefined;
+    normalizeMeetingType(visitNode.meetingType || meta.meetingType) ||
+    undefined;
 
   const notes =
     normalizeNullableText(visitNode.notes, 1000) ||
@@ -349,7 +388,10 @@ const normalizeContactPrefs = (meta, profile, authUser) => {
 
 const hasVisitData = (visitPayload) => {
   if (!visitPayload || typeof visitPayload !== "object") return false;
-  if (Array.isArray(visitPayload.preferredSlots) && visitPayload.preferredSlots.length > 0) {
+  if (
+    Array.isArray(visitPayload.preferredSlots) &&
+    visitPayload.preferredSlots.length > 0
+  ) {
     return true;
   }
   return false;
@@ -359,8 +401,8 @@ const hasBookingData = (bookingPayload) => {
   if (!bookingPayload || typeof bookingPayload !== "object") return false;
   return Boolean(
     hasValue(bookingPayload.startDate) ||
-      hasValue(bookingPayload.endDate) ||
-      Number.isFinite(Number(bookingPayload.guests)),
+    hasValue(bookingPayload.endDate) ||
+    Number.isFinite(Number(bookingPayload.guests)),
   );
 };
 
@@ -370,8 +412,14 @@ const deriveIntent = ({
   bookingPayload,
   visitPayload,
 }) => {
-  const mode = normalizeText(resourceSnapshot?.commercialMode, 40).toLowerCase();
-  const bookingType = normalizeText(resourceSnapshot?.bookingType, 40).toLowerCase();
+  const mode = normalizeText(
+    resourceSnapshot?.commercialMode,
+    40,
+  ).toLowerCase();
+  const bookingType = normalizeText(
+    resourceSnapshot?.bookingType,
+    40,
+  ).toLowerCase();
 
   const forcedVisit = mode === "sale" || mode === "rent_long_term";
   if (forcedVisit) return "visit_request";
@@ -445,7 +493,8 @@ const validateCanonicalMeta = ({ intent, bookingPayload, visitPayload }) => {
   }
 
   if (intent === "booking_request") {
-    const hasAnyDate = hasValue(bookingPayload.startDate) || hasValue(bookingPayload.endDate);
+    const hasAnyDate =
+      hasValue(bookingPayload.startDate) || hasValue(bookingPayload.endDate);
     if (hasAnyDate && !validateBookingDateRange(bookingPayload)) {
       throw createHttpError(
         422,
@@ -534,7 +583,10 @@ const createHttpError = (status, code, message) => {
 
 const getAuthenticatedUserId = (req) => {
   const headers = req.headers || {};
-  return normalizeText(headers["x-appwrite-user-id"] || headers["x-appwrite-userid"], 64);
+  return normalizeText(
+    headers["x-appwrite-user-id"] || headers["x-appwrite-userid"],
+    64,
+  );
 };
 
 const getRequestId = (req) => {
@@ -623,7 +675,10 @@ const createConversation = async ({
 };
 
 const reopenConversationIfNeeded = async ({ db, config, conversation }) => {
-  const normalizedStatus = normalizeText(conversation?.status, 20).toLowerCase();
+  const normalizedStatus = normalizeText(
+    conversation?.status,
+    20,
+  ).toLowerCase();
   if (!normalizedStatus || normalizedStatus === "active") return conversation;
 
   return db.updateDocument(
@@ -659,7 +714,6 @@ const createMessage = async ({
       body: message,
       kind: "text",
       payloadJson: safeJson({ intent, contactChannel }, 2000),
-      readBySender: true,
       readByRecipient: false,
       enabled: true,
     },
@@ -686,6 +740,103 @@ const createMessage = async ({
   );
 
   return msg;
+};
+
+const createSystemMessage = async ({
+  db,
+  config,
+  conversationId,
+  body,
+  ownerUserId,
+  clientUserId,
+  payloadData = {},
+}) => {
+  return db.createDocument(
+    config.databaseId,
+    config.messagesCollectionId,
+    ID.unique(),
+    {
+      conversationId,
+      senderUserId: "system",
+      senderName: "Sistema",
+      senderRole: "root",
+      body,
+      kind: "system",
+      payloadJson: safeJson(payloadData, 2000),
+      readByRecipient: false,
+      enabled: true,
+    },
+    buildMessagePermissions(ownerUserId, clientUserId),
+  );
+};
+
+const buildSystemMessageForChannel = (contactChannel, intent) => {
+  const channelMap = {
+    WHATSAPP:
+      "Lead creado vía WhatsApp. Da seguimiento externo y registra actualizaciones aquí.",
+    EMAIL:
+      "Lead creado vía correo electrónico. Da seguimiento externo y registra actualizaciones aquí.",
+    IN_PLATFORM: "Lead creado en la plataforma.",
+    resource_chat: "Lead creado en la plataforma.",
+    resource_cta_form: "Lead creado desde formulario CTA.",
+  };
+  const intentMap = {
+    SCHEDULE_MEETING: " Intención: agendar visita/reunión.",
+    AVAILABILITY_INQUIRY: " Intención: consulta de disponibilidad.",
+    GENERAL_INQUIRY: " Intención: consulta general.",
+    visit_request: " Intención: solicitud de visita.",
+    booking_request: " Intención: solicitud de reserva.",
+    booking_request_manual: " Intención: reserva manual.",
+    info_request: " Intención: consulta de información.",
+  };
+
+  return (
+    (channelMap[contactChannel] || channelMap.IN_PLATFORM) +
+    (intentMap[intent] || "")
+  );
+};
+
+const createMeetingRequest = async ({
+  db,
+  config,
+  leadId,
+  conversationId,
+  resourceId,
+  meetingRequest,
+  ownerUserId,
+  clientUserId,
+}) => {
+  if (!meetingRequest?.at) return null;
+  const proposedAt = toIsoOrUndefined(meetingRequest.at);
+  if (!proposedAt) return null;
+
+  const mode = normalizeMeetingMode(meetingRequest.mode);
+  const durationMins = toSafeInteger(meetingRequest.durationMins, 30);
+
+  return db.createDocument(
+    config.databaseId,
+    config.meetingRequestsCollectionId,
+    ID.unique(),
+    {
+      lead_id: leadId,
+      thread_id: conversationId,
+      resource_id: resourceId,
+      proposed_by: clientUserId,
+      proposed_at: proposedAt,
+      mode,
+      duration_mins: durationMins,
+      status: "PROPOSED",
+      enabled: true,
+    },
+    [
+      ...new Set([
+        Permission.read(Role.user(ownerUserId)),
+        Permission.update(Role.user(ownerUserId)),
+        Permission.delete(Role.user(ownerUserId)),
+        Permission.read(Role.user(clientUserId)),
+      ]),
+    ],
+  );
 };
 
 const buildCanonicalMeta = ({
@@ -739,11 +890,19 @@ const assertClientActor = ({ profile, authUser }) => {
   }
 
   if (role !== "client") {
-    throw createHttpError(403, "FORBIDDEN", "Only client users can create leads");
+    throw createHttpError(
+      403,
+      "FORBIDDEN",
+      "Only client users can create leads",
+    );
   }
 
   if (INTERNAL_ROLES.has(role)) {
-    throw createHttpError(403, "FORBIDDEN", "Internal users cannot create leads");
+    throw createHttpError(
+      403,
+      "FORBIDDEN",
+      "Internal users cannot create leads",
+    );
   }
 
   if (!authUser?.emailVerification) {
@@ -798,8 +957,41 @@ export default async ({ req, res, log, error }) => {
   const resourceId = normalizeText(body.resourceId || body.propertyId, 64);
   const message = normalizeText(body.message, 2000);
   const requestedIntent = normalizeIntent(body.intent);
-  const contactChannel = normalizeContactChannel(body.contactChannel || body.source);
+  const contactChannel = normalizeContactChannel(
+    body.channel || body.contactChannel || body.source,
+  );
   const rawMeta = parseMetaPayload(body);
+
+  // Parse new unified payload fields
+  const contactPayload =
+    body.contact && typeof body.contact === "object" ? body.contact : {};
+  const dateRangePayload =
+    body.dateRange && typeof body.dateRange === "object" ? body.dateRange : {};
+  const meetingRequestPayload =
+    body.meetingRequest && typeof body.meetingRequest === "object"
+      ? body.meetingRequest
+      : null;
+
+  // Merge dateRange into rawMeta.booking if provided
+  if (dateRangePayload.from || dateRangePayload.to) {
+    if (!rawMeta.booking) rawMeta.booking = {};
+    if (dateRangePayload.from)
+      rawMeta.booking.startDate =
+        rawMeta.booking.startDate || dateRangePayload.from;
+    if (dateRangePayload.to)
+      rawMeta.booking.endDate = rawMeta.booking.endDate || dateRangePayload.to;
+  }
+
+  // Merge contact into rawMeta.contactPrefs if provided
+  if (contactPayload.phone || contactPayload.email) {
+    if (!rawMeta.contactPrefs) rawMeta.contactPrefs = {};
+    if (contactPayload.phone)
+      rawMeta.contactPrefs.phone =
+        rawMeta.contactPrefs.phone || contactPayload.phone;
+    if (contactPayload.email)
+      rawMeta.contactPrefs.email =
+        rawMeta.contactPrefs.email || contactPayload.email;
+  }
 
   if (!resourceId || !message) {
     return res.json(
@@ -847,7 +1039,11 @@ export default async ({ req, res, log, error }) => {
         resourceId,
       ),
       users.get(authenticatedUserId),
-      db.getDocument(config.databaseId, config.usersCollectionId, authenticatedUserId),
+      db.getDocument(
+        config.databaseId,
+        config.usersCollectionId,
+        authenticatedUserId,
+      ),
     ]);
 
     assertClientActor({ profile: clientProfile, authUser });
@@ -971,6 +1167,41 @@ export default async ({ req, res, log, error }) => {
       contactChannel,
     });
 
+    // Always create a system message describing channel + intent for CRM traceability
+    const systemBody = buildSystemMessageForChannel(contactChannel, intent);
+    await createSystemMessage({
+      db,
+      config,
+      conversationId: conversation.$id,
+      body: systemBody,
+      ownerUserId: resourceOwnerUserId,
+      clientUserId: authenticatedUserId,
+      payloadData: { intent, contactChannel, leadId: lead.$id },
+    });
+
+    // If intent is SCHEDULE_MEETING and meetingRequest payload provided, create meeting_request
+    let meetingRequestId = null;
+    if (
+      (intent === "SCHEDULE_MEETING" || intent === "visit_request") &&
+      meetingRequestPayload
+    ) {
+      try {
+        const meetingDoc = await createMeetingRequest({
+          db,
+          config,
+          leadId: lead.$id,
+          conversationId: conversation.$id,
+          resourceId,
+          meetingRequest: meetingRequestPayload,
+          ownerUserId: resourceOwnerUserId,
+          clientUserId: authenticatedUserId,
+        });
+        meetingRequestId = meetingDoc?.$id || null;
+      } catch (meetingErr) {
+        log(`meeting_request creation skipped: ${meetingErr.message}`);
+      }
+    }
+
     await db
       .updateDocument(
         config.databaseId,
@@ -1001,6 +1232,7 @@ export default async ({ req, res, log, error }) => {
             conversationId: conversation.$id,
             intent,
             contactChannel,
+            meetingRequestId,
           },
           20000,
         ),
@@ -1017,6 +1249,7 @@ export default async ({ req, res, log, error }) => {
         conversationId: conversation.$id,
         intent,
         contactChannel,
+        meetingRequestId,
       },
       openLead ? 200 : 201,
     );

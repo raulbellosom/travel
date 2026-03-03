@@ -20,8 +20,39 @@ const LEAD_INTENTS = [
   "booking_request_manual",
   "visit_request",
   "info_request",
+  // New v2 intents
+  "GENERAL_INQUIRY",
+  "SCHEDULE_MEETING",
+  "AVAILABILITY_INQUIRY",
 ];
-const LEAD_CHANNELS = ["resource_chat", "resource_cta_form"];
+const LEAD_CHANNELS = [
+  "resource_chat",
+  "resource_cta_form",
+  // New v2 channels
+  "IN_PLATFORM",
+  "WHATSAPP",
+  "EMAIL",
+];
+
+/** Map new intent codes to display-friendly labels */
+const INTENT_DISPLAY = {
+  booking_request: "Reserva",
+  booking_request_manual: "Reserva manual",
+  visit_request: "Visita",
+  info_request: "Información",
+  GENERAL_INQUIRY: "Consulta general",
+  SCHEDULE_MEETING: "Reunión",
+  AVAILABILITY_INQUIRY: "Disponibilidad",
+};
+
+/** Map channel codes to display-friendly labels */
+const CHANNEL_DISPLAY = {
+  resource_chat: "Chat",
+  resource_cta_form: "Formulario CTA",
+  IN_PLATFORM: "Plataforma",
+  WHATSAPP: "WhatsApp",
+  EMAIL: "Email",
+};
 
 const safeParseJson = (value) => {
   try {
@@ -38,10 +69,11 @@ const getLeadResourceId = (lead) =>
   String(lead?.resourceId || lead?.propertyId || "").trim();
 
 const normalizeLeadIntent = (lead, meta = {}) => {
-  const normalized = String(lead?.intent || "")
-    .trim()
-    .toLowerCase();
-  if (LEAD_INTENTS.includes(normalized)) return normalized;
+  const raw = String(lead?.intent || "").trim();
+  // New v2 intents are stored uppercase
+  if (LEAD_INTENTS.includes(raw)) return raw;
+  const lower = raw.toLowerCase();
+  if (LEAD_INTENTS.includes(lower)) return lower;
 
   const visitSlots = Array.isArray(meta?.visit?.preferredSlots)
     ? meta.visit.preferredSlots
@@ -58,19 +90,22 @@ const normalizeLeadIntent = (lead, meta = {}) => {
 };
 
 const normalizeLeadChannel = (lead) => {
-  const normalized = String(lead?.contactChannel || lead?.source || "")
-    .trim()
-    .toLowerCase();
-  if (normalized === "authenticated_chat") return "resource_chat";
-  if (normalized === "authenticated_form") return "resource_cta_form";
-  if (LEAD_CHANNELS.includes(normalized)) return normalized;
+  const raw = String(lead?.contactChannel || lead?.source || "").trim();
+  // New v2 channels are stored uppercase
+  if (LEAD_CHANNELS.includes(raw)) return raw;
+  const lower = raw.toLowerCase();
+  if (lower === "authenticated_chat") return "resource_chat";
+  if (lower === "authenticated_form") return "resource_cta_form";
+  if (LEAD_CHANNELS.includes(lower)) return lower;
   return "resource_chat";
 };
 
 const extractLeadMetaDetails = (lead) => {
   const meta = safeParseJson(lead?.metaJson);
   const booking =
-    meta?.booking && typeof meta.booking === "object" && !Array.isArray(meta.booking)
+    meta?.booking &&
+    typeof meta.booking === "object" &&
+    !Array.isArray(meta.booking)
       ? meta.booking
       : {};
   const visit =
@@ -92,9 +127,16 @@ const extractLeadMetaDetails = (lead) => {
   return {
     meta,
     bookingGuests: Number.isFinite(guests) ? guests : 0,
-    bookingStartDate: String(booking.startDate || booking.checkInDate || "").trim(),
-    bookingEndDate: String(booking.endDate || booking.checkOutDate || "").trim(),
+    bookingStartDate: String(
+      booking.startDate || booking.checkInDate || "",
+    ).trim(),
+    bookingEndDate: String(
+      booking.endDate || booking.checkOutDate || "",
+    ).trim(),
     visitSlots: preferredSlots,
+    // v2: meeting request data (stored alongside lead, not in separate collection on frontend)
+    meetingRequestId: String(lead?.meetingRequestId || "").trim() || null,
+    contactPreferredChannel: String(lead?.contactChannel || "").trim() || null,
   };
 };
 
@@ -288,6 +330,7 @@ const Leads = () => {
         bookingStartDate: metaDetails.bookingStartDate,
         bookingEndDate: metaDetails.bookingEndDate,
         visitSlotsCount: metaDetails.visitSlots.length,
+        meetingRequestId: metaDetails.meetingRequestId,
         mappedName: fullName,
         mappedEmail: u.email || "",
         mappedPhone: phoneNum,
@@ -447,6 +490,24 @@ const Leads = () => {
           defaultValue: "Informacion",
         }),
       },
+      {
+        value: "GENERAL_INQUIRY",
+        label: t("leadsPage.filters.intent.generalInquiry", {
+          defaultValue: "Consulta general",
+        }),
+      },
+      {
+        value: "SCHEDULE_MEETING",
+        label: t("leadsPage.filters.intent.scheduleMeeting", {
+          defaultValue: "Reunión",
+        }),
+      },
+      {
+        value: "AVAILABILITY_INQUIRY",
+        label: t("leadsPage.filters.intent.availabilityInquiry", {
+          defaultValue: "Disponibilidad",
+        }),
+      },
     ],
     [t],
   );
@@ -469,6 +530,24 @@ const Leads = () => {
         value: "resource_cta_form",
         label: t("leadsPage.filters.channel.resourceCtaForm", {
           defaultValue: "Formulario CTA",
+        }),
+      },
+      {
+        value: "IN_PLATFORM",
+        label: t("leadsPage.filters.channel.inPlatform", {
+          defaultValue: "Plataforma",
+        }),
+      },
+      {
+        value: "WHATSAPP",
+        label: t("leadsPage.filters.channel.whatsapp", {
+          defaultValue: "WhatsApp",
+        }),
+      },
+      {
+        value: "EMAIL",
+        label: t("leadsPage.filters.channel.email", {
+          defaultValue: "Email",
         }),
       },
     ],
@@ -603,7 +682,9 @@ const Leads = () => {
         </label>
 
         <label className="grid gap-1 text-sm">
-          <span>{t("leadsPage.filters.channel", { defaultValue: "Canal" })}</span>
+          <span>
+            {t("leadsPage.filters.channel", { defaultValue: "Canal" })}
+          </span>
           <Select
             value={channelFilter}
             onChange={(value) => {
@@ -688,7 +769,9 @@ const Leads = () => {
                             lead.leadResourceId}
                         </p>
                         <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          {lead.intent} • {lead.contactChannel}
+                          {INTENT_DISPLAY[lead.intent] || lead.intent} •{" "}
+                          {CHANNEL_DISPLAY[lead.contactChannel] ||
+                            lead.contactChannel}
                         </p>
                         {(lead.bookingGuests > 0 ||
                           (lead.bookingStartDate && lead.bookingEndDate) ||
@@ -703,6 +786,14 @@ const Leads = () => {
                             {lead.visitSlotsCount > 0
                               ? `${lead.visitSlotsCount} slot(s)`
                               : ""}
+                          </p>
+                        )}
+                        {lead.meetingRequestId && (
+                          <p className="mt-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                            📅{" "}
+                            {t("leadsPage.meetingRequested", {
+                              defaultValue: "Reunión solicitada",
+                            })}
                           </p>
                         )}
                         {lead.lastMessage && (

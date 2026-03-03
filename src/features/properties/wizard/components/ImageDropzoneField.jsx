@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Camera, ImagePlus, Loader2, X } from "lucide-react";
 import { ImageViewerModal } from "../../../../components/common/organisms/ImageViewerModal";
 
@@ -21,12 +27,16 @@ function isFileLike(file) {
 }
 
 function isValidImageFile(file) {
-  const mime = String(file?.type || "").trim().toLowerCase();
+  const mime = String(file?.type || "")
+    .trim()
+    .toLowerCase();
   if (["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(mime)) {
     return true;
   }
 
-  const filename = String(file?.name || "").trim().toLowerCase();
+  const filename = String(file?.name || "")
+    .trim()
+    .toLowerCase();
   return /\.(png|jpe?g|webp)$/.test(filename);
 }
 
@@ -54,7 +64,7 @@ function normalizeExistingImages(images) {
         id: String(fallbackId || `existing-${index}`),
         url,
         isMain: Boolean(image?.isMain),
-        altText: String(image?.altText || "").trim(),
+        alt: String(image?.alt || "").trim(),
       };
     })
     .filter(Boolean);
@@ -206,12 +216,17 @@ export default function ImageDropzoneField({
       });
 
       const filesToAppend = accepted.slice(0, availableSlots);
-      const skippedByLimitCount = Math.max(0, accepted.length - filesToAppend.length);
+      const skippedByLimitCount = Math.max(
+        0,
+        accepted.length - filesToAppend.length,
+      );
       const errorParts = [];
 
       if (invalidTypeCount > 0) {
         errorParts.push(
-          t("propertyForm.images.errors.invalidType", { count: invalidTypeCount }),
+          t("propertyForm.images.errors.invalidType", {
+            count: invalidTypeCount,
+          }),
         );
       }
       if (oversizeCount > 0) {
@@ -229,7 +244,9 @@ export default function ImageDropzoneField({
       }
       if (skippedByLimitCount > 0) {
         errorParts.push(
-          t("propertyForm.images.errors.maxFiles", { maxFiles: MAX_IMAGE_FILES }),
+          t("propertyForm.images.errors.maxFiles", {
+            maxFiles: MAX_IMAGE_FILES,
+          }),
         );
       }
 
@@ -244,18 +261,23 @@ export default function ImageDropzoneField({
 
   const removeImage = useCallback(
     (signature) => {
-      const nextFiles = files.filter((file) => toFileSignature(file) !== signature);
+      const nextFiles = files.filter(
+        (file) => toFileSignature(file) !== signature,
+      );
       setUploadError("");
       updateFiles(nextFiles);
     },
     [files, updateFiles],
   );
 
-  const handleDragOver = useCallback((event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!isDragging) setIsDragging(true);
-  }, [isDragging]);
+  const handleDragOver = useCallback(
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!isDragging) setIsDragging(true);
+    },
+    [isDragging],
+  );
 
   const handleDragLeave = useCallback((event) => {
     event.preventDefault();
@@ -431,7 +453,7 @@ export default function ImageDropzoneField({
                 >
                   <img
                     src={image.url}
-                    alt={image.altText || t("propertyForm.images.fallbackAlt")}
+                    alt={image.alt || t("propertyForm.images.fallbackAlt")}
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
@@ -455,7 +477,9 @@ export default function ImageDropzoneField({
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-          {t("propertyForm.images.pendingTitle", { count: previewItems.length })}
+          {t("propertyForm.images.pendingTitle", {
+            count: previewItems.length,
+          })}
         </p>
 
         {previewItems.length === 0 ? (
@@ -479,7 +503,10 @@ export default function ImageDropzoneField({
                     {item.previewUrl ? (
                       <img
                         src={item.previewUrl}
-                        alt={item.file?.name || t("propertyForm.images.fallbackAlt")}
+                        alt={
+                          item.file?.name ||
+                          t("propertyForm.images.fallbackAlt")
+                        }
                         className="h-full w-full object-cover"
                         loading="lazy"
                       />
@@ -515,7 +542,9 @@ export default function ImageDropzoneField({
         )}
       </div>
 
-      {error ? <p className="text-sm text-red-600 dark:text-red-300">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+      ) : null}
 
       <ImageViewerModal
         isOpen={viewerState.isOpen}

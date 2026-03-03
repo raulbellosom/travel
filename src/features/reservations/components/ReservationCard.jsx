@@ -76,9 +76,7 @@ const ReservationCard = ({
   const hasLeftActions = canCancel;
 
   const resourceTitle =
-    resourceMap[reservation.resourceId || reservation.propertyId]?.title ||
-    reservation.resourceId ||
-    "—";
+    resourceMap[reservation.resourceId]?.title || reservation.resourceId || "—";
 
   const scheduleLabel = formatScheduleLabel(reservation, locale);
   const nights = calcNights(

@@ -153,10 +153,10 @@ Reglas:
 
 ## 6. Compatibilidad de migracion
 
-Mientras dure la migracion a resources:
+Migracion a resources **completada** (2025-07):
 
-- aceptar `resourceId` y `propertyId` en endpoints criticos.
-- guardar `resourceId` como canonico y `propertyId` como alias legacy cuando aplique.
+- ~~aceptar `resourceId` y `propertyId` en endpoints criticos.~~ → solo `resourceId`.
+- ~~guardar `resourceId` como canonico y `propertyId` como alias legacy.~~ → eliminado.
 - mantener ruta publica `/propiedades/:slug` cargando desde `resources`.
 
 ---

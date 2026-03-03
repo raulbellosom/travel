@@ -16,11 +16,15 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  reservationsCollectionId: getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
+  reservationsCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   reservationPaymentsCollectionId:
-    getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") || "reservation_payments",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
-  issueVoucherFunctionId: getEnv("APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID") || "",
+    getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") ||
+    "reservation_payments",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  issueVoucherFunctionId:
+    getEnv("APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID") || "",
   mercadoPagoWebhookSecret: getEnv("MERCADOPAGO_WEBHOOK_SECRET") || "",
 });
 
@@ -107,18 +111,28 @@ const maybeIssueVoucher = async ({ functions, config, reservationId, log }) => {
 
 export default async ({ req, res, log, error }) => {
   if (req.method && req.method.toUpperCase() !== "POST") {
-    return json(res, 405, { ok: false, code: "METHOD_NOT_ALLOWED", message: "Use POST" });
+    return json(res, 405, {
+      ok: false,
+      code: "METHOD_NOT_ALLOWED",
+      message: "Use POST",
+    });
   }
 
   const config = cfg();
   if (!config.endpoint || !config.projectId || !config.apiKey) {
-    return json(res, 500, { ok: false, code: "ENV_MISSING", message: "Missing Appwrite credentials" });
+    return json(res, 500, {
+      ok: false,
+      code: "ENV_MISSING",
+      message: "Missing Appwrite credentials",
+    });
   }
 
   const rawBody = rawBodyFromRequest(req);
   const payload = parseBody(req);
   const signatureHeader =
-    req.headers?.["x-signature"] || req.headers?.["x-mercadopago-signature"] || "";
+    req.headers?.["x-signature"] ||
+    req.headers?.["x-mercadopago-signature"] ||
+    "";
 
   if (
     !verifySimpleHmac({
@@ -127,10 +141,17 @@ export default async ({ req, res, log, error }) => {
       secret: config.mercadoPagoWebhookSecret,
     })
   ) {
-    return json(res, 401, { ok: false, code: "INVALID_SIGNATURE", message: "Invalid Mercado Pago signature" });
+    return json(res, 401, {
+      ok: false,
+      code: "INVALID_SIGNATURE",
+      message: "Invalid Mercado Pago signature",
+    });
   }
 
-  const eventId = normalize(payload.id || payload.eventId || payload.data?.id, 120);
+  const eventId = normalize(
+    payload.id || payload.eventId || payload.data?.id,
+    120,
+  );
   const reservationId = normalize(
     payload?.metadata?.reservationId ||
       payload?.external_reference ||
@@ -138,10 +159,16 @@ export default async ({ req, res, log, error }) => {
       payload?.data?.metadata?.reservationId,
     64,
   );
-  const providerPaymentId = normalize(payload?.paymentId || payload?.data?.id || eventId, 120);
+  const providerPaymentId = normalize(
+    payload?.paymentId || payload?.data?.id || eventId,
+    120,
+  );
   const status = mapStatus(payload?.status || payload?.data?.status);
   const amount = toMoney(payload?.transaction_amount || payload?.amount || 0);
-  const currency = normalize(payload?.currency_id || payload?.currency || "MXN", 3).toUpperCase();
+  const currency = normalize(
+    payload?.currency_id || payload?.currency || "MXN",
+    3,
+  ).toUpperCase();
 
   if (!eventId || !reservationId) {
     return json(res, 422, {
@@ -185,7 +212,8 @@ export default async ({ req, res, log, error }) => {
       ID.unique(),
       {
         reservationId,
-        propertyOwnerId: reservation.propertyOwnerId,
+        resourceId: reservation.resourceId,
+        resourceOwnerUserId: reservation.resourceOwnerUserId,
         provider: "mercadopago",
         providerPaymentId: providerPaymentId || eventId,
         providerEventId: eventId,
@@ -201,7 +229,8 @@ export default async ({ req, res, log, error }) => {
     const reservationPatch = {};
     if (status === "approved") {
       reservationPatch.paymentStatus = "paid";
-      reservationPatch.status = reservation.status === "completed" ? "completed" : "confirmed";
+      reservationPatch.status =
+        reservation.status === "completed" ? "completed" : "confirmed";
       reservationPatch.paymentProvider = "mercadopago";
       reservationPatch.externalRef = providerPaymentId || eventId;
     } else if (status === "rejected") {
@@ -226,7 +255,7 @@ export default async ({ req, res, log, error }) => {
       config,
       log,
       data: {
-        actorUserId: reservation.propertyOwnerId,
+        actorUserId: reservation.resourceOwnerUserId,
         actorRole: "owner",
         action: "payment.webhook_mercadopago_processed",
         entityType: "reservation_payments",

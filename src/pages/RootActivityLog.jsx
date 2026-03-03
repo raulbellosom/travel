@@ -197,7 +197,13 @@ const RootActivityLog = () => {
                 </span>
               </header>
 
-              <div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-3">
+              {log.changeSummary ? (
+                <p className="rounded-lg bg-cyan-50 px-3 py-2 text-xs text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">
+                  {log.changeSummary}
+                </p>
+              ) : null}
+
+              <div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2 lg:grid-cols-4">
                 <p>
                   <strong>actorUserId:</strong> {log.actorUserId || "-"}
                 </p>
@@ -207,7 +213,27 @@ const RootActivityLog = () => {
                 <p>
                   <strong>entityId:</strong> {log.entityId || "-"}
                 </p>
+                <p>
+                  <strong>requestId:</strong> {log.requestId || "-"}
+                </p>
               </div>
+
+              {Array.isArray(log.changedFields) &&
+              log.changedFields.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    changedFields:
+                  </span>
+                  {log.changedFields.map((field) => (
+                    <span
+                      key={field}
+                      className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-200"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div>

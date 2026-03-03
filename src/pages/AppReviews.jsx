@@ -66,7 +66,7 @@ const AppReviews = () => {
     return reviews.filter((review) => {
       const text = [
         review.$id,
-        review.propertyId,
+        review.resourceId,
         review.authorName,
         review.title,
         review.comment,
@@ -181,7 +181,7 @@ const AppReviews = () => {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-300">
-                      {review.propertyId}
+                      {review.resourceId}
                     </p>
                     <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {review.authorName}

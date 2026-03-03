@@ -290,12 +290,12 @@ const searchLeadsLocal = async ({ userId, query }) => {
 
   return rankDocuments(pool, query, (lead) => [
     lead.$id,
-    lead.name,
-    lead.email,
-    lead.phone,
-    lead.message,
+    lead.lastMessage,
     lead.status,
-    lead.propertyId,
+    lead.intent,
+    lead.contactChannel,
+    lead.resourceId,
+    lead.conversationId,
   ]);
 };
 
@@ -309,7 +309,7 @@ const searchReservationsLocal = async ({ userId, query }) => {
 
   return rankDocuments(pool, query, (reservation) => [
     reservation.$id,
-    reservation.propertyId,
+    reservation.resourceId,
     reservation.guestName,
     reservation.guestEmail,
     reservation.guestPhone,
@@ -345,7 +345,7 @@ const searchReviewsLocal = async ({ userId, query }) => {
 
   return rankDocuments(pool, query, (review) => [
     review.$id,
-    review.propertyId,
+    review.resourceId,
     review.authorName,
     review.title,
     review.comment,

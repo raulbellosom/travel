@@ -38,19 +38,11 @@ export const reservationsService = {
 
   async listForOwner(
     ownerUserId,
-    {
-      status = "",
-      paymentStatus = "",
-      propertyOwnerId = "",
-      resourceOwnerUserId = "",
-      resourceId = "",
-    } = {},
+    { status = "", paymentStatus = "", resourceId = "" } = {},
   ) {
     ensureAppwriteConfigured();
 
-    const resolvedOwnerUserId = String(
-      ownerUserId || resourceOwnerUserId || propertyOwnerId || "",
-    ).trim();
+    const resolvedOwnerUserId = String(ownerUserId || "").trim();
 
     const queries = [
       Query.equal("enabled", true),
@@ -61,20 +53,9 @@ export const reservationsService = {
     if (status) queries.push(Query.equal("status", status));
     if (paymentStatus)
       queries.push(Query.equal("paymentStatus", paymentStatus));
-    if (resolvedOwnerUserId) {
-      try {
-        queries.push(Query.equal("resourceOwnerUserId", resolvedOwnerUserId));
-      } catch {
-        queries.push(Query.equal("propertyOwnerId", resolvedOwnerUserId));
-      }
-    }
-    if (resourceId) {
-      try {
-        queries.push(Query.equal("resourceId", resourceId));
-      } catch {
-        queries.push(Query.equal("propertyId", resourceId));
-      }
-    }
+    if (resolvedOwnerUserId)
+      queries.push(Query.equal("resourceOwnerUserId", resolvedOwnerUserId));
+    if (resourceId) queries.push(Query.equal("resourceId", resourceId));
 
     return databases.listDocuments({
       databaseId: env.appwrite.databaseId,
@@ -122,13 +103,10 @@ export const reservationsService = {
       );
     }
 
-    const resolvedResourceId = String(
-      payload.resourceId || payload.propertyId || "",
-    ).trim();
+    const resolvedResourceId = String(payload.resourceId || "").trim();
     return executeJsonFunction(functionId, {
       ...payload,
       resourceId: resolvedResourceId || undefined,
-      propertyId: resolvedResourceId || payload.propertyId,
     });
   },
 
@@ -153,13 +131,10 @@ export const reservationsService = {
       );
     }
 
-    const resolvedResourceId = String(
-      payload.resourceId || payload.propertyId || "",
-    ).trim();
+    const resolvedResourceId = String(payload.resourceId || "").trim();
     return executeJsonFunction(functionId, {
       ...payload,
       resourceId: resolvedResourceId || undefined,
-      propertyId: resolvedResourceId || payload.propertyId,
     });
   },
 

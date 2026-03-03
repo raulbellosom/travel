@@ -190,7 +190,9 @@ const useRowActionMenu = (paginatedItems) => {
 
     return () => {
       document.removeEventListener("mousedown", onOutsideClick);
-      document.removeEventListener("touchstart", onOutsideClick, { passive: true });
+      document.removeEventListener("touchstart", onOutsideClick, {
+        passive: true,
+      });
       document.removeEventListener("keydown", onEscape);
       window.removeEventListener("resize", onViewport);
       window.removeEventListener("scroll", onViewport, true);
@@ -388,7 +390,6 @@ const MyProperties = () => {
     paginatedItems,
   } = usePagination(sortedItems);
 
-
   // ─── Thumbnail resolution ───────────────────────────────────
   const getResourceThumbnail = useCallback(
     (item) => {
@@ -506,9 +507,12 @@ const MyProperties = () => {
     setError("");
     setBusyId(item.$id);
 
+    const publishedAt =
+      status === "published" ? new Date().toISOString() : item.publishedAt;
+
     setItems((current) =>
       current.map((entry) =>
-        entry.$id === item.$id ? { ...entry, status } : entry,
+        entry.$id === item.$id ? { ...entry, status, publishedAt } : entry,
       ),
     );
 
@@ -517,7 +521,9 @@ const MyProperties = () => {
     } catch (err) {
       setItems((current) =>
         current.map((entry) =>
-          entry.$id === item.$id ? { ...entry, status: item.status } : entry,
+          entry.$id === item.$id
+            ? { ...entry, status: item.status, publishedAt: item.publishedAt }
+            : entry,
         ),
       );
       setError(getErrorMessage(err, t("myResourcesPage.errors.toggleStatus")));
@@ -692,9 +698,15 @@ const MyProperties = () => {
       {/* Filters */}
       <ResourceListFilters
         searchText={searchText}
-        onSearchChange={(v) => { setSearchText(v); setPage(1); }}
+        onSearchChange={(v) => {
+          setSearchText(v);
+          setPage(1);
+        }}
         resourceTypeFilter={resourceTypeFilter}
-        onResourceTypeChange={(v) => { setResourceTypeFilter(v); setPage(1); }}
+        onResourceTypeChange={(v) => {
+          setResourceTypeFilter(v);
+          setPage(1);
+        }}
         responsibleFilter={responsibleFilter}
         onResponsibleChange={setResponsibleFilter}
         staffUsers={staffUsers}

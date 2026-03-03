@@ -16,11 +16,15 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  reservationsCollectionId: getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
+  reservationsCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
   reservationPaymentsCollectionId:
-    getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") || "reservation_payments",
-  activityLogsCollectionId: getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
-  issueVoucherFunctionId: getEnv("APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID") || "",
+    getEnv("APPWRITE_COLLECTION_RESERVATION_PAYMENTS_ID") ||
+    "reservation_payments",
+  activityLogsCollectionId:
+    getEnv("APPWRITE_COLLECTION_ACTIVITY_LOGS_ID") || "",
+  issueVoucherFunctionId:
+    getEnv("APPWRITE_FUNCTION_ISSUE_RESERVATION_VOUCHER_ID") || "",
   stripeWebhookSecret: getEnv("STRIPE_WEBHOOK_SECRET") || "",
 });
 
@@ -64,7 +68,9 @@ const verifyStripeSignature = ({ rawBody, signatureHeader, secret }) => {
   const parsed = parseStripeSignature(signatureHeader);
   if (!parsed.timestamp || parsed.signatures.length === 0) return false;
   const signedPayload = `${parsed.timestamp}.${rawBody}`;
-  const digest = createHmac("sha256", secret).update(signedPayload).digest("hex");
+  const digest = createHmac("sha256", secret)
+    .update(signedPayload)
+    .digest("hex");
   return parsed.signatures.some((signature) => {
     const left = Buffer.from(signature, "utf8");
     const right = Buffer.from(digest, "utf8");
@@ -125,30 +131,59 @@ const maybeIssueVoucher = async ({ functions, config, reservationId, log }) => {
 
 export default async ({ req, res, log, error }) => {
   if (req.method && req.method.toUpperCase() !== "POST") {
-    return json(res, 405, { ok: false, code: "METHOD_NOT_ALLOWED", message: "Use POST" });
+    return json(res, 405, {
+      ok: false,
+      code: "METHOD_NOT_ALLOWED",
+      message: "Use POST",
+    });
   }
 
   const config = cfg();
   if (!config.endpoint || !config.projectId || !config.apiKey) {
-    return json(res, 500, { ok: false, code: "ENV_MISSING", message: "Missing Appwrite credentials" });
+    return json(res, 500, {
+      ok: false,
+      code: "ENV_MISSING",
+      message: "Missing Appwrite credentials",
+    });
   }
 
   const rawBody = rawBodyFromRequest(req);
   const payload = parseBody(req);
-  const signatureHeader = req.headers?.["stripe-signature"] || req.headers?.["Stripe-Signature"] || "";
+  const signatureHeader =
+    req.headers?.["stripe-signature"] ||
+    req.headers?.["Stripe-Signature"] ||
+    "";
 
-  if (!verifyStripeSignature({ rawBody, signatureHeader, secret: config.stripeWebhookSecret })) {
-    return json(res, 401, { ok: false, code: "INVALID_SIGNATURE", message: "Invalid Stripe signature" });
+  if (
+    !verifyStripeSignature({
+      rawBody,
+      signatureHeader,
+      secret: config.stripeWebhookSecret,
+    })
+  ) {
+    return json(res, 401, {
+      ok: false,
+      code: "INVALID_SIGNATURE",
+      message: "Invalid Stripe signature",
+    });
   }
 
   const eventId = normalize(payload.id, 120);
   const eventType = normalize(payload.type, 120);
   const eventData = payload?.data?.object || {};
-  const reservationId = normalize(eventData?.metadata?.reservationId || payload?.reservationId, 64);
+  const reservationId = normalize(
+    eventData?.metadata?.reservationId || payload?.reservationId,
+    64,
+  );
   const providerPaymentId = normalize(eventData?.id || payload?.paymentId, 120);
   const status = mapStripeStatus(eventType, eventData);
-  const amount = moneyFromStripe(eventData?.amount_total || payload?.amountTotal || 0);
-  const currency = normalize(eventData?.currency || payload?.currency || "MXN", 3).toUpperCase();
+  const amount = moneyFromStripe(
+    eventData?.amount_total || payload?.amountTotal || 0,
+  );
+  const currency = normalize(
+    eventData?.currency || payload?.currency || "MXN",
+    3,
+  ).toUpperCase();
 
   if (!eventId || !reservationId) {
     return json(res, 422, {
@@ -192,6 +227,7 @@ export default async ({ req, res, log, error }) => {
       ID.unique(),
       {
         reservationId,
+        resourceId: reservation.resourceId,
         resourceOwnerUserId: reservation.resourceOwnerUserId,
         provider: "stripe",
         providerPaymentId: providerPaymentId || eventId,
@@ -208,7 +244,8 @@ export default async ({ req, res, log, error }) => {
     const reservationPatch = {};
     if (status === "succeeded") {
       reservationPatch.paymentStatus = "paid";
-      reservationPatch.status = reservation.status === "completed" ? "completed" : "confirmed";
+      reservationPatch.status =
+        reservation.status === "completed" ? "completed" : "confirmed";
       reservationPatch.paymentProvider = "stripe";
       reservationPatch.externalRef = providerPaymentId || eventId;
     } else if (status === "failed") {

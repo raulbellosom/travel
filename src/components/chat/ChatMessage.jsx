@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import { cn } from "../../utils/cn";
-import { Clock, Check, CheckCheck, AlertCircle, CalendarClock } from "lucide-react";
+import {
+  Clock,
+  Check,
+  CheckCheck,
+  AlertCircle,
+  CalendarClock,
+} from "lucide-react";
 import { useChat } from "../../contexts/ChatContext";
 
 const getInitials = (name) => {
@@ -105,7 +111,9 @@ const MessageStatus = ({ status }) => {
 };
 
 const getProposalStatusLabel = (status) => {
-  const normalized = String(status || "pending").trim().toLowerCase();
+  const normalized = String(status || "pending")
+    .trim()
+    .toLowerCase();
   if (normalized === "accepted") return "Aceptada";
   if (normalized === "rejected") return "Rechazada";
   if (normalized === "reschedule_requested") return "Cambio solicitado";
@@ -113,14 +121,18 @@ const getProposalStatusLabel = (status) => {
 };
 
 const getProposalTypeLabel = (proposalType) => {
-  const normalized = String(proposalType || "").trim().toLowerCase();
+  const normalized = String(proposalType || "")
+    .trim()
+    .toLowerCase();
   if (normalized === "visit") return "Propuesta de visita";
   if (normalized === "booking_manual") return "Propuesta de disponibilidad";
   return "Propuesta";
 };
 
 const getResponseLabel = (response) => {
-  const normalized = String(response || "").trim().toLowerCase();
+  const normalized = String(response || "")
+    .trim()
+    .toLowerCase();
   if (normalized === "accept") return "Acepta la propuesta";
   if (normalized === "reject") return "Rechaza la propuesta";
   if (normalized === "request_change") return "Solicita cambio";
@@ -136,8 +148,14 @@ const ChatMessage = ({
 }) => {
   const { respondToProposal, canWriteMessaging, chatRole } = useChat();
   const [isResponding, setIsResponding] = useState(false);
+  const [showChangeInput, setShowChangeInput] = useState(false);
+  const [changeComment, setChangeComment] = useState("");
+  const [proposalError, setProposalError] = useState("");
   const messageStatus = getMessageStatus(message, isOwn);
-  const kind = String(message?.kind || "text").trim().toLowerCase() || "text";
+  const kind =
+    String(message?.kind || "text")
+      .trim()
+      .toLowerCase() || "text";
   const payload = useMemo(() => parsePayload(message), [message]);
 
   const time = new Date(message.$createdAt).toLocaleTimeString(undefined, {
@@ -158,22 +176,29 @@ const ChatMessage = ({
   const handleProposalResponse = async (response) => {
     if (!canRespondToProposal || isResponding) return;
 
-    let comment;
-    if (response === "request_change") {
-      comment =
-        window.prompt("Indica el ajuste que necesitas", "") || undefined;
+    // For request_change, show inline input instead of window.prompt
+    if (response === "request_change" && !showChangeInput) {
+      setShowChangeInput(true);
+      return;
     }
 
+    const comment =
+      response === "request_change" ? changeComment || undefined : undefined;
+
     setIsResponding(true);
+    setProposalError("");
     try {
       await respondToProposal({
         proposalMessageId: message.$id,
         response,
         comment,
       });
+      setShowChangeInput(false);
+      setChangeComment("");
     } catch (err) {
-      const text = String(err?.message || "No se pudo responder la propuesta.");
-      window.alert(text);
+      setProposalError(
+        String(err?.message || "No se pudo responder la propuesta."),
+      );
     } finally {
       setIsResponding(false);
     }
@@ -199,10 +224,15 @@ const ChatMessage = ({
           {timeRange}
         </p>
         {payload?.meetingType && (
-          <p className="mt-1">Tipo: {payload.meetingType === "on_site" ? "Presencial" : "Video llamada"}</p>
+          <p className="mt-1">
+            Tipo:{" "}
+            {payload.meetingType === "on_site" ? "Presencial" : "Video llamada"}
+          </p>
         )}
         {payload?.location && <p className="mt-1">Lugar: {payload.location}</p>}
-        <p className="mt-1.5 font-medium">Estado: {getProposalStatusLabel(payload?.status)}</p>
+        <p className="mt-1.5 font-medium">
+          Estado: {getProposalStatusLabel(payload?.status)}
+        </p>
 
         {canRespondToProposal && (
           <div className="mt-2 grid grid-cols-3 gap-1.5">
@@ -232,6 +262,49 @@ const ChatMessage = ({
             </button>
           </div>
         )}
+
+        {/* Inline change request input */}
+        {canRespondToProposal && showChangeInput && (
+          <div className="mt-2 space-y-1">
+            <input
+              type="text"
+              value={changeComment}
+              onChange={(e) => setChangeComment(e.target.value)}
+              placeholder="Indica el ajuste que necesitas"
+              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] outline-none focus:border-cyan-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleProposalResponse("request_change");
+              }}
+            />
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => handleProposalResponse("request_change")}
+                disabled={isResponding}
+                className="rounded-md bg-amber-500 px-2 py-1 text-[11px] font-semibold text-slate-900 transition hover:bg-amber-400 disabled:opacity-60"
+              >
+                Enviar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChangeInput(false);
+                  setChangeComment("");
+                }}
+                className="rounded-md px-2 py-1 text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Error display (replaces window.alert) */}
+        {proposalError && (
+          <p className="mt-1 text-[11px] font-medium text-red-600 dark:text-red-400">
+            {proposalError}
+          </p>
+        )}
       </div>
     );
   };
@@ -242,9 +315,12 @@ const ChatMessage = ({
       <div className="mt-1 rounded-xl border border-slate-200 bg-white/90 p-2 text-xs text-slate-700 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-200">
         <p className="font-semibold">{label}</p>
         {payload?.comment && <p className="mt-1">{payload.comment}</p>}
-        {Array.isArray(payload?.suggestedSlots) && payload.suggestedSlots.length > 0 && (
-          <p className="mt-1">Slots sugeridos: {payload.suggestedSlots.length}</p>
-        )}
+        {Array.isArray(payload?.suggestedSlots) &&
+          payload.suggestedSlots.length > 0 && (
+            <p className="mt-1">
+              Slots sugeridos: {payload.suggestedSlots.length}
+            </p>
+          )}
       </div>
     );
   };

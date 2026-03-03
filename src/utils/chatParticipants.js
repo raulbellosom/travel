@@ -2,6 +2,21 @@ const normalizeId = (value) => String(value || "").trim();
 
 const isKnownSide = (value) => value === "client" || value === "owner";
 
+/**
+ * Resolve the message `senderRole` enum from the platform user role.
+ * Maps granular staff roles (`staff_manager`, `staff_editor`, `staff_support`)
+ * to the message-level `"staff"` value.
+ * @param {string} userRole - platform `user.role` value
+ * @returns {"client"|"owner"|"staff"|"root"}
+ */
+export const resolveMessageSenderRole = (userRole) => {
+  const r = String(userRole || "").toLowerCase();
+  if (r === "root") return "root";
+  if (r === "owner") return "owner";
+  if (r.startsWith("staff_")) return "staff";
+  return "client";
+};
+
 export const getConversationSide = (conversation, userId, fallbackRole) => {
   const normalizedUserId = normalizeId(userId);
   const clientUserId = normalizeId(conversation?.clientUserId);
@@ -13,7 +28,11 @@ export const getConversationSide = (conversation, userId, fallbackRole) => {
   return null;
 };
 
-export const getConversationCounterparty = (conversation, userId, fallbackRole) => {
+export const getConversationCounterparty = (
+  conversation,
+  userId,
+  fallbackRole,
+) => {
   const side = getConversationSide(conversation, userId, fallbackRole);
   if (side === "client") {
     return {
@@ -32,14 +51,22 @@ export const getConversationCounterparty = (conversation, userId, fallbackRole) 
   return { userId: "", name: "", side: null };
 };
 
-export const getConversationUnreadCount = (conversation, userId, fallbackRole) => {
+export const getConversationUnreadCount = (
+  conversation,
+  userId,
+  fallbackRole,
+) => {
   const side = getConversationSide(conversation, userId, fallbackRole);
   if (side === "client") return Number(conversation?.clientUnread || 0);
   if (side === "owner") return Number(conversation?.ownerUnread || 0);
   return 0;
 };
 
-export const getConversationUnreadResetPatch = (conversation, userId, fallbackRole) => {
+export const getConversationUnreadResetPatch = (
+  conversation,
+  userId,
+  fallbackRole,
+) => {
   const side = getConversationSide(conversation, userId, fallbackRole);
   if (side === "client") return { clientUnread: 0 };
   if (side === "owner") return { ownerUnread: 0 };

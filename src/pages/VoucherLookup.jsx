@@ -59,12 +59,12 @@ const VoucherLookup = () => {
         });
 
         let nextProperty = null;
-        if (nextReservation?.propertyId) {
+        if (nextReservation?.resourceId) {
           nextProperty = await databases
             .getDocument({
               databaseId: env.appwrite.databaseId,
-              collectionId: env.appwrite.collections.properties,
-              documentId: nextReservation.propertyId,
+              collectionId: env.appwrite.collections.resources,
+              documentId: nextReservation.resourceId,
             })
             .catch(() => null);
         }
@@ -134,7 +134,7 @@ const VoucherLookup = () => {
       <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <p className="text-sm">
           <strong>{t("voucherPage.labels.property")}:</strong>{" "}
-          {property?.title || reservation.propertyId}
+          {property?.title || reservation.resourceId}
         </p>
         <p className="text-sm">
           <strong>{t("voucherPage.labels.guest")}:</strong>{" "}

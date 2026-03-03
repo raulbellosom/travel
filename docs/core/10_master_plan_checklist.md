@@ -12,7 +12,7 @@ Checklist maestro para migracion de `properties` a `resources` con sistema de mo
 - [x] Helper de comportamiento `getResourceBehavior` centralizado.
 - [x] Hook `useInstanceModules` y servicios de `instance_settings` integrados.
 - [x] Rutas root nuevas (`/app/root/instance`, `/app/root/modules`) disponibles.
-- [x] Functions criticas (`create-lead`, `create-reservation-public`, `create-payment-session`) migradas con `resourceId` canonico y fallback `propertyId`.
+- [x] Functions criticas (`create-lead`, `create-reservation-public`, `create-payment-session`) migradas con `resourceId` canonico ~~y fallback `propertyId`~~ (fallback eliminado 2025-07).
 - [x] Helper de modulo/limites agregado en functions (`modulesService`).
 - [x] Documentacion v3 actualizada (`02`, `03`, `05`, `06`, `07`, `11`, `12`, `13`, `14`, `17`).
 - [x] Nuevos docs de arquitectura/modulos/migracion creados (`14`, `15`, `16`).
@@ -28,7 +28,7 @@ Checklist maestro para migracion de `properties` a `resources` con sistema de mo
 ## Compatibilidad y migracion
 
 - [x] `properties` y `propertyId` permanecen como capa temporal de compatibilidad.
-- [x] Contratos backend aceptan `resourceId` y fallback legacy.
+- [x] ~~Contratos backend aceptan `resourceId` y fallback legacy.~~ Fallback `propertyId` eliminado de reservations/functions (2025-07).
 - [x] Rutas publicas SEO (`/propiedades/:slug`) preservadas.
 - [ ] Retiro definitivo de `properties/property_images` (pendiente post-migracion completa).
 

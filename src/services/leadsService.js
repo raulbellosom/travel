@@ -1,18 +1,13 @@
 import env from "../env";
-import { databases, ensureAppwriteConfigured, ID, Query } from "../api/appwriteClient";
+import {
+  databases,
+  ensureAppwriteConfigured,
+  ID,
+  Query,
+} from "../api/appwriteClient";
 import { executeJsonFunction } from "../utils/functions";
 
 const META_JSON_MAX_LENGTH = 8000;
-const isQueryCompatibilityError = (error) => {
-  const code = Number(error?.code);
-  if (code === 400) return true;
-  const message = String(error?.message || "").toLowerCase();
-  return (
-    message.includes("invalid query") ||
-    message.includes("attribute") ||
-    message.includes("index")
-  );
-};
 
 const parseJsonString = (value) => {
   if (!value) return {};
@@ -31,7 +26,14 @@ const parseJsonString = (value) => {
 export const leadsService = {
   async listMine(
     _userId,
-    { status, intent, contactChannel, resourceId, propertyId, propertyOwnerId } = {},
+    {
+      status,
+      intent,
+      contactChannel,
+      resourceId,
+      propertyId,
+      propertyOwnerId,
+    } = {},
   ) {
     ensureAppwriteConfigured();
     const queries = [
@@ -41,41 +43,21 @@ export const leadsService = {
     ];
     if (status) queries.push(Query.equal("status", status));
     if (intent) queries.push(Query.equal("intent", intent));
-    if (contactChannel) queries.push(Query.equal("contactChannel", contactChannel));
+    if (contactChannel)
+      queries.push(Query.equal("contactChannel", contactChannel));
     const resolvedResourceId = resourceId || propertyId;
     if (resolvedResourceId) {
-      try {
-        queries.push(Query.equal("resourceId", resolvedResourceId));
-      } catch {
-        queries.push(Query.equal("propertyId", resolvedResourceId));
-      }
+      queries.push(Query.equal("resourceId", resolvedResourceId));
     }
     if (propertyOwnerId) {
       queries.push(Query.equal("resourceOwnerUserId", propertyOwnerId));
     }
 
-    try {
-      return await databases.listDocuments({
-        databaseId: env.appwrite.databaseId,
-        collectionId: env.appwrite.collections.leads,
-        queries,
-      });
-    } catch (strictError) {
-      if (!isQueryCompatibilityError(strictError) || !contactChannel) {
-        throw strictError;
-      }
-
-      const fallbackQueries = queries.filter(
-        (query) => !String(query).includes("contactChannel"),
-      );
-      fallbackQueries.push(Query.equal("source", contactChannel));
-
-      return databases.listDocuments({
-        databaseId: env.appwrite.databaseId,
-        collectionId: env.appwrite.collections.leads,
-        queries: fallbackQueries,
-      });
-    }
+    return databases.listDocuments({
+      databaseId: env.appwrite.databaseId,
+      collectionId: env.appwrite.collections.leads,
+      queries,
+    });
   },
 
   async updateLead(leadId, patch) {
@@ -93,12 +75,14 @@ export const leadsService = {
     const functionId = env.appwrite.functions.createLead;
     if (!functionId) {
       throw new Error(
-        "No esta configurada APPWRITE_FUNCTION_CREATE_LEAD_ID para crear leads autenticados."
+        "No esta configurada APPWRITE_FUNCTION_CREATE_LEAD_ID para crear leads autenticados.",
       );
     }
 
     const rawMeta =
-      payload?.meta && typeof payload.meta === "object" && !Array.isArray(payload.meta)
+      payload?.meta &&
+      typeof payload.meta === "object" &&
+      !Array.isArray(payload.meta)
         ? payload.meta
         : parseJsonString(payload?.metaJson);
 
@@ -111,8 +95,22 @@ export const leadsService = {
 
     const normalizedPayload = {
       ...payload,
-      contactChannel: payload?.contactChannel || payload?.source || "resource_chat",
+      contactChannel:
+        payload?.contactChannel ||
+        payload?.channel ||
+        payload?.source ||
+        "IN_PLATFORM",
+      channel:
+        payload?.channel ||
+        payload?.contactChannel ||
+        payload?.source ||
+        "IN_PLATFORM",
       meta: rawMeta,
+      ...(payload?.contact ? { contact: payload.contact } : {}),
+      ...(payload?.dateRange ? { dateRange: payload.dateRange } : {}),
+      ...(payload?.meetingRequest
+        ? { meetingRequest: payload.meetingRequest }
+        : {}),
     };
 
     return executeJsonFunction(functionId, normalizedPayload);
@@ -155,7 +153,8 @@ export const leadsService = {
         resourceOwnerUserId: propertyOwnerId,
         userId: userId || undefined,
         lastMessage,
-        contactChannel: payload.contactChannel || payload.source || "resource_cta_form",
+        contactChannel:
+          payload.contactChannel || payload.source || "resource_cta_form",
         source: payload.source || payload.contactChannel || "resource_cta_form",
         intent: payload.intent || "info_request",
         conversationId: payload.conversationId || undefined,

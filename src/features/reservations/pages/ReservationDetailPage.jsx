@@ -227,7 +227,7 @@ const ReservationDetailPage = () => {
         fnId,
         JSON.stringify({
           reservationId: id,
-          resourceId: reservation?.resourceId || reservation?.propertyId || "",
+          resourceId: reservation?.resourceId || "",
         }),
         false,
       );
@@ -324,9 +324,7 @@ const ReservationDetailPage = () => {
     );
   }
 
-  const resource = resources.find(
-    (r) => r.$id === (reservation.resourceId || reservation.propertyId),
-  );
+  const resource = resources.find((r) => r.$id === reservation.resourceId);
   const resourceTitle = resource?.title || reservation.resourceId || "—";
   const status = reservation.status || "";
   const nights = calcNights(

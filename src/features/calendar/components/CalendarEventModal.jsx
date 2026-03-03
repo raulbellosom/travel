@@ -76,7 +76,7 @@ export default function CalendarEventModal({
 
   const resource = useMemo(() => {
     if (!reservation) return null;
-    const id = reservation.resourceId || reservation.propertyId;
+    const id = reservation.resourceId;
     return resourceMap[id] || null;
   }, [reservation, resourceMap]);
 
@@ -141,8 +141,7 @@ export default function CalendarEventModal({
     });
 
   // Resolve resource display name
-  const resourceTitle =
-    resource?.title || reservation.resourceId || reservation.propertyId || "—";
+  const resourceTitle = resource?.title || reservation.resourceId || "—";
 
   // Translate enum values using centralized resourceLabels utility
 

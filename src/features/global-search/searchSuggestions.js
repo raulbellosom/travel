@@ -35,7 +35,14 @@ const COMMAND_ENTITIES = Object.freeze({
     "cliente",
     "clientes",
   ],
-  reservations: ["reservation", "reservations", "booking", "bookings", "reserva", "reservas"],
+  reservations: [
+    "reservation",
+    "reservations",
+    "booking",
+    "bookings",
+    "reserva",
+    "reservas",
+  ],
   payments: ["payment", "payments", "pago", "pagos", "cobro", "cobros"],
   reviews: ["review", "reviews", "resena", "resenas", "rating", "ratings"],
   team: [
@@ -49,7 +56,14 @@ const COMMAND_ENTITIES = Object.freeze({
     "member",
     "miembro",
   ],
-  clients: ["client", "clients", "customer", "customers", "cliente", "clientes"],
+  clients: [
+    "client",
+    "clients",
+    "customer",
+    "customers",
+    "cliente",
+    "clientes",
+  ],
 });
 
 const normalizeText = (value) =>
@@ -84,7 +98,9 @@ const buildRouteWithParams = (route, params = {}) => {
 const getScore = (query, values = []) => {
   if (!query) return 1;
 
-  const normalizedValues = values.map((value) => normalizeText(value)).filter(Boolean);
+  const normalizedValues = values
+    .map((value) => normalizeText(value))
+    .filter(Boolean);
   if (normalizedValues.length === 0) return 0;
 
   const queryTokens = toTokens(query);
@@ -100,7 +116,7 @@ const getScore = (query, values = []) => {
 
     const tokenMatches = queryTokens.reduce(
       (acc, token) => (value.includes(token) ? acc + 1 : acc),
-      0
+      0,
     );
     if (tokenMatches === 0 && score === 0) continue;
 
@@ -113,23 +129,33 @@ const getScore = (query, values = []) => {
 };
 
 const detectIntent = (tokens) => {
-  if (tokens.some((token) => COMMAND_VERBS.create.includes(token))) return "create";
-  if (tokens.some((token) => COMMAND_VERBS.manage.includes(token))) return "manage";
+  if (tokens.some((token) => COMMAND_VERBS.create.includes(token)))
+    return "create";
+  if (tokens.some((token) => COMMAND_VERBS.manage.includes(token)))
+    return "manage";
   if (tokens.some((token) => COMMAND_VERBS.open.includes(token))) return "open";
   return "";
 };
 
 const detectEntity = (query, tokens) => {
   for (const [entity, aliases] of Object.entries(COMMAND_ENTITIES)) {
-    const hasMatch = aliases.some((alias) => query.includes(alias) || tokens.includes(alias));
+    const hasMatch = aliases.some(
+      (alias) => query.includes(alias) || tokens.includes(alias),
+    );
     if (hasMatch) return entity;
   }
   return "";
 };
 
 const getCommandRemainder = (tokens, intent, entity) => {
-  const removable = new Set([...(COMMAND_VERBS[intent] || []), ...(COMMAND_ENTITIES[entity] || [])]);
-  return tokens.filter((token) => !removable.has(token)).join(" ").trim();
+  const removable = new Set([
+    ...(COMMAND_VERBS[intent] || []),
+    ...(COMMAND_ENTITIES[entity] || []),
+  ]);
+  return tokens
+    .filter((token) => !removable.has(token))
+    .join(" ")
+    .trim();
 };
 
 const getCommandLabel = (t, intent, entity) => {
@@ -145,7 +171,9 @@ const getCommandLabel = (t, intent, entity) => {
     leads: t("globalSearch.commandEntities.leads"),
     reservations: t("globalSearch.commandEntities.reservations"),
     payments: t("globalSearch.commandEntities.payments"),
-    reviews: t("globalSearch.commandEntities.reviews", { defaultValue: "resenas" }),
+    reviews: t("globalSearch.commandEntities.reviews", {
+      defaultValue: "resenas",
+    }),
     team: t("globalSearch.commandEntities.team"),
     clients: t("globalSearch.commandEntities.clients"),
   };
@@ -195,7 +223,9 @@ const resolveCommandResult = ({
     } else if (canReadProperties) {
       action = {
         type: "navigate",
-        to: buildRouteWithParams(INTERNAL_ROUTES.myProperties, { search: remainder }),
+        to: buildRouteWithParams(INTERNAL_ROUTES.myProperties, {
+          search: remainder,
+        }),
       };
     }
   } else if (entity === "leads") {
@@ -211,7 +241,9 @@ const resolveCommandResult = ({
     if (canReadReservations) {
       action = {
         type: "navigate",
-        to: buildRouteWithParams(INTERNAL_ROUTES.reservations, { search: remainder }),
+        to: buildRouteWithParams(INTERNAL_ROUTES.reservations, {
+          search: remainder,
+        }),
       };
     }
   } else if (entity === "payments") {
@@ -219,7 +251,9 @@ const resolveCommandResult = ({
     if (canReadPayments) {
       action = {
         type: "navigate",
-        to: buildRouteWithParams(INTERNAL_ROUTES.payments, { search: remainder }),
+        to: buildRouteWithParams(INTERNAL_ROUTES.payments, {
+          search: remainder,
+        }),
       };
     }
   } else if (entity === "reviews") {
@@ -227,7 +261,9 @@ const resolveCommandResult = ({
     if (canReadReviews) {
       action = {
         type: "navigate",
-        to: buildRouteWithParams(INTERNAL_ROUTES.reviews, { search: remainder }),
+        to: buildRouteWithParams(INTERNAL_ROUTES.reviews, {
+          search: remainder,
+        }),
       };
     }
   } else if (entity === "team") {
@@ -237,8 +273,14 @@ const resolveCommandResult = ({
         type: "navigate",
         to:
           intent === "create" || intent === "manage"
-            ? buildRouteWithParams(INTERNAL_ROUTES.team, { tab: "manage", search: remainder })
-            : buildRouteWithParams(INTERNAL_ROUTES.team, { tab: "list", search: remainder }),
+            ? buildRouteWithParams(INTERNAL_ROUTES.team, {
+                tab: "manage",
+                search: remainder,
+              })
+            : buildRouteWithParams(INTERNAL_ROUTES.team, {
+                tab: "list",
+                search: remainder,
+              }),
       };
     }
   } else if (entity === "clients") {
@@ -246,7 +288,9 @@ const resolveCommandResult = ({
     if (canReadClients) {
       action = {
         type: "navigate",
-        to: buildRouteWithParams(INTERNAL_ROUTES.clients, { search: remainder }),
+        to: buildRouteWithParams(INTERNAL_ROUTES.clients, {
+          search: remainder,
+        }),
       };
     }
   }
@@ -288,7 +332,15 @@ const toActionItems = ({
       subtitle: t("globalSearch.quickActions.dashboard.subtitle"),
       icon: "layout-dashboard",
       action: { type: "navigate", to: INTERNAL_ROUTES.dashboard },
-      keywords: ["dashboard", "overview", "resumen", "inicio", "panel", "go dashboard", "ir dashboard"],
+      keywords: [
+        "dashboard",
+        "overview",
+        "resumen",
+        "inicio",
+        "panel",
+        "go dashboard",
+        "ir dashboard",
+      ],
     },
     ...(canReadProfile
       ? [
@@ -299,7 +351,14 @@ const toActionItems = ({
             subtitle: t("globalSearch.quickActions.profile.subtitle"),
             icon: "user",
             action: { type: "navigate", to: INTERNAL_ROUTES.profile },
-            keywords: ["profile", "perfil", "mi perfil", "account", "cuenta", "preferences"],
+            keywords: [
+              "profile",
+              "perfil",
+              "mi perfil",
+              "account",
+              "cuenta",
+              "preferences",
+            ],
           },
         ]
       : []),
@@ -396,7 +455,9 @@ const toActionItems = ({
     items.push({
       id: "action-reviews",
       group: "actions",
-      title: t("globalSearch.quickActions.reviews.title", { defaultValue: "Ver resenas" }),
+      title: t("globalSearch.quickActions.reviews.title", {
+        defaultValue: "Ver resenas",
+      }),
       subtitle: t("globalSearch.quickActions.reviews.subtitle", {
         defaultValue: "Moderacion y estado de resenas",
       }),
@@ -520,7 +581,8 @@ const pickTopMatches = (items) =>
     });
 
 const getTeamDisplayName = (member, fallback = "") => {
-  const fullName = `${member?.firstName || ""} ${member?.lastName || ""}`.trim();
+  const fullName =
+    `${member?.firstName || ""} ${member?.lastName || ""}`.trim();
   return fullName || fallback;
 };
 
@@ -578,7 +640,13 @@ export const buildGlobalSearchResults = ({
 
   const properties = (dataset?.properties || [])
     .map((property) => {
-      const values = [property.title, property.slug, property.city, property.state, property.description];
+      const values = [
+        property.title,
+        property.slug,
+        property.city,
+        property.state,
+        property.description,
+      ];
       return {
         id: `property-${property.$id}`,
         group: "properties",
@@ -601,7 +669,10 @@ export const buildGlobalSearchResults = ({
 
   const team = (dataset?.team || [])
     .map((member) => {
-      const displayName = getTeamDisplayName(member, member.email || t("globalSearch.fallbacks.member"));
+      const displayName = getTeamDisplayName(
+        member,
+        member.email || t("globalSearch.fallbacks.member"),
+      );
       const values = [displayName, member.email, member.role];
       return {
         id: `team-${member.$id}`,
@@ -627,11 +698,11 @@ export const buildGlobalSearchResults = ({
   const leads = (dataset?.leads || [])
     .flatMap((lead) => {
       const values = [
-        lead.name,
-        lead.email,
-        lead.phone,
-        lead.message,
+        lead.lastMessage,
         lead.status,
+        lead.intent,
+        lead.contactChannel,
+        lead.resourceId,
         toIsoDate(lead.$createdAt),
       ];
       const score = getScore(normalizedQuery, values);
@@ -642,39 +713,23 @@ export const buildGlobalSearchResults = ({
         group: "leads",
         groupLabel: groups.leads,
         title: t("globalSearch.dynamic.openConversation", {
-          name: lead.name || t("globalSearch.fallbacks.client"),
+          name:
+            lead.lastMessage?.slice(0, 40) ||
+            t("globalSearch.fallbacks.client"),
         }),
-        subtitle: (lead.message || "").slice(0, 90),
+        subtitle: (lead.lastMessage || "").slice(0, 90),
         icon: "message-square",
         action: {
           type: "navigate",
           to: buildRouteWithParams(INTERNAL_ROUTES.leads, {
             focus: lead.$id,
-            search: lead.name || lead.email || normalizedQuery,
+            search: normalizedQuery,
           }),
         },
         score: score + 4,
       };
 
-      const emailItem = lead.email
-        ? {
-            id: `lead-email-${lead.$id}`,
-            group: "leads",
-            groupLabel: groups.leads,
-            title: t("globalSearch.dynamic.sendEmail", {
-              name: lead.name || t("globalSearch.fallbacks.client"),
-            }),
-            subtitle: lead.email,
-            icon: "mail",
-            action: {
-              type: "external",
-              href: `mailto:${lead.email}`,
-            },
-            score: score + 1,
-          }
-        : null;
-
-      return emailItem ? [conversationItem, emailItem] : [conversationItem];
+      return [conversationItem];
     })
     .slice(0, MAX_ENTITY_RESULTS * 2);
 
@@ -734,7 +789,9 @@ export const buildGlobalSearchResults = ({
         title: t("globalSearch.dynamic.openPayment", {
           id: toShortId(payment.$id),
         }),
-        subtitle: [payment.provider, payment.status, payment.reservationId].filter(Boolean).join(" - "),
+        subtitle: [payment.provider, payment.status, payment.reservationId]
+          .filter(Boolean)
+          .join(" - "),
         icon: "credit-card",
         action: {
           type: "navigate",
@@ -753,7 +810,7 @@ export const buildGlobalSearchResults = ({
     .map((review) => {
       const values = [
         review.$id,
-        review.propertyId,
+        review.resourceId,
         review.authorName,
         review.title,
         review.comment,
@@ -769,7 +826,9 @@ export const buildGlobalSearchResults = ({
             defaultValue: "Abrir resena #{{id}}",
             id: toShortId(review.$id),
           }),
-        subtitle: [review.authorName, review.status, review.propertyId].filter(Boolean).join(" - "),
+        subtitle: [review.authorName, review.status, review.resourceId]
+          .filter(Boolean)
+          .join(" - "),
         icon: "message-square",
         action: {
           type: "navigate",
@@ -787,8 +846,16 @@ export const buildGlobalSearchResults = ({
 
   const clients = (dataset?.clients || [])
     .map((client) => {
-      const displayName = `${client.firstName || ""} ${client.lastName || ""}`.trim();
-      const values = [client.$id, displayName, client.firstName, client.lastName, client.email, client.phone];
+      const displayName =
+        `${client.firstName || ""} ${client.lastName || ""}`.trim();
+      const values = [
+        client.$id,
+        displayName,
+        client.firstName,
+        client.lastName,
+        client.email,
+        client.phone,
+      ];
       return {
         id: `client-${client.$id}`,
         group: "clients",
@@ -809,48 +876,59 @@ export const buildGlobalSearchResults = ({
     .filter((item) => (hasQuery ? item.score > 0 : true))
     .slice(0, MAX_ENTITY_RESULTS);
 
-  const profile = dataset?.profile && canReadProfile
-    ? (() => {
-        const displayName = `${dataset.profile.firstName || ""} ${dataset.profile.lastName || ""}`.trim();
-        const values = [
-          dataset.profile.firstName,
-          dataset.profile.lastName,
-          dataset.profile.email,
-          dataset.profile.phone,
-          dataset.profile.whatsappNumber,
-          dataset.profile.role,
-        ];
-        return {
-          id: `profile-${dataset.profile.$id || "me"}`,
-          group: "profile",
-          groupLabel: groups.profile,
-          title: t("globalSearch.dynamic.openProfile", { defaultValue: "Abrir mi perfil" }),
-          subtitle: [displayName, dataset.profile.email, dataset.profile.role].filter(Boolean).join(" - "),
-          icon: "user",
-          action: { type: "navigate", to: INTERNAL_ROUTES.profile },
-          score: getScore(normalizedQuery, values),
-        };
-      })()
-    : null;
+  const profile =
+    dataset?.profile && canReadProfile
+      ? (() => {
+          const displayName =
+            `${dataset.profile.firstName || ""} ${dataset.profile.lastName || ""}`.trim();
+          const values = [
+            dataset.profile.firstName,
+            dataset.profile.lastName,
+            dataset.profile.email,
+            dataset.profile.phone,
+            dataset.profile.whatsappNumber,
+            dataset.profile.role,
+          ];
+          return {
+            id: `profile-${dataset.profile.$id || "me"}`,
+            group: "profile",
+            groupLabel: groups.profile,
+            title: t("globalSearch.dynamic.openProfile", {
+              defaultValue: "Abrir mi perfil",
+            }),
+            subtitle: [displayName, dataset.profile.email, dataset.profile.role]
+              .filter(Boolean)
+              .join(" - "),
+            icon: "user",
+            action: { type: "navigate", to: INTERNAL_ROUTES.profile },
+            score: getScore(normalizedQuery, values),
+          };
+        })()
+      : null;
 
-  const preferences = dataset?.preferences && canReadProfile
-    ? (() => {
-        const values = [
-          dataset.preferences.theme,
-          dataset.preferences.locale,
-        ];
-        return {
-          id: `preferences-${dataset.preferences.$id || "me"}`,
-          group: "profile",
-          groupLabel: groups.profile,
-          title: t("globalSearch.dynamic.openPreferences", { defaultValue: "Abrir preferencias" }),
-          subtitle: [dataset.preferences.theme, dataset.preferences.locale].filter(Boolean).join(" - "),
-          icon: "settings",
-          action: { type: "navigate", to: INTERNAL_ROUTES.profile },
-          score: getScore(normalizedQuery, values),
-        };
-      })()
-    : null;
+  const preferences =
+    dataset?.preferences && canReadProfile
+      ? (() => {
+          const values = [
+            dataset.preferences.theme,
+            dataset.preferences.locale,
+          ];
+          return {
+            id: `preferences-${dataset.preferences.$id || "me"}`,
+            group: "profile",
+            groupLabel: groups.profile,
+            title: t("globalSearch.dynamic.openPreferences", {
+              defaultValue: "Abrir preferencias",
+            }),
+            subtitle: [dataset.preferences.theme, dataset.preferences.locale]
+              .filter(Boolean)
+              .join(" - "),
+            icon: "settings",
+            action: { type: "navigate", to: INTERNAL_ROUTES.profile },
+            score: getScore(normalizedQuery, values),
+          };
+        })()
+      : null;
 
   const merged = [
     ...(commandResult ? [commandResult] : []),

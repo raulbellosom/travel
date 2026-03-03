@@ -80,7 +80,7 @@ const ReservationEditPage = () => {
   } = useReservationForm(
     reservation
       ? {
-          resourceId: reservation.resourceId || reservation.propertyId || "",
+          resourceId: reservation.resourceId || "",
           scheduleType:
             reservation.bookingType === "time_slot"
               ? "time_slot"
@@ -142,9 +142,7 @@ const ReservationEditPage = () => {
   }
 
   const resourceTitle =
-    resources.find(
-      (r) => r.$id === (reservation.resourceId || reservation.propertyId),
-    )?.title ||
+    resources.find((r) => r.$id === reservation.resourceId)?.title ||
     reservation.resourceId ||
     "Reserva";
 

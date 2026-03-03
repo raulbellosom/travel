@@ -19,7 +19,8 @@ const cfg = () => ({
   projectId: getEnv("APPWRITE_FUNCTION_PROJECT_ID", "APPWRITE_PROJECT_ID"),
   apiKey: getEnv("APPWRITE_FUNCTION_API_KEY", "APPWRITE_API_KEY"),
   databaseId: getEnv("APPWRITE_DATABASE_ID") || "main",
-  resourcesCollectionId: getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
+  resourcesCollectionId:
+    getEnv("APPWRITE_COLLECTION_RESOURCES_ID") || "resources",
   reservationsCollectionId:
     getEnv("APPWRITE_COLLECTION_RESERVATIONS_ID") || "reservations",
 });
@@ -43,7 +44,11 @@ const normalizeText = (value, maxLength = 0) => {
 
 const normalizeBookingType = (value, commercialMode = "") => {
   const normalized = normalizeText(value, 40).toLowerCase();
-  if (["manual_contact", "date_range", "time_slot", "fixed_event"].includes(normalized)) {
+  if (
+    ["manual_contact", "date_range", "time_slot", "fixed_event"].includes(
+      normalized,
+    )
+  ) {
     return normalized;
   }
 
@@ -66,7 +71,9 @@ const parseDate = (value) => {
 
 const startOfDayUtc = (value) => {
   const date = value instanceof Date ? value : new Date(value);
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
 };
 
 const toDateKey = (value) => {
@@ -123,8 +130,7 @@ const resolveReservationInterval = (reservation = {}) => {
   }
 
   if (checkInDate && checkOutDate) {
-    const isSlot =
-      bookingType === "time_slot" || bookingType === "fixed_event";
+    const isSlot = bookingType === "time_slot" || bookingType === "fixed_event";
     return {
       bookingType,
       start: checkInDate,
@@ -147,7 +153,10 @@ const addBlockedDateKeys = ({ set, start, end, from, to }) => {
   const limitEnd = startOfDayUtc(end);
 
   while (cursor.getTime() <= limitEnd.getTime()) {
-    if (cursor.getTime() >= from.getTime() && cursor.getTime() <= to.getTime()) {
+    if (
+      cursor.getTime() >= from.getTime() &&
+      cursor.getTime() <= to.getTime()
+    ) {
       set.add(toDateKey(cursor));
     }
     cursor = new Date(cursor.getTime() + DAY_IN_MS);
@@ -175,7 +184,7 @@ export default async ({ req, res, error }) => {
   }
 
   const payload = parseBody(req);
-  const resourceId = normalizeText(payload.resourceId || payload.propertyId, 64);
+  const resourceId = normalizeText(payload.resourceId, 64);
 
   if (!resourceId) {
     return json(res, 422, {
@@ -200,7 +209,8 @@ export default async ({ req, res, error }) => {
     });
   }
 
-  const rangeDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / DAY_IN_MS) + 1;
+  const rangeDays =
+    Math.ceil((toDate.getTime() - fromDate.getTime()) / DAY_IN_MS) + 1;
   if (rangeDays > MAX_RANGE_DAYS) {
     return json(res, 422, {
       ok: false,
@@ -273,7 +283,8 @@ export default async ({ req, res, error }) => {
 
       if (interval.isSlot) {
         const slotDateKey = toDateKey(interval.start);
-        if (!occupiedSlotsByDate[slotDateKey]) occupiedSlotsByDate[slotDateKey] = [];
+        if (!occupiedSlotsByDate[slotDateKey])
+          occupiedSlotsByDate[slotDateKey] = [];
         occupiedSlotsByDate[slotDateKey].push({
           reservationId: reservation.$id,
           bookingType: interval.bookingType,
@@ -305,7 +316,8 @@ export default async ({ req, res, error }) => {
         resourceId,
         bookingType: resourceBookingType,
         manualContactScheduleType:
-          manualContactScheduleType === "date_range" || manualContactScheduleType === "time_slot"
+          manualContactScheduleType === "date_range" ||
+          manualContactScheduleType === "time_slot"
             ? manualContactScheduleType
             : "none",
         from: fromDate.toISOString(),

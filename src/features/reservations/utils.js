@@ -1,16 +1,17 @@
 import dayjs from "dayjs";
 import { RESERVATION_STATUS_COLORS, PAYMENT_STATUS_COLORS } from "./constants";
+import {
+  getEffectiveStart,
+  getEffectiveEnd,
+  isTimeBased,
+} from "./reservationAdapter";
 
 /**
  * Returns a human-readable schedule label for a reservation.
  */
 export const formatScheduleLabel = (reservation, _locale = "es-MX") => {
-  const isTimeSlot =
-    reservation.bookingType === "time_slot" ||
-    reservation.bookingType === "fixed_event";
-
-  const startValue = reservation.startDateTime || reservation.checkInDate;
-  const endValue = reservation.endDateTime || reservation.checkOutDate;
+  const startValue = getEffectiveStart(reservation);
+  const endValue = getEffectiveEnd(reservation);
 
   if (!startValue || !endValue) return "—";
 
@@ -19,7 +20,7 @@ export const formatScheduleLabel = (reservation, _locale = "es-MX") => {
 
   if (!start.isValid() || !end.isValid()) return "—";
 
-  if (isTimeSlot) {
+  if (isTimeBased(reservation)) {
     return `${start.format("DD/MM/YY HH:mm")} – ${end.format("DD/MM/YY HH:mm")}`;
   }
   return `${start.format("DD/MM/YYYY")} – ${end.format("DD/MM/YYYY")}`;

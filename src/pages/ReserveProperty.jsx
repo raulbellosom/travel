@@ -439,7 +439,6 @@ const ReserveProperty = () => {
       const reservationResult =
         await reservationsService.createReservationPublic({
           resourceId: property.$id,
-          propertyId: property.$id,
           checkInDate: new Date(form.dateRange.startDate).toISOString(),
           checkOutDate: new Date(form.dateRange.endDate).toISOString(),
           guestCount: Number(form.guestCount),

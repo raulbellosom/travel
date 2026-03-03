@@ -351,7 +351,17 @@ const normalizeResourceInput = (
   if (videoUrl) assign("videoUrl", videoUrl);
   if (virtualTourUrl) assign("virtualTourUrl", virtualTourUrl);
 
-  assign("status", String(source.status || "draft").trim());
+  const statusValue = String(source.status || "draft").trim();
+  assign("status", statusValue);
+
+  // Auto-stamp publishedAt when transitioning to "published".
+  if (statusValue === "published") {
+    data.publishedAt = new Date().toISOString();
+  } else if (hasOwn(source, "status") && statusValue !== "published") {
+    // Clear publishedAt when explicitly moving away from published.
+    data.publishedAt = null;
+  }
+
   assign("featured", Boolean(source.featured));
   assign("enabled", source.enabled ?? true);
 
@@ -429,7 +439,7 @@ const listImagesWithFallbackField = async ({
     queries: [
       Query.equal(idField, resourceId),
       Query.equal("enabled", true),
-      Query.orderAsc("sortOrder"),
+      Query.orderAsc("position"),
       Query.limit(50),
     ],
   });
@@ -627,7 +637,7 @@ export const propertiesService = {
           break;
         case "recent":
         default:
-          queries.push(Query.orderDesc("$createdAt"));
+          queries.push(Query.orderDesc("publishedAt"));
           break;
       }
     }
@@ -946,13 +956,13 @@ export const propertiesService = {
       try {
         const imageData = {
           fileId: uploadedFile.$id,
-          sortOrder: baseSortOrder + index,
+          position: baseSortOrder + index,
           isMain: baseGalleryImageIds.length === 0 && index === 0,
           enabled: true,
         };
 
         if (normalizedAltText.length >= 3) {
-          imageData.altText = normalizedAltText;
+          imageData.alt = normalizedAltText;
         }
 
         const resolvedFileSize = Number(

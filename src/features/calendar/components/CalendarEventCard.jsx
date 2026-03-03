@@ -26,7 +26,7 @@ export default function CalendarEventCard({
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const colors = STATUS_COLORS[reservation.status] || STATUS_COLORS.pending;
 
-  const resourceId = reservation.resourceId || reservation.propertyId;
+  const resourceId = reservation.resourceId;
   const resource = resourceMap[resourceId] || null;
   const resourceTitle = resource?.title || resourceId || "—";
 
