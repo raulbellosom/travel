@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   MessageCircle,
   Search,
@@ -21,6 +21,7 @@ import {
   Archive,
   CheckCircle2,
   RotateCcw,
+  CalendarPlus,
 } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { useAuth } from "../hooks/useAuth";
@@ -1026,6 +1027,23 @@ const Conversations = () => {
                           {t("conversationsPage.actions.archive")}
                         </button>
                       )}
+
+                      {isInternalRole(user?.role) &&
+                        activeConversation?.resourceId &&
+                        activeConversationStatus !== "closed" && (
+                          <Link
+                            to={`/app/reservations/new?resourceId=${activeConversation.resourceId}`}
+                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-900/25 dark:text-emerald-300 dark:hover:bg-emerald-900/35"
+                            title={t("conversationsPage.actions.createReservation", {
+                              defaultValue: "Crear reserva",
+                            })}
+                          >
+                            <CalendarPlus size={12} />
+                            {t("conversationsPage.actions.createReservation", {
+                              defaultValue: "Crear reserva",
+                            })}
+                          </Link>
+                        )}
 
                       {activeConversationStatus !== "closed" && (
                         <button

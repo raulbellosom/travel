@@ -4,7 +4,7 @@
  * Full-width layout with section cards and desktop summary sidebar.
  */
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import ReservationForm from "../components/ReservationForm";
@@ -15,6 +15,8 @@ import { useAuth } from "../../../hooks/useAuth";
 const ReservationNewPage = () => {
   const { t: _t } = useTranslation();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const initialResourceId = searchParams.get("resourceId") || "";
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(true);
 
@@ -38,7 +40,7 @@ const ReservationNewPage = () => {
   }, [user?.$id]);
 
   const { form, errors, submitting, submitError, onChange, submitCreate } =
-    useReservationForm();
+    useReservationForm(initialResourceId ? { resourceId: initialResourceId } : {});
 
   return (
     <section className="space-y-6 pb-24">
