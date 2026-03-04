@@ -84,18 +84,6 @@ export default function BookingContactBlock({
   const [meetingMode, setMeetingMode] = useState("ONSITE");
   const [meetingDuration, setMeetingDuration] = useState(30);
 
-  // Availability inquiry date range (for short-term manual_contact)
-  const [inquiryDateFrom, setInquiryDateFrom] = useState(
-    selectedDateRange?.startDate
-      ? formatDateInput(selectedDateRange.startDate)
-      : "",
-  );
-  const [inquiryDateTo, setInquiryDateTo] = useState(
-    selectedDateRange?.endDate
-      ? formatDateInput(selectedDateRange.endDate)
-      : "",
-  );
-
   // ── Derived ──
   const intent = useMemo(() => {
     if (isVisitRequestMode) return "SCHEDULE_MEETING";
@@ -179,11 +167,6 @@ export default function BookingContactBlock({
     if (channel === "WHATSAPP" && !contactPhone.trim()) return false;
     if (channel === "EMAIL" && !contactEmail.trim()) return false;
     if (intent === "SCHEDULE_MEETING" && !meetingDate) return false;
-    if (
-      intent === "AVAILABILITY_INQUIRY" &&
-      (!inquiryDateFrom || !inquiryDateTo)
-    )
-      return false;
     return true;
   }, [
     canContact,
@@ -195,8 +178,6 @@ export default function BookingContactBlock({
     contactEmail,
     intent,
     meetingDate,
-    inquiryDateFrom,
-    inquiryDateTo,
   ]);
 
   // ── Submit ──
@@ -215,10 +196,12 @@ export default function BookingContactBlock({
 
     if (intent === "AVAILABILITY_INQUIRY") {
       payload.dateRange = {
-        from: inquiryDateFrom
-          ? new Date(inquiryDateFrom).toISOString()
+        from: selectedDateRange?.startDate
+          ? new Date(selectedDateRange.startDate).toISOString()
           : undefined,
-        to: inquiryDateTo ? new Date(inquiryDateTo).toISOString() : undefined,
+        to: selectedDateRange?.endDate
+          ? new Date(selectedDateRange.endDate).toISOString()
+          : undefined,
       };
     }
 
@@ -243,8 +226,7 @@ export default function BookingContactBlock({
     effectiveMessage,
     contactPhone,
     contactEmail,
-    inquiryDateFrom,
-    inquiryDateTo,
+    selectedDateRange,
     meetingDate,
     meetingTime,
     meetingMode,
@@ -553,43 +535,43 @@ export default function BookingContactBlock({
                   defaultValue: "Consulta de disponibilidad",
                 })}
               </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                    {t("bookingBlock.availabilitySection.from", {
-                      defaultValue: "Check-in",
-                    })}
-                  </label>
-                  <div className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-900">
-                    <Calendar size={14} className="shrink-0 text-amber-500" />
-                    <input
-                      type="date"
-                      value={inquiryDateFrom}
-                      onChange={(e) => setInquiryDateFrom(e.target.value)}
-                      min={formatDateInput(new Date())}
-                      className="w-full bg-transparent text-sm outline-none"
-                    />
+              {selectedDateRange?.startDate && selectedDateRange?.endDate ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-400">
+                      {t("bookingBlock.availabilitySection.from", {
+                        defaultValue: "Check-in",
+                      })}
+                    </p>
+                    <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 dark:border-amber-700 dark:bg-slate-900">
+                      <Calendar size={14} className="shrink-0 text-amber-500" />
+                      <span className="text-sm text-slate-800 dark:text-slate-200">
+                        {formatDateInput(selectedDateRange.startDate)}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-400">
+                      {t("bookingBlock.availabilitySection.to", {
+                        defaultValue: "Check-out",
+                      })}
+                    </p>
+                    <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 dark:border-amber-700 dark:bg-slate-900">
+                      <Calendar size={14} className="shrink-0 text-amber-500" />
+                      <span className="text-sm text-slate-800 dark:text-slate-200">
+                        {formatDateInput(selectedDateRange.endDate)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                    {t("bookingBlock.availabilitySection.to", {
-                      defaultValue: "Check-out",
-                    })}
-                  </label>
-                  <div className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-900">
-                    <Calendar size={14} className="shrink-0 text-amber-500" />
-                    <input
-                      type="date"
-                      value={inquiryDateTo}
-                      onChange={(e) => setInquiryDateTo(e.target.value)}
-                      min={inquiryDateFrom || formatDateInput(new Date())}
-                      className="w-full bg-transparent text-sm outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-              {selectedGuestCount > 0 && (
+              ) : (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {t("bookingBlock.availabilitySection.selectHint", {
+                    defaultValue: "Selecciona las fechas en el calendario.",
+                  })}
+                </p>
+              )}
+              {selectedGuestCount > 0 && selectedDateRange?.startDate && (
                 <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
                   {t("bookingBlock.availabilitySection.guests", {
                     defaultValue: "Huéspedes: {{count}}",

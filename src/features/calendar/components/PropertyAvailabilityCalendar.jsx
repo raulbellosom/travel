@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
-  Expand,
 } from "lucide-react";
 import {
   getMonthGridDays,
@@ -21,7 +20,6 @@ import {
 } from "../utils/calendarUtils";
 import BookingSummary from "./BookingSummary";
 import { formatMoneyWithDenomination } from "../../../utils/money";
-import { Modal } from "../../../components/common";
 
 const MonthGrid = ({
   base,
@@ -147,8 +145,13 @@ const MonthGrid = ({
  * Shows pricing per unit, availability, and allows date selection.
  * Supports all resource types: property, vehicle, experience, venue, service.
  *
- * Desktop: Shows two months side-by-side inline, second month appears on hover.
- * Mobile: Shows one month with "Ver 2 meses" button to open expanded modal.
+ * `months` prop controls layout:
+ *   1            – always single month
+ *   2            – always two months side-by-side
+ *   "responsive" – 1 month on mobile (< lg), 2 on desktop (>= lg)
+ *
+ * Legacy `singleMonth=true` is equivalent to `months={1}`.
+ * No hover-driven expansion. Month navigation via arrows only.
  */
 export default function PropertyAvailabilityCalendar({
   property = {},
@@ -161,7 +164,13 @@ export default function PropertyAvailabilityCalendar({
   priceLabel,
   guestCount,
   onGuestCountChange,
+  singleMonth = false,
+  months: monthsProp,
+  selectionMode = "range",
 }) {
+  const isSingleMode = selectionMode === "single";
+  // Resolve effective months: prop > legacy singleMonth > default responsive
+  const resolvedMonthsMode = monthsProp ?? (singleMonth ? 1 : "responsive");
   const { t, i18n } = useTranslation();
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const MotionDiv = motion.div;
@@ -170,21 +179,29 @@ export default function PropertyAvailabilityCalendar({
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
   const [hoverDate, setHoverDate] = useState(null);
-  const [isExpandedViewOpen, setIsExpandedViewOpen] = useState(false);
-  const [isDesktopSecondMonthVisible, setIsDesktopSecondMonthVisible] =
-    useState(false);
 
-  // Suppress horizontal scrollbar while the expanded two-month view is open.
-  // overflow-x: hidden on <html> stops the scrollbar without clipping anything
-  // visible (all calendar content is well within the viewport bounds).
+  // For "responsive" mode: track viewport width to decide 1 vs 2 months
+  const [isLg, setIsLg] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024,
+  );
   useEffect(() => {
-    if (!isDesktopSecondMonthVisible) return;
-    const prev = document.documentElement.style.overflowX;
-    document.documentElement.style.overflowX = "hidden";
-    return () => {
-      document.documentElement.style.overflowX = prev;
-    };
-  }, [isDesktopSecondMonthVisible]);
+    if (resolvedMonthsMode !== "responsive") return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const handler = (e) => setIsLg(e.matches);
+    setIsLg(mql.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, [resolvedMonthsMode]);
+
+  // Effective month count to render
+  const showMonths =
+    resolvedMonthsMode === "responsive"
+      ? isLg
+        ? 2
+        : 1
+      : resolvedMonthsMode === 2
+        ? 2
+        : 1;
 
   const minDate = stripTime(new Date());
   const maxDate = addDays(new Date(), 365);
@@ -200,6 +217,18 @@ export default function PropertyAvailabilityCalendar({
 
   const pick = (d) => {
     if (isDisabled(d)) return;
+
+    // Single-day mode: toggle the selected date
+    if (isSingleMode) {
+      if (startDate && sameDay(d, startDate)) {
+        onRangeChange?.({ startDate: null, endDate: null });
+      } else {
+        onRangeChange?.({ startDate: d, endDate: null });
+      }
+      return;
+    }
+
+    // Range mode (default)
     if (!startDate) {
       onRangeChange?.({ startDate: d, endDate: null });
     } else if (!endDate) {
@@ -224,6 +253,8 @@ export default function PropertyAvailabilityCalendar({
   };
 
   const inHoverRange = (d) => {
+    // No hover-range highlight in single-day mode
+    if (isSingleMode) return false;
     if (startDate && !endDate && hoverDate) {
       // Don't show hover range if hovered date violates stay constraints
       if (hoverDate > startDate) {
@@ -248,6 +279,11 @@ export default function PropertyAvailabilityCalendar({
    *  - null      = not applicable (before startDate, already disabled, etc.)
    */
   const getRangeHint = (d) => {
+    // Single-day mode: every non-disabled day from today is "valid" (green)
+    if (isSingleMode) {
+      if (isDisabled(d)) return null;
+      return "valid";
+    }
     if (!startDate || endDate) return null;
     if (d <= startDate) return null;
     if (isDisabled(d)) return null;
@@ -351,27 +387,7 @@ export default function PropertyAvailabilityCalendar({
   return (
     <div className="space-y-4">
       {/* ── Inline calendar card ─────────────────────────── */}
-      <div
-        className={[
-          "overflow-hidden rounded-2xl border bg-linear-to-b from-white to-slate-50/70 dark:from-slate-900 dark:to-slate-950 transition-all duration-300 ease-out",
-          isDesktopSecondMonthVisible
-            ? "relative z-50 border-cyan-200 shadow-2xl dark:border-cyan-800"
-            : "border-slate-200 shadow-sm dark:border-slate-700",
-        ].join(" ")}
-        style={
-          isDesktopSecondMonthVisible
-            ? {
-                width: "48rem",
-                maxWidth: "90vw",
-                marginLeft: "calc(100% - 48rem)",
-              }
-            : undefined
-        }
-        onMouseEnter={() => {
-          if (window.innerWidth >= 1024) setIsDesktopSecondMonthVisible(true);
-        }}
-        onMouseLeave={() => setIsDesktopSecondMonthVisible(false)}
-      >
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-linear-to-b from-white to-slate-50/70 shadow-sm transition-all duration-200 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
         {/* Navigation header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-3 py-3 dark:border-slate-700">
           <button
@@ -386,21 +402,12 @@ export default function PropertyAvailabilityCalendar({
           <div className="flex min-w-0 items-center gap-2 text-center">
             <CalendarIcon className="h-4 w-4 text-slate-400" />
             <h3 className="truncate text-sm font-semibold capitalize text-slate-900 dark:text-slate-100">
-              {/* Show range label when second month is visible on desktop */}
-              <span className="hidden lg:inline">
-                {isDesktopSecondMonthVisible
-                  ? modalRangeLabel
-                  : month.toLocaleDateString(locale, {
-                      month: "long",
-                      year: "numeric",
-                    })}
-              </span>
-              <span className="lg:hidden">
-                {month.toLocaleDateString(locale, {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
+              {showMonths === 2
+                ? modalRangeLabel
+                : month.toLocaleDateString(locale, {
+                    month: "long",
+                    year: "numeric",
+                  })}
             </h3>
           </div>
 
@@ -414,42 +421,25 @@ export default function PropertyAvailabilityCalendar({
           </button>
         </div>
 
-        {/* Calendar grids */}
+        {/* Calendar grids — deterministic: 1 or 2 months, no hover */}
         <div className="p-3 sm:p-4">
-          {/* Mobile: single month */}
-          <div className="lg:hidden">
-            <MonthGrid base={month} {...monthGridCommonProps} />
-          </div>
-
-          {/* Desktop: first month always visible, second slides in on hover */}
-          <div className="hidden lg:block">
-            <div
-              className="grid grid-cols-1 gap-6 transition-all duration-300"
-              style={{
-                gridTemplateColumns: isDesktopSecondMonthVisible
-                  ? "1fr 1fr"
-                  : "1fr",
-              }}
-            >
+          <div
+            className={`grid gap-6 ${
+              showMonths === 2 ? "grid-cols-2" : "grid-cols-1"
+            }`}
+          >
+            <MonthGrid
+              base={month}
+              showMonthLabel={showMonths === 2}
+              {...monthGridCommonProps}
+            />
+            {showMonths === 2 && (
               <MonthGrid
-                base={month}
-                showMonthLabel={isDesktopSecondMonthVisible}
+                base={addMonths(month, 1)}
+                showMonthLabel
                 {...monthGridCommonProps}
               />
-              {isDesktopSecondMonthVisible && (
-                <MotionDiv
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                >
-                  <MonthGrid
-                    base={addMonths(month, 1)}
-                    showMonthLabel
-                    {...monthGridCommonProps}
-                  />
-                </MotionDiv>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
@@ -462,8 +452,9 @@ export default function PropertyAvailabilityCalendar({
           </div>
         )}
 
-        {/* Range hint legend — only when picking end date */}
-        {startDate &&
+        {/* Range hint legend — only when picking end date in range mode */}
+        {!isSingleMode &&
+          startDate &&
           !endDate &&
           (property.minStayNights || property.maxStayNights) && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-2">
@@ -487,17 +478,7 @@ export default function PropertyAvailabilityCalendar({
           )}
 
         {/* Action buttons */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-3 pt-1">
-          {/* On mobile, show expand button. On desktop, it's less needed but still available */}
-          <button
-            type="button"
-            onClick={() => setIsExpandedViewOpen(true)}
-            className="lg:hidden inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-600 dark:hover:text-cyan-300"
-          >
-            <Expand className="h-3.5 w-3.5" />
-            {t("calendar.openTwoMonths", { defaultValue: "Ver 2 meses" })}
-          </button>
-
+        <div className="flex flex-wrap items-center justify-end gap-2 px-4 pb-3 pt-1">
           {(startDate || endDate) && (
             <button
               type="button"
@@ -511,148 +492,6 @@ export default function PropertyAvailabilityCalendar({
           )}
         </div>
       </div>
-
-      {/* ── Extended calendar modal (improved design) ─── */}
-      <Modal
-        isOpen={isExpandedViewOpen}
-        onClose={() => setIsExpandedViewOpen(false)}
-        title={t("calendar.modal.title", {
-          defaultValue: "Calendario extendido",
-        })}
-        description={t("calendar.modal.description", {
-          defaultValue:
-            "Revisa dos meses de disponibilidad y selecciona tus fechas.",
-        })}
-        size="full"
-        className="max-w-5xl"
-      >
-        <div className="space-y-5">
-          {/* Navigation bar */}
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-linear-to-r from-slate-50 to-white px-4 py-3 shadow-sm dark:border-slate-700 dark:from-slate-800/80 dark:to-slate-800/40">
-            <button
-              type="button"
-              onClick={() => setMonth(addMonths(month, -1))}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 hover:shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-300"
-              aria-label={t("calendar.aria.previous")}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-cyan-500" />
-              <p className="truncate text-center text-sm font-bold capitalize text-slate-800 dark:text-slate-100">
-                {modalRangeLabel}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setMonth(addMonths(month, 1))}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700 hover:shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-cyan-500 dark:hover:text-cyan-300"
-              aria-label={t("calendar.aria.next")}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Dual month grids */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/30">
-              <MonthGrid base={month} showMonthLabel {...monthGridCommonProps} />
-            </div>
-            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-800/30">
-              <MonthGrid
-                base={addMonths(month, 1)}
-                showMonthLabel
-                {...monthGridCommonProps}
-              />
-            </div>
-          </div>
-
-          {/* Stay constraints + legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/40">
-            {property.minStayNights && (
-              <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                {priceLabel && priceLabel !== "night"
-                  ? `${t("calendar.minStayGeneric", { count: property.minStayNights, unit: property.minStayNights === 1 ? unitLabelSingular : unitLabelPlural })} · ${t("calendar.maxStayGeneric", { count: property.maxStayNights || 365, unit: unitLabelPlural })}`
-                  : `${t("calendar.minStay", { nights: property.minStayNights })} · ${t("calendar.maxStay", { nights: property.maxStayNights || 365 })}`}
-              </p>
-            )}
-
-            {/* Legend */}
-            <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-3 rounded-md border border-cyan-600 bg-cyan-600" />
-                {t("calendar.selectDates", { defaultValue: "Seleccionado" })}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-3 rounded-md border border-cyan-200 bg-cyan-50" />
-                {t("calendar.booking.inRange", { defaultValue: "Rango" })}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-3 rounded-md border border-emerald-300 bg-emerald-100" />
-                {t("calendar.hint.selectable", { defaultValue: "Disponible" })}
-              </span>
-              {Number(property.minStayNights) > 1 && (
-                <span className="flex items-center gap-1.5">
-                  <span className="inline-block h-3 w-3 rounded-md border border-amber-300 bg-amber-100" />
-                  {t("calendar.hint.tooClose", {
-                    defaultValue: "Mín. no alcanzado",
-                  })}
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-3 rounded-md border border-red-300 bg-red-100" />
-                {t("calendar.hint.tooFar", { defaultValue: "Máx. excedido" })}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-3 rounded-md border border-slate-200 bg-slate-50 opacity-75 line-through" />
-                {t("calendar.booking.unavailable", {
-                  defaultValue: "No disponible",
-                })}
-              </span>
-            </div>
-          </div>
-
-          {/* Selected range summary inside modal */}
-          {startDate && endDate && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-200 bg-cyan-50/60 px-4 py-3 dark:border-cyan-800/40 dark:bg-cyan-950/20">
-              <div className="flex items-center gap-3 text-sm text-cyan-800 dark:text-cyan-200">
-                <CalendarIcon className="h-4 w-4" />
-                <span className="font-semibold">
-                  {startDate.toLocaleDateString(locale, {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </span>
-                <ChevronRight className="h-3 w-3 opacity-50" />
-                <span className="font-semibold">
-                  {endDate.toLocaleDateString(locale, {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </span>
-                <span className="text-xs opacity-70">
-                  ({daysBetween(startDate, endDate)}{" "}
-                  {daysBetween(startDate, endDate) === 1
-                    ? unitLabelSingular
-                    : unitLabelPlural}
-                  )
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  onRangeChange?.({ startDate: null, endDate: null });
-                }}
-                className="text-xs font-semibold text-cyan-700 transition hover:text-red-500 dark:text-cyan-300 dark:hover:text-red-400"
-              >
-                {t("calendar.clearDates")}
-              </button>
-            </div>
-          )}
-        </div>
-      </Modal>
 
       {/* ── Booking summary ──────────────────────────────── */}
       {summary && (

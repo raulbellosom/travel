@@ -4,7 +4,6 @@ import {
   useMemo,
   useState,
   useCallback,
-  useRef,
   lazy,
   Suspense,
 } from "react";
@@ -65,6 +64,8 @@ import {
   Hammer,
   Timer,
   Shield,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
@@ -96,7 +97,7 @@ import {
 } from "../features/calendar";
 import { getFileViewUrl } from "../utils/imageOptimization"; // HD fallback for viewer modal
 import { getBookingTypeLabel } from "../utils/resourceLabels";
-import { BookingContactBlock } from "../components/booking";
+import { BookingWizardModal } from "../components/booking";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -192,30 +193,14 @@ const PropertyDetail = () => {
   const [bookingBlockSuccess, setBookingBlockSuccess] = useState(false);
   const [bookingBlockConversationId, setBookingBlockConversationId] =
     useState(null);
+  // Wizard modal open/close
+  const [wizardModalOpen, setWizardModalOpen] = useState(false);
   // Hour-range input state (splits selectedHourStart into 3 editable parts)
   const [startHour12, setStartHour12] = useState(9);
   const [startMinute, setStartMinute] = useState("00");
   const [startPeriod, setStartPeriod] = useState("AM");
   // Guest count input draft (validated on blur)
   const [guestCountDraft, setGuestCountDraft] = useState("1");
-  // Ref for scroll-to-calendar action from PriceCard
-  const calendarSectionRef = useRef(null);
-  const handleScrollToCalendar = useCallback(() => {
-    calendarSectionRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, []);
-
-  // Ref for scroll-to-booking-block action (replaces chat modal)
-  const bookingBlockRef = useRef(null);
-  const handleScrollToBookingBlock = useCallback(() => {
-    bookingBlockRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, []);
-
   const locale = i18n.language === "es" ? "es-MX" : "en-US";
   const resourceBehavior = useMemo(
     () =>
@@ -666,6 +651,25 @@ const PropertyDetail = () => {
     ],
   );
 
+  // Enables the "Continuar" button in the calendar modal
+  const canContinueFromCalendar = useMemo(() => {
+    if (isDateRangeSchedule)
+      return Boolean(selectedDateRange.startDate && selectedDateRange.endDate);
+    if (isTimeSlotSchedule)
+      return isHourRangeMode
+        ? Boolean(hourRangeSlot)
+        : Boolean(selectedTimeSlot);
+    return true; // no calendar required (manual_contact without schedule)
+  }, [
+    isDateRangeSchedule,
+    isHourRangeMode,
+    isTimeSlotSchedule,
+    hourRangeSlot,
+    selectedDateRange.endDate,
+    selectedDateRange.startDate,
+    selectedTimeSlot,
+  ]);
+
   const authReturnPath = buildPathFromLocation(location);
 
   const authRedirectQuery = authReturnPath
@@ -716,39 +720,8 @@ const PropertyDetail = () => {
         if (!isClient || !isVerified || user.$id === property.ownerUserId) {
           return;
         }
-        if (!startDate || !endDate) return;
-
-        const checkInDate = formatDateForQuery(startDate);
-        const checkOutDate = formatDateForQuery(endDate);
-        const rangeLabel = `${new Date(startDate).toLocaleDateString(
-          locale,
-        )} - ${new Date(endDate).toLocaleDateString(locale)}`;
-        const guests = summary.guestCount || selectedGuestCount;
-        const nights =
-          summary.nights ||
-          (startDate && endDate ? daysBetween(startDate, endDate) : 0);
-
-        setChatScheduleMeta({
-          scheduleType: "date_range",
-          checkInDate,
-          checkOutDate,
-          ...(guests > 1 ? { guestCount: guests } : {}),
-          ...(nights > 0 ? { nights } : {}),
-        });
-
-        // Build contextual extras
-        const extras = [];
-        if (nights > 0)
-          extras.push(
-            `${nights} ${nights === 1 ? t("calendar.booking.night", { defaultValue: "noche" }) : t("calendar.booking.nights", { defaultValue: "noches" })}`,
-          );
-        if (guests > 1)
-          extras.push(
-            `${guests} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
-          );
-        const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
-
-        handleScrollToBookingBlock();
+        // dates already live in selectedDateRange — open booking wizard
+        setWizardModalOpen(true);
         return;
       }
 
@@ -764,18 +737,64 @@ const PropertyDetail = () => {
     [
       isChatAuth,
       isManualContactBooking,
-      locale,
       location,
       navigate,
       property,
       loginToChatPath,
       selectedDateRange.endDate,
       selectedDateRange.startDate,
-      selectedGuestCount,
-      t,
       user,
     ],
   );
+
+  // ── Calendar modal handlers ──────────────────────────────────────────────
+  const handleOpenCalendarModal = useCallback(() => {
+    if (!user?.$id) {
+      navigate(loginToChatPath, { state: { from: location } });
+      return;
+    }
+    // Reset booking state before opening
+    setBookingBlockSuccess(false);
+    setBookingBlockConversationId(null);
+    // Open wizard directly — calendar is now embedded as step 0
+    setWizardModalOpen(true);
+  }, [loginToChatPath, location, navigate, user?.$id]);
+
+  /** Called when wizard advances from step 0 (calendar) to step 1 (contact) */
+  const handleWizardCalendarContinue = useCallback(() => {
+    // Build schedule metadata for the lead payload
+    const selectedSlot = selectedTimeSlot || hourRangeSlot || null;
+
+    if (selectedSlot?.startDateTime && selectedSlot?.endDateTime) {
+      setChatScheduleMeta({
+        scheduleType: hourRangeSlot ? "hour_range" : "time_slot",
+        startDateTime: selectedSlot.startDateTime,
+        endDateTime: selectedSlot.endDateTime,
+        timezone: browserTimeZone,
+        ...(selectedHourCount > 0 && hourRangeSlot
+          ? { hours: selectedHourCount }
+          : {}),
+        ...(selectedGuestCount > 1 ? { guestCount: selectedGuestCount } : {}),
+      });
+    } else if (selectedDateRange.startDate && selectedDateRange.endDate) {
+      setChatScheduleMeta({
+        scheduleType: "date_range",
+        checkInDate: formatDateForQuery(selectedDateRange.startDate),
+        checkOutDate: formatDateForQuery(selectedDateRange.endDate),
+        ...(selectedGuestCount > 1 ? { guestCount: selectedGuestCount } : {}),
+      });
+    } else {
+      setChatScheduleMeta(null);
+    }
+  }, [
+    browserTimeZone,
+    hourRangeSlot,
+    selectedDateRange.endDate,
+    selectedDateRange.startDate,
+    selectedGuestCount,
+    selectedHourCount,
+    selectedTimeSlot,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -810,16 +829,13 @@ const PropertyDetail = () => {
     setChatScheduleMeta(null);
   }, [property?.$id]);
 
-  useEffect(() => {
-    let cancelled = false;
-
+  // ── Availability fetch (extracted for retry) ──────────────────────────────
+  const fetchAvailability = useCallback(() => {
     if (!property?.$id || !resourceBehavior.requiresCalendar) {
       setAvailabilityLoading(false);
       setAvailabilityError("");
       setAvailabilityData({ blockedDateKeys: [], occupiedSlotsByDate: {} });
-      return () => {
-        cancelled = true;
-      };
+      return;
     }
 
     setAvailabilityLoading(true);
@@ -828,7 +844,6 @@ const PropertyDetail = () => {
     reservationsService
       .getResourceAvailability(property.$id, { days: 365 })
       .then((result) => {
-        if (cancelled) return;
         const data = result?.body?.data || {};
         setAvailabilityData({
           blockedDateKeys: Array.isArray(data.blockedDateKeys)
@@ -842,25 +857,24 @@ const PropertyDetail = () => {
         });
       })
       .catch((err) => {
-        if (cancelled) return;
+        // eslint-disable-next-line no-console
+        console.error("[availability-fetch]", err);
+        const detail = err?.message || "";
+        const userMsg = t("client:propertyDetail.calendar.availabilityError", {
+          defaultValue: "No se pudo cargar la disponibilidad.",
+        });
         setAvailabilityError(
-          getErrorMessage(
-            err,
-            t("client:propertyDetail.calendar.availabilityError", {
-              defaultValue: "No se pudo cargar la disponibilidad.",
-            }),
-          ),
+          detail && detail !== userMsg ? `${userMsg} (${detail})` : userMsg,
         );
       })
       .finally(() => {
-        if (cancelled) return;
         setAvailabilityLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [property?.$id, resourceBehavior.requiresCalendar, t]);
+
+  useEffect(() => {
+    fetchAvailability();
+  }, [fetchAvailability]);
 
   useEffect(() => {
     if (!isTimeSlotSchedule) return;
@@ -1054,9 +1068,8 @@ const PropertyDetail = () => {
     const extraLabel = extras.length ? `\n${extras.join(", ")}` : "";
 
     if (isVisitRequestMode && !nextScheduleMeta?.startDateTime) {
-      // Visit scheduling is handled inline by BookingContactBlock
-      setChatScheduleMeta(nextScheduleMeta);
-      handleScrollToBookingBlock();
+      // Open booking wizard for visit scheduling
+      setWizardModalOpen(true);
       return;
     }
 
@@ -1072,20 +1085,16 @@ const PropertyDetail = () => {
             "Selecciona fechas y huespedes para solicitar disponibilidad.",
         }),
       });
-      handleScrollToCalendar();
+      setWizardModalOpen(true);
       return;
     }
 
     setChatScheduleMeta(nextScheduleMeta);
-
-    // Scroll to inline BookingContactBlock instead of opening modal
-    handleScrollToBookingBlock();
+    setWizardModalOpen(true);
   }, [
     browserTimeZone,
     canContactAsClient,
     chatLoading,
-    handleScrollToBookingBlock,
-    handleScrollToCalendar,
     hourRangeSlot,
     isChatAuth,
     isManualBookingRequestMode,
@@ -1101,127 +1110,6 @@ const PropertyDetail = () => {
     showToast,
     t,
     user?.$id,
-  ]);
-
-  const handleManualSlotContact = useCallback(() => {
-    if (!property || !selectedTimeSlot) return;
-
-    if (!isChatAuth || !user?.$id) {
-      navigate(loginToChatPath, { state: { from: location } });
-      return;
-    }
-
-    const isClient = user.role === "client";
-    const isVerified = Boolean(user.emailVerified);
-    if (!isClient || !isVerified || user.$id === property.ownerUserId) return;
-
-    const startDate = new Date(selectedTimeSlot.startDateTime);
-    const endDate = new Date(selectedTimeSlot.endDateTime);
-    if (
-      Number.isNaN(startDate.getTime()) ||
-      Number.isNaN(endDate.getTime()) ||
-      endDate <= startDate
-    ) {
-      return;
-    }
-
-    const dateLabel = startDate.toLocaleDateString(locale);
-    const timeLabel = `${startDate.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} - ${endDate.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
-
-    const guests = selectedGuestCount;
-
-    setChatScheduleMeta({
-      scheduleType: "time_slot",
-      startDateTime: startDate.toISOString(),
-      endDateTime: endDate.toISOString(),
-      slotDurationMinutes: Number(property.slotDurationMinutes || 60),
-      slotBufferMinutes: Number(property.slotBufferMinutes || 0),
-      ...(guests > 1 ? { guestCount: guests } : {}),
-    });
-
-    const extras = [];
-    if (guests > 1)
-      extras.push(
-        `${guests} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
-      );
-    const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
-
-    handleScrollToBookingBlock();
-  }, [
-    handleScrollToBookingBlock,
-    isChatAuth,
-    location,
-    locale,
-    navigate,
-    property,
-    loginToChatPath,
-    selectedGuestCount,
-    selectedTimeSlot,
-    t,
-    user,
-  ]);
-
-  /** Handle hour-range manual contact (chat) */
-  const handleHourRangeContact = useCallback(() => {
-    if (!property || !hourRangeSlot) return;
-    if (!isChatAuth || !user?.$id) {
-      navigate(loginToChatPath, { state: { from: location } });
-      return;
-    }
-    const isClient = user.role === "client";
-    const isVerified = Boolean(user.emailVerified);
-    if (!isClient || !isVerified || user.$id === property.ownerUserId) return;
-
-    const startDate = new Date(hourRangeSlot.startDateTime);
-    const endDate = new Date(hourRangeSlot.endDateTime);
-
-    const dateLabel = startDate.toLocaleDateString(locale);
-    const timeLabel = `${startDate.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} - ${endDate.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
-
-    const guests = selectedGuestCount;
-
-    setChatScheduleMeta({
-      scheduleType: "hour_range",
-      startDateTime: startDate.toISOString(),
-      endDateTime: endDate.toISOString(),
-      hours: selectedHourCount,
-      ...(guests > 1 ? { guestCount: guests } : {}),
-    });
-
-    const extras = [];
-    if (selectedHourCount > 0) extras.push(`${selectedHourCount}h`);
-    if (guests > 1)
-      extras.push(
-        `${guests} ${t("client:propertyDetail.vacation.guests", { defaultValue: "huéspedes" })}`,
-      );
-    const extraLabel = extras.length ? ` (${extras.join(", ")})` : "";
-
-    handleScrollToBookingBlock();
-  }, [
-    handleScrollToBookingBlock,
-    hourRangeSlot,
-    isChatAuth,
-    location,
-    locale,
-    navigate,
-    property,
-    loginToChatPath,
-    selectedGuestCount,
-    selectedHourCount,
-    t,
-    user,
   ]);
 
   /** Navigate to /reservar/ pre-filling the selected time slot */
@@ -1332,7 +1220,7 @@ const PropertyDetail = () => {
     user?.phone,
   ]);
 
-  /** Handler for the inline BookingContactBlock submit */
+  /** Handler for BookingWizardModal submit */
   const handleBookingBlockSubmit = useCallback(
     async (payload) => {
       if (!property || !startConversation) return;
@@ -1363,7 +1251,7 @@ const PropertyDetail = () => {
         setBookingBlockConversationId(conversation?.$id || null);
         setChatOpened(true);
       } catch (err) {
-        console.error("BookingContactBlock submit failed:", err);
+        console.error("BookingWizardModal submit failed:", err);
         showToast({
           type: "error",
           message: getErrorMessage(
@@ -1983,31 +1871,15 @@ const PropertyDetail = () => {
                 scheduleType={resourceBehavior.effectiveScheduleType}
                 bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
-                onContactAgent={handleOpenChat}
-                onScrollToCalendar={handleScrollToCalendar}
+                onContactAgent={
+                  isManualContactBooking
+                    ? handleOpenCalendarModal
+                    : handleOpenChat
+                }
                 canChat={canContactAsClient}
                 loginToContactPath={loginToChatPath}
                 chatLoading={chatLoading}
               />
-              {/* ── Inline Booking/Contact Block (mobile) ── */}
-              <div ref={bookingBlockRef} className="mt-4">
-                <BookingContactBlock
-                  property={property}
-                  isVisitRequestMode={isVisitRequestMode}
-                  isManualBookingRequestMode={isManualBookingRequestMode}
-                  isAuthenticated={Boolean(user?.$id)}
-                  canContact={canContactAsClient}
-                  loginPath={loginToChatPath}
-                  registerPath={registerToChatPath}
-                  selectedDateRange={selectedDateRange}
-                  selectedGuestCount={selectedGuestCount}
-                  onSubmit={handleBookingBlockSubmit}
-                  loading={bookingBlockLoading}
-                  success={bookingBlockSuccess}
-                  conversationId={bookingBlockConversationId}
-                  locale={locale}
-                />
-              </div>
             </div>
 
             {/* ── Quick Stats Grid ──────────────────────── */}
@@ -2909,436 +2781,403 @@ const PropertyDetail = () => {
                 scheduleType={resourceBehavior.effectiveScheduleType}
                 bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
-                onContactAgent={handleOpenChat}
-                onScrollToCalendar={handleScrollToCalendar}
+                onContactAgent={
+                  isManualContactBooking
+                    ? handleOpenCalendarModal
+                    : handleOpenChat
+                }
                 canChat={canContactAsClient}
                 loginToContactPath={loginToChatPath}
                 chatLoading={chatLoading}
               />
             </div>
 
-            {/* ── Inline Booking/Contact Block (desktop) ── */}
-            <BookingContactBlock
-              property={property}
-              isVisitRequestMode={isVisitRequestMode}
-              isManualBookingRequestMode={isManualBookingRequestMode}
-              isAuthenticated={Boolean(user?.$id)}
-              canContact={canContactAsClient}
-              loginPath={loginToChatPath}
-              registerPath={registerToChatPath}
-              selectedDateRange={selectedDateRange}
-              selectedGuestCount={selectedGuestCount}
+            {/* ── Booking Wizard Modal (with embedded calendar as step 0) ── */}
+            <BookingWizardModal
+              isOpen={wizardModalOpen}
+              onClose={() => setWizardModalOpen(false)}
               onSubmit={handleBookingBlockSubmit}
               loading={bookingBlockLoading}
               success={bookingBlockSuccess}
               conversationId={bookingBlockConversationId}
+              property={property}
+              isVisitRequestMode={isVisitRequestMode}
+              isManualBookingRequestMode={isManualBookingRequestMode}
+              selectedDateRange={selectedDateRange}
+              selectedGuestCount={selectedGuestCount}
+              selectedTimeSlot={selectedTimeSlot}
+              hourRangeSlot={hourRangeSlot}
               locale={locale}
-            />
-
-            {/* ── Calendar placeholder ───────────────── */}
-            {canRenderScheduleAside && (
-              <div
-                ref={calendarSectionRef}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-              >
-                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
-                  <Calendar
-                    size={18}
-                    className="text-cyan-600 dark:text-cyan-400"
-                  />
-                  {t("client:propertyDetail.calendar.title")}
-                </h2>
-                {availabilityError ? (
-                  <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
-                    {availabilityError}
-                  </p>
-                ) : null}
-                {availabilityLoading ? (
-                  <div className="flex min-h-32 items-center justify-center">
-                    <Spinner size="sm" />
-                  </div>
-                ) : isDateRangeSchedule ? (
-                  <PropertyAvailabilityCalendar
-                    property={property}
-                    pricing={{}}
-                    disabledDates={disabledCalendarDates}
-                    selectedRange={selectedDateRange}
-                    onRangeChange={setSelectedDateRange}
-                    onReserveClick={handleCalendarReserve}
-                    resourceType={resourceBehavior.resourceType}
-                    priceLabel={resourceBehavior.priceLabel}
-                    guestCount={selectedGuestCount}
-                    onGuestCountChange={setSelectedGuestCount}
-                  />
-                ) : isTimeSlotSchedule ? (
-                  <div className="space-y-3">
-                    {/* Single-date picker using the rich availability calendar */}
-                    <PropertyAvailabilityCalendar
-                      property={property}
-                      pricing={{}}
-                      disabledDates={disabledCalendarDates}
-                      selectedRange={{
-                        startDate: selectedSlotDate
-                          ? new Date(selectedSlotDate + "T12:00:00")
-                          : null,
-                        endDate: null,
-                      }}
-                      onRangeChange={(range) => {
-                        const picked = range?.endDate || range?.startDate;
-                        if (!picked) {
-                          setSelectedSlotDate("");
-                          return;
-                        }
-                        const y = picked.getFullYear();
-                        const mo = String(picked.getMonth() + 1).padStart(
-                          2,
-                          "0",
-                        );
-                        const d = String(picked.getDate()).padStart(2, "0");
-                        setSelectedSlotDate(`${y}-${mo}-${d}`);
-                      }}
-                      resourceType={resourceBehavior.resourceType}
-                      priceLabel={resourceBehavior.priceLabel}
-                    />
-
-                    {blockedDateSet.has(selectedSlotDate) ? (
-                      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                        {t("client:propertyDetail.calendar.dayUnavailable", {
-                          defaultValue:
-                            "La fecha seleccionada no esta disponible.",
-                        })}
-                      </p>
-                    ) : isHourRangeMode && hourRangeConfig ? (
-                      /* ── Hour-range picker ────────────────── */
-                      <>
-                        {/* Start time: hour / minutes / AM-PM inputs */}
-                        <div className="grid gap-1.5 text-sm">
-                          <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {t(
-                              "client:propertyDetail.calendar.selectStartTime",
-                              { defaultValue: "Hora de inicio" },
-                            )}
-                          </span>
-                          <div className="grid grid-cols-3 gap-2">
-                            {/* Hour */}
-                            <Select
-                              label={t("client:propertyDetail.calendar.hour", {
-                                defaultValue: "Hora",
-                              })}
-                              size="md"
-                              value={String(startHour12)}
-                              options={Array.from({ length: 12 }, (_, i) => ({
-                                value: String(i + 1),
-                                label: String(i + 1),
-                              }))}
-                              onChange={(v) => {
-                                const h = Number(v);
-                                setStartHour12(h);
-                                const next = computeHourStart(
-                                  h,
-                                  startMinute,
-                                  startPeriod,
-                                );
-                                setSelectedHourStart(next);
-                                setSelectedHourCount(0);
-                              }}
-                            />
-                            {/* Minutes */}
-                            <Select
-                              label={t(
-                                "client:propertyDetail.calendar.minutes",
-                                { defaultValue: "Min" },
+              calendarCanContinue={canContinueFromCalendar}
+              onCalendarContinue={handleWizardCalendarContinue}
+              calendarContent={
+                resourceBehavior.requiresCalendar ? (
+                  <>
+                    {availabilityError ? (
+                      <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-950/30">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle
+                            size={18}
+                            className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                              {t(
+                                "client:propertyDetail.calendar.availabilityErrorTitle",
+                                {
+                                  defaultValue:
+                                    "Error al cargar disponibilidad",
+                                },
                               )}
-                              size="md"
-                              value={startMinute}
-                              options={[
-                                { value: "00", label: ":00" },
-                                { value: "30", label: ":30" },
-                              ]}
-                              onChange={(m) => {
-                                setStartMinute(m);
-                                const next = computeHourStart(
-                                  startHour12,
-                                  m,
-                                  startPeriod,
-                                );
-                                setSelectedHourStart(next);
-                                setSelectedHourCount(0);
-                              }}
-                            />
-                            {/* AM / PM */}
-                            <Select
-                              label={t(
-                                "client:propertyDetail.calendar.period",
-                                { defaultValue: "AM/PM" },
+                            </p>
+                            <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                              {availabilityError}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={fetchAvailability}
+                              disabled={availabilityLoading}
+                              className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-50 disabled:opacity-50 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-slate-800"
+                            >
+                              <RefreshCw
+                                size={14}
+                                className={
+                                  availabilityLoading ? "animate-spin" : ""
+                                }
+                              />
+                              {t(
+                                "client:propertyDetail.calendar.retryAvailability",
+                                { defaultValue: "Reintentar" },
                               )}
-                              size="md"
-                              value={startPeriod}
-                              options={[
-                                { value: "AM", label: "AM" },
-                                { value: "PM", label: "PM" },
-                              ]}
-                              onChange={(p) => {
-                                setStartPeriod(p);
-                                const next = computeHourStart(
-                                  startHour12,
-                                  startMinute,
-                                  p,
-                                );
-                                setSelectedHourStart(next);
-                                setSelectedHourCount(0);
-                              }}
-                            />
+                            </button>
                           </div>
                         </div>
+                      </div>
+                    ) : null}
+                    {availabilityLoading ? (
+                      <div className="flex min-h-32 items-center justify-center">
+                        <Spinner size="sm" />
+                      </div>
+                    ) : isDateRangeSchedule ? (
+                      <PropertyAvailabilityCalendar
+                        property={property}
+                        pricing={{}}
+                        disabledDates={disabledCalendarDates}
+                        selectedRange={selectedDateRange}
+                        onRangeChange={setSelectedDateRange}
+                        onReserveClick={handleCalendarReserve}
+                        resourceType={resourceBehavior.resourceType}
+                        priceLabel={resourceBehavior.priceLabel}
+                        guestCount={selectedGuestCount}
+                        onGuestCountChange={setSelectedGuestCount}
+                        months="responsive"
+                      />
+                    ) : isTimeSlotSchedule ? (
+                      <div className="space-y-3">
+                        <PropertyAvailabilityCalendar
+                          property={property}
+                          pricing={{}}
+                          disabledDates={disabledCalendarDates}
+                          months="responsive"
+                          selectionMode="single"
+                          selectedRange={{
+                            startDate: selectedSlotDate
+                              ? new Date(selectedSlotDate + "T12:00:00")
+                              : null,
+                            endDate: null,
+                          }}
+                          onRangeChange={(range) => {
+                            const picked = range?.endDate || range?.startDate;
+                            if (!picked) {
+                              setSelectedSlotDate("");
+                              return;
+                            }
+                            const y = picked.getFullYear();
+                            const mo = String(picked.getMonth() + 1).padStart(
+                              2,
+                              "0",
+                            );
+                            const d = String(picked.getDate()).padStart(2, "0");
+                            setSelectedSlotDate(`${y}-${mo}-${d}`);
+                          }}
+                          resourceType={resourceBehavior.resourceType}
+                          priceLabel={resourceBehavior.priceLabel}
+                        />
 
-                        {/* How many hours — number input + blur validation */}
-                        {selectedHourStart && hourCountOptions.length > 0 ? (
-                          <label className="grid gap-1 text-sm">
-                            <span className="font-medium text-slate-700 dark:text-slate-200">
-                              {t("client:propertyDetail.calendar.selectHours", {
-                                defaultValue: "¿Cuántas horas?",
-                              })}
-                            </span>
-                            <input
-                              type="number"
-                              min={hourRangeConfig.minHours}
-                              max={
-                                hourCountOptions[hourCountOptions.length - 1] ??
-                                hourRangeConfig.maxHours
-                              }
-                              value={
-                                selectedHourCount === 0 ? "" : selectedHourCount
-                              }
-                              placeholder={`${hourRangeConfig.minHours}–${hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours} h`}
-                              onChange={(e) => {
-                                const v = parseInt(e.target.value, 10);
-                                setSelectedHourCount(isNaN(v) ? 0 : v);
-                              }}
-                              onBlur={(e) => {
-                                const min = hourRangeConfig.minHours;
-                                const max =
-                                  hourCountOptions[
-                                    hourCountOptions.length - 1
-                                  ] ?? hourRangeConfig.maxHours;
-                                const v = parseInt(e.target.value, 10);
-                                if (isNaN(v) || v < min)
-                                  setSelectedHourCount(min);
-                                else if (v > max) setSelectedHourCount(max);
-                              }}
-                              className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                            />
-                          </label>
-                        ) : selectedHourStart ? (
+                        {blockedDateSet.has(selectedSlotDate) ? (
                           <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
                             {t(
-                              "client:propertyDetail.calendar.noHoursAvailable",
+                              "client:propertyDetail.calendar.dayUnavailable",
                               {
                                 defaultValue:
-                                  "No hay suficiente disponibilidad para esa hora de inicio.",
+                                  "La fecha seleccionada no esta disponible.",
                               },
                             )}
                           </p>
-                        ) : null}
+                        ) : isHourRangeMode && hourRangeConfig ? (
+                          <>
+                            {/* Start time: hour / minutes / AM-PM */}
+                            <div className="grid gap-1.5 text-sm">
+                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                                {t(
+                                  "client:propertyDetail.calendar.selectStartTime",
+                                  { defaultValue: "Hora de inicio" },
+                                )}
+                              </span>
+                              <div className="grid grid-cols-3 gap-2">
+                                <Select
+                                  label={t(
+                                    "client:propertyDetail.calendar.hour",
+                                    { defaultValue: "Hora" },
+                                  )}
+                                  size="md"
+                                  value={String(startHour12)}
+                                  options={Array.from(
+                                    { length: 12 },
+                                    (_, i) => ({
+                                      value: String(i + 1),
+                                      label: String(i + 1),
+                                    }),
+                                  )}
+                                  onChange={(v) => {
+                                    const h = Number(v);
+                                    setStartHour12(h);
+                                    const next = computeHourStart(
+                                      h,
+                                      startMinute,
+                                      startPeriod,
+                                    );
+                                    setSelectedHourStart(next);
+                                    setSelectedHourCount(0);
+                                  }}
+                                />
+                                <Select
+                                  label={t(
+                                    "client:propertyDetail.calendar.minutes",
+                                    { defaultValue: "Min" },
+                                  )}
+                                  size="md"
+                                  value={startMinute}
+                                  options={[
+                                    { value: "00", label: ":00" },
+                                    { value: "30", label: ":30" },
+                                  ]}
+                                  onChange={(m) => {
+                                    setStartMinute(m);
+                                    const next = computeHourStart(
+                                      startHour12,
+                                      m,
+                                      startPeriod,
+                                    );
+                                    setSelectedHourStart(next);
+                                    setSelectedHourCount(0);
+                                  }}
+                                />
+                                <Select
+                                  label={t(
+                                    "client:propertyDetail.calendar.period",
+                                    { defaultValue: "AM/PM" },
+                                  )}
+                                  size="md"
+                                  value={startPeriod}
+                                  options={[
+                                    { value: "AM", label: "AM" },
+                                    { value: "PM", label: "PM" },
+                                  ]}
+                                  onChange={(p) => {
+                                    setStartPeriod(p);
+                                    const next = computeHourStart(
+                                      startHour12,
+                                      startMinute,
+                                      p,
+                                    );
+                                    setSelectedHourStart(next);
+                                    setSelectedHourCount(0);
+                                  }}
+                                />
+                              </div>
+                            </div>
 
-                        {hourRangeSlot ? (
-                          <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 px-3 py-2 text-sm text-cyan-800 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-200">
-                            {hourRangeSlot.label}
-                          </div>
-                        ) : null}
+                            {/* How many hours */}
+                            {selectedHourStart &&
+                            hourCountOptions.length > 0 ? (
+                              <label className="grid gap-1 text-sm">
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                  {t(
+                                    "client:propertyDetail.calendar.selectHours",
+                                    { defaultValue: "¿Cuántas horas?" },
+                                  )}
+                                </span>
+                                <input
+                                  type="number"
+                                  min={hourRangeConfig.minHours}
+                                  max={
+                                    hourCountOptions[
+                                      hourCountOptions.length - 1
+                                    ] ?? hourRangeConfig.maxHours
+                                  }
+                                  value={
+                                    selectedHourCount === 0
+                                      ? ""
+                                      : selectedHourCount
+                                  }
+                                  placeholder={`${hourRangeConfig.minHours}–${hourCountOptions[hourCountOptions.length - 1] ?? hourRangeConfig.maxHours} h`}
+                                  onChange={(e) => {
+                                    const v = parseInt(e.target.value, 10);
+                                    setSelectedHourCount(isNaN(v) ? 0 : v);
+                                  }}
+                                  onBlur={(e) => {
+                                    const min = hourRangeConfig.minHours;
+                                    const max =
+                                      hourCountOptions[
+                                        hourCountOptions.length - 1
+                                      ] ?? hourRangeConfig.maxHours;
+                                    const v = parseInt(e.target.value, 10);
+                                    if (isNaN(v) || v < min)
+                                      setSelectedHourCount(min);
+                                    else if (v > max) setSelectedHourCount(max);
+                                  }}
+                                  className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                                />
+                              </label>
+                            ) : selectedHourStart ? (
+                              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                                {t(
+                                  "client:propertyDetail.calendar.noHoursAvailable",
+                                  {
+                                    defaultValue:
+                                      "No hay suficiente disponibilidad para esa hora de inicio.",
+                                  },
+                                )}
+                              </p>
+                            ) : null}
 
-                        {/* Guest count for hour-range mode */}
-                        <label className="grid gap-1 text-sm">
-                          <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {t("client:propertyDetail.calendar.guestCount", {
-                              defaultValue: "Cantidad de personas",
-                            })}
-                          </span>
-                          <input
-                            type="number"
-                            min={1}
-                            max={
-                              attrs?.bookingMaxUnits ||
-                              attrs?.venueCapacitySeated ||
-                              500
-                            }
-                            value={guestCountDraft}
-                            onChange={(e) => {
-                              setGuestCountDraft(e.target.value);
-                              const parsed = parseInt(e.target.value, 10);
-                              if (!isNaN(parsed) && parsed >= 1)
-                                setSelectedGuestCount(parsed);
-                            }}
-                            onBlur={(e) => {
-                              const v = parseInt(e.target.value, 10);
-                              const max = Number(
-                                attrs?.bookingMaxUnits ||
+                            {hourRangeSlot ? (
+                              <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 px-3 py-2 text-sm text-cyan-800 dark:border-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-200">
+                                {hourRangeSlot.label}
+                              </div>
+                            ) : null}
+
+                            {/* Guest count for hour-range mode */}
+                            <label className="grid gap-1 text-sm">
+                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                                {t(
+                                  "client:propertyDetail.calendar.guestCount",
+                                  { defaultValue: "Cantidad de personas" },
+                                )}
+                              </span>
+                              <input
+                                type="number"
+                                min={1}
+                                max={
+                                  attrs?.bookingMaxUnits ||
                                   attrs?.venueCapacitySeated ||
-                                  500,
-                              );
-                              const clamped =
-                                isNaN(v) || v < 1 ? 1 : v > max ? max : v;
-                              setGuestCountDraft(String(clamped));
-                              setSelectedGuestCount(clamped);
-                            }}
-                            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                          />
-                        </label>
-
-                        {hourRangeSlot ? (
-                          isManualContactBooking ? (
-                            <button
-                              type="button"
-                              onClick={handleHourRangeContact}
-                              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
-                            >
-                              {t(
-                                "client:propertyDetail.calendar.contactForSlot",
-                                {
-                                  defaultValue: "Solicitar este horario",
-                                },
-                              )}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleSlotReserve}
-                              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-500"
-                            >
-                              {t("client:propertyDetail.calendar.reserveSlot", {
-                                defaultValue: "Reservar este horario",
-                              })}
-                              <ArrowRight size={16} />
-                            </button>
-                          )
-                        ) : null}
-                      </>
-                    ) : availableTimeSlots.length === 0 ? (
-                      /* ── Predefined slots: no slots message ─ */
-                      <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                        {t("client:propertyDetail.calendar.noSlots", {
-                          defaultValue:
-                            "No hay horarios disponibles para la fecha seleccionada.",
-                        })}
-                      </p>
-                    ) : (
-                      /* ── Predefined slots: grid ──────────── */
-                      <>
-                        {/* Guest count input */}
-                        <label className="grid gap-1 text-sm">
-                          <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {t("client:propertyDetail.calendar.guestCount", {
-                              defaultValue: "Cantidad de personas",
+                                  500
+                                }
+                                value={guestCountDraft}
+                                onChange={(e) => {
+                                  setGuestCountDraft(e.target.value);
+                                  const parsed = parseInt(e.target.value, 10);
+                                  if (!isNaN(parsed) && parsed >= 1)
+                                    setSelectedGuestCount(parsed);
+                                }}
+                                onBlur={(e) => {
+                                  const v = parseInt(e.target.value, 10);
+                                  const max = Number(
+                                    attrs?.bookingMaxUnits ||
+                                      attrs?.venueCapacitySeated ||
+                                      500,
+                                  );
+                                  const clamped =
+                                    isNaN(v) || v < 1 ? 1 : v > max ? max : v;
+                                  setGuestCountDraft(String(clamped));
+                                  setSelectedGuestCount(clamped);
+                                }}
+                                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                              />
+                            </label>
+                          </>
+                        ) : availableTimeSlots.length === 0 ? (
+                          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                            {t("client:propertyDetail.calendar.noSlots", {
+                              defaultValue:
+                                "No hay horarios disponibles para la fecha seleccionada.",
                             })}
-                          </span>
-                          <input
-                            type="number"
-                            min={1}
-                            max={
-                              attrs?.bookingMaxUnits ||
-                              attrs?.venueCapacitySeated ||
-                              500
-                            }
-                            value={guestCountDraft}
-                            onChange={(e) => {
-                              setGuestCountDraft(e.target.value);
-                              const parsed = parseInt(e.target.value, 10);
-                              if (!isNaN(parsed) && parsed >= 1)
-                                setSelectedGuestCount(parsed);
-                            }}
-                            onBlur={(e) => {
-                              const v = parseInt(e.target.value, 10);
-                              const max = Number(
-                                attrs?.bookingMaxUnits ||
+                          </p>
+                        ) : (
+                          <>
+                            {/* Guest count */}
+                            <label className="grid gap-1 text-sm">
+                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                                {t(
+                                  "client:propertyDetail.calendar.guestCount",
+                                  { defaultValue: "Cantidad de personas" },
+                                )}
+                              </span>
+                              <input
+                                type="number"
+                                min={1}
+                                max={
+                                  attrs?.bookingMaxUnits ||
                                   attrs?.venueCapacitySeated ||
-                                  500,
-                              );
-                              const clamped =
-                                isNaN(v) || v < 1 ? 1 : v > max ? max : v;
-                              setGuestCountDraft(String(clamped));
-                              setSelectedGuestCount(clamped);
-                            }}
-                            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                          />
-                        </label>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          {availableTimeSlots.map((slot) => {
-                            const isSelected =
-                              selectedTimeSlot?.startDateTime ===
-                                slot.startDateTime &&
-                              selectedTimeSlot?.endDateTime ===
-                                slot.endDateTime;
-                            return (
-                              <button
-                                key={slot.startDateTime}
-                                type="button"
-                                disabled={!slot.isAvailable}
-                                onClick={() => setSelectedTimeSlot(slot)}
-                                className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                                  !slot.isAvailable
-                                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
-                                    : isSelected
-                                      ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
-                                      : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
-                                }`}
-                              >
-                                {slot.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {selectedTimeSlot ? (
-                          isManualContactBooking ? (
-                            <button
-                              type="button"
-                              onClick={handleManualSlotContact}
-                              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
-                            >
-                              {t(
-                                "client:propertyDetail.calendar.contactForSlot",
-                                {
-                                  defaultValue: "Solicitar este horario",
-                                },
-                              )}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleSlotReserve}
-                              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-indigo-400 hover:to-cyan-500"
-                            >
-                              {t("client:propertyDetail.calendar.reserveSlot", {
-                                defaultValue: "Reservar este horario",
+                                  500
+                                }
+                                value={guestCountDraft}
+                                onChange={(e) => {
+                                  setGuestCountDraft(e.target.value);
+                                  const parsed = parseInt(e.target.value, 10);
+                                  if (!isNaN(parsed) && parsed >= 1)
+                                    setSelectedGuestCount(parsed);
+                                }}
+                                onBlur={(e) => {
+                                  const v = parseInt(e.target.value, 10);
+                                  const max = Number(
+                                    attrs?.bookingMaxUnits ||
+                                      attrs?.venueCapacitySeated ||
+                                      500,
+                                  );
+                                  const clamped =
+                                    isNaN(v) || v < 1 ? 1 : v > max ? max : v;
+                                  setGuestCountDraft(String(clamped));
+                                  setSelectedGuestCount(clamped);
+                                }}
+                                className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                              />
+                            </label>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              {availableTimeSlots.map((slot) => {
+                                const isSelected =
+                                  selectedTimeSlot?.startDateTime ===
+                                    slot.startDateTime &&
+                                  selectedTimeSlot?.endDateTime ===
+                                    slot.endDateTime;
+                                return (
+                                  <button
+                                    key={slot.startDateTime}
+                                    type="button"
+                                    disabled={!slot.isAvailable}
+                                    onClick={() => setSelectedTimeSlot(slot)}
+                                    className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                                      !slot.isAvailable
+                                        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                                        : isSelected
+                                          ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-400 dark:bg-cyan-950/40 dark:text-cyan-200"
+                                          : "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:text-cyan-200"
+                                    }`}
+                                  >
+                                    {slot.label}
+                                  </button>
+                                );
                               })}
-                              <ArrowRight size={16} />
-                            </button>
-                          )
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center dark:border-slate-600 dark:bg-slate-800/50">
-                    <Calendar
-                      size={32}
-                      className="mb-2 text-slate-300 dark:text-slate-600"
-                    />
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {t("client:propertyDetail.calendar.placeholder")}
-                    </p>
-                    <Link
-                      to={`/reservar/${property.slug}`}
-                      className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500"
-                    >
-                      {t("client:propertyDetail.cta.hourly.button", {
-                        defaultValue: "Reservar horario",
-                      })}
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </>
+                ) : null
+              }
+            />
 
             {/* ── Agent Card (with integrated chat) ────── */}
             <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -3580,7 +3419,6 @@ function PriceCard({
   bookingTypeLabel,
   isCtaBlocked,
   onContactAgent,
-  onScrollToCalendar,
   canChat,
   loginToContactPath,
   chatLoading,
@@ -3674,19 +3512,7 @@ function PriceCard({
 
       {/* CTA Button */}
       {!isCtaBlocked &&
-        (scheduleType === "time_slot" ? (
-          <button
-            type="button"
-            onClick={onScrollToCalendar}
-            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-cyan-600 px-4 py-3 text-sm font-bold text-white transition hover:from-indigo-400 hover:to-cyan-500"
-          >
-            <Calendar size={16} />
-            {t("client:propertyDetail.cta.hourly.selectSlotHint", {
-              defaultValue: "Ver disponibilidad de horarios",
-            })}
-            <ArrowRight size={16} />
-          </button>
-        ) : isBookFlow ? (
+        (isBookFlow ? (
           <Link
             to={`/reservar/${property.slug}`}
             className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition ${s.btn}`}
@@ -3701,8 +3527,18 @@ function PriceCard({
             disabled={chatLoading}
             className={`mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${s.btn}`}
           >
-            {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
-            {ctaLabel}
+            {chatLoading ? (
+              <Spinner size="xs" />
+            ) : bookingType === "manual_contact" ? (
+              <Calendar size={16} />
+            ) : (
+              <MessageCircle size={16} />
+            )}
+            {bookingType === "manual_contact"
+              ? t("calendarModal.cta.open", {
+                  defaultValue: "Ver disponibilidad",
+                })
+              : ctaLabel}
           </button>
         ) : (
           <Link

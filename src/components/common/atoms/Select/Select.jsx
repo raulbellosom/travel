@@ -287,10 +287,14 @@ const Select = React.forwardRef(
       };
 
       document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside, { passive: true });
+      document.addEventListener("touchstart", handleClickOutside, {
+        passive: true,
+      });
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside, { passive: true });
+        document.removeEventListener("touchstart", handleClickOutside, {
+          passive: true,
+        });
       };
     }, []);
 
@@ -403,7 +407,7 @@ const Select = React.forwardRef(
                 <div
                   ref={dropdownRef}
                   onTransitionEnd={handleTransitionEnd}
-                  className="fixed z-120 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800"
+                  className="fixed z-[10050] overflow-hidden rounded-xl border border-slate-300 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800"
                   style={{
                     left: `${dropdownLayout.left}px`,
                     top: `${dropdownLayout.top}px`,
@@ -450,7 +454,10 @@ const Select = React.forwardRef(
                             "hover:bg-slate-100 dark:hover:bg-slate-700",
                           ].join(" ")}
                           onClick={() => handleOptionSelect(option)}
-                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleOptionSelect(option); }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ")
+                              handleOptionSelect(option);
+                          }}
                           onMouseEnter={() => setActiveIndex(index)}
                         >
                           {option.icon && (
