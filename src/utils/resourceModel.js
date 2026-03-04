@@ -547,10 +547,12 @@ export const getManualContactScheduleType = (resourceDoc = {}) => {
   if (explicit !== "none") return explicit;
 
   // Infer from commercialMode when the attribute is missing:
+  // sale / rent_long_term → date_range (visit scheduling)
   // rent_hourly → time_slot, rent_short_term → date_range
   const mode = normalizeLower(
     resourceDoc.commercialMode || resourceDoc.operationType || "",
   );
+  if (mode === "sale" || mode === "rent_long_term") return "date_range";
   if (mode === "rent_hourly") return "time_slot";
   if (mode === "rent_short_term") return "date_range";
   return "none";

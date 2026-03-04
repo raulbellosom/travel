@@ -363,9 +363,9 @@ export default function PropertyAvailabilityCalendar({
     inRange,
     inHoverRange,
     priceOf,
-    fmtCompactPrice,
+    fmtCompactPrice: isSingleMode ? () => "" : fmtCompactPrice,
     fmtPrice,
-    getRangeHint,
+    getRangeHint: isSingleMode ? () => null : getRangeHint,
     pick,
     setHoverDate,
   };
@@ -443,8 +443,8 @@ export default function PropertyAvailabilityCalendar({
           </div>
         </div>
 
-        {/* Stay constraints */}
-        {property.minStayNights && (
+        {/* Stay constraints — hidden in single/visit mode */}
+        {!isSingleMode && property.minStayNights && (
           <div className="px-4 pb-2 text-xs text-slate-500 dark:text-slate-400">
             {priceLabel && priceLabel !== "night"
               ? `${t("calendar.minStayGeneric", { count: property.minStayNights, unit: property.minStayNights === 1 ? unitLabelSingular : unitLabelPlural })} \u00b7 ${t("calendar.maxStayGeneric", { count: property.maxStayNights || 365, unit: unitLabelPlural })}`
@@ -493,8 +493,8 @@ export default function PropertyAvailabilityCalendar({
         </div>
       </div>
 
-      {/* ── Booking summary ──────────────────────────────── */}
-      {summary && (
+      {/* ── Booking summary (hidden for visit/single mode) ── */}
+      {!isSingleMode && summary && (
         <MotionDiv
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

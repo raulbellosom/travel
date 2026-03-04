@@ -651,10 +651,19 @@ const PropertyDetail = () => {
     ],
   );
 
+  const isVisitRequestMode =
+    resourceBehavior.commercialMode === "sale" ||
+    resourceBehavior.commercialMode === "rent_long_term";
+  const isManualBookingRequestMode =
+    !isVisitRequestMode && resourceBehavior.bookingType === "manual_contact";
+
   // Enables the "Continuar" button in the calendar modal
   const canContinueFromCalendar = useMemo(() => {
-    if (isDateRangeSchedule)
+    if (isDateRangeSchedule) {
+      // Visit mode (sale/rent_long_term) uses single selection — only startDate needed
+      if (isVisitRequestMode) return Boolean(selectedDateRange.startDate);
       return Boolean(selectedDateRange.startDate && selectedDateRange.endDate);
+    }
     if (isTimeSlotSchedule)
       return isHourRangeMode
         ? Boolean(hourRangeSlot)
@@ -664,6 +673,7 @@ const PropertyDetail = () => {
     isDateRangeSchedule,
     isHourRangeMode,
     isTimeSlotSchedule,
+    isVisitRequestMode,
     hourRangeSlot,
     selectedDateRange.endDate,
     selectedDateRange.startDate,
@@ -681,11 +691,6 @@ const PropertyDetail = () => {
   const loginToChatPath = `/login${authRedirectQuery}`;
   const browserTimeZone =
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const isVisitRequestMode =
-    resourceBehavior.commercialMode === "sale" ||
-    resourceBehavior.commercialMode === "rent_long_term";
-  const isManualBookingRequestMode =
-    !isVisitRequestMode && resourceBehavior.bookingType === "manual_contact";
   const canContactAsClient =
     isChatAuth &&
     user?.role === "client" &&
@@ -776,6 +781,19 @@ const PropertyDetail = () => {
           : {}),
         ...(selectedGuestCount > 1 ? { guestCount: selectedGuestCount } : {}),
       });
+    } else if (
+      isVisitRequestMode &&
+      selectedDateRange.startDate &&
+      !selectedDateRange.endDate
+    ) {
+      // Visit mode: single date selected for scheduling a tour
+      const visitDate = formatDateForQuery(selectedDateRange.startDate);
+      setChatScheduleMeta({
+        scheduleType: "visit",
+        checkInDate: visitDate,
+        checkOutDate: visitDate,
+        ...(selectedGuestCount > 1 ? { guestCount: selectedGuestCount } : {}),
+      });
     } else if (selectedDateRange.startDate && selectedDateRange.endDate) {
       setChatScheduleMeta({
         scheduleType: "date_range",
@@ -789,6 +807,7 @@ const PropertyDetail = () => {
   }, [
     browserTimeZone,
     hourRangeSlot,
+    isVisitRequestMode,
     selectedDateRange.endDate,
     selectedDateRange.startDate,
     selectedGuestCount,
@@ -1172,11 +1191,14 @@ const PropertyDetail = () => {
           timezone: schedule.timezone || browserTimeZone,
         },
       ];
-    } else if (isVisitRequestMode && booking.startDate && booking.endDate) {
+    } else if (isVisitRequestMode && booking.startDate) {
+      // For single-date visits, create a 1-hour slot for the visit
+      const visitStart = new Date(booking.startDate);
+      const visitEnd = new Date(visitStart.getTime() + 60 * 60 * 1000); // +1 hour
       visit.preferredSlots = [
         {
-          startDateTime: booking.startDate,
-          endDateTime: booking.endDate,
+          startDateTime: visitStart.toISOString(),
+          endDateTime: visitEnd.toISOString(),
           timezone: browserTimeZone,
         },
       ];
@@ -2868,9 +2890,14 @@ const PropertyDetail = () => {
                         onReserveClick={handleCalendarReserve}
                         resourceType={resourceBehavior.resourceType}
                         priceLabel={resourceBehavior.priceLabel}
-                        guestCount={selectedGuestCount}
-                        onGuestCountChange={setSelectedGuestCount}
+                        guestCount={
+                          isVisitRequestMode ? undefined : selectedGuestCount
+                        }
+                        onGuestCountChange={
+                          isVisitRequestMode ? undefined : setSelectedGuestCount
+                        }
                         months="responsive"
+                        selectionMode={isVisitRequestMode ? "single" : "range"}
                       />
                     ) : isTimeSlotSchedule ? (
                       <div className="space-y-3">
@@ -3534,11 +3561,7 @@ function PriceCard({
             ) : (
               <MessageCircle size={16} />
             )}
-            {bookingType === "manual_contact"
-              ? t("calendarModal.cta.open", {
-                  defaultValue: "Ver disponibilidad",
-                })
-              : ctaLabel}
+            {ctaLabel}
           </button>
         ) : (
           <Link

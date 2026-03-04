@@ -157,6 +157,18 @@ export default function BookingWizardModal({
     };
   }, [isOpen]);
 
+  /* Auto-populate meetingDate from calendar selection (visit mode) */
+  useEffect(() => {
+    if (!isVisitRequestMode || !selectedDateRange?.startDate) return;
+    const d =
+      selectedDateRange.startDate instanceof Date
+        ? selectedDateRange.startDate
+        : new Date(selectedDateRange.startDate);
+    if (isNaN(d.getTime())) return;
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    setMeetingDate(iso);
+  }, [isVisitRequestMode, selectedDateRange?.startDate]);
+
   /* Escape key */
   useEffect(() => {
     if (!isOpen) return;
@@ -209,10 +221,15 @@ export default function BookingWizardModal({
       } else {
         parts.push(`Fechas: ${from} – ${to}.`);
       }
+    } else if (selectedDateRange?.startDate) {
+      // Single-date selection (visit mode)
+      parts.push(
+        `Fecha de visita: ${fmtDate(selectedDateRange.startDate, locale)}.`,
+      );
     }
 
-    // Guest count
-    if (selectedGuestCount > 0) {
+    // Guest count (skip for visit mode — not relevant)
+    if (selectedGuestCount > 0 && !isVisitRequestMode) {
       parts.push(`Personas: ${selectedGuestCount}.`);
     }
 
@@ -402,9 +419,13 @@ export default function BookingWizardModal({
                       })
                     : step === 0
                       ? calendarContent
-                        ? t("bookingWizard.step0.calendarHeading", {
-                            defaultValue: "Selecciona fechas y detalles",
-                          })
+                        ? isVisitRequestMode
+                          ? t("bookingWizard.step0.visitHeading", {
+                              defaultValue: "Selecciona fecha de visita",
+                            })
+                          : t("bookingWizard.step0.calendarHeading", {
+                              defaultValue: "Selecciona fechas y detalles",
+                            })
                         : t("bookingWizard.step0.heading", {
                             defaultValue: "Tu solicitud",
                           })
@@ -530,20 +551,34 @@ export default function BookingWizardModal({
                         })}
                       </p>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                            {t("bookingWizard.meetingSection.date", {
-                              defaultValue: "Fecha preferida",
-                            })}
-                          </label>
-                          <input
-                            type="date"
-                            value={meetingDate}
-                            onChange={(e) => setMeetingDate(e.target.value)}
-                            min={new Date().toISOString().split("T")[0]}
-                            className="w-full min-h-10 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-900"
-                          />
-                        </div>
+                        {/* Date: show read-only summary when picked from calendar step 0, editable otherwise */}
+                        {calendarContent && meetingDate ? (
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                              {t("bookingWizard.meetingSection.date", {
+                                defaultValue: "Fecha preferida",
+                              })}
+                            </label>
+                            <p className="flex min-h-10 items-center rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
+                              {fmtDate(meetingDate, locale)}
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                              {t("bookingWizard.meetingSection.date", {
+                                defaultValue: "Fecha preferida",
+                              })}
+                            </label>
+                            <input
+                              type="date"
+                              value={meetingDate}
+                              onChange={(e) => setMeetingDate(e.target.value)}
+                              min={new Date().toISOString().split("T")[0]}
+                              className="w-full min-h-10 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-900"
+                            />
+                          </div>
+                        )}
                         <div>
                           <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
                             {t("bookingWizard.meetingSection.time", {
