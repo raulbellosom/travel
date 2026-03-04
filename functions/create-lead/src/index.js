@@ -1132,7 +1132,6 @@ export default async ({ req, res, log, error }) => {
       lastMessage: message,
       conversationId: conversation.$id,
       source: contactChannel,
-      intent,
       status: openLead ? openLead.status : "new",
       isArchived: false,
       metaJson: serializedMeta,
