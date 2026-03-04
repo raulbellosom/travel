@@ -51,6 +51,17 @@ function fmtDate(date, locale = "es-MX") {
   });
 }
 
+function fmtTime(date, locale = "es-MX") {
+  if (!date) return "";
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 function toIso(date) {
   if (!date) return undefined;
   const d = date instanceof Date ? date : new Date(date);
@@ -179,18 +190,54 @@ export default function BookingWizardModal({
 
   const defaultMessage = useMemo(() => {
     const title = property?.title || "";
-    if (intent === "SCHEDULE_MEETING")
-      return t("bookingWizard.defaultMessage.scheduleMeeting", {
-        defaultValue: `Hola, me interesa "${title}". Me gustaría agendar una visita.`,
-      });
-    if (intent === "AVAILABILITY_INQUIRY")
-      return t("bookingWizard.defaultMessage.availabilityInquiry", {
-        defaultValue: `Hola, me interesa "${title}". Quiero confirmar disponibilidad y condiciones.`,
-      });
-    return t("bookingWizard.defaultMessage.generalInquiry", {
-      defaultValue: `Hola, me interesa "${title}". ¿Me pueden dar más información?`,
-    });
-  }, [intent, property?.title, t]);
+    const parts = [`Hola, me interesa "${title}".`];
+
+    // Date / time details
+    const slot = selectedTimeSlot || hourRangeSlot;
+    if (slot?.startDateTime && slot?.endDateTime) {
+      const startD = fmtDate(slot.startDateTime, locale);
+      const startT = fmtTime(slot.startDateTime, locale);
+      const endT = fmtTime(slot.endDateTime, locale);
+      parts.push(`Fecha: ${startD}, de ${startT} a ${endT}.`);
+    } else if (hasDateRange) {
+      const from = fmtDate(selectedDateRange.startDate, locale);
+      const to = fmtDate(selectedDateRange.endDate, locale);
+      if (nights > 0) {
+        parts.push(
+          `Fechas: ${from} – ${to} (${nights} ${nights === 1 ? "noche" : "noches"}).`,
+        );
+      } else {
+        parts.push(`Fechas: ${from} – ${to}.`);
+      }
+    }
+
+    // Guest count
+    if (selectedGuestCount > 0) {
+      parts.push(`Personas: ${selectedGuestCount}.`);
+    }
+
+    // Intent-specific closing
+    if (intent === "SCHEDULE_MEETING") {
+      parts.push("Me gustaría agendar una visita.");
+    } else if (intent === "AVAILABILITY_INQUIRY") {
+      parts.push("Quiero confirmar disponibilidad y condiciones.");
+    } else {
+      parts.push("¿Me pueden dar más información?");
+    }
+
+    return parts.join(" ");
+  }, [
+    intent,
+    property?.title,
+    selectedTimeSlot,
+    hourRangeSlot,
+    hasDateRange,
+    selectedDateRange?.startDate,
+    selectedDateRange?.endDate,
+    selectedGuestCount,
+    nights,
+    locale,
+  ]);
 
   const effectiveMessage = message || defaultMessage;
 
