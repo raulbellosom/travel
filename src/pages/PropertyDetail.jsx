@@ -96,7 +96,6 @@ import {
   daysBetween,
 } from "../features/calendar";
 import { getFileViewUrl } from "../utils/imageOptimization"; // HD fallback for viewer modal
-import { getBookingTypeLabel } from "../utils/resourceLabels";
 import { BookingWizardModal } from "../components/booking";
 
 const MapDisplay = lazy(
@@ -111,10 +110,6 @@ const FALLBACK_BANNERS = [
 
 /* ─── Helpers ──────────────────────────────────────────── */
 
-const isSale = (op) => op === "sale";
-const isRent = (op) => op === "rent";
-const isVacation = (op) => op === "vacation_rental";
-const isHourly = (op) => op === "rent_hourly";
 const formatDateForQuery = (dateValue) => {
   if (!dateValue) return "";
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
@@ -289,8 +284,6 @@ const PropertyDetail = () => {
 
   /* ─── Computed values ────────────────────────────────── */
 
-  const opType = resourceBehavior.operationType;
-
   const amountParts = useMemo(
     () =>
       formatMoneyParts(property?.price || 0, {
@@ -348,10 +341,6 @@ const PropertyDetail = () => {
     };
     return labelMap[pm] || labelMap.total;
   }, [property, resourceBehavior.pricingModel, t]);
-  const bookingTypeLabel = useMemo(
-    () => getBookingTypeLabel(resourceBehavior.bookingType, t),
-    [resourceBehavior.bookingType, t],
-  );
   const blockedDateSet = useMemo(
     () =>
       new Set(
@@ -603,28 +592,35 @@ const PropertyDetail = () => {
 
   const operationBadge = useMemo(() => {
     if (!property) return { color: "bg-cyan-500", label: "" };
-    if (isSale(opType))
+    const cm = resourceBehavior.commercialMode;
+    if (cm === "sale")
       return {
         color: "bg-emerald-500",
-        label: t("client:common.enums.operation.sale"),
+        label: t("client:common.enums.commercialMode.sale", {
+          defaultValue: "Venta",
+        }),
       };
-    if (isHourly(opType))
+    if (cm === "rent_hourly")
       return {
         color: "bg-indigo-500",
-        label: t("client:common.enums.operation.rent_hourly", {
+        label: t("client:common.enums.commercialMode.rent_hourly", {
           defaultValue: "Renta por hora",
         }),
       };
-    if (isRent(opType))
+    if (cm === "rent_long_term")
       return {
         color: "bg-blue-500",
-        label: t("client:common.enums.operation.rent"),
+        label: t("client:common.enums.commercialMode.rent_long_term", {
+          defaultValue: "Renta",
+        }),
       };
     return {
       color: "bg-amber-500",
-      label: t("client:common.enums.operation.vacation_rental"),
+      label: t("client:common.enums.commercialMode.rent_short_term", {
+        defaultValue: "Renta vacacional",
+      }),
     };
-  }, [opType, property, t]);
+  }, [property, resourceBehavior.commercialMode, t]);
 
   const isCtaBlocked = useMemo(() => {
     if (isManualContactBooking) return false;
@@ -651,9 +647,8 @@ const PropertyDetail = () => {
     ],
   );
 
-  const isVisitRequestMode =
-    resourceBehavior.commercialMode === "sale" ||
-    resourceBehavior.commercialMode === "rent_long_term";
+  // Centralized in getResourceBehavior(): true only for property + sale/rent_long_term.
+  const isVisitRequestMode = resourceBehavior.isVisitMode;
   const isManualBookingRequestMode =
     !isVisitRequestMode && resourceBehavior.bookingType === "manual_contact";
 
@@ -758,12 +753,20 @@ const PropertyDetail = () => {
       navigate(loginToChatPath, { state: { from: location } });
       return;
     }
+    // Must be a verified client who does not own this resource.
+    if (
+      user.role !== "client" ||
+      !user.emailVerified ||
+      user.$id === property?.ownerUserId
+    ) {
+      return;
+    }
     // Reset booking state before opening
     setBookingBlockSuccess(false);
     setBookingBlockConversationId(null);
     // Open wizard directly — calendar is now embedded as step 0
     setWizardModalOpen(true);
-  }, [loginToChatPath, location, navigate, user?.$id]);
+  }, [loginToChatPath, location, navigate, property?.ownerUserId, user]);
 
   /** Called when wizard advances from step 0 (calendar) to step 1 (contact) */
   const handleWizardCalendarContinue = useCallback(() => {
@@ -1888,10 +1891,9 @@ const PropertyDetail = () => {
                 priceSuffix={priceSuffix}
                 priceLabel={priceLabel}
                 property={property}
-                opType={opType}
+                commercialMode={resourceBehavior.commercialMode}
                 bookingType={resourceBehavior.bookingType}
                 scheduleType={resourceBehavior.effectiveScheduleType}
-                bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={
                   isManualContactBooking
@@ -1940,27 +1942,30 @@ const PropertyDetail = () => {
                       value={property.parkingSpaces}
                     />
                   )}
-                  {property.floors > 0 && !isVacation(opType) && (
-                    <StatCard
-                      icon={Layers}
-                      label={t("client:propertyDetail.stats.floors")}
-                      value={property.floors}
-                    />
-                  )}
-                  {property.yearBuilt && isSale(opType) && (
-                    <StatCard
-                      icon={CalendarDays}
-                      label={t("client:propertyDetail.stats.yearBuilt")}
-                      value={property.yearBuilt}
-                    />
-                  )}
-                  {isVacation(opType) && property.maxGuests > 0 && (
-                    <StatCard
-                      icon={Users}
-                      label={t("client:propertyDetail.stats.maxGuests")}
-                      value={property.maxGuests}
-                    />
-                  )}
+                  {property.floors > 0 &&
+                    resourceBehavior.commercialMode !== "rent_short_term" && (
+                      <StatCard
+                        icon={Layers}
+                        label={t("client:propertyDetail.stats.floors")}
+                        value={property.floors}
+                      />
+                    )}
+                  {property.yearBuilt &&
+                    resourceBehavior.commercialMode === "sale" && (
+                      <StatCard
+                        icon={CalendarDays}
+                        label={t("client:propertyDetail.stats.yearBuilt")}
+                        value={property.yearBuilt}
+                      />
+                    )}
+                  {resourceBehavior.commercialMode === "rent_short_term" &&
+                    property.maxGuests > 0 && (
+                      <StatCard
+                        icon={Users}
+                        label={t("client:propertyDetail.stats.maxGuests")}
+                        value={property.maxGuests}
+                      />
+                    )}
                 </>
               )}
 
@@ -2521,17 +2526,18 @@ const PropertyDetail = () => {
 
             {/* ── Type-specific details ─────────────────── */}
             {resourceBehavior.resourceType === "property" &&
-              (isRent(opType) || isVacation(opType)) && (
+              (resourceBehavior.commercialMode === "rent_long_term" ||
+                resourceBehavior.commercialMode === "rent_short_term") && (
                 <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
                   <SectionHeading className="mt-0!">
-                    {isRent(opType)
+                    {resourceBehavior.commercialMode === "rent_long_term"
                       ? t("client:propertyDetail.sections.rentalTerms")
                       : t("client:propertyDetail.sections.vacationRules")}
                   </SectionHeading>
 
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {/* Rental-specific */}
-                    {isRent(opType) && (
+                    {/* Long-term rental conditions */}
+                    {resourceBehavior.commercialMode === "rent_long_term" && (
                       <>
                         {property.rentPeriod && (
                           <DetailRow
@@ -2563,8 +2569,8 @@ const PropertyDetail = () => {
                       </>
                     )}
 
-                    {/* Vacation-specific */}
-                    {isVacation(opType) && (
+                    {/* Renta vacacional (rent_short_term) */}
+                    {resourceBehavior.commercialMode === "rent_short_term" && (
                       <>
                         {property.maxGuests > 0 && (
                           <DetailRow
@@ -2629,7 +2635,7 @@ const PropertyDetail = () => {
 
             {/* Sale-specific features */}
             {resourceBehavior.resourceType === "property" &&
-              isSale(opType) &&
+              resourceBehavior.commercialMode === "sale" &&
               (property.furnished || property.yearBuilt) && (
                 <section className="rounded-2xl border border-slate-200 bg-linear-to-br from-slate-50 to-white p-5 sm:p-6 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/60">
                   <SectionHeading className="mt-0!">
@@ -2798,10 +2804,9 @@ const PropertyDetail = () => {
                 priceSuffix={priceSuffix}
                 priceLabel={priceLabel}
                 property={property}
-                opType={opType}
+                commercialMode={resourceBehavior.commercialMode}
                 bookingType={resourceBehavior.bookingType}
                 scheduleType={resourceBehavior.effectiveScheduleType}
-                bookingTypeLabel={bookingTypeLabel}
                 isCtaBlocked={isCtaBlocked}
                 onContactAgent={
                   isManualContactBooking
@@ -3433,30 +3438,30 @@ function DetailRow({ icon: Icon, label, value }) {
   );
 }
 
-/** Price + CTA card – adapts per operationType */
+/** Price + CTA card – adapts per commercialMode */
 function PriceCard({
   t,
   amountParts,
   priceSuffix,
   priceLabel,
   property,
-  opType,
+  commercialMode,
   bookingType,
   scheduleType,
-  bookingTypeLabel,
   isCtaBlocked,
   onContactAgent,
   canChat,
   loginToContactPath,
   chatLoading,
 }) {
-  const ctaKey = isSale(opType)
-    ? "sale"
-    : isHourly(opType)
-      ? "hourly"
-      : isRent(opType)
-        ? "rent"
-        : "vacationRental";
+  const ctaKey =
+    commercialMode === "sale"
+      ? "sale"
+      : commercialMode === "rent_hourly"
+        ? "hourly"
+        : commercialMode === "rent_long_term"
+          ? "rent"
+          : "vacationRental";
 
   // Background and accent colors per type
   const styles = {
@@ -3530,14 +3535,8 @@ function PriceCard({
           {ctaHint}
         </p>
       )}
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-        {t("client:propertyDetail.bookingType", {
-          defaultValue: "Tipo de reserva",
-        })}
-        : {bookingTypeLabel}
-      </p>
 
-      {/* CTA Button */}
+      {/* Primary CTA — only shown when booking/payment modules are active */}
       {!isCtaBlocked &&
         (isBookFlow ? (
           <Link
@@ -3562,6 +3561,32 @@ function PriceCard({
               <MessageCircle size={16} />
             )}
             {ctaLabel}
+          </button>
+        ) : (
+          <Link
+            to={loginToContactPath || "/login"}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <MessageCircle size={16} />
+            {t("client:propertyDetail.agent.loginToChat", {
+              defaultValue: "Inicia sesion para contactar",
+            })}
+          </Link>
+        ))}
+
+      {/* Fallback CTA — modules disabled but contact is still possible */}
+      {isCtaBlocked &&
+        (canChat ? (
+          <button
+            type="button"
+            onClick={onContactAgent}
+            disabled={chatLoading}
+            className="mt-4 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {chatLoading ? <Spinner size="xs" /> : <MessageCircle size={16} />}
+            {t("client:propertyDetail.agent.contactAgent", {
+              defaultValue: "Contactar al propietario",
+            })}
           </button>
         ) : (
           <Link

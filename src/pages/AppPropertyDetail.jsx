@@ -59,6 +59,7 @@ import {
 import { getOptimizedImage, getFileViewUrl } from "../utils/imageOptimization";
 import { formatMoneyWithDenomination } from "../utils/money";
 import { getResourceDetails } from "../utils/getResourceDetails";
+import { getCommercialModeLabel } from "../utils/resourceLabels";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -398,8 +399,8 @@ const AppPropertyDetail = () => {
       String(detail.value).trim() !== "",
   );
 
-  const isRent = property.operationType === "rent";
-  const isVacationRental = property.operationType === "vacation_rental";
+  const isRent = property.commercialMode === "rent_long_term";
+  const isVacationRental = property.commercialMode === "rent_short_term";
   const publicUrl = getPublicPropertyRoute(
     property.slug,
     i18n.resolvedLanguage || i18n.language,
@@ -897,10 +898,7 @@ const AppPropertyDetail = () => {
               />
               <InfoCard
                 label={t("propertyForm.fields.operationType")}
-                value={t(
-                  `propertyForm.options.operationType.${property.operationType}`,
-                  { defaultValue: property.operationType },
-                )}
+                value={getCommercialModeLabel(property.commercialMode, t)}
                 icon={Tag}
               />
               <InfoCard

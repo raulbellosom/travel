@@ -29,12 +29,12 @@ const CATEGORY_I18N_MAP = Object.freeze({
   warehouse: "client:common.enums.category.warehouse",
   // service
   cleaning: "client:common.enums.category.cleaning",
-  dj: "client:common.enums.category.dj",
   chef: "client:common.enums.category.chef",
   photography: "client:common.enums.category.photography",
   catering: "client:common.enums.category.catering",
   maintenance: "client:common.enums.category.maintenance",
   // music
+  dj: "client:common.enums.category.dj",
   banda: "client:common.enums.category.banda",
   norteno: "client:common.enums.category.norteno",
   sierreno: "client:common.enums.category.sierreno",

@@ -530,9 +530,10 @@ const ReserveProperty = () => {
                 {t("client:reserveProperty.labels.operation")}
               </p>
               <p className="font-semibold text-slate-900 dark:text-slate-100">
-                {t(`client:common.enums.operation.${behavior.operationType}`, {
-                  defaultValue: behavior.operationType,
-                })}
+                {t(
+                  `client:common.enums.commercialMode.${behavior.commercialMode}`,
+                  { defaultValue: behavior.commercialMode },
+                )}
               </p>
             </div>
             {maxCapacity > 0 && (

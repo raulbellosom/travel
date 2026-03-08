@@ -546,15 +546,37 @@ export const getManualContactScheduleType = (resourceDoc = {}) => {
   );
   if (explicit !== "none") return explicit;
 
-  // Infer from commercialMode when the attribute is missing:
-  // sale / rent_long_term → date_range (visit scheduling)
-  // rent_hourly → time_slot, rent_short_term → date_range
-  const mode = normalizeLower(
+  // Only infer a schedule type when the resource is actually manual_contact.
+  // Bookable resources (date_range / time_slot / fixed_event) own their own
+  // schedule and do not use manualContactScheduleType at all.
+  const commercialMode = normalizeLower(
     resourceDoc.commercialMode || resourceDoc.operationType || "",
   );
-  if (mode === "sale" || mode === "rent_long_term") return "date_range";
-  if (mode === "rent_hourly") return "time_slot";
-  if (mode === "rent_short_term") return "date_range";
+  const effectiveBookingType = normalizeBookingType(
+    resourceDoc.bookingType,
+    commercialMode,
+  );
+  if (effectiveBookingType !== "manual_contact") return "none";
+
+  // sale and rent_long_term are always manual_contact.
+  // property → offer date_range for visit scheduling.
+  // vehicle and all other types → no schedule widget; use plain contact.
+  const resourceType = normalizeResourceType(
+    resourceDoc.resourceType || "property",
+  );
+  if (commercialMode === "sale" || commercialMode === "rent_long_term") {
+    return resourceType === "property" ? "date_range" : "none";
+  }
+
+  // rent_short_term manual_contact:
+  // property → date_range (check-in / availability window).
+  // vehicle and others → no schedule (plain contact; admin can opt-in explicitly).
+  if (commercialMode === "rent_short_term") {
+    return resourceType === "property" ? "date_range" : "none";
+  }
+
+  // rent_hourly manual_contact: wizard never produces this combination.
+  // Safest fallback: no schedule widget.
   return "none";
 };
 
@@ -632,9 +654,13 @@ export const getResourceBehavior = (
     ) ||
     effectiveScheduleType === "date_range" ||
     effectiveScheduleType === "time_slot";
+  // requiresPayments is true only when the resource is actually bookable
+  // (not manual_contact). manual_contact flows always go through create-lead,
+  // never through create-reservation-public or the payment pipeline.
   const requiresPayments =
-    normalized.commercialMode === "rent_short_term" ||
-    normalized.commercialMode === "rent_hourly";
+    (normalized.commercialMode === "rent_short_term" ||
+      normalized.commercialMode === "rent_hourly") &&
+    normalized.bookingType !== "manual_contact";
 
   const requiredModule =
     normalized.commercialMode === "rent_short_term"
@@ -668,7 +694,21 @@ export const getResourceBehavior = (
       normalized.commercialMode,
       normalized.category,
     ),
-    ctaType: normalized.bookingType === "manual_contact" ? "contact" : "book",
+    // ctaType is "contact" when the resource is manual_contact OR when the
+    // required booking/payment module is disabled (can't complete the flow).
+    ctaType:
+      normalized.bookingType === "manual_contact" ||
+      !canOperateMode ||
+      !canUsePayments
+        ? "contact"
+        : "book",
+    // isVisitMode: property in sale or rent_long_term always uses a
+    // "schedule a visit" wizard instead of a generic contact form.
+    // All other resource types are either bookable or use plain contact.
+    isVisitMode:
+      normalized.resourceType === "property" &&
+      (normalized.commercialMode === "sale" ||
+        normalized.commercialMode === "rent_long_term"),
     priceLabel: priceLabelByModel[normalized.pricingModel] || "total",
   };
 };
