@@ -442,8 +442,9 @@ function getFieldsForStep({ t, context, stepId }) {
             },
           ]
         : []),
-      // Slot mode selector: predefined fixed-duration slots vs. hour-range picker
-      ...(commercialMode === "rent_hourly"
+      // Slot mode selector: only for rent_hourly online booking (not manual_contact).
+      // manual_contact uses manualContactScheduleType to opt into a schedule widget.
+      ...(commercialMode === "rent_hourly" && bookingType !== "manual_contact"
         ? [
             {
               key: "attributes.slotMode",
@@ -478,8 +479,8 @@ function getFieldsForStep({ t, context, stepId }) {
         helpKey: "wizard.fields.music.availabilityEndTime.help",
         required: false,
       },
-      // hour_range mode: client picks start time + number of hours
-      ...(slotMode === "hour_range"
+      // hour_range mode: client picks start time + number of hours (rent_hourly only)
+      ...(slotMode === "hour_range" && commercialMode === "rent_hourly"
         ? [
             {
               key: "attributes.bookingMinUnits",

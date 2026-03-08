@@ -3101,11 +3101,7 @@ const PropertyDetail = () => {
                               <input
                                 type="number"
                                 min={1}
-                                max={
-                                  attrs?.bookingMaxUnits ||
-                                  attrs?.venueCapacitySeated ||
-                                  500
-                                }
+                                max={maxCapacity > 0 ? maxCapacity : 500}
                                 value={guestCountDraft}
                                 onChange={(e) => {
                                   setGuestCountDraft(e.target.value);
@@ -3115,11 +3111,8 @@ const PropertyDetail = () => {
                                 }}
                                 onBlur={(e) => {
                                   const v = parseInt(e.target.value, 10);
-                                  const max = Number(
-                                    attrs?.bookingMaxUnits ||
-                                      attrs?.venueCapacitySeated ||
-                                      500,
-                                  );
+                                  const max =
+                                    maxCapacity > 0 ? maxCapacity : 500;
                                   const clamped =
                                     isNaN(v) || v < 1 ? 1 : v > max ? max : v;
                                   setGuestCountDraft(String(clamped));
@@ -3149,11 +3142,7 @@ const PropertyDetail = () => {
                               <input
                                 type="number"
                                 min={1}
-                                max={
-                                  attrs?.bookingMaxUnits ||
-                                  attrs?.venueCapacitySeated ||
-                                  500
-                                }
+                                max={maxCapacity > 0 ? maxCapacity : 500}
                                 value={guestCountDraft}
                                 onChange={(e) => {
                                   setGuestCountDraft(e.target.value);
@@ -3163,11 +3152,8 @@ const PropertyDetail = () => {
                                 }}
                                 onBlur={(e) => {
                                   const v = parseInt(e.target.value, 10);
-                                  const max = Number(
-                                    attrs?.bookingMaxUnits ||
-                                      attrs?.venueCapacitySeated ||
-                                      500,
-                                  );
+                                  const max =
+                                    maxCapacity > 0 ? maxCapacity : 500;
                                   const clamped =
                                     isNaN(v) || v < 1 ? 1 : v > max ? max : v;
                                   setGuestCountDraft(String(clamped));
