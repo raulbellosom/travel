@@ -5,10 +5,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "migrate:resources:dry": "node migrate-resources.js",
-    "migrate:resources:live": "DRY_RUN=false node migrate-resources.js"
+    "migrate:resources:dry": "node --env-file=.env migrate-resources.js",
+    "migrate:resources:live": "DRY_RUN=false node --env-file=.env migrate-resources.js"
   },
   "dependencies": {
-    "node-appwrite": "^14.0.0"
+    "node-appwrite": "^17.0.0"
   }
 }
