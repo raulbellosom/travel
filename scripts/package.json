@@ -1,0 +1,14 @@
+{
+  "name": "inmobo-scripts",
+  "version": "1.0.0",
+  "description": "One-off migration and maintenance scripts for the Inmobo platform",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "migrate:resources:dry": "node migrate-resources.js",
+    "migrate:resources:live": "DRY_RUN=false node migrate-resources.js"
+  },
+  "dependencies": {
+    "node-appwrite": "^14.0.0"
+  }
+}
