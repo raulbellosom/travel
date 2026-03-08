@@ -3,7 +3,9 @@
  * Human-first wizard configuration that maps UI -> canonical resources schema.
  *
  * Notes:
- * - Vehicles support sale, long-term rent (manual contact) and short-term rent (date_range).
+ * - Vehicles are always manual_contact in all commercial modes.
+ * - For rent_short_term, admin can enable date-range intent via
+ *   manualContactScheduleType in the conditions step (never via bookingType).
  * - The vehicle-specific details are stored in `attributes.*` per schema convention:
  *   vehicleModelYear, vehicleSeats, vehicleDoors, vehicleTransmission, vehicleFuelType, vehicleLuggageCapacity.
  * - Pricing is asked once and mapped to pricingModel based on offering.
@@ -15,10 +17,7 @@ const VEHICLE_CATEGORIES = ["car", "suv", "pickup", "van", "motorcycle", "boat"]
 
 /**
  * Human offering modes for vehicles.
- * We follow current product rules:
- * - sale => manual_contact
- * - rent_long_term => manual_contact
- * - rent_short_term => date_range
+ * All modes use manual_contact — vehicles never go through online booking.
  * We intentionally omit rent_hourly for vehicles (based on current combinations policy).
  */
 const OFFERINGS = [
@@ -39,14 +38,18 @@ const OFFERINGS = [
   {
     id: "rent_short_term",
     commercialMode: "rent_short_term",
-    bookingType: "date_range",
+    // Vehicles are always manual_contact by default. Admin can enable
+    // date-range intent via manualContactScheduleType in the conditions step.
+    bookingType: "manual_contact",
     i18nLabelKey: "wizard.offerings.vehicle.rent_short_term.label",
     i18nHelpKey: "wizard.offerings.vehicle.rent_short_term.help",
   },
 ];
 
-function getDefaultBookingTypeForCommercialMode(commercialMode) {
-  if (commercialMode === "rent_short_term") return "date_range";
+// Vehicles are always manual_contact regardless of commercial mode.
+// Date-range intent for rent_short_term is configured via
+// manualContactScheduleType in the conditions step, not via bookingType.
+function getDefaultBookingTypeForCommercialMode(_commercialMode) {
   return "manual_contact";
 }
 
@@ -97,43 +100,8 @@ function getOfferingOptions({ t }) {
   }));
 }
 
-function getBookingTypeOptions({ t, commercialMode, paymentsOnlineEnabled = true }) {
-  const defaultBookingType =
-    getDefaultBookingTypeForCommercialMode(commercialMode);
-  const manualOption = {
-    id: "manual_contact",
-    label: t("wizard.bookingType.manualContact", {
-      defaultValue: "Reservacion por contacto",
-    }),
-    description: t("propertyForm.helper.bookingTypeManual"),
-  };
-
-  if (!defaultBookingType || defaultBookingType === "manual_contact") {
-    return [manualOption];
-  }
-
-  if (!paymentsOnlineEnabled) {
-    return [manualOption];
-  }
-
-  return [
-    {
-      id: defaultBookingType,
-      label: t("wizard.bookingType.onlineDateRange", {
-        defaultValue: "Reserva en linea (fechas)",
-      }),
-      description: t("propertyForm.helper.bookingTypeDirect"),
-    },
-    manualOption,
-  ];
-}
-
 function getFieldsForStep({ t, context, stepId }) {
-  const {
-    commercialMode,
-    bookingType,
-    paymentsOnlineEnabled = true,
-  } = context || {};
+  const { commercialMode, bookingType } = context || {};
 
   if (stepId === "publishWhat") {
     return [
@@ -160,19 +128,8 @@ function getFieldsForStep({ t, context, stepId }) {
       },
     ];
 
-    if (commercialMode === "rent_short_term") {
-      fields.push({
-        key: "bookingType",
-        type: "select",
-        labelKey: "propertyForm.fields.bookingType",
-        options: getBookingTypeOptions({
-          t,
-          commercialMode,
-          paymentsOnlineEnabled,
-        }),
-        required: true,
-      });
-    }
+    // bookingType is always manual_contact for vehicles; no selector needed.
+    // Admin can configure date-range intent in the conditions step.
 
     return fields;
   }
@@ -247,6 +204,8 @@ function getFieldsForStep({ t, context, stepId }) {
           key: "attributes.manualContactScheduleType",
           type: "select",
           labelKey: "propertyForm.fields.manualContactScheduleType",
+          // time_slot omitted: vehicles don't support rent_hourly, so
+          // time_slot is never a valid schedule type for any vehicle.
           options: [
             {
               id: "none",
@@ -255,10 +214,6 @@ function getFieldsForStep({ t, context, stepId }) {
             {
               id: "date_range",
               label: t("propertyForm.options.manualContactScheduleType.date_range"),
-            },
-            {
-              id: "time_slot",
-              label: t("propertyForm.options.manualContactScheduleType.time_slot"),
             },
           ],
           required: false,

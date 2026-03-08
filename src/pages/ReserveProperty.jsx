@@ -192,17 +192,17 @@ const ReserveProperty = () => {
   const browserTimeZone =
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const leadIntent = useMemo(() => {
-    if (
-      behavior.commercialMode === "sale" ||
-      behavior.commercialMode === "rent_long_term"
-    ) {
+    // visit_request is only for property + sale/rent_long_term (isVisitMode).
+    // All other resource types (vehicle, service, venue, etc.) use plain contact
+    // even in sale or rent_long_term — they never schedule a property visit.
+    if (behavior.isVisitMode) {
       return "visit_request";
     }
     if (behavior.bookingType === "manual_contact") {
       return "booking_request_manual";
     }
     return "booking_request";
-  }, [behavior.bookingType, behavior.commercialMode]);
+  }, [behavior.bookingType, behavior.isVisitMode]);
   usePageSeo({
     title: property?.title
       ? `${property.title} | ${t("reservePropertyPage.title")}`
