@@ -1182,6 +1182,21 @@
       "backToList": "Volver al listado",
       "viewPublic": "Ver en landing"
     },
+    "draft": {
+      "publish": "Publicar ahora",
+      "publishError": "No se pudo publicar el recurso.",
+      "publishCard": {
+        "title": "Listo para publicar",
+        "description": "Revisa que tu recurso esté completo antes de publicarlo en el marketplace."
+      },
+      "checks": {
+        "title": "Título definido",
+        "description": "Descripción añadida",
+        "images": "Al menos 1 imagen",
+        "price": "Precio configurado",
+        "location": "Ciudad definida"
+      }
+    },
     "errors": {
       "notFound": "Propiedad no encontrada.",
       "load": "No se pudo cargar la propiedad.",

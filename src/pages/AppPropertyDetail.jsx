@@ -38,6 +38,7 @@ import {
   TrendingUp,
   Users,
   Video,
+  XCircle,
 } from "lucide-react";
 import Modal, { ModalFooter } from "../components/common/organisms/Modal";
 import Select from "../components/common/atoms/Select/Select";
@@ -186,6 +187,7 @@ const AppPropertyDetail = () => {
   const [resourceLeads, setResourceLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -364,6 +366,60 @@ const AppPropertyDetail = () => {
     return { total, newLeads, won };
   }, [resourceLeads]);
 
+  const publishReadiness = useMemo(() => {
+    if (!property) return [];
+    return [
+      {
+        key: "title",
+        ok: Boolean(property.title?.trim()),
+        label: t("appPropertyDetailPage.draft.checks.title"),
+      },
+      {
+        key: "description",
+        ok: Boolean(property.description?.trim()),
+        label: t("appPropertyDetailPage.draft.checks.description"),
+      },
+      {
+        key: "images",
+        ok: images.length > 0,
+        label: t("appPropertyDetailPage.draft.checks.images"),
+      },
+      {
+        key: "price",
+        ok: Number(property.price) > 0,
+        label: t("appPropertyDetailPage.draft.checks.price"),
+      },
+      {
+        key: "city",
+        ok: Boolean(property.city?.trim()),
+        label: t("appPropertyDetailPage.draft.checks.location"),
+      },
+    ];
+  }, [property, images, t]);
+
+  const handlePublish = async () => {
+    if (!property?.$id || publishing) return;
+    setPublishing(true);
+    setError("");
+    try {
+      const updated = await resourcesService.update(
+        property.$id,
+        user?.$id,
+        { status: "published" },
+      );
+      setProperty(updated);
+    } catch (err) {
+      setError(
+        getErrorMessage(
+          err,
+          t("appPropertyDetailPage.draft.publishError"),
+        ),
+      );
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   // ── Loading state ─────────────────────────────────────────
   if (loading) {
     return <SkeletonLoader variant="detail" className="py-4" />;
@@ -401,6 +457,7 @@ const AppPropertyDetail = () => {
 
   const isRent = property.commercialMode === "rent_long_term";
   const isVacationRental = property.commercialMode === "rent_short_term";
+  const isDraft = property.status === "draft";
   const publicUrl = getPublicPropertyRoute(
     property.slug,
     i18n.resolvedLanguage || i18n.language,
@@ -840,7 +897,7 @@ const AppPropertyDetail = () => {
           )}
 
           {/* Leads mini-list — shown on mobile/tablet only (sidebar shows it on desktop) */}
-          {canReadLeads && resourceLeads.length > 0 && (
+          {canReadLeads && !isDraft && resourceLeads.length > 0 && (
             <div className="lg:hidden">
               <SectionCard
                 title={t("leadsPage.title", "Leads")}
@@ -925,35 +982,94 @@ const AppPropertyDetail = () => {
             </div>
           </SectionCard>
 
-          {/* Statistics */}
-          <SectionCard
-            title={t("appPropertyDetailPage.sections.statistics")}
-            icon={TrendingUp}
-          >
-            <div className="grid grid-cols-3 gap-2">
-              <StatPill
-                label={t("myPropertiesPage.table.views")}
-                value={Number(property.views || 0)}
-                icon={Eye}
-                color="slate"
-              />
-              <StatPill
-                label={t("myPropertiesPage.table.leads")}
-                value={Number(property.contactCount || 0)}
-                icon={Landmark}
-                color="cyan"
-              />
-              <StatPill
-                label={t("myPropertiesPage.table.reservations")}
-                value={Number(property.reservationCount || 0)}
-                icon={CalendarClock}
-                color="amber"
-              />
+          {/* Statistics / Publish card */}
+          {isDraft ? (
+            <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50/50 dark:border-violet-700/30 dark:from-violet-950/40 dark:to-purple-950/20">
+              <div className="border-b border-violet-100 px-4 py-3 dark:border-violet-800/30">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-violet-500 dark:text-violet-400" />
+                  <h3 className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+                    {t("appPropertyDetailPage.draft.publishCard.title")}
+                  </h3>
+                </div>
+              </div>
+              <div className="p-4">
+                <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                  {t("appPropertyDetailPage.draft.publishCard.description")}
+                </p>
+
+                <ul className="mb-4 space-y-2">
+                  {publishReadiness.map((check) => (
+                    <li key={check.key} className="flex items-center gap-2">
+                      {check.ok ? (
+                        <CheckCircle2
+                          size={14}
+                          className="shrink-0 text-emerald-500 dark:text-emerald-400"
+                        />
+                      ) : (
+                        <XCircle
+                          size={14}
+                          className="shrink-0 text-slate-300 dark:text-slate-600"
+                        />
+                      )}
+                      <span
+                        className={
+                          check.ok
+                            ? "text-sm text-slate-700 dark:text-slate-200"
+                            : "text-sm text-slate-400 dark:text-slate-500"
+                        }
+                      >
+                        {check.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="inline-flex w-full min-h-9 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-violet-600 dark:hover:bg-violet-500"
+                >
+                  {publishing ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={14} />
+                  )}
+                  {t("appPropertyDetailPage.draft.publish")}
+                </button>
+              </div>
             </div>
-          </SectionCard>
+          ) : (
+            <SectionCard
+              title={t("appPropertyDetailPage.sections.statistics")}
+              icon={TrendingUp}
+            >
+              <div className="grid grid-cols-3 gap-2">
+                <StatPill
+                  label={t("myPropertiesPage.table.views")}
+                  value={Number(property.views || 0)}
+                  icon={Eye}
+                  color="slate"
+                />
+                <StatPill
+                  label={t("myPropertiesPage.table.leads")}
+                  value={Number(property.contactCount || 0)}
+                  icon={Landmark}
+                  color="cyan"
+                />
+                <StatPill
+                  label={t("myPropertiesPage.table.reservations")}
+                  value={Number(property.reservationCount || 0)}
+                  icon={CalendarClock}
+                  color="amber"
+                />
+              </div>
+            </SectionCard>
+          )}
 
           {/* Leads panel (desktop only) */}
-          {canReadLeads && (
+          {canReadLeads && !isDraft && (
             <SectionCard title={t("leadsPage.title", "Leads")} icon={Landmark}>
               {resourceLeads.length === 0 ? (
                 <div className="flex flex-col items-center py-4 text-center text-sm text-slate-400 dark:text-slate-500">

@@ -575,8 +575,9 @@ export const getManualContactScheduleType = (resourceDoc = {}) => {
     return resourceType === "property" ? "date_range" : "none";
   }
 
-  // rent_hourly manual_contact: wizard never produces this combination.
-  // Safest fallback: no schedule widget.
+  // rent_hourly manual_contact: no automatic schedule inferred from commercialMode.
+  // If the admin explicitly set attributes.manualContactScheduleType, it is already
+  // returned at line 547 above — this fallback only fires when the attribute is absent.
   return "none";
 };
 

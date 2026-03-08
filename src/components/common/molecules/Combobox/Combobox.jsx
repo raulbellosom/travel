@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const normalizeText = (value = "") =>
   String(value)
@@ -328,10 +329,33 @@ const Combobox = ({
         onKeyDown={handleKeyDown}
       />
 
+      {/* Chevron toggle */}
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden="true"
+        disabled={disabled}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          if (disabled) return;
+          if (isOpen) {
+            setIsOpen(false);
+            setActiveIndex(-1);
+          } else {
+            updateDropdownLayout();
+            setIsOpen(true);
+            inputRef.current?.focus();
+          }
+        }}
+        className="absolute inset-y-0 right-2 flex items-center text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
+
       {isOpen && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed z-[120] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
+              className="fixed z-[10100] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
               style={{
                 left: `${dropdownLayout.left}px`,
                 top: `${dropdownLayout.top}px`,

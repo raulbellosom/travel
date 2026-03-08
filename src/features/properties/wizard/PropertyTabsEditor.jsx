@@ -700,7 +700,7 @@ export default function PropertyTabsEditor({
   return (
     <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
       <aside className="hidden xl:block">
-        <div className="sticky top-6 rounded-3xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,250,252,0.95)_100%)] p-5 shadow-xl shadow-slate-200/70 transition-colors duration-300 dark:border-cyan-500/20 dark:bg-gradient-to-b dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:shadow-2xl dark:shadow-cyan-950/35">
+        <div className="sticky top-20 rounded-3xl border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,250,252,0.95)_100%)] p-5 shadow-xl shadow-slate-200/70 transition-colors duration-300 dark:border-cyan-500/20 dark:bg-gradient-to-b dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:shadow-2xl dark:shadow-cyan-950/35">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-300">
             {t("wizard.title")}
           </p>
@@ -866,19 +866,20 @@ export default function PropertyTabsEditor({
               onFieldChange={handleFieldChange}
             />
           ) : (
-            <div
-              className={
-                currentStep.id === "conditions"
-                  ? "grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2"
-                  : "space-y-5"
-              }
-            >
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
               {fields.map((field) => {
                 const value = selectors.getValue(state, field.key);
                 const error = stepErrors?.[`${currentStep.id}.${field.key}`];
+                // Full-width: wide field types and known full-width keys
                 const isFullWidth =
-                  currentStep.id === "conditions" &&
-                  (field.type === "select" || field.type === "textarea");
+                  field.type === "textarea" ||
+                  field.type === "images" ||
+                  field.type === "amenities" ||
+                  field.key === "slug" ||
+                  field.key === "title" ||
+                  field.key === "description" ||
+                  field.key === "offeringId" ||
+                  field.key === "resourceType";
 
                 return (
                   <div

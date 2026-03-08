@@ -70,8 +70,18 @@ const ReserveProperty = () => {
     }
     return { startDate, endDate };
   }, [location.search]);
+  // Pre-filled slot times from PropertyDetail's handleSlotReserve (ISO strings)
+  const initialSlotRange = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return {
+      slotStart: params.get("slotStart") || "",
+      slotEnd: params.get("slotEnd") || "",
+    };
+  }, [location.search]);
   const [form, setForm] = useState({
     dateRange: initialDateRange,
+    slotStart: initialSlotRange.slotStart,
+    slotEnd: initialSlotRange.slotEnd,
     guestCount: 1,
     guestName: "",
     specialRequests: "",
@@ -156,6 +166,8 @@ const ReserveProperty = () => {
     [behavior.effectiveScheduleType],
   );
   const isTimeSlotSchedule = behavior.effectiveScheduleType === "time_slot";
+  // true when caller (PropertyDetail.handleSlotReserve) pre-filled slot ISO times via URL
+  const hasPrefilledSlot = isTimeSlotSchedule && Boolean(form.slotStart && form.slotEnd);
   const dateFieldLabel = useMemo(() => {
     if (isTimeSlotSchedule) {
       return t("reservePropertyPage.form.fields.timeSlotDate");
@@ -250,6 +262,14 @@ const ReserveProperty = () => {
     }));
   }, [initialDateRange]);
 
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      slotStart: initialSlotRange.slotStart,
+      slotEnd: initialSlotRange.slotEnd,
+    }));
+  }, [initialSlotRange]);
+
   const galleryUrls = useMemo(() => {
     const urls = (images || []).map((item) => item.url).filter(Boolean);
     if (urls.length > 0) return urls;
@@ -337,12 +357,31 @@ const ReserveProperty = () => {
     }
 
     if (requiresSchedule) {
-      const hasStart = Boolean(form.dateRange.startDate);
-      const hasEnd = Boolean(form.dateRange.endDate);
-      const needsRange = !isTimeSlotSchedule;
-      if (!hasStart || (needsRange && (!hasEnd || nights < 1))) {
-        setError(t("reservePropertyPage.errors.invalidDates"));
-        return;
+      if (isTimeSlotSchedule) {
+        // For time_slot: must have a pre-filled slot for online payment path.
+        // For lead-only (manual_contact), a bare date is acceptable.
+        if (!form.slotStart || !form.slotEnd) {
+          if (!createLeadOnly) {
+            setError(
+              t("reservePropertyPage.errors.selectSlot", {
+                defaultValue:
+                  "Selecciona un horario disponible desde la página del recurso antes de continuar.",
+              }),
+            );
+            return;
+          }
+          if (!form.dateRange.startDate) {
+            setError(t("reservePropertyPage.errors.invalidDates"));
+            return;
+          }
+        }
+      } else {
+        const hasStart = Boolean(form.dateRange.startDate);
+        const hasEnd = Boolean(form.dateRange.endDate);
+        if (!hasStart || !hasEnd || nights < 1) {
+          setError(t("reservePropertyPage.errors.invalidDates"));
+          return;
+        }
       }
     }
 
@@ -368,6 +407,11 @@ const ReserveProperty = () => {
         const endIso = form.dateRange.endDate
           ? new Date(form.dateRange.endDate).toISOString()
           : null;
+        // For time_slot resources, prefer the pre-filled slot times from the URL
+        const effectiveStartIso =
+          isTimeSlotSchedule && form.slotStart ? form.slotStart : startIso;
+        const effectiveEndIso =
+          isTimeSlotSchedule && form.slotEnd ? form.slotEnd : endIso;
         const leadMessage = t(
           "reservePropertyPage.messages.defaultLeadMessage",
           {
@@ -379,8 +423,8 @@ const ReserveProperty = () => {
         const booking = {
           guests: Number(form.guestCount) || 1,
           adults: Number(form.guestCount) || 1,
-          startDate: startIso || undefined,
-          endDate: endIso || undefined,
+          startDate: effectiveStartIso || undefined,
+          endDate: effectiveEndIso || undefined,
           nights: nights > 0 ? nights : undefined,
         };
 
@@ -436,11 +480,22 @@ const ReserveProperty = () => {
         return;
       }
 
+      // For time_slot, use the pre-filled ISO slot times from URL params.
+      // For date_range, use the date range picker values.
+      const checkInDate =
+        isTimeSlotSchedule && form.slotStart
+          ? form.slotStart
+          : new Date(form.dateRange.startDate).toISOString();
+      const checkOutDate =
+        isTimeSlotSchedule && form.slotEnd
+          ? form.slotEnd
+          : new Date(form.dateRange.endDate).toISOString();
+
       const reservationResult =
         await reservationsService.createReservationPublic({
           resourceId: property.$id,
-          checkInDate: new Date(form.dateRange.startDate).toISOString(),
-          checkOutDate: new Date(form.dateRange.endDate).toISOString(),
+          checkInDate,
+          checkOutDate,
           guestCount: Number(form.guestCount),
           guestName: form.guestName || user.name || "",
           guestEmail: user.email,
@@ -565,28 +620,75 @@ const ReserveProperty = () => {
             {t("reservePropertyPage.form.title")}
           </h2>
 
-          {requiresSchedule && (
-            <label className="grid gap-1 text-sm">
-              <span className="inline-flex items-center gap-2">
-                <CalendarDays size={14} />
-                {dateFieldLabel}
-              </span>
-              <DateRangePicker
-                mode={isTimeSlotSchedule ? "single" : "range"}
-                value={
-                  isTimeSlotSchedule ? form.dateRange.startDate : form.dateRange
-                }
-                onChange={(next) =>
-                  updateForm({
-                    dateRange: isTimeSlotSchedule
-                      ? { startDate: next, endDate: null }
-                      : next,
-                  })
-                }
-                minDate={new Date()}
-              />
-            </label>
-          )}
+          {requiresSchedule &&
+            (isTimeSlotSchedule ? (
+              hasPrefilledSlot ? (
+                // Pre-filled slot from PropertyDetail's handleSlotReserve
+                <div className="rounded-xl border border-cyan-200 bg-cyan-50/50 px-3 py-3 text-sm dark:border-cyan-800 dark:bg-cyan-950/30">
+                  <p className="mb-1 inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <CalendarDays size={12} />
+                    {t("reservePropertyPage.form.fields.selectedSlot", {
+                      defaultValue: "Horario seleccionado",
+                    })}
+                  </p>
+                  <p className="font-medium text-cyan-800 dark:text-cyan-200">
+                    {new Date(form.slotStart).toLocaleDateString(locale)}{" "}
+                    &middot;{" "}
+                    {new Date(form.slotStart).toLocaleTimeString(locale, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    &ndash;{" "}
+                    {new Date(form.slotEnd).toLocaleTimeString(locale, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              ) : (
+                // No pre-filled slot: show single-date picker + redirect hint
+                <div className="grid gap-1.5 text-sm">
+                  <label className="grid gap-1 text-sm">
+                    <span className="inline-flex items-center gap-2">
+                      <CalendarDays size={14} />
+                      {t("reservePropertyPage.form.fields.timeSlotDate")}
+                    </span>
+                    <DateRangePicker
+                      mode="single"
+                      value={form.dateRange.startDate}
+                      onChange={(next) =>
+                        updateForm({
+                          dateRange: { startDate: next, endDate: null },
+                        })
+                      }
+                      minDate={new Date()}
+                    />
+                  </label>
+                  {!createLeadOnly && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      {t("reservePropertyPage.form.fields.slotRequired", {
+                        defaultValue:
+                          "Para completar tu reserva selecciona un horario disponible desde la página del recurso.",
+                      })}
+                    </p>
+                  )}
+                </div>
+              )
+            ) : (
+              // date_range path
+              <label className="grid gap-1 text-sm">
+                <span className="inline-flex items-center gap-2">
+                  <CalendarDays size={14} />
+                  {dateFieldLabel}
+                </span>
+                <DateRangePicker
+                  mode="range"
+                  value={form.dateRange}
+                  onChange={(next) => updateForm({ dateRange: next })}
+                  minDate={new Date()}
+                />
+              </label>
+            ))}
 
           <label className="grid gap-1 text-sm">
             <span className="inline-flex items-center gap-2">

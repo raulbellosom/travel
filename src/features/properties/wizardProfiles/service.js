@@ -581,6 +581,9 @@ function getFieldsForStep({ t, context, stepId }) {
 
   if (stepId === "conditions") {
     const unitVariant = getUnitLabelVariant(category);
+    // slotMode is injected into context by wizardMapping.js from attributes.slotMode.
+    // Default to "predefined" so fields render correctly before admin explicitly picks.
+    const slotMode = context.slotMode || "predefined";
 
     // Booking minimum/maximum â€œunitsâ€ + availability window
     // Stored in attributes for services.
@@ -621,24 +624,54 @@ function getFieldsForStep({ t, context, stepId }) {
             },
           ]
         : []),
-      {
-        key: "attributes.bookingMinUnits",
-        type: "number",
-        labelKey: `wizard.fields.service.bookingMinUnits.${unitVariant}.label`,
-        helpKey: `wizard.fields.service.bookingMinUnits.${unitVariant}.help`,
-        required: false,
-        min: 1,
-        max: 9999,
-      },
-      {
-        key: "attributes.bookingMaxUnits",
-        type: "number",
-        labelKey: `wizard.fields.service.bookingMaxUnits.${unitVariant}.label`,
-        helpKey: `wizard.fields.service.bookingMaxUnits.${unitVariant}.help`,
-        required: false,
-        min: 1,
-        max: 9999,
-      },
+      // slotMode: predefined fixed-duration grid vs client-picked hour range.
+      // Only for rent_hourly online booking (not manual_contact, not rent_short_term).
+      ...(commercialMode === "rent_hourly" && bookingType !== "manual_contact"
+        ? [
+            {
+              key: "attributes.slotMode",
+              type: "select",
+              labelKey: "wizard.fields.slotMode.label",
+              helpKey: "wizard.fields.slotMode.help",
+              options: [
+                {
+                  id: "predefined",
+                  label: t("wizard.options.slotMode.predefined"),
+                },
+                {
+                  id: "hour_range",
+                  label: t("wizard.options.slotMode.hour_range"),
+                },
+              ],
+              required: false,
+            },
+          ]
+        : []),
+      // bookingMinUnits / bookingMaxUnits:
+      // - Always shown for rent_short_term.
+      // - For rent_hourly: only in hour_range mode (predefined uses fixed slot grid instead).
+      ...(commercialMode !== "rent_hourly" || slotMode === "hour_range"
+        ? [
+            {
+              key: "attributes.bookingMinUnits",
+              type: "number",
+              labelKey: `wizard.fields.service.bookingMinUnits.${unitVariant}.label`,
+              helpKey: `wizard.fields.service.bookingMinUnits.${unitVariant}.help`,
+              required: false,
+              min: 1,
+              max: 9999,
+            },
+            {
+              key: "attributes.bookingMaxUnits",
+              type: "number",
+              labelKey: `wizard.fields.service.bookingMaxUnits.${unitVariant}.label`,
+              helpKey: `wizard.fields.service.bookingMaxUnits.${unitVariant}.help`,
+              required: false,
+              min: 1,
+              max: 9999,
+            },
+          ]
+        : []),
       {
         key: "attributes.availabilityStartTime",
         type: "time",
@@ -653,9 +686,9 @@ function getFieldsForStep({ t, context, stepId }) {
         helpKey: "wizard.fields.service.availabilityEndTime.help",
         required: false,
       },
-      // Hourly-only helper (optional): slot duration and buffer are root fields in schema,
-      // but in MVP they may be used by booking overlap logic. Keep them optional.
-      ...(commercialMode === "rent_hourly"
+      // slotDurationMinutes + slotBufferMinutes: predefined mode only.
+      // hour_range lets the client pick their own span; fixed duration is irrelevant.
+      ...(commercialMode === "rent_hourly" && slotMode === "predefined"
         ? [
             {
               key: "slotDurationMinutes",

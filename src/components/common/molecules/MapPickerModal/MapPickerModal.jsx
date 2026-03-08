@@ -10,7 +10,7 @@
  *   latitude     - initial lat
  *   longitude    - initial lng
  */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MapPin, Check, LocateFixed, Search, X } from "lucide-react";
 import Modal, { ModalFooter } from "../../organisms/Modal";
@@ -43,6 +43,34 @@ const MapPickerModal = ({
     loading: searching,
     clearResults,
   } = useGeocoding();
+
+  // Auto-geolocate when modal opens with no existing coordinates
+  useEffect(() => {
+    if (!isOpen || latitude != null || longitude != null) return;
+    if (!navigator.geolocation) return;
+
+    setGeolocating(true);
+    setGeoError("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setMapCenter({ lat, lng });
+        try {
+          const location = await reverseGeocode(lat, lng);
+          if (location) setSelected(location);
+        } catch {
+          setSelected(emptyNormalizedLocation(lat, lng));
+        }
+        setGeolocating(false);
+      },
+      () => {
+        setGeolocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const handleSelect = useCallback((location) => {
     setSelected(location);
@@ -177,7 +205,11 @@ const MapPickerModal = ({
                   <li
                     key={`${result.lat}-${result.lng}-${index}`}
                     role="option"
-                    aria-selected={selected !== null && selected.lat === result.lat && selected.lng === result.lng}
+                    aria-selected={
+                      selected !== null &&
+                      selected.lat === result.lat &&
+                      selected.lng === result.lng
+                    }
                   >
                     <button
                       type="button"
@@ -224,8 +256,8 @@ const MapPickerModal = ({
 
         {/* Interactive Map */}
         <MapPicker
-          latitude={mapCenter?.lat ?? latitude}
-          longitude={mapCenter?.lng ?? longitude}
+          latitude={mapCenter?.lat ?? latitude ?? 19.4326}
+          longitude={mapCenter?.lng ?? longitude ?? -99.1332}
           onSelect={handleSelect}
           height="420px"
           zoom={14}
@@ -294,4 +326,3 @@ const MapPickerModal = ({
 };
 
 export default MapPickerModal;
-

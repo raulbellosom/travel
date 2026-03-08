@@ -1182,6 +1182,21 @@
       "backToList": "Back to list",
       "viewPublic": "View on landing"
     },
+    "draft": {
+      "publish": "Publish now",
+      "publishError": "Could not publish the resource.",
+      "publishCard": {
+        "title": "Ready to publish",
+        "description": "Make sure your resource is complete before publishing it to the marketplace."
+      },
+      "checks": {
+        "title": "Title defined",
+        "description": "Description added",
+        "images": "At least 1 image",
+        "price": "Price set",
+        "location": "City defined"
+      }
+    },
     "errors": {
       "notFound": "Property not found.",
       "load": "Could not load the property.",

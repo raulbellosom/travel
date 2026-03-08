@@ -21,7 +21,9 @@ function toFieldMap(fields = []) {
 }
 
 function normalizeCountryCode(rawValue) {
-  return String(rawValue || "").trim().toUpperCase();
+  return String(rawValue || "")
+    .trim()
+    .toUpperCase();
 }
 
 function toNumberOrNull(value) {
@@ -72,13 +74,17 @@ export default function LocationStepForm({
 
   const selectedState = useMemo(
     () =>
-      locationOptionsService.findState(selectedCountryCode, formState.state || ""),
+      locationOptionsService.findState(
+        selectedCountryCode,
+        formState.state || "",
+      ),
     [formState.state, selectedCountryCode],
   );
 
   const selectedStateCode = String(selectedState?.stateCode || "").trim();
   const cityOptions = useMemo(
-    () => locationOptionsService.getCities(selectedCountryCode, selectedStateCode),
+    () =>
+      locationOptionsService.getCities(selectedCountryCode, selectedStateCode),
     [selectedCountryCode, selectedStateCode],
   );
 
@@ -128,7 +134,11 @@ export default function LocationStepForm({
         stateCode,
         location?.city || "",
       ) ||
-      locationOptionsService.findCity(countryCode, stateCode, formState.city || "");
+      locationOptionsService.findCity(
+        countryCode,
+        stateCode,
+        formState.city || "",
+      );
 
     const cityValue = String(
       matchedCity?.value || location?.city || formState.city || "",
@@ -200,7 +210,10 @@ export default function LocationStepForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <Select
-          label={t(fieldMap.country?.labelKey || "wizard.fields.location.country.label")}
+          label={t(
+            fieldMap.country?.labelKey ||
+              "wizard.fields.location.country.label",
+          )}
           helperText={
             fieldMap.country?.helpKey ? t(fieldMap.country.helpKey) : undefined
           }
@@ -214,7 +227,9 @@ export default function LocationStepForm({
 
         <div className="min-w-0">
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            {t(fieldMap.state?.labelKey || "wizard.fields.location.state.label")}
+            {t(
+              fieldMap.state?.labelKey || "wizard.fields.location.state.label",
+            )}
             {fieldMap.state?.required ? (
               <span className="ml-1 text-red-500">*</span>
             ) : null}
@@ -253,7 +268,9 @@ export default function LocationStepForm({
             inputClassName={COMBOBOX_INPUT_CLASS}
             placeholder={t("propertyForm.locationCombobox.cityPlaceholder")}
             noResultsText={t("propertyForm.locationCombobox.noResultsCity")}
-            onChange={(value) => onFieldChange?.("city", String(value || "").trim())}
+            onChange={(value) =>
+              onFieldChange?.("city", String(value || "").trim())
+            }
           />
           {getFieldError(stepErrors, stepId, "city") ? (
             <p className="mt-1 text-sm text-red-600 dark:text-red-300">
@@ -262,17 +279,21 @@ export default function LocationStepForm({
           ) : null}
         </div>
 
-        <TextInput
-          label={t(
-            fieldMap.streetAddress?.labelKey ||
-              "wizard.fields.location.streetAddress.label",
-          )}
-          required={Boolean(fieldMap.streetAddress?.required)}
-          value={formState.streetAddress || ""}
-          className="min-w-0"
-          error={getFieldError(stepErrors, stepId, "streetAddress")}
-          onChange={(event) => onFieldChange?.("streetAddress", event.target.value)}
-        />
+        <div className="md:col-span-2">
+          <TextInput
+            label={t(
+              fieldMap.streetAddress?.labelKey ||
+                "wizard.fields.location.streetAddress.label",
+            )}
+            required={Boolean(fieldMap.streetAddress?.required)}
+            value={formState.streetAddress || ""}
+            className="min-w-0"
+            error={getFieldError(stepErrors, stepId, "streetAddress")}
+            onChange={(event) =>
+              onFieldChange?.("streetAddress", event.target.value)
+            }
+          />
+        </div>
 
         <TextInput
           label={t(
@@ -283,7 +304,9 @@ export default function LocationStepForm({
           value={formState.neighborhood || ""}
           className="min-w-0"
           error={getFieldError(stepErrors, stepId, "neighborhood")}
-          onChange={(event) => onFieldChange?.("neighborhood", event.target.value)}
+          onChange={(event) =>
+            onFieldChange?.("neighborhood", event.target.value)
+          }
         />
 
         <TextInput
@@ -295,12 +318,15 @@ export default function LocationStepForm({
           value={formState.postalCode || ""}
           className="min-w-0"
           error={getFieldError(stepErrors, stepId, "postalCode")}
-          onChange={(event) => onFieldChange?.("postalCode", event.target.value)}
+          onChange={(event) =>
+            onFieldChange?.("postalCode", event.target.value)
+          }
         />
 
         <NumberInput
           label={t(
-            fieldMap.latitude?.labelKey || "wizard.fields.location.latitude.label",
+            fieldMap.latitude?.labelKey ||
+              "wizard.fields.location.latitude.label",
           )}
           required={Boolean(fieldMap.latitude?.required)}
           value={formState.latitude ?? ""}
@@ -318,7 +344,8 @@ export default function LocationStepForm({
 
         <NumberInput
           label={t(
-            fieldMap.longitude?.labelKey || "wizard.fields.location.longitude.label",
+            fieldMap.longitude?.labelKey ||
+              "wizard.fields.location.longitude.label",
           )}
           required={Boolean(fieldMap.longitude?.required)}
           value={formState.longitude ?? ""}
@@ -339,8 +366,8 @@ export default function LocationStepForm({
         isOpen={isMapOpen}
         onClose={() => setIsMapOpen(false)}
         onConfirm={applyLocationFromMap}
-        latitude={latitude ?? 19.4326}
-        longitude={longitude ?? -99.1332}
+        latitude={latitude}
+        longitude={longitude}
       />
     </div>
   );

@@ -138,7 +138,7 @@ const Modal = ({
     <AnimatePresence>
       {isOpen && (
         <MotionDiv
-          className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-hidden"
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4 overflow-hidden"
           variants={backdropVariants}
           initial="hidden"
           animate="visible"

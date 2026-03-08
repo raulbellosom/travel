@@ -17,11 +17,7 @@ function getAmenityLabel(item, language = "es") {
 function normalizeValue(value) {
   if (!Array.isArray(value)) return [];
   return Array.from(
-    new Set(
-      value
-        .map((entry) => String(entry || "").trim())
-        .filter(Boolean),
-    ),
+    new Set(value.map((entry) => String(entry || "").trim()).filter(Boolean)),
   );
 }
 
@@ -38,7 +34,6 @@ export default function AmenitySelectorField({
   category = "",
 }) {
   const [pickerValue, setPickerValue] = useState("");
-  const [pickerKey, setPickerKey] = useState(0);
   const selectedSlugs = useMemo(() => normalizeValue(value), [value]);
   const language = t?.("common.languageCode", { defaultValue: "es" }) || "es";
 
@@ -88,10 +83,11 @@ export default function AmenitySelectorField({
 
   const suggestedOptions = useMemo(() => {
     if (resourceType !== "music") return [];
-    return pickerOptions.filter((option) => option.relevanceScore > 0).slice(0, 10);
+    return pickerOptions
+      .filter((option) => option.relevanceScore > 0)
+      .slice(0, 10);
   }, [pickerOptions, resourceType]);
 
-  const label = field?.labelKey ? t(field.labelKey) : t("propertyForm.amenities.searchLabel");
   const help = field?.helpKey ? t(field.helpKey) : "";
 
   const handleSelect = (slug) => {
@@ -101,7 +97,6 @@ export default function AmenitySelectorField({
 
     onChange?.([...selectedSlugs, nextSlug]);
     setPickerValue("");
-    setPickerKey((current) => current + 1);
   };
 
   const removeAmenity = (slug) => {
@@ -110,12 +105,11 @@ export default function AmenitySelectorField({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {label}
-        </label>
+      <div className="flex items-center justify-end">
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          {t("propertyForm.amenities.selected", { count: selectedSlugs.length })}
+          {t("propertyForm.amenities.selected", {
+            count: selectedSlugs.length,
+          })}
         </span>
       </div>
 
@@ -152,7 +146,6 @@ export default function AmenitySelectorField({
           ) : null}
 
           <Combobox
-            key={pickerKey}
             value={pickerValue}
             options={pickerOptions}
             disabled={pickerOptions.length === 0}
@@ -165,7 +158,9 @@ export default function AmenitySelectorField({
         </div>
       ) : null}
 
-      {!amenitiesLoading && pickerOptions.length === 0 && selectedSlugs.length === 0 ? (
+      {!amenitiesLoading &&
+      pickerOptions.length === 0 &&
+      selectedSlugs.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
           {t("propertyForm.amenities.empty")}
         </p>
@@ -195,7 +190,9 @@ export default function AmenitySelectorField({
         )}
       </div>
 
-      {error ? <p className="text-sm text-red-600 dark:text-red-300">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+      ) : null}
     </div>
   );
 }
