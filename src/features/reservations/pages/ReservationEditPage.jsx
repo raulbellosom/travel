@@ -82,7 +82,8 @@ const ReservationEditPage = () => {
       ? {
           resourceId: reservation.resourceId || "",
           scheduleType:
-            reservation.bookingType === "time_slot"
+            reservation.bookingType === "time_slot" ||
+            reservation.bookingType === "fixed_event"
               ? "time_slot"
               : "date_range",
           checkInDate: reservation.checkInDate || "",

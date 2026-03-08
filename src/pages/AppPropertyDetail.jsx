@@ -60,7 +60,11 @@ import {
 import { getOptimizedImage, getFileViewUrl } from "../utils/imageOptimization";
 import { formatMoneyWithDenomination } from "../utils/money";
 import { getResourceDetails } from "../utils/getResourceDetails";
-import { getCommercialModeLabel } from "../utils/resourceLabels";
+import {
+  getCommercialModeLabel,
+  getCategoryLabel,
+  getPricingModelLabel,
+} from "../utils/resourceLabels";
 
 const MapDisplay = lazy(
   () => import("../components/common/molecules/MapDisplay"),
@@ -508,13 +512,9 @@ const AppPropertyDetail = () => {
           <div className="mt-1.5 flex flex-wrap items-center gap-3">
             <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
               {formattedPrice}
-              {property.pricePerUnit && property.pricePerUnit !== "total" && (
+              {property.pricingModel && property.pricingModel !== "fixed_total" && (
                 <span className="ml-1 text-sm font-normal text-slate-500">
-                  /{" "}
-                  {t(
-                    `propertyForm.options.pricePerUnit.${property.pricePerUnit}`,
-                    { defaultValue: property.pricePerUnit },
-                  )}
+                  / {getPricingModelLabel(property.pricingModel, t)}
                 </span>
               )}
               {property.priceNegotiable && (
@@ -941,20 +941,18 @@ const AppPropertyDetail = () => {
           <SectionCard>
             <div className="grid grid-cols-2 gap-2">
               <InfoCard
-                label={t("propertyForm.fields.propertyType")}
-                value={t(
-                  `propertyForm.options.propertyType.${property.propertyType}`,
-                  {
-                    defaultValue: t(
-                      `propertyForm.options.category.${property.propertyType}`,
-                      { defaultValue: property.propertyType },
-                    ),
-                  },
+                label={t("appPropertyDetailPage.fields.category", "Categoría")}
+                value={getCategoryLabel(
+                  property.category || property.propertyType,
+                  t,
                 )}
                 icon={Building2}
               />
               <InfoCard
-                label={t("propertyForm.fields.operationType")}
+                label={t(
+                  "appPropertyDetailPage.fields.commercialMode",
+                  "Modo comercial",
+                )}
                 value={getCommercialModeLabel(property.commercialMode, t)}
                 icon={Tag}
               />
