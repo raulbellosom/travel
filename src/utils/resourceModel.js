@@ -68,7 +68,13 @@ const normalizeLower = (value) => normalizeText(value).toLowerCase();
 
 export const normalizeResourceType = (value) => {
   const normalized = normalizeLower(value);
-  return RESOURCE_TYPES.has(normalized) ? normalized : "property";
+  if (RESOURCE_TYPES.has(normalized)) return normalized;
+  if (normalized) {
+    console.warn(
+      `[resourceModel] Unknown resourceType: "${normalized}", falling back to "property"`,
+    );
+  }
+  return "property";
 };
 
 export const normalizeCommercialMode = (value) => {
@@ -78,6 +84,11 @@ export const normalizeCommercialMode = (value) => {
   const fromLegacy = LEGACY_OPERATION_TO_COMMERCIAL[normalized];
   if (fromLegacy) return fromLegacy;
 
+  if (normalized) {
+    console.warn(
+      `[resourceModel] Unknown commercialMode: "${normalized}", falling back to "sale"`,
+    );
+  }
   return "sale";
 };
 
@@ -411,12 +422,7 @@ export const getAllowedPricingModels = (
   const fallbackFromType = pickFirstNonEmptyPricingModelList(byCategory || {});
   if (fallbackFromType.length > 0) return [...fallbackFromType];
 
-  const fallbackFromProperty = pickFirstNonEmptyPricingModelList(
-    ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE.property.house,
-  );
-  return fallbackFromProperty.length > 0
-    ? [...fallbackFromProperty]
-    : ["fixed_total"];
+  return ["fixed_total"];
 };
 
 export const getAllowedBookingTypes = (
@@ -561,9 +567,7 @@ export const getManualContactScheduleType = (resourceDoc = {}) => {
   // sale and rent_long_term are always manual_contact.
   // property → offer date_range for visit scheduling.
   // vehicle and all other types → no schedule widget; use plain contact.
-  const resourceType = normalizeResourceType(
-    resourceDoc.resourceType || "property",
-  );
+  const resourceType = normalizeResourceType(resourceDoc.resourceType);
   if (commercialMode === "sale" || commercialMode === "rent_long_term") {
     return resourceType === "property" ? "date_range" : "none";
   }
@@ -582,7 +586,7 @@ export const getManualContactScheduleType = (resourceDoc = {}) => {
 };
 
 export const normalizeResourceDocument = (doc = {}) => {
-  const resourceType = normalizeResourceType(doc.resourceType || "property");
+  const resourceType = normalizeResourceType(doc.resourceType);
   const commercialMode = normalizeCommercialMode(
     doc.commercialMode || doc.operationType,
   );
@@ -593,7 +597,7 @@ export const normalizeResourceDocument = (doc = {}) => {
     resourceType,
     doc.category || doc.propertyType || "",
   );
-  const category = normalizeText(doc.category || doc.propertyType || "house");
+  const category = normalizeText(doc.category || doc.propertyType || "");
   const attributes = normalizeAttributes(doc.attributes);
   const manualContactScheduleType = getManualContactScheduleType({
     ...doc,

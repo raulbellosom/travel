@@ -1,6 +1,6 @@
 # Migration 001 — Backfill canonical fields in `resources`
 
-**Status:** PENDING
+**Status:** COMPLETE (data run 2026-03-08) — hardening applied
 **Collection:** `resources` (database: `main`)
 **Script:** `scripts/migrate-resources.js`
 **Created:** 2026-03-07
@@ -109,15 +109,23 @@ Review the new report for any errors. If `stats.errored > 0`, investigate each e
 
 Run the dry run again. All documents should now show `stats.clean = stats.total` (no more patches needed).
 
-### Step 5: Harden `resourceModel.js`
+### Step 5: Harden `resourceModel.js` ✓ DONE (2026-03-08)
 
-After successful live run and verification, remove the following fallbacks:
+Applied changes:
 
-- `resourceModel.js:71` — `normalizeResourceType()`: change `return "property"` to throw or return `null`
-- `resourceModel.js:585` — `normalizeResourceDocument()`: remove `|| "property"` fallback
-- `resourceModel.js:587` — `normalizeResourceDocument()`: remove `|| doc.operationType` fallback
-- `resourceModel.js:596` — `normalizeResourceDocument()`: remove `|| doc.propertyType` fallback and `|| "house"` default
-- `propertiesService.js` — remove `|| doc.operationType` and `|| doc.propertyType` fallbacks
+- `normalizeResourceType()` — keeps `"property"` fallback; now emits `console.warn` for non-empty unknown values (bridge still needed for raw DB reads)
+- `normalizeCommercialMode()` — keeps `"sale"` fallback; now emits `console.warn` for non-empty unknown values
+- `normalizeResourceDocument()` line ~585 — removed `|| "property"` before passing to `normalizeResourceType`
+- `normalizeResourceDocument()` line ~596 — removed `|| "house"` default; category resolves to `""` if both `category` and `propertyType` absent
+- `getAllowedPricingModels()` — last-resort `property.house` lookup replaced with direct `["fixed_total"]`
+- `propertiesService.js` — removed dead `target="legacy"` branch, `normalizeOperationType()`, `normalizedLegacyOperation`, `normalizedLegacyPricePerUnit`, `toLegacyOperationType`/`toLegacyPricePerUnit` imports, all `useCanonicalResources` conditional branches
+
+Intentionally preserved read bridges (raw DB docs may still arrive un-normalized):
+- `doc.commercialMode || doc.operationType` in `normalizeResourceDocument` and `getManualContactScheduleType`
+- `doc.pricingModel || doc.pricePerUnit` in `normalizeResourceDocument`
+- `doc.category || doc.propertyType` in `normalizeResourceDocument`
+- `resolveCommercialFilter() || filters.operationType` in `listPublic` (HeroSection URL params)
+- `resolveCategoryFilter() || filters.propertyType` in `listPublic` (HeroSection URL params)
 
 ---
 

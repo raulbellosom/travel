@@ -18,8 +18,6 @@ import {
   normalizePricingModel,
   normalizeResourceDocument,
   normalizeResourceType,
-  toLegacyOperationType,
-  toLegacyPricePerUnit,
 } from "../utils/resourceModel";
 import {
   isAllowedCategory,
@@ -35,11 +33,6 @@ const toNumber = (value, fallback = 0) => {
   if (value === "" || value === null || value === undefined) return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const normalizeOperationType = (value = "") => {
-  if (value === "vacationRental") return "vacation_rental";
-  return String(value || "").trim();
 };
 
 const getCollectionConfig = () => {
@@ -58,8 +51,6 @@ const getCollectionConfig = () => {
     legacyPropertiesCollectionId,
     resourceImagesCollectionId,
     resourceImagesBucketId,
-    // Resource-only mode: always query canonical fields in resources collection.
-    useCanonicalResources: Boolean(resourcesCollectionId),
   };
 };
 
@@ -104,7 +95,7 @@ const normalizeCategoryToken = (value) =>
 
 const normalizeResourceInput = (
   input = {},
-  { forUpdate = false, target = "legacy", existing = {} } = {},
+  { forUpdate = false, existing = {} } = {},
 ) => {
   const source = input || {};
   const base = existing || {};
@@ -244,12 +235,6 @@ const normalizeResourceInput = (
     source.bookingType,
     normalizedCommercialMode,
   );
-  const normalizedLegacyOperation = toLegacyOperationType(
-    normalizedCommercialMode,
-  );
-  const normalizedLegacyPricePerUnit = toLegacyPricePerUnit(
-    normalizedPricingModel,
-  );
 
   assign("slug", normalizeSlug(source.slug));
   assign("title", String(source.title || "").trim());
@@ -263,18 +248,12 @@ const normalizeResourceInput = (
   );
   assign("priceNegotiable", Boolean(source.priceNegotiable));
 
-  if (target === "canonical") {
-    assign("resourceType", normalizedResourceType);
-    assign("category", normalizedCategory);
-    assign("commercialMode", normalizedCommercialMode);
-    assign("pricingModel", normalizedPricingModel);
-    assign("bookingType", normalizedBookingType);
-    assign("attributes", normalizeAttributes(source.attributes));
-  } else {
-    assign("propertyType", normalizedCategory);
-    assign("operationType", normalizeOperationType(normalizedLegacyOperation));
-    assign("pricePerUnit", normalizedLegacyPricePerUnit);
-  }
+  assign("resourceType", normalizedResourceType);
+  assign("category", normalizedCategory);
+  assign("commercialMode", normalizedCommercialMode);
+  assign("pricingModel", normalizedPricingModel);
+  assign("bookingType", normalizedBookingType);
+  assign("attributes", normalizeAttributes(source.attributes));
 
   assign("bedrooms", toNumber(source.bedrooms, 0));
   assign("bathrooms", toNumber(source.bathrooms, 0));
@@ -544,8 +523,7 @@ export const propertiesService = {
 
   async listPublic({ page = 1, limit = 20, filters = {} } = {}) {
     ensureAppwriteConfigured();
-    const { resourcesCollectionId, useCanonicalResources } =
-      getCollectionConfig();
+    const { resourcesCollectionId } = getCollectionConfig();
 
     const offset = (Math.max(1, Number(page)) - 1) * Number(limit);
     const queries = [
@@ -562,7 +540,7 @@ export const propertiesService = {
     const resourceTypeFilter = String(filters.resourceType || "")
       .trim()
       .toLowerCase();
-    if (resourceTypeFilter && useCanonicalResources) {
+    if (resourceTypeFilter) {
       queries.push(
         Query.equal("resourceType", normalizeResourceType(resourceTypeFilter)),
       );
@@ -573,26 +551,15 @@ export const propertiesService = {
 
     const categoryFilter = resolveCategoryFilter(filters);
     if (categoryFilter) {
-      queries.push(
-        Query.equal(
-          useCanonicalResources ? "category" : "propertyType",
-          categoryFilter,
-        ),
-      );
+      queries.push(Query.equal("category", categoryFilter));
     }
 
     const hasCommercialFilter =
       String(filters.commercialMode || "").trim() ||
       String(filters.operationType || "").trim();
     if (hasCommercialFilter) {
-      const commercial = resolveCommercialFilter(filters);
       queries.push(
-        Query.equal(
-          useCanonicalResources ? "commercialMode" : "operationType",
-          useCanonicalResources
-            ? commercial
-            : toLegacyOperationType(commercial),
-        ),
+        Query.equal("commercialMode", resolveCommercialFilter(filters)),
       );
     }
 
@@ -783,11 +750,9 @@ export const propertiesService = {
 
   async create(userId, payload) {
     ensureAppwriteConfigured();
-    const { resourcesCollectionId, useCanonicalResources } =
-      getCollectionConfig();
+    const { resourcesCollectionId } = getCollectionConfig();
     const normalized = normalizeResourceInput(payload, {
       forUpdate: false,
-      target: useCanonicalResources ? "canonical" : "legacy",
     });
 
     const data = {
@@ -815,8 +780,7 @@ export const propertiesService = {
 
   async update(resourceId, _userId, payload) {
     ensureAppwriteConfigured();
-    const { resourcesCollectionId, useCanonicalResources } =
-      getCollectionConfig();
+    const { resourcesCollectionId } = getCollectionConfig();
     const needsResourceContext = [
       "resourceType",
       "category",
@@ -838,7 +802,6 @@ export const propertiesService = {
 
     const normalized = normalizeResourceInput(payload, {
       forUpdate: true,
-      target: useCanonicalResources ? "canonical" : "legacy",
       existing,
     });
 
@@ -873,8 +836,7 @@ export const propertiesService = {
 
   async listImages(resourceId) {
     ensureAppwriteConfigured();
-    const { resourceImagesCollectionId, useCanonicalResources } =
-      getCollectionConfig();
+    const { resourceImagesCollectionId } = getCollectionConfig();
     const normalizedId = String(resourceId || "").trim();
     if (!normalizedId) return [];
 
@@ -884,14 +846,14 @@ export const propertiesService = {
         databaseId: env.appwrite.databaseId,
         collectionId: resourceImagesCollectionId,
         resourceId: normalizedId,
-        idField: useCanonicalResources ? "resourceId" : "propertyId",
+        idField: "resourceId",
       });
     } catch {
       response = await listImagesWithFallbackField({
         databaseId: env.appwrite.databaseId,
         collectionId: resourceImagesCollectionId,
         resourceId: normalizedId,
-        idField: useCanonicalResources ? "propertyId" : "resourceId",
+        idField: "propertyId",
       });
     }
 
@@ -913,7 +875,6 @@ export const propertiesService = {
       resourceImagesBucketId,
       resourceImagesCollectionId,
       resourcesCollectionId,
-      useCanonicalResources,
     } = getCollectionConfig();
 
     if (!resourceImagesBucketId) {
@@ -977,7 +938,7 @@ export const propertiesService = {
           collectionId: resourceImagesCollectionId,
           resourceId: normalizedResourceId,
           data: imageData,
-          preferredIdField: useCanonicalResources ? "resourceId" : "propertyId",
+          preferredIdField: "resourceId",
         });
 
         uploadedImages.push({
