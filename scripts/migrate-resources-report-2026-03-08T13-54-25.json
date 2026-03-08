@@ -1,0 +1,21 @@
+{
+  "runAt": "2026-03-08T13:54:25.003Z",
+  "mode": "dry_run",
+  "endpoint": "https://appwrite.racoondevs.com/v1",
+  "projectId": "698b8c02000ec3c5548c",
+  "databaseId": "mainv2",
+  "collectionId": "resources",
+  "stats": {
+    "total": 10,
+    "clean": 10,
+    "patched": 0,
+    "patchedFields": {},
+    "skippedDryRun": 0,
+    "errored": 0,
+    "anomalyCount": 0,
+    "anomalyCodes": {}
+  },
+  "patched": [],
+  "anomalies": [],
+  "errors": []
+}
