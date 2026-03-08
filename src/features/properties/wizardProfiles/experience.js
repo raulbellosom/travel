@@ -443,8 +443,9 @@ function getFieldsForStep({ t, context, stepId }) {
             },
           ]
         : []),
-      // Slot mode selector for hourly resources
-      ...(commercialMode === "rent_hourly"
+      // Slot mode selector: only for rent_hourly online booking (not manual_contact).
+      // manual_contact uses manualContactScheduleType to opt into a schedule widget.
+      ...(commercialMode === "rent_hourly" && bookingType !== "manual_contact"
         ? [
             {
               key: "attributes.slotMode",
