@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(grep:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(while read f)",
+      "Bash(do echo \"=== $f ===\")",
+      "Read(//d/RacoonDevs/travel/code/front/**)",
+      "Bash(done)"
     ]
   }
 }
