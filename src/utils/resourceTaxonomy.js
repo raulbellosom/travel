@@ -78,6 +78,8 @@ export const CATEGORY_BY_RESOURCE_TYPE = Object.freeze({
     "photography",
     "catering",
     "maintenance",
+    "massage",
+    "beauty",
   ]),
   music: MUSIC_CATEGORIES,
   vehicle: Object.freeze(["car", "suv", "pickup", "van", "motorcycle", "boat"]),
@@ -122,6 +124,8 @@ const COMMERCIAL_MODE_BY_RESOURCE_AND_CATEGORY = Object.freeze({
     photography: Object.freeze(["rent_short_term", "rent_hourly"]),
     catering: Object.freeze(["rent_short_term", "rent_hourly"]),
     maintenance: Object.freeze(["rent_short_term", "rent_hourly"]),
+    massage: Object.freeze(["rent_short_term", "rent_hourly"]),
+    beauty: Object.freeze(["rent_short_term", "rent_hourly"]),
   }),
   music: BOOKABLE_MODES_BY_CATEGORY,
   vehicle: Object.freeze({
@@ -163,6 +167,8 @@ export const CATEGORY_I18N_KEY_BY_SLUG = Object.freeze({
   photography: "client:common.enums.category.photography",
   catering: "client:common.enums.category.catering",
   maintenance: "client:common.enums.category.maintenance",
+  massage: "client:common.enums.category.massage",
+  beauty: "client:common.enums.category.beauty",
   // music (auto-generated from MUSIC_CATEGORIES)
   ...MUSIC_CATEGORY_I18N_KEYS,
   // vehicle

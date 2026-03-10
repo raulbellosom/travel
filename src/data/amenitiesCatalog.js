@@ -1609,13 +1609,6 @@ export const DEFAULT_AMENITIES_CATALOG = [
     icon: "droplets",
   },
   {
-    slug: "massage-at-home",
-    name_es: "Servicio a domicilio",
-    name_en: "At-home service",
-    category: "services",
-    icon: "home",
-  },
-  {
     slug: "massage-shower",
     name_es: "Regadera disponible",
     name_en: "Shower available",
@@ -1651,13 +1644,6 @@ export const DEFAULT_AMENITIES_CATALOG = [
     name_en: "Premium products",
     category: "services",
     icon: "badge-check",
-  },
-  {
-    slug: "beauty-at-home",
-    name_es: "Servicio a domicilio",
-    name_en: "At-home service",
-    category: "services",
-    icon: "home",
   },
   {
     slug: "beauty-event-packages",

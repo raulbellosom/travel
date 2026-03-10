@@ -274,6 +274,7 @@ Purpose: canonical marketplace entity.
 Enum values:
 
 - **resourceType** → `property` · `service` · `music` · `vehicle` · `experience` · `venue`
+- **service.category** → `cleaning` · `chef` · `photography` · `catering` · `maintenance` · `massage` · `beauty`
 - **commercialMode** → `sale` · `rent_long_term` · `rent_short_term` · `rent_hourly`
 - **pricingModel** → `fixed_total` · `per_month` · `per_night` · `per_day` · `per_hour` · `per_person` · `per_event` · `per_m2` (canonical); `total` is a legacy alias normalized to `fixed_total` at read time — do not write new documents with `total`
 - **bookingType** → `manual_contact` · `date_range` · `time_slot` · `fixed_event`
@@ -291,14 +292,14 @@ Relationships:
 
 Known `attributes` sub-keys (JSON string field, max 20000):
 
-| key                          | type     | applies to                          | values / notes                                               |
-| ---------------------------- | -------- | ----------------------------------- | ------------------------------------------------------------ |
-| `slotMode`                   | string   | `rent_hourly` + `time_slot`         | `predefined` (slot grid) · `hour_range` (start + duration); defaults to `predefined` |
-| `manualContactScheduleType`  | string   | `manual_contact`                    | `date_range` · `time_slot` · `none`; inferred from resourceType+commercialMode if absent |
-| `availabilityStartTime`      | string   | `time_slot` / `fixed_event`         | Business hours start `"HH:MM"` 24h, e.g. `"09:00"`          |
-| `availabilityEndTime`        | string   | `time_slot` / `fixed_event`         | Business hours end `"HH:MM"` 24h, e.g. `"22:00"`            |
-| `bookingMinUnits`            | number   | `time_slot` + `hour_range`          | Minimum hours per booking                                    |
-| `bookingMaxUnits`            | number   | `time_slot` + `hour_range`          | Maximum hours per booking (capacity guard)                   |
+| key                         | type   | applies to                  | values / notes                                                                           |
+| --------------------------- | ------ | --------------------------- | ---------------------------------------------------------------------------------------- |
+| `slotMode`                  | string | `rent_hourly` + `time_slot` | `predefined` (slot grid) · `hour_range` (start + duration); defaults to `predefined`     |
+| `manualContactScheduleType` | string | `manual_contact`            | `date_range` · `time_slot` · `none`; inferred from resourceType+commercialMode if absent |
+| `availabilityStartTime`     | string | `time_slot` / `fixed_event` | Business hours start `"HH:MM"` 24h, e.g. `"09:00"`                                       |
+| `availabilityEndTime`       | string | `time_slot` / `fixed_event` | Business hours end `"HH:MM"` 24h, e.g. `"22:00"`                                         |
+| `bookingMinUnits`           | number | `time_slot` + `hour_range`  | Minimum hours per booking                                                                |
+| `bookingMaxUnits`           | number | `time_slot` + `hour_range`  | Maximum hours per booking (capacity guard)                                               |
 
 See `docs/core/11_resource_booking_behavior.md` for full behavior rules.
 

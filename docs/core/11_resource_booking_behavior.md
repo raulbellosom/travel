@@ -120,6 +120,10 @@ All other keys in `attributes` are resource-specific extended profile data and h
 | `vehicle`    | `car`            | `rent_short_term`   | `per_day`                                      |
 | `service`    | `chef`           | `rent_short_term`   | `per_day` · `per_person` · `per_event` · `fixed_total` |
 | `service`    | `chef`           | `rent_hourly`       | `per_hour` · `per_person` · `per_event` · `fixed_total` |
+| `service`    | `massage`        | `rent_short_term`   | `per_person` · `per_day` · `per_event` · `fixed_total` |
+| `service`    | `massage`        | `rent_hourly`       | `per_hour` · `per_person` · `fixed_total` |
+| `service`    | `beauty`         | `rent_short_term`   | `per_person` · `per_day` · `per_event` · `fixed_total` |
+| `service`    | `beauty`         | `rent_hourly`       | `per_hour` · `per_person` · `fixed_total` |
 | `music`      | `dj`             | `rent_short_term`   | `per_day` · `per_event` · `fixed_total`        |
 | `music`      | `dj`             | `rent_hourly`       | `per_hour` · `per_event` · `fixed_total`       |
 | `experience` | `tour`           | `rent_short_term`   | `per_person` · `per_day` · `per_event` · `fixed_total` |
