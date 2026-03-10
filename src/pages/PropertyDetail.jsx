@@ -66,6 +66,7 @@ import {
   Shield,
   AlertTriangle,
   RefreshCw,
+  Droplets,
 } from "lucide-react";
 import env from "../env";
 import { getAmenityIcon } from "../data/amenitiesCatalog";
@@ -2315,6 +2316,103 @@ const PropertyDetail = () => {
                       )}
                     </>
                   )}
+                  {/* Massage */}
+                  {resourceBehavior.category === "massage" && (
+                    <>
+                      {attrs.massageModality && (
+                        <StatCard
+                          icon={Sparkles}
+                          label={t("client:resource.massageModality", {
+                            defaultValue: "Tipo de masaje",
+                          })}
+                          value={t(
+                            `client:common.enums.massageModality.${attrs.massageModality}`,
+                            { defaultValue: attrs.massageModality },
+                          )}
+                        />
+                      )}
+                      {Number(attrs.massageDurationMinutes) > 0 && (
+                        <StatCard
+                          icon={Clock}
+                          label={t("client:resource.massageDurationMinutes", {
+                            defaultValue: "Duración de sesión",
+                          })}
+                          value={`${attrs.massageDurationMinutes} min`}
+                        />
+                      )}
+                      {Number(attrs.massageMaxClients) > 1 && (
+                        <StatCard
+                          icon={Users}
+                          label={t("client:resource.massageMaxClients", {
+                            defaultValue: "Clientes simultáneos",
+                          })}
+                          value={attrs.massageMaxClients}
+                        />
+                      )}
+                      {attrs.massageTravelsToLocation && (
+                        <StatCard
+                          icon={MapPin}
+                          label={t("client:resource.massageTravelsToLocation", {
+                            defaultValue: "A domicilio",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.massageIncludesProducts && (
+                        <StatCard
+                          icon={Droplets}
+                          label={t("client:resource.massageIncludesProducts", {
+                            defaultValue: "Incluye aceites y cremas",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                    </>
+                  )}
+                  {/* Beauty */}
+                  {resourceBehavior.category === "beauty" && (
+                    <>
+                      {attrs.beautyServiceType && (
+                        <StatCard
+                          icon={Sparkles}
+                          label={t("client:resource.beautyServiceType", {
+                            defaultValue: "Tipo de servicio",
+                          })}
+                          value={t(
+                            `client:common.enums.beautyServiceType.${attrs.beautyServiceType}`,
+                            { defaultValue: attrs.beautyServiceType },
+                          )}
+                        />
+                      )}
+                      {attrs.beautyTravelsToLocation && (
+                        <StatCard
+                          icon={MapPin}
+                          label={t("client:resource.beautyTravelsToLocation", {
+                            defaultValue: "A domicilio",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.beautyIncludesProducts && (
+                        <StatCard
+                          icon={Droplets}
+                          label={t("client:resource.beautyIncludesProducts", {
+                            defaultValue: "Incluye productos",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                      {attrs.beautyForEvents && (
+                        <StatCard
+                          icon={CalendarHeart}
+                          label={t("client:resource.beautyForEvents", {
+                            defaultValue: "Para eventos",
+                          })}
+                          value={t("common.yes", "Sí")}
+                        />
+                      )}
+                    </>
+                  )}
                   <StatCard
                     icon={MapPin}
                     label={t("client:resource.location", {
@@ -2342,7 +2440,7 @@ const PropertyDetail = () => {
                       label={t("client:resource.includesSound", {
                         defaultValue: "Incluye sonido",
                       })}
-                      value={t("common.yes", "S�")}
+                      value={t("common.yes", "Sí")}
                     />
                   )}
                   {attrs.musicIncludesLighting && (
@@ -2351,7 +2449,7 @@ const PropertyDetail = () => {
                       label={t("client:resource.includesLighting", {
                         defaultValue: "Incluye iluminacion",
                       })}
-                      value={t("common.yes", "S�")}
+                      value={t("common.yes", "Sí")}
                     />
                   )}
                   {Number(attrs.musicBandMembers) > 0 && (
@@ -2387,7 +2485,7 @@ const PropertyDetail = () => {
                       label={t("client:resource.travelsToVenue", {
                         defaultValue: "Se traslada al lugar",
                       })}
-                      value={t("common.yes", "S�")}
+                      value={t("common.yes", "Sí")}
                     />
                   )}
                 </>

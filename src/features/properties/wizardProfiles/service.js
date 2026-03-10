@@ -18,6 +18,8 @@ const SERVICE_CATEGORIES = [
   "photography",
   "catering",
   "maintenance",
+  "massage",
+  "beauty",
 ];
 
 /**
@@ -148,6 +150,19 @@ const ATTRIBUTE_KEYS_BY_CATEGORY = {
     "maintenanceWarranty",
     "maintenanceResponseTimeHours",
   ],
+  massage: [
+    "massageModality",
+    "massageDurationMinutes",
+    "massageMaxClients",
+    "massageTravelsToLocation",
+    "massageIncludesProducts",
+  ],
+  beauty: [
+    "beautyServiceType",
+    "beautyTravelsToLocation",
+    "beautyIncludesProducts",
+    "beautyForEvents",
+  ],
 };
 
 /**
@@ -169,7 +184,8 @@ const GENERIC_BOOKING_CONDITION_KEYS = [
  * - cleaning/maintenance/photography: units (default)
  */
 function getUnitLabelVariant(category) {
-  if (category === "chef" || category === "catering") return "people";
+  if (category === "chef" || category === "catering" || category === "massage")
+    return "people";
   return "units"; // generic/hours-like
 }
 
@@ -560,6 +576,75 @@ function getFieldsForStep({ t, context, stepId }) {
             min: 0,
             max: 9999,
             suffixKey: "wizard.units.hours",
+          },
+        );
+        break;
+
+      case "massage":
+        fields.push(
+          {
+            key: "attributes.massageModality",
+            type: "text",
+            labelKey: "wizard.fields.service.massageModality.label",
+            required: false,
+          },
+          {
+            key: "attributes.massageDurationMinutes",
+            type: "number",
+            labelKey: "wizard.fields.service.massageDurationMinutes.label",
+            required: false,
+            min: 15,
+            max: 480,
+            suffixKey: "wizard.units.minutes",
+          },
+          {
+            key: "attributes.massageMaxClients",
+            type: "number",
+            labelKey: "wizard.fields.service.massageMaxClients.label",
+            required: false,
+            min: 1,
+            max: 10,
+          },
+          {
+            key: "attributes.massageTravelsToLocation",
+            type: "boolean",
+            labelKey: "wizard.fields.service.massageTravelsToLocation.label",
+            required: false,
+          },
+          {
+            key: "attributes.massageIncludesProducts",
+            type: "boolean",
+            labelKey: "wizard.fields.service.massageIncludesProducts.label",
+            required: false,
+          },
+        );
+        break;
+
+      case "beauty":
+        fields.push(
+          {
+            key: "attributes.beautyServiceType",
+            type: "text",
+            labelKey: "wizard.fields.service.beautyServiceType.label",
+            required: false,
+          },
+          {
+            key: "attributes.beautyTravelsToLocation",
+            type: "boolean",
+            labelKey: "wizard.fields.service.beautyTravelsToLocation.label",
+            required: false,
+          },
+          {
+            key: "attributes.beautyIncludesProducts",
+            type: "boolean",
+            labelKey: "wizard.fields.service.beautyIncludesProducts.label",
+            required: false,
+          },
+          {
+            key: "attributes.beautyForEvents",
+            type: "boolean",
+            labelKey: "wizard.fields.service.beautyForEvents.label",
+            required: false,
           },
         );
         break;

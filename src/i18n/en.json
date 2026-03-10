@@ -1569,6 +1569,15 @@
       "maintenanceEmergencyService": "24h emergency service",
       "maintenanceWarranty": "Work warranty",
       "maintenanceResponseTimeHours": "Response time",
+      "massageModality": "Massage type",
+      "massageDurationMinutes": "Session duration (min)",
+      "massageMaxClients": "Max simultaneous clients",
+      "massageTravelsToLocation": "Offers at-home service",
+      "massageIncludesProducts": "Includes oils and creams",
+      "beautyServiceType": "Beauty service type",
+      "beautyTravelsToLocation": "Offers at-home service",
+      "beautyIncludesProducts": "Includes products",
+      "beautyForEvents": "Available for events (weddings, etc.)",
       "experienceDurationMinutes": "Experience duration",
       "experienceMinParticipants": "Minimum participants",
       "experienceMaxParticipants": "Maximum participants",
@@ -1742,6 +1751,8 @@
         "photography": "Photography",
         "catering": "Catering",
         "maintenance": "Maintenance",
+        "massage": "Massage",
+        "beauty": "Beauty",
         "car": "Car",
         "suv": "SUV",
         "pickup": "Pickup",
@@ -1902,6 +1913,25 @@
         "painting": "Painting",
         "carpentry": "Carpentry",
         "general": "General"
+      },
+      "massageModality": {
+        "swedish": "Swedish / Relaxing",
+        "deep_tissue": "Deep tissue",
+        "sports": "Sports",
+        "hot_stone": "Hot stone",
+        "prenatal": "Prenatal",
+        "reflexology": "Reflexology",
+        "other": "Other"
+      },
+      "beautyServiceType": {
+        "manicure": "Manicure",
+        "pedicure": "Pedicure",
+        "facial": "Facial",
+        "makeup": "Makeup",
+        "waxing": "Waxing",
+        "nails": "Nails (acrylic/gel)",
+        "lashes": "Lash extensions",
+        "other": "Other"
       }
     },
     "units": {
@@ -3115,7 +3145,9 @@
         "chef": "Chef",
         "photography": "Photography",
         "catering": "Catering",
-        "maintenance": "Maintenance"
+        "maintenance": "Maintenance",
+        "massage": "Massage",
+        "beauty": "Beauty"
       },
       "vehicle": {
         "car": "Car",
@@ -3504,6 +3536,33 @@
         },
         "maintenanceResponseTimeHours": {
           "label": "Response time (hrs)"
+        },
+        "massageModality": {
+          "label": "Massage type"
+        },
+        "massageDurationMinutes": {
+          "label": "Session duration (min)"
+        },
+        "massageMaxClients": {
+          "label": "Max simultaneous clients"
+        },
+        "massageTravelsToLocation": {
+          "label": "I offer at-home service"
+        },
+        "massageIncludesProducts": {
+          "label": "Includes oils and creams"
+        },
+        "beautyServiceType": {
+          "label": "Service type"
+        },
+        "beautyTravelsToLocation": {
+          "label": "I offer at-home service"
+        },
+        "beautyIncludesProducts": {
+          "label": "Includes products"
+        },
+        "beautyForEvents": {
+          "label": "Available for events (weddings, etc.)"
         }
       },
       "vehicle": {

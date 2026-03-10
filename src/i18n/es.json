@@ -1569,6 +1569,15 @@
       "maintenanceEmergencyService": "Servicio de emergencia 24h",
       "maintenanceWarranty": "Garantia del trabajo",
       "maintenanceResponseTimeHours": "Tiempo de respuesta",
+      "massageModality": "Tipo de masaje",
+      "massageDurationMinutes": "Duracion de sesion (min)",
+      "massageMaxClients": "Maximo de clientes simultaneos",
+      "massageTravelsToLocation": "Ofrece servicio a domicilio",
+      "massageIncludesProducts": "Incluye aceites y cremas",
+      "beautyServiceType": "Tipo de servicio de belleza",
+      "beautyTravelsToLocation": "Ofrece servicio a domicilio",
+      "beautyIncludesProducts": "Incluye productos",
+      "beautyForEvents": "Disponible para eventos (bodas, XV anos, etc.)",
       "experienceDurationMinutes": "Duracion de la experiencia",
       "experienceMinParticipants": "Participantes minimos",
       "experienceMaxParticipants": "Participantes maximos",
@@ -1742,6 +1751,8 @@
         "photography": "Fotografia",
         "catering": "Catering",
         "maintenance": "Mantenimiento",
+        "massage": "Masajes",
+        "beauty": "Belleza",
         "car": "Auto",
         "suv": "SUV",
         "pickup": "Pickup",
@@ -1902,6 +1913,25 @@
         "painting": "Pintura",
         "carpentry": "Carpinteria",
         "general": "General"
+      },
+      "massageModality": {
+        "swedish": "Sueco / Relajante",
+        "deep_tissue": "Tejido profundo",
+        "sports": "Deportivo",
+        "hot_stone": "Piedras calientes",
+        "prenatal": "Prenatal",
+        "reflexology": "Reflexología",
+        "other": "Otro"
+      },
+      "beautyServiceType": {
+        "manicure": "Manicure",
+        "pedicure": "Pedicure",
+        "facial": "Facial",
+        "makeup": "Maquillaje",
+        "waxing": "Depilación",
+        "nails": "Uñas (acrílico/gel)",
+        "lashes": "Extensiones de pestañas",
+        "other": "Otro"
       }
     },
     "units": {
@@ -3115,7 +3145,9 @@
         "chef": "Chef",
         "photography": "Fotografía",
         "catering": "Catering",
-        "maintenance": "Mantenimiento"
+        "maintenance": "Mantenimiento",
+        "massage": "Masajes",
+        "beauty": "Belleza"
       },
       "vehicle": {
         "car": "Auto",
@@ -3504,6 +3536,33 @@
         },
         "maintenanceResponseTimeHours": {
           "label": "Tiempo de respuesta (hrs)"
+        },
+        "massageModality": {
+          "label": "Tipo de masaje"
+        },
+        "massageDurationMinutes": {
+          "label": "Duración de la sesión (min)"
+        },
+        "massageMaxClients": {
+          "label": "Clientes simultáneos máx."
+        },
+        "massageTravelsToLocation": {
+          "label": "Ofrezco servicio a domicilio"
+        },
+        "massageIncludesProducts": {
+          "label": "Incluye aceites y cremas"
+        },
+        "beautyServiceType": {
+          "label": "Tipo de servicio"
+        },
+        "beautyTravelsToLocation": {
+          "label": "Ofrezco servicio a domicilio"
+        },
+        "beautyIncludesProducts": {
+          "label": "Incluye productos"
+        },
+        "beautyForEvents": {
+          "label": "Disponible para eventos (bodas, XV años, etc.)"
         }
       },
       "vehicle": {

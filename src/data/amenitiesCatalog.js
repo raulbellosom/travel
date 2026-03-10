@@ -1571,6 +1571,122 @@ export const DEFAULT_AMENITIES_CATALOG = [
     category: "tech",
     icon: "wifi",
   },
+
+  /* ================  MASSAGE  ================ */
+  {
+    slug: "massage-private-room",
+    name_es: "Sala privada",
+    name_en: "Private room",
+    category: "services",
+    icon: "door-closed",
+  },
+  {
+    slug: "massage-couples",
+    name_es: "Masaje en pareja",
+    name_en: "Couples massage",
+    category: "services",
+    icon: "heart",
+  },
+  {
+    slug: "massage-aromatherapy",
+    name_es: "Aromaterapia incluida",
+    name_en: "Aromatherapy included",
+    category: "services",
+    icon: "sparkles",
+  },
+  {
+    slug: "massage-hot-stone",
+    name_es: "Piedras calientes",
+    name_en: "Hot stones",
+    category: "services",
+    icon: "flame",
+  },
+  {
+    slug: "massage-products-included",
+    name_es: "Aceites y cremas incluidos",
+    name_en: "Oils and creams included",
+    category: "services",
+    icon: "droplets",
+  },
+  {
+    slug: "massage-at-home",
+    name_es: "Servicio a domicilio",
+    name_en: "At-home service",
+    category: "services",
+    icon: "home",
+  },
+  {
+    slug: "massage-shower",
+    name_es: "Regadera disponible",
+    name_en: "Shower available",
+    category: "services",
+    icon: "shower-head",
+  },
+  {
+    slug: "massage-music-ambient",
+    name_es: "Música ambiental",
+    name_en: "Ambient music",
+    category: "services",
+    icon: "music",
+  },
+
+  /* ================  BEAUTY  ================ */
+  {
+    slug: "beauty-private-room",
+    name_es: "Sala privada",
+    name_en: "Private room",
+    category: "services",
+    icon: "door-closed",
+  },
+  {
+    slug: "beauty-nail-art",
+    name_es: "Nail art",
+    name_en: "Nail art",
+    category: "services",
+    icon: "sparkles",
+  },
+  {
+    slug: "beauty-products-premium",
+    name_es: "Productos de marca",
+    name_en: "Premium products",
+    category: "services",
+    icon: "badge-check",
+  },
+  {
+    slug: "beauty-at-home",
+    name_es: "Servicio a domicilio",
+    name_en: "At-home service",
+    category: "services",
+    icon: "home",
+  },
+  {
+    slug: "beauty-event-packages",
+    name_es: "Paquetes para eventos",
+    name_en: "Event packages",
+    category: "services",
+    icon: "package",
+  },
+  {
+    slug: "beauty-lash-extensions",
+    name_es: "Extensiones de pestañas",
+    name_en: "Lash extensions",
+    category: "services",
+    icon: "eye",
+  },
+  {
+    slug: "beauty-makeup-airbrush",
+    name_es: "Maquillaje aerógrafo",
+    name_en: "Airbrush makeup",
+    category: "services",
+    icon: "paintbrush",
+  },
+  {
+    slug: "beauty-waxing",
+    name_es: "Depilación con cera",
+    name_en: "Waxing",
+    category: "services",
+    icon: "zap",
+  },
 ];
 
 /* ───────────────────────────────────────────────────────────────────────────

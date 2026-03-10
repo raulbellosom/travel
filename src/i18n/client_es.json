@@ -276,6 +276,8 @@
         "photography": "Fotografía",
         "catering": "Catering",
         "maintenance": "Mantenimiento",
+        "massage": "Masajes",
+        "beauty": "Belleza",
         "car": "Auto",
         "suv": "SUV",
         "pickup": "Pickup",
@@ -410,6 +412,25 @@
         "painting": "Pintura",
         "carpentry": "Carpintería",
         "general": "General"
+      },
+      "massageModality": {
+        "swedish": "Sueco / Relajante",
+        "deep_tissue": "Tejido profundo",
+        "sports": "Deportivo",
+        "hot_stone": "Piedras calientes",
+        "prenatal": "Prenatal",
+        "reflexology": "Reflexología",
+        "other": "Otro"
+      },
+      "beautyServiceType": {
+        "manicure": "Manicure",
+        "pedicure": "Pedicure",
+        "facial": "Facial",
+        "makeup": "Maquillaje",
+        "waxing": "Depilación",
+        "nails": "Uñas (acrílico/gel)",
+        "lashes": "Extensiones de pestañas",
+        "other": "Otro"
       }
     }
   },
@@ -459,6 +480,15 @@
     "emergency24h": "Emergencia 24h",
     "warranty": "Garantía",
     "responseTime": "Tiempo de respuesta",
+    "massageModality": "Tipo de masaje",
+    "massageDurationMinutes": "Duración de sesión",
+    "massageMaxClients": "Clientes simultáneos",
+    "massageTravelsToLocation": "A domicilio",
+    "massageIncludesProducts": "Incluye aceites y cremas",
+    "beautyServiceType": "Tipo de servicio",
+    "beautyTravelsToLocation": "A domicilio",
+    "beautyIncludesProducts": "Incluye productos",
+    "beautyForEvents": "Para eventos",
     "participants": "Participantes",
     "difficulty": "Dificultad",
     "includesEquipment": "Incluye equipo",

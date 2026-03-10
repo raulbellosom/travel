@@ -286,6 +286,32 @@ const ALLOWED_PRICING_MODELS_BY_RESOURCE_CATEGORY_AND_MODE = Object.freeze({
         "fixed_total",
       ]),
     }),
+    massage: Object.freeze({
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "fixed_total",
+      ]),
+    }),
+    beauty: Object.freeze({
+      rent_short_term: Object.freeze([
+        "per_person",
+        "per_day",
+        "per_event",
+        "fixed_total",
+      ]),
+      rent_hourly: Object.freeze([
+        "per_hour",
+        "per_person",
+        "fixed_total",
+      ]),
+    }),
   }),
   music: MUSIC_PRICING_BY_CATEGORY,
   experience: Object.freeze({

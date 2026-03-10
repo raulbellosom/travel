@@ -224,6 +224,8 @@ export const CATEGORY_AMENITY_KEYWORDS = Object.freeze({
   photography: Object.freeze(["professional", "equipment", "portfolio"]),
   catering: Object.freeze(["materials", "certified", "bilingual"]),
   maintenance: Object.freeze(["guarantee", "materials", "available"]),
+  massage: Object.freeze(["massage", "private", "aromatherapy", "couples", "hot-stone", "spa", "relax", "domicilio", "location", "products"]),
+  beauty: Object.freeze(["beauty", "nail", "facial", "makeup", "waxing", "lash", "private", "domicilio", "location", "event", "wedding"]),
 
   // Music categories
   dj: Object.freeze(["professional", "equipment", "portfolio", "sound", "lighting"]),
