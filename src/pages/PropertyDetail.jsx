@@ -211,6 +211,19 @@ const PropertyDetail = () => {
     [property?.attributes],
   );
 
+  // Max allowed guests for the guest-count input in time-slot booking
+  const maxCapacity = useMemo(() => {
+    const rt = resourceBehavior.resourceType;
+    if (rt === "venue")
+      return Math.max(
+        Number(attrs.venueCapacityStanding) || 0,
+        Number(attrs.venueCapacitySeated) || 0,
+      );
+    if (rt === "experience")
+      return Number(attrs.experienceMaxParticipants) || 0;
+    return Number(property?.maxGuests) || 0;
+  }, [resourceBehavior.resourceType, attrs, property?.maxGuests]);
+
   const scheduleType = resourceBehavior.effectiveScheduleType;
   const isManualContactBooking =
     resourceBehavior.bookingType === "manual_contact";
